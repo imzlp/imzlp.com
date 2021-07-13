@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /archives/
+Allow: /categories/
+Allow: /notes/
+Allow: /changelog/
+Allow: /resources/
+
+Disallow: /about/
+Disallow: /essay/
+Disallow: /essay/tweets/
+Disallow: /essay/questions/
+Disallow: /essay/books/

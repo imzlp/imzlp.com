@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一些开发资源的收集整理">
+<meta property="og:type" content="website">
+<meta property="og:title" content="资源">
+<meta property="og:url" content="https://imzlp.com/resources/index.html">
+<meta property="og:site_name" content="Z&#39;s Blog">
+<meta property="og:description" content="一些开发资源的收集整理">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-11-08T11:19:46.000Z">
+<meta property="article:modified_time" content="2021-07-13T16:14:57.769Z">
+<meta property="article:author" content="查利鹏">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://imzlp.com/resources/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : false,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>资源 | Z's Blog
+</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-66450323-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-66450323-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Z's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-feeds">
+
+    <a href="/feeds/" rel="section"><i class="fas fa-rss fa-fw"></i>资讯</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fas fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+  <div id="google_translate_element"></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit()
+    {
+      var google_translate_element = document.getElementById('google_translate_element');
+      var timer = setInterval(function() 
+      {
+        google_translate_element = document.getElementById('google_translate_element');
+        if (google_translate_element) 
+        {
+          clearInterval(timer);
+          new google.translate.TranslateElement(
+          {
+            pageLanguage: 'zh-CN',
+            
+              includedLanguages: 'en,zh-CN,ru,ja',
+            
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE, autoDisplay: true
+          },
+          'google_translate_element');
+
+          
+            // 清除图片的请求
+            img = [].slice.call(document.querySelectorAll('#goog-gt-tt img,#google_translate_element img'));
+            img.forEach(function(v, i) {v.src = '';});
+          
+          var google_language_selector = document.getElementById(':0.targetLanguage');
+          google_language_selector.style.backgroundColor = "#ffffffb5";
+          google_language_selector.style.border = "0px solid #ffffffb5";
+        }
+      }, 300);
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.cn/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+  
+
+      
+      
+
+      
+      
+
+      
+
+        
+        <ul id="sub-menu" class="sub-menu menu">
+          
+            
+          
+          
+              
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-documents">
+
+    <a href="/resources/documents/" rel="section"><i class="fas fa-passport fa-fw"></i>文档</a>
+
+  </li>
+
+
+          
+        </ul>
+        
+
+        
+
+                
+                
+        
+      
+
+      
+      
+  
+
+          <div class="content page posts-expand">
+            
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN">
+      <header class="post-header">
+	<h1 class="post-title" itemprop="name headline">资源
+	</h1>
+	<div class="post-meta">
+	    <div class="post-description">一些开发资源的收集整理</div>
+	  
+
+	</div>
+
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+          <ul>
+<li><a href="https://imzlp.com/resources/documents/">常用技术文档的索引</a>(<a target="_blank" rel="noopener" href="https://docs.imzlp.com/">docs.imzlp.com</a>)</li>
+<li><a target="_blank" rel="noopener" href="https://consolehelp.imzlp.com/">UE4 Console Help</a></li>
+<li><a target="_blank" rel="noopener" href="https://ue4wiki.imzlp.com/">UE4 Wiki Archive</a></li>
+</ul>
+<hr>
+<script src="https://gist.github.com/imzlp/c9ab762791925829e4b868bfd928a482.js"></script>
+
+<h2 id="Unreal-Engine-News"><a href="#Unreal-Engine-News" class="headerlink" title="Unreal Engine News"></a>Unreal Engine News</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/metahuman-creator">MetaHuman Creator:HIGH-FIDELITY DIGITAL HUMANS MADE EASY</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/oodle-now-free-to-use-in-unreal-engine-via-github">Oodle now free to use in Unreal Engine via GitHub</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/a-sneak-peek-at-metahuman-creator-high-fidelity-digital-humans-made-easy">A sneak peek at MetaHuman Creator: high-fidelity digital humans made easy</a></li>
+<li><a target="_blank" rel="noopener" href="https://portal.productboard.com/epicgames/1-unreal-engine-public-roadmap/">Unreal Engine Public Roadmap</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/unreal-engine-4-26-released">Unreal Engine 4.26 released!</a></li>
+</ul>
+<h2 id="Unreal-Engine-Issues"><a href="#Unreal-Engine-Issues" class="headerlink" title="Unreal Engine Issues"></a>Unreal Engine Issues</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://issues.unrealengine.com/">Unreal Engine Issues</a></li>
+</ul>
+<h2 id="UE4-Release-Notes"><a href="#UE4-Release-Notes" class="headerlink" title="UE4 Release Notes"></a>UE4 Release Notes</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Support/Builds/index.html">Unreal Engine Release Notes</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/WhatsNew/Builds/ReleaseNotes/4_26/index.html">Unreal Engine 4.26 Release Notes</a></li>
+</ul>
+<h2 id="UE4-Hotfix-Release-notes"><a href="#UE4-Hotfix-Release-notes" class="headerlink" title="UE4 Hotfix Release notes"></a>UE4 Hotfix Release notes</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/t/4-26-2-hotfix-released/213111">4.26.2 Hotfix released</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/unreal-engine/announcements-and-releases/1858635-4-26-1-hotfix-released">4.26.1 Hotfix released</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/unreal-engine/announcements-and-releases/1824840-4-25-4-hotfix-released">4.25.4 Hotfix released</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/unreal-engine/announcements-and-releases/1793950-4-25-3-hotfix-released">4.25.3 Hotfix released</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/unreal-engine/announcements-and-releases/1791750-4-25-2-hotfix-released">4.25.2 Hotfix released</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/unreal-engine/announcements-and-releases/1770617-4-25-1-hotfix-released">4.25.1 Hotfix released</a></li>
+</ul>
+<h2 id="UE4-Documents"><a href="#UE4-Documents" class="headerlink" title="UE4 Documents"></a>UE4 Documents</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/index.html">Unreal Engine 4 Documentation</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/API/index.html">Unreal Engine API Reference</a></li>
+<li><a target="_blank" rel="noopener" href="https://consolehelp.imzlp.com/">Unreal Engine 4 Console Variables and Commands</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/Development/CodingStandard/index.html">Coding Standard</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/index.html">Unreal Architecture</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/resources">Unreal Engine Resource</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/feed">Unreal Engine Feeds</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/ProgrammingAndScripting/ProgrammingWithCPP/index.html">Programming with C++</a></li>
+</ul>
+<h2 id="Other-Docs"><a href="#Other-Docs" class="headerlink" title="Other Docs"></a>Other Docs</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://ue4community.wiki/">Unreal Engine Community Wiki</a></li>
+<li><a target="_blank" rel="noopener" href="https://unrealartoptimization.github.io/">Unreal Art Optimization</a></li>
+</ul>
+<h2 id="UE4-Source-Code"><a href="#UE4-Source-Code" class="headerlink" title="UE4 Source Code"></a>UE4 Source Code</h2><p>下面列出的是<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine">EpicGames/UnrealEngine</a>仓库的分流地址，国内的网络环境直接从Github上直接clone实在太慢了，在VPS上几分钟搞定。</p>
+<blockquote>
+<p>注意：Epic不允许UE代码的二次分发，所以下载下列代码之前请确保你同意UE的<a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/eula">EULA协议</a>。<br>另外，在下载后，最好使用<code>git fetch</code>更新一下，保持分支为最新（更新就很快了）。</p>
+</blockquote>
+<h3 id="4-26"><a href="#4-26" class="headerlink" title="4.26"></a>4.26</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EXS4NpO6YLxMo0E_2rHna7QB1ndDB5Gpz9Bp90lN4ANbng?e=tY1gpk">UE_4.26_20210116</a></li>
+</ul>
+<h3 id="4-25"><a href="#4-25" class="headerlink" title="4.25"></a>4.25</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EWqpLFEcg2lFiHR8r30JjD8BHHHdFH4FpZrzlDmOH654LQ?e=iyg6qZ">UE_4.25.1_Release</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EVJVwIR-mP9BltWPZDMnkCABaQuiSiUpj--vZYylLB0kZA?e=hnzMp9">UE_4.25_20200506</a></li>
+</ul>
+<h3 id="4-24"><a href="#4-24" class="headerlink" title="4.24"></a>4.24</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/Ebz6CEqlRolBo_nSOgE9XvgBMQsM34heI6ctdeJM91MIEg?e=Ak0i6F">UE_4.24 20200219</a></li>
+</ul>
+<!-- - [UE_4.24 Preview 201901108](https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EaZOpq9bkuFGvYi4aVBOWcEBZWzgb0WvRGN1R2uRHnaMKA?e=sueUgP) -->
+
+<h3 id="4-23"><a href="#4-23" class="headerlink" title="4.23"></a>4.23</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/ET3LeM11p9RFv6rBfTjJR-kBks-GhVdt8WHyhoKyszWgMA?e=Dc6hSY">UE_4.23 20190905</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EdDtthWMJoxEqf_ZdDngax4B7aXi1uwqKmuKeDfsb3BAvw?e=cirGHp">UE_4.23 gitdeps</a></li>
+</ul>
+<h3 id="4-22"><a href="#4-22" class="headerlink" title="4.22"></a>4.22</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EWN_BB-e8ytEhhDQw7Ojb20BLnSZy5t5rN47PUhpDkOiKQ?e=nuvaZ1">UE_4.22 20191028</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EcR4A06s_SFBpTkwXZjzFi0B7eA1XIMbRoyYW3yUYyZcNg?e=binGWk">UE_4.22 gitdeps</a></li>
+</ul>
+<h3 id="4-21"><a href="#4-21" class="headerlink" title="4.21"></a>4.21</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EQQI4g-7J3NMjmciTK8jg28BEk91vxis9fdnQaKDmrLOKw?e=iwaq3H">UE_4.21 20190808</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EblSD-XPI-5NnW6Wl4Nw3a8BJ6jgiy0mRqZj7aZxw-nAkA?e=3DKL6y">UE_4.21 gitdeps</a></li>
+</ul>
+<h3 id="VRFunHouse"><a href="#VRFunHouse" class="headerlink" title="VRFunHouse"></a>VRFunHouse</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/ERyZEdl5QjtLiAFgcdtnwckBPGA8EiPDu5sDf9wIqRVZNA?e=93KMm2">UE_VRFuncHouse 20190506</a></li>
+</ul>
+<h3 id="UnrealTournament"><a href="#UnrealTournament" class="headerlink" title="UnrealTournament"></a>UnrealTournament</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EXLLbKADwEhOh57QAgQewlgBhqISG9wuDIFuwmeV2DKAow?e=8QsjKi">UnrealTournament 20190228</a></li>
+</ul>
+<h2 id="UE4-Toolchain"><a href="#UE4-Toolchain" class="headerlink" title="UE4 Toolchain"></a>UE4 Toolchain</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/UE4Launcher">UE4 Launcher</a> 方便启动UE的工具</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4program">ue4program</a> 创建UE的StandaloneApplication工具</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/UE4_API_FOR_DASH">UE4_API_FOR_DASH</a> 抓取UE4 API生成的带索引Dash文档</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/jashking/UnrealPakViewer">UnrealPakViewer</a> 查看UE4 Pak文件的工具</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/ryanjon2040/UE4-Binary-Builder">UE4-Binary-Builder</a> 从源码编译UE4的工具</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/gildor2/UEViewer">UModel</a> 预览和导出未加密Pak的资源</li>
+</ul>
+<h2 id="UE4-Plugins"><a href="#UE4-Plugins" class="headerlink" title="UE4 Plugins"></a>UE4 Plugins</h2><p>我写的一些插件：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/">HotPatcher</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-recast-detour">ue4-recast-detour</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-dtkit">ue4-dtkit</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-zstd">ue4-zstd</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-export-nav-data">ue4-export-nav-data</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-GitController">ue4-GitController</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-protobuf">ue4-protobuf</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/ue4-jwt">ue4-jwt</a></li>
+</ul>
+<p>从开源仓库Fork并添加额外维护的一些插件：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/oodle-compression">oodle-compression</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/debugable-unlua">debugable-unlua</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/unlua-pb">unreal-pb</a></li>
+</ul>
+<h2 id="VR-Tools"><a href="#VR-Tools" class="headerlink" title="VR Tools"></a>VR Tools</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/the-expanse/SideQuest">SideQuest</a> Android-based的开源VR应用商店</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/polygraphene/ALVR">ALVR</a> Standalone VR玩SteamVR的串流工具</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/SecondReality/VirtualControllerDriver">VirtualControllerDriver</a> 拍摄MR视频时创建虚拟控制器</li>
+</ul>
+<h2 id="Boost"><a href="#Boost" class="headerlink" title="Boost"></a>Boost</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EX9Fbm99hwZNnoB_EyCHx5ABCpYLjItCtYKrEQmZwepj3w?e=Qnhz49">boost_1602_vc140</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/ETk80lrlN1NBlxIonFicYxwBtxXxOJSkmKCrPfO7EMXBiQ?e=inyYts">boost_v162</a></li>
+</ul>
+<h2 id="Protobuf"><a href="#Protobuf" class="headerlink" title="Protobuf"></a>Protobuf</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EUW3huPDKe1EoXmkQFhjfYsBoGJ8eNB_owznT-2z25J_6Q?e=8EUet9">protobuf_v3.9.1</a></li>
+</ul>
+<h2 id="CodeWorks"><a href="#CodeWorks" class="headerlink" title="CodeWorks"></a>CodeWorks</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:f:/g/personal/2017020625_stu_sdnu_edu_cn/ErTM0Ov4H6FOoCoPKb1IaLoBevJ1J_M3vRqwEFNSUtTGZQ?e=vyEheW">CodeWorks_1R7</a>(<a target="_blank" rel="noopener" href="https://pan.baidu.com/s/182QgeG154XmGyLOfzOEc6Q">百度网盘链接</a>，提取码<code>tkuj </code>)</li>
+</ul>
+<h2 id="Lua"><a href="#Lua" class="headerlink" title="Lua"></a>Lua</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EVUNXwFuW4pJrZxhN4o5xSwBwzJI91g1Bdx7W6KvKPK1Cg?e=r7odIc">Lua53-build-with-msvc14_x64-20191022</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/Ef6wF1ztiaxGmDszctHYKXcB7jG26mxc3l_NU_L6i8Qbwg?e=jAGxXk">Lua53-build-with-msvc14_x86-20191022</a></li>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/ESfg4ZdjF7pDr55kK7X4ZOUBpZygfZC_Zw9U635ZDqdttg?e=VOKrLq">luasocket_MSVC14_x64</a></li>
+</ul>
+<h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><p>模拟HTTP请求的工具:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.getpostman.com/">Postman</a>  跨平台/功能全面/启动有点慢</li>
+<li><a target="_blank" rel="noopener" href="https://insomnia.rest/">Insomnia</a></li>
+</ul>
+<h2 id="IOS"><a href="#IOS" class="headerlink" title="IOS"></a>IOS</h2><p>在Windows上方便访问IOS设备的工具。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://1drv.ms/u/s!AjFMYHAQUensgflJi982sMzBlTHkcQ?e=HqtRJz">iOSLogInfo</a> 在Win上类似logcat的工具</li>
+<li><a target="_blank" rel="noopener" href="https://imazing.com/zh">iMazing</a> Window上的IOS设备管理软件，可以访问应用的数据文件夹</li>
+</ul>
+
+      </div>
+      
+      
+      
+    </div>
+    
+
+    
+    
+    
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Unreal-Engine-News"><span class="nav-number">1.</span> <span class="nav-text">Unreal Engine News</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unreal-Engine-Issues"><span class="nav-number">2.</span> <span class="nav-text">Unreal Engine Issues</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Release-Notes"><span class="nav-number">3.</span> <span class="nav-text">UE4 Release Notes</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Hotfix-Release-notes"><span class="nav-number">4.</span> <span class="nav-text">UE4 Hotfix Release notes</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Documents"><span class="nav-number">5.</span> <span class="nav-text">UE4 Documents</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Other-Docs"><span class="nav-number">6.</span> <span class="nav-text">Other Docs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Source-Code"><span class="nav-number">7.</span> <span class="nav-text">UE4 Source Code</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-26"><span class="nav-number">7.1.</span> <span class="nav-text">4.26</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-25"><span class="nav-number">7.2.</span> <span class="nav-text">4.25</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-24"><span class="nav-number">7.3.</span> <span class="nav-text">4.24</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-23"><span class="nav-number">7.4.</span> <span class="nav-text">4.23</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-22"><span class="nav-number">7.5.</span> <span class="nav-text">4.22</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-21"><span class="nav-number">7.6.</span> <span class="nav-text">4.21</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#VRFunHouse"><span class="nav-number">7.7.</span> <span class="nav-text">VRFunHouse</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UnrealTournament"><span class="nav-number">7.8.</span> <span class="nav-text">UnrealTournament</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Toolchain"><span class="nav-number">8.</span> <span class="nav-text">UE4 Toolchain</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Plugins"><span class="nav-number">9.</span> <span class="nav-text">UE4 Plugins</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VR-Tools"><span class="nav-number">10.</span> <span class="nav-text">VR Tools</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Boost"><span class="nav-number">11.</span> <span class="nav-text">Boost</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Protobuf"><span class="nav-number">12.</span> <span class="nav-text">Protobuf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CodeWorks"><span class="nav-number">13.</span> <span class="nav-text">CodeWorks</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lua"><span class="nav-number">14.</span> <span class="nav-text">Lua</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP"><span class="nav-number">15.</span> <span class="nav-text">HTTP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IOS"><span class="nav-number">16.</span> <span class="nav-text">IOS</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">每一篇文章都是一个成长的过程。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">138</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://docs.imzlp.com/" title="https:&#x2F;&#x2F;docs.imzlp.com&#x2F;" rel="noopener" target="_blank">TechDocuments</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://linux.imzlp.com/" title="https:&#x2F;&#x2F;linux.imzlp.com&#x2F;" rel="noopener" target="_blank">LinuxCommands</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/25915/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;25915&#x2F;">UE4 Code Rules</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE4 Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/21696/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;21696&#x2F;">Open Source Tookits</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE4 Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">580k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/resources/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'retro',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
