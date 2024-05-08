@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从开始学C语言到现在也有五六年的时间了，也看了不少的好书和烂书，折腾了很多工具(编译器&#x2F;编辑器圣战)，在这里详细汇总一下。折腾久了能够得到一种思想，这种思想不同于那种“拿来主义”，而是“自己去做”的经验。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="学习C&#x2F;C++的一些书籍和工具">
+<meta property="og:url" content="https://imzlp.com/posts/64054/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="从开始学C语言到现在也有五六年的时间了，也看了不少的好书和烂书，折腾了很多工具(编译器&#x2F;编辑器圣战)，在这里详细汇总一下。折腾久了能够得到一种思想，这种思想不同于那种“拿来主义”，而是“自己去做”的经验。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/all-books-list.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/c-primer-plus.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/pointers-on-c.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/c++-primer.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/data-structure-and-alogorithmic-analysis.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/Learning-cpp-from-the-defects.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/inside-the-cpp-object-model.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/effective-cpp.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/STL-source-codes-analysis.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/modern-operatings-ystems.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/TCP-IP-Illstated-volume1-the-protocols.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/Understanding-unix-linux-programming.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/unix-network-programing.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/advance-programing-in-the-unix-environment.webp">
+<meta property="article:published_time" content="2016-06-12T12:08:43.000Z">
+<meta property="article:modified_time" content="2016-06-12T12:08:43.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="C语言">
+<meta property="article:tag" content="编程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/64054/all-books-list.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/64054/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>学习C/C++的一些书籍和工具 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/64054/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          学习C/C++的一些书籍和工具<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2016-06-12-64054.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-06-12 12:08 12:08:43:08" itemprop="dateCreated datePublished" datetime="2016-06-12T12:08:43+00:00">2016-06-12 12:08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%B5%84%E6%BA%90%E5%88%86%E4%BA%AB/" itemprop="url" rel="index"><span itemprop="name">资源分享</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%B5%84%E6%BA%90%E5%88%86%E4%BA%AB/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/64054/" class="post-meta-item leancloud_visitors" data-flag-title="学习C/C++的一些书籍和工具" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>从开始学C语言到现在也有五六年的时间了，也看了不少的好书和烂书，折腾了很多工具(编译器/编辑器圣战)，在这里详细汇总一下。折腾久了能够得到一种思想，这种思想不同于那种“拿来主义”，而是“自己去做”的经验。</p>
+<span id="more"></span>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/all-books-list.webp"></p>
+<h2 id="书籍类"><a href="#书籍类" class="headerlink" title="书籍类"></a>书籍类</h2><p>这部分主要写一下我看过的书，主要是C/C++方面的。<br>我刚开始接触编程是从C语言开始的，然后慢慢过渡到C++的，其实现在回首看C语言，这种面向过程形式的用起来的感觉确实很简陋，但是在保证程序猿具有良好的数据结构和算法技能的同时能够发挥出最强大的性能。简单的说，C++在C的基础上增加了OO的东西(非常重要)，并且封装好了一大批库，有很多牛人写的算法，直接用就可以了，不必担心性能。可以说C++是C的一个超集，但是C++不具有VLA(变长数组)。</p>
+<p>以下书籍建议按照顺序阅读：</p>
+<h3 id="C语言"><a href="#C语言" class="headerlink" title="C语言"></a>C语言</h3><p><strong>C Primer Plus</strong><br>前置技能:无</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/c-primer-plus.webp"></p>
+<p>我是由这本书入门C语言的，内容十分详实，但是有些地方感觉有些啰嗦。其实我第一本看的是<strong>谭浩强的《C语言程序设计》</strong>，与C Primer Plus相比之下不知道烂了多少条街。</p>
+<p><strong>C和指针</strong><br>前置技能:C语言</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/pointers-on-c.webp"></p>
+<p>虽然也是号称入门书，但是，最好还是具有C语言的经验之后再去看，里面对于指针和数据结构的探索深度写的很好。</p>
+<p>读完上面两本，C语言就可以称作入门了，但是写代码需要长久的练习。</p>
+<h3 id="C"><a href="#C" class="headerlink" title="C++"></a>C++</h3><p>如果具有了C语言的经验之后，学习C++就会事半功倍。因为C++中具有从C继承来的关键字，数据类型等。</p>
+<p><strong>C++ Primer</strong><br>前置技能:C语言</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/c++-primer.webp"></p>
+<p>我学习C++用的书是C++ Primer 4th，前段时间也入了本5th，用来补C++11的知识。其实不要看书名Primer，如果没有C基础的人还是不适合直接阅读这本书的，因为这本书的章节安排顺序对初学者很不友好，往往前面出现的一个东西你只有看到很后面的章节才会详细解释。所以建议看这本书之前，首先对C语言或者C++有个大概的概念。</p>
+<p>根据4th和5th的对比来看，强烈建议从5th开始看，因为C++11是大改，具有非常多的新特性，直接上手就好。</p>
+<p>其实C++ Primer内容的详尽程度近乎手册，真正做到了事无大小悉以教之。</p>
+<p>这本书一定一定要认真看！</p>
+<p><strong>数据结构与算法分析——C语言描述</strong><br>前置技能:C/C++</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/data-structure-and-alogorithmic-analysis.webp"></p>
+<p>我看过严蔚敏的<strong>数据结构</strong>，但是总的来说，国内教材的风格是比不上国外的书籍有趣的。</p>
+<p>对于学习数据结构和算法方面的知识我推荐这本书。</p>
+<p>虽然说<strong>算法导论</strong>是巨著，但是对于初学者而言如果没有很好的数学技能，很容易搞不懂，所以还是先入手这本<strong>数据结构和算法分析</strong>吧！</p>
+<p><strong>从陷阱和缺陷中学习C/C++</strong><br>前置技能:C/C++</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/Learning-cpp-from-the-defects.webp"></p>
+<p>很薄的的一本书，只有166页，淘宝团队出品的。</p>
+<p>这本书不涉及任何C/C++语法的知识。有的只是各种错误用法的案例分析，完全都是干货啊，实用度满分。</p>
+<h3 id="进阶"><a href="#进阶" class="headerlink" title="进阶"></a>进阶</h3><p>前置技能:C++</p>
+<p>C++方面的进阶书就多了。</p>
+<p><strong>深度探索C++对象模型</strong><br>前置技能：熟悉C++的面向对象部分</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/inside-the-cpp-object-model.webp"></p>
+<p>在你读完C++ Primer之后，可能对类的构造以及虚函数之类的用法具有了一定的了解，这本书就是深入C++的对象特性，其实主要的篇幅是在讲述C++中类的构造、析构、拷贝的编译器实现，以及类的继承、多态等，还有函数语义、执行期的深入到编译器层面的知识，当然还有C++ OO里面重要的RAII机制，以及虚函数表的深度探索。</p>
+<p>这本书能够让你更深入的了解C++的对象模型，正如这本书的名字一样，深度探索，强烈推荐！！</p>
+<p><strong>Effective C++:改善程序与设计的55个具体做法</strong><br>前置技能:C++</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/effective-cpp.webp"></p>
+<p>这本书如上面的**从缺陷中学习C/C++**一样，不涉及C++的任何语法知识，有的只是对C++特性的误用或者C++设计时并没有考虑到的地方。</p>
+<p>完全都是干货啊，这本书真的是常读常新的，如果可以我强联建议这55个梗概一定要背下来！！</p>
+<p><strong>STL源码剖析</strong><br>前置技能：C++,STL</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/STL-source-codes-analysis.webp"></p>
+<p>STL是C++的标准模板库，其中包含5个组件，分别为算法、容器、迭代器、函数、适配器。</p>
+<p>STL源码剖析则是对STL的实现的算法以及数据结构的详尽分析，是一本非常好的书(侯婕先生译作必属精品)，我最近正在读，打算自己写出一个STL出来。</p>
+<h3 id="语言无关"><a href="#语言无关" class="headerlink" title="语言无关"></a>语言无关</h3><blockquote>
+<p>后面这几本书是C++偏服务器后端方向的，前面的几本书是不论用C/C++搞什么方向都可以看的，后面的基本就看个人的方向适当选择了。</p>
+</blockquote>
+<p><strong>现代操作系统</strong><br>前置技能:C语言</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/modern-operatings-ystems.webp"></p>
+<p>从操作系统的发展开始讲起，然后逐步拓展到进程线程/存储管理/文件系统/输入输出/死锁等等。可以详细了解操作系统相关的知识。</p>
+<p><strong>TCP/IP详解 卷1:协议</strong></p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/TCP-IP-Illstated-volume1-the-protocols.webp"></p>
+<p>W.Richchard Stevens的神书之一，对于想要学习TCP/IP协议的不二之书！</p>
+<p><strong>Uinx/Linux编程实践教程</strong></p>
+<p>  <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/Understanding-unix-linux-programming.webp"></p>
+<p>在看<code>APUE(Unix环境高级编程)</code>之前可以看这本书，但是这本书好像已经绝版了，可以去图书馆看，或者买影印版。</p>
+<p>这本书通过分析设计并编写一个Linux下的工具来一步步引导你学习Unix/Linux下的知识，不过这本书有些老了，书中有的代码需要自己改进一下。</p>
+<p><strong>Unix网络编程 卷1：套接字联网API</strong></p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/unix-network-programing.webp"></p>
+<p>W.Richchard Stevens的神书之一。传说中的<code>UNP(UNIX Network Programing)</code>。第三版是顶级网络编程专家Bill Fenner和Andrew M. Rudoff应邀执笔，对已故大牛W. Richard Stevens的经典作品进行修订。增添了IPv6、SCTP协议和密钥管理套接字等内容，深入讨论了最新的关键标准、实现和技术。</p>
+<p>是我等学习UNIX 网络编程的不二之作。</p>
+<p><strong>Unix环境高级编程</strong></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64054/advance-programing-in-the-unix-environment.webp"></p>
+<p>这本就是传说中的<code>APUE(Advance Programing in the UNIX Environment)</code>。比前面写到的<strong>Uinx/Linux编程实践教程</strong>深度和广度都更大。</p>
+<p>这本也是我等学习/进阶UNIX环境编程的不二之作啊。</p>
+<blockquote>
+<p>关于Unix/Linux平台的东西你在Windows下是跑不起来的，所以看后面这三本书的话最好装个Linux或者搞个虚拟机。</p>
+</blockquote>
+<h2 id="工具类"><a href="#工具类" class="headerlink" title="工具类"></a>工具类</h2><p>其实学习C++并不需要什么特别的工具，主要是现在上市面上工具太多了，让人眼花缭乱，我最开始使用过VC6.0(十几年前的东西，但是现在好多学校还在用)，经过社区上一群人把我骂醒之后(不支持新特性)，我就选择了支持更新标准的Dev-cpp，现在在用SublimeText+GCC/Clang或者Visual Studio(宇宙最强IDE)，其实不管你自己怎么配置，得到的也终究只是VS的一个子集，但是使用编辑器+编译器可以更好地理解编译/链接过程，也不失为一种技能。</p>
+<p>废话不多说，对于初学者IDE我推荐使用Dev-cpp，可以在<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1eS8sJTo">这里下载</a>(带有MinGW)</p>
+<p>当然如果想IDE的话可以使用VS：<a href="ed2k://|file|cn_visual_studio_professional_2015_with_update_2_x86_x64_dvd_8509246.iso|7591639040|AE734B5731B7DD489102A1101BE4595B|/">Visual Studio 2015 Professional Update2</a></p>
+<p>自己想要安装环境的话可以使<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1boEUpY3">用在线安装</a>或者使用我打包的<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1nvKVINf">离线版本</a>，添加到系统PATH路径就可以了。</p>
+<p>分析代码可以使用gprof，这是GCC提供的。</p>
+<p>分析内存泄露在Windows下可以使用<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1o8cUxlg">cppcheck</a>，Linux下可以使用<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1cyX4HC">valgrind</a>。</p>
+<p>SubimeText+Gprof+Clang+cppcheck也是非常爽的一个组合，具体的可以看我的这篇博文：<a href="https://imzlp.com/2015/12/26/use-clang-and-configuration-sublimetext-build-system/">配置SublimeText为C/C++的轻量级IDE</a></p>
+<h2 id="文档手册类"><a href="#文档手册类" class="headerlink" title="文档手册类"></a>文档手册类</h2><h3 id="在线文档"><a href="#在线文档" class="headerlink" title="在线文档"></a>在线文档</h3><ul>
+<li><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/">cppReference</a>(以此为主)</li>
+<li><a target="_blank" rel="noopener" href="http://www.cplusplus.com/">cplusplus</a></li>
+<li><a target="_blank" rel="noopener" href="https://isocpp.org/">Standard C++</a></li>
+<li>MSDN的<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/zh-cn/library/3bstk3k5.aspx">C++语言参考</a></li>
+<li><a target="_blank" rel="noopener" href="http://cdecl.org/">cdecl</a>：一个很有趣的站点，输入C/C++语句会输出其代表的含义(英语)</li>
+</ul>
+<h3 id="离线文档"><a href="#离线文档" class="headerlink" title="离线文档"></a>离线文档</h3><p>我现在常用的是离线的wikipedia(查IEEE很方便)+离线的cppReference还有cppReference的chm(方便查询)。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.mirrorservice.org/sites/download.kiwix.org/portable/wikipedia/">离线wiki下载</a>，或者在<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1cea5Dc">这里</a>下载我离线到百度云的版本(更新到2015.05)</li>
+<li>离线的cppReference<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1hsFcabi">下载</a></li>
+<li>cppReference.chm<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1jIvvj5G">下载</a></li>
+<li>Manpages CHM (with POSIX manpages)<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1eSt107g">下载</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/64054/" target="_blank">学习C/C++的一些书籍和工具</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2016年06月12日 12时08分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.2k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/64054/" target="_blank" title="学习C/C++的一些书籍和工具">https://imzlp.com/posts/64054/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/64054/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/C%E8%AF%AD%E8%A8%80/" rel="tag"># C语言</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"># 编程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/31145/" rel="prev" title="在VPS上部署shadowsocks服务">
+      <i class="fa fa-chevron-left"></i> 在VPS上部署shadowsocks服务
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/52122/" rel="next" title="未来计划">
+      未来计划 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%A6%E7%B1%8D%E7%B1%BB"><span class="nav-number">1.</span> <span class="nav-text">书籍类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#C%E8%AF%AD%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">C语言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C"><span class="nav-number">1.2.</span> <span class="nav-text">C++</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E9%98%B6"><span class="nav-number">1.3.</span> <span class="nav-text">进阶</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E8%A8%80%E6%97%A0%E5%85%B3"><span class="nav-number">1.4.</span> <span class="nav-text">语言无关</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">工具类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%E6%89%8B%E5%86%8C%E7%B1%BB"><span class="nav-number">3.</span> <span class="nav-text">文档手册类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8%E7%BA%BF%E6%96%87%E6%A1%A3"><span class="nav-number">3.1.</span> <span class="nav-text">在线文档</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A6%BB%E7%BA%BF%E6%96%87%E6%A1%A3"><span class="nav-number">3.2.</span> <span class="nav-text">离线文档</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/64054/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

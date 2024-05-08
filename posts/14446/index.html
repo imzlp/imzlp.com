@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="之前提到过数次C和C++并不是一个语言，就算是C++中从C继承来的那部分也和ISO C有很大区别，以后我会逐渐整理一些它们之间不兼容的特性到这里来。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C和C++之间的不兼容">
+<meta property="og:url" content="https://imzlp.com/posts/14446/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="之前提到过数次C和C++并不是一个语言，就算是C++中从C继承来的那部分也和ISO C有很大区别，以后我会逐渐整理一些它们之间不兼容的特性到这里来。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14446/variable-function-arguments-c-and-cpp-defference.webp">
+<meta property="article:published_time" content="2017-02-27T15:25:56.000Z">
+<meta property="article:modified_time" content="2017-05-23T10:46:52.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="C语言">
+<meta property="article:tag" content="标准解读">
+<meta property="article:tag" content="C语言标准">
+<meta property="article:tag" content="C++标准">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14446/variable-function-arguments-c-and-cpp-defference.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/14446/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>C和C++之间的不兼容 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/14446/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C和C++之间的不兼容<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2017-02-27-14446.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-02-27 15:25 15:25:56:25" itemprop="dateCreated datePublished" datetime="2017-02-27T15:25:56+00:00">2017-02-27 15:25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2017-05-23 10:46 10:46:52:46" itemprop="dateModified" datetime="2017-05-23T10:46:52+00:00">2017-05-23 10:46</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">标准解读</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/C-%E6%A0%87%E5%87%86/" itemprop="url" rel="index"><span itemprop="name">C++标准</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/C-%E6%A0%87%E5%87%86/C%E8%AF%AD%E8%A8%80%E6%A0%87%E5%87%86/" itemprop="url" rel="index"><span itemprop="name">C语言标准</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/14446/" class="post-meta-item leancloud_visitors" data-flag-title="C和C++之间的不兼容" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>之前提到过数次C和C++并不是一个语言，就算是C++中从C继承来的那部分也和ISO C有很大区别，以后我会逐渐整理一些它们之间不兼容的特性到这里来。</p>
+<span id="more"></span>
+
+<h3 id="函数声明-定义"><a href="#函数声明-定义" class="headerlink" title="函数声明/定义"></a>函数声明/定义</h3><p>在C语言中，如果函数声明(包含定义)为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 代表接收不定参数的实参</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;func()\n&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">  <span class="built_in">func</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>);<span class="comment">// call func();</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>等同于C++中的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">func</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">  cout&lt;&lt;<span class="string">&quot;func&quot;</span>&lt;&lt;endl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">  <span class="built_in">func</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>);<span class="comment">// call func();</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在C语言中如果指定函数不接收任何参数，需要显式指定参数列表为void:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">func</span><span class="params">(<span class="type">void</span>)</span></span>;</span><br><span class="line"><span class="comment">// 不等价</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">func</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>而C++中。参数列表为空和void均代表不接收任何参数。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">func</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 等价</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">func</span><span class="params">(<span class="type">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14446/variable-function-arguments-c-and-cpp-defference.webp"></p>
+<h3 id="sizeof操作"><a href="#sizeof操作" class="headerlink" title="sizeof操作"></a>sizeof操作</h3><p>在C语言中由于存在VLA(varible length array)，所以在C语言中<code>sizeof</code>并不是完全的编译期行为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">func</span><span class="params">(<span class="type">unsigned</span> <span class="type">int</span> n)</span>&#123;</span><br><span class="line">  <span class="type">int</span> iarr[n];</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;%llu\n&quot;</span>,<span class="keyword">sizeof</span>(iarr));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在C++中是没有这个特性的，但是有一些编译器扩展是支持的，比如<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc/Variable-Length.html">Using the GNU Compiler Collection(GCC)</a><br>如果你的C++编译器编译的过，那么你是编译器扩展的受害者(逃</p>
+<h3 id="enum"><a href="#enum" class="headerlink" title="enum"></a>enum</h3><p>在C语言中enum等同于int类型，但是在C++中enum是一个不同于其基础类型的类型。</p>
+<blockquote>
+<p>[ISO/IEC 9899:1999]The identifiers in an enumerator list are declared as constants that have type int and may appear wherever such are permitted.</p>
+</blockquote>
+<p>在C语言中可以使用整型常量对枚举赋初值，但是在C++中就是错误：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">color</span> &#123;</span> red, blue, green &#125;;</span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">color</span> <span class="title">c</span> =</span> <span class="number">1</span>; <span class="comment">// // valid C, invalid C++</span></span><br><span class="line"><span class="comment">// error: cannot initialize a variable of type &#x27;enum color&#x27; with an rvalue of type &#x27;int&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>另外，在C++中，因为枚举对象和该枚举类型的基础类型是不同的类型，所以对两者分别sizeof结果不一定相等。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> <span class="title class_">e</span> &#123; A &#125;;</span><br><span class="line"><span class="built_in">sizeof</span>(A) == <span class="built_in">sizeof</span>(<span class="type">int</span>) <span class="comment">// in C</span></span><br><span class="line"><span class="built_in">sizeof</span>(A) == <span class="built_in">sizeof</span>(e) <span class="comment">// in C ++</span></span><br><span class="line"><span class="comment">/* and sizeof(int) is not necessarily equal to sizeof(e) */</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="void-不能隐式转换为其他类型的指针"><a href="#void-不能隐式转换为其他类型的指针" class="headerlink" title="void*不能隐式转换为其他类型的指针"></a>void*不能隐式转换为其他类型的指针</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> *x=<span class="built_in">malloc</span>(<span class="number">4</span>); <span class="comment">// valid C, invalid C++</span></span><br><span class="line"><span class="built_in">free</span>(x);</span><br></pre></td></tr></table></figure>
+
+<p>C++中不能隐式转换void*为其他类型的指针，C语言中可以。</p>
+<blockquote>
+<p>ISO C will accept this usage of pointer to void being assigned to a pointer to object type. C ++ will not.</p>
+</blockquote>
+<h3 id="类型定义在参数-返回类型"><a href="#类型定义在参数-返回类型" class="headerlink" title="类型定义在参数/返回类型"></a>类型定义在参数/返回类型</h3><p>在C++中不允许将类型定义在函数的返回类型或参数类型，但是在C中是允许的。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">( <span class="keyword">struct</span> S &#123; <span class="type">int</span> a; &#125; arg )</span> </span>&#123;&#125; <span class="comment">// valid C, invalid C ++</span></span><br><span class="line"><span class="keyword">enum</span> <span class="title class_">E</span> &#123; A, B, C &#125; <span class="built_in">f</span>() &#123;&#125; <span class="comment">// valid C, invalid C ++</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="字符数组初始化"><a href="#字符数组初始化" class="headerlink" title="字符数组初始化"></a>字符数组初始化</h3><p>在C++中对char数组使用一个””初始化必须能够容纳该字符串字面值所有的的字符(包括末尾\0)，如果一个字符数组不能够容纳初始化字符串字面值的所有元素，则是一个错误：</p>
+<blockquote>
+<p>In C++ ,when initializing an array of character with a string, the number of characters in the string (including the terminating ’\0’) must not exceed the number of elements in the array.</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> x[<span class="number">4</span>]=<span class="string">&quot;abcd&quot;</span>; <span class="comment">// valid C, invalid C++</span></span><br><span class="line"><span class="comment">// [clang++ 3.9]error: initializer-string for char array is too long</span></span><br></pre></td></tr></table></figure>
+
+<p>但是在C中会只初始化能够容纳的部分。</p>
+<blockquote>
+<p>In C, an array can be initialized with a string even if the array is not large enough to contain the string-terminating ’\0’.</p>
+</blockquote>
+<h3 id="字符常量的基础类型"><a href="#字符常量的基础类型" class="headerlink" title="字符常量的基础类型"></a>字符常量的基础类型</h3><p>在C语言中字符常量是一个int类型，但是在C++中是一个char类型。</p>
+<blockquote>
+<p>**[ISO/IEC 14882:2014]**An ordinary character literal that contains a single c-char representable in the execution character set has type char, with value equal to the numerical value of the encoding of the c-char in the execution character set.</p>
+</blockquote>
+<blockquote>
+<p>**[ISO/IEC 9899:1999]**An integer character constant has type int. The value of an integer character constant containing a single character that maps to a single-byte execution character is the numerical value of the representation of the mapped character interpreted as an integer.</p>
+</blockquote>
+<p>所以，下面的代码会在C和C++中具有两种行为(使用C编译器为no,使用C++编译器会为yes)：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(<span class="built_in">sizeof</span>(<span class="string">&#x27;a&#x27;</span>)==<span class="built_in">sizeof</span>(<span class="type">char</span>))&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;yes\n&quot;</span>);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;no\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>即：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// valid in C, invalid in C++</span></span><br><span class="line"><span class="built_in">sizeof</span>(<span class="string">&#x27;a&#x27;</span>) == <span class="built_in">sizeof</span>(<span class="type">int</span>)</span><br></pre></td></tr></table></figure>
+<p>为什么呢？<br>试想一下，如果在C++里int和char是同一个类型，那么这个会输出什么？</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::cout&lt;&lt;<span class="string">&#x27;x&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>在函数重载中也就无法区分整型和字符型，所以这也是C++中把int和char作为两个类型。</p>
+<h3 id="string-literal-type"><a href="#string-literal-type" class="headerlink" title="string literal type"></a>string literal type</h3><p>在C语言中，字符串字面值是一个char*类型，即：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> *p = <span class="string">&quot;abc&quot;</span>;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>**[ISO/IEC 9899:1999]**defines p with type “pointer to char” and initializes it to point to an object with type “array of char” with length 4 whose elements are initialized with a character string literal. If an attempt is made to use p to modify the contents of the array, the behavior is undefined.</p>
+</blockquote>
+<p>在C++中字符串字面值是一个const char*:</p>
+<blockquote>
+<p>A narrow string literal has type “array of n const char”, where n is the size of the string as defined below, and has static storage duration.</p>
+</blockquote>
+<p>上述规则同样适用于<code>char16_t string literal</code>/<code>char32_t string literal</code>.</p>
+<p>字符串字面值的类型C/C++中的不同会使以下代码具有两种行为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// valid in C, invalid in C++</span></span><br><span class="line"><span class="type">char</span> *str=<span class="string">&quot;hello&quot;</span>;</span><br></pre></td></tr></table></figure>
+<p>如果你的C++编译器编译的过，说明你是编译器扩展(不标准)的受害者(逃。</p>
+<!--
+### resault of conditional expression
+在C语言中`contitional expression`的结果不能是一个lvalue:
+>**[ISO/IEC 9899:1999]**The first operand is evaluated; there is a sequence point after its evaluation.  The second operand is evaluated only if the first compares unequal to 0; the third operand is evaluated only if the first compares equal to 0; the result is the value of the second or third operand(whichever is evaluated), converted to the type described below(**A conditional expression does not yield an lvalue**). If an attempt is made to modify the result of a conditional operator or to access it after the next sequence point,the behavior is undefined.
+
+但是在C++中可以是一个lvalue:
+>**[ISO/IEC 14882:2014]**
+
+即，在下面的代码中，C和C++具有两种行为：
+
+-->
+
+<h3 id="C结构和C-类的成员要求"><a href="#C结构和C-类的成员要求" class="headerlink" title="C结构和C++类的成员要求"></a>C结构和C++类的成员要求</h3><p>C语言的<code>struct</code>可以包含一个<code>不完全类型(incomplete types)</code>(但不是随意包含)：</p>
+<blockquote>
+<p>**[ISO/IEC 9899:1999]**A structure or union shall not contain a member with incomplete or function type (hence,A structure or union shall not contain a member with incomplete or function type (hence,a structure shall not contain an instance of itself, but may contain a pointer to an instance of itself), except that the last member of a structure with more than one named member may have incomplete array type; such a structure  (and any union containing, possibly recursively, a member that is such a structure) shall not be a member of a structure or an element of an array.</p>
+</blockquote>
+<p>意思就是：具有多个成员的结构的最后一个成员可以是一个不完全数组。</p>
+<p>通过这个特性可以使用<code>Array of length zero</code>来动态扩充一个<code>struct</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line">  <span class="type">char</span> tag;</span><br><span class="line">  <span class="type">char</span> alz[];</span><br><span class="line">&#125;Astruct;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line"></span><br><span class="line">  Astruct *x=(<span class="keyword">struct</span> A*)<span class="built_in">malloc</span>(<span class="built_in">sizeof</span>(Astruct)+<span class="built_in">sizeof</span>(<span class="type">char</span>)*<span class="number">10</span>);</span><br><span class="line">  <span class="built_in">free</span>(x);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>虽然也可以使用一个指针：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line">  <span class="type">char</span> tag;</span><br><span class="line">  <span class="type">char</span> *cp;</span><br><span class="line">&#125;Astruct;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line"></span><br><span class="line">  Astruct *x=(Astruct*)<span class="built_in">malloc</span>(<span class="built_in">sizeof</span>(Astruct));</span><br><span class="line">  x-&gt;cp=(<span class="type">char</span>*)<span class="built_in">malloc</span>(<span class="built_in">sizeof</span>(<span class="type">char</span>*)*<span class="number">10</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">free</span>(x-&gt;cp);</span><br><span class="line">  <span class="built_in">free</span>(x);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是使用<code>Array of length zero</code>可以节省一个<code>sizeof(char*)</code>的开销，而且第一种方法创建的是连续分配的内存，可以减轻内存碎片化的问题。</p>
+<p>但是，注意上面那段引用的最后一句，这意味着在C++中这个特性是不可能存在的(因为C++存在继承(inheritance))，派生类中存在基类中的成员，但是C++标准并未规定类的内存布局怎样，所以不能保证继承来的基类的最后一个成员也是派生类的最后一个成员，在C++中也同样不能保证类的最后一个成员在内存布局中位于实例的尾部(不能确定虚函数表的位置，依赖实现)。</p>
+<p>即，在C++中，class的成员(非static)是一个完全类型(complete types)：</p>
+<blockquote>
+<p>**[ISO/IEC 14882:2014]**Non-static (9.4) data members shall not have incomplete types. In particular, a class C shall not contain a non-static member of class C, but it can contain a pointer or reference to an object of class C.</p>
+</blockquote>
+<p>所以就不能使用上面C中使用的<code>Array of length zero</code>的技巧(这个还是要依赖于实现)，但是这个是未定义的行为(undefine behavior)。</p>
+<p>虽然C++中也可以使用<code>&#123;&#125;</code>来对未知大小的数组进行初始化，但是不能使用空的初始化列表为一个未知大小的数组进行初始化。</p>
+<blockquote>
+<p>**[ISO/IEC 14882:2014]**An array of unknown size initialized with a brace-enclosed initializer-list containing n initializer-clauses, where n shall be greater than zero, is defined as having n elements (8.3.4).</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x[] = &#123; <span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span> &#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>declares and initializes x as a one-dimensional array that has three elements since no size was specified and there are three initializers. — end example ] An empty initializer list {} shall not be used as the initializer-clause for an array of unknown bound.</p>
+</blockquote>
+<blockquote>
+<p><strong>The syntax provides for empty initializer-lists, but nonetheless C++ does not have zero length arrays.</strong></p>
+</blockquote>
+<p>所以在C++中，这样的代码是UB行为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x[]=&#123;&#125;;</span><br><span class="line">x[<span class="number">0</span>]=<span class="number">123</span>; <span class="comment">// no compile error</span></span><br></pre></td></tr></table></figure>
+
+<p>以上代码在<code>MinGW-W64 G++ 6.2.0</code>以及<code>Clang++ 3.9 x86_64-w64-windows-gnu</code>编译通过，在<code>VS2015</code>中编译报错：</p>
+<blockquote>
+<p>error C2466: 不能分配常量大小为 0 的数组</p>
+</blockquote>
+<h3 id="递归主函数"><a href="#递归主函数" class="headerlink" title="递归主函数"></a>递归主函数</h3><p>C语言中允许递归主函数(没有不允许)：</p>
+<blockquote>
+<p>Recursive function calls shall be permitted, both directly and indirectly through any chain of other functions.</p>
+</blockquote>
+<p>但是C++中明确规定了不能递归主函数：</p>
+<blockquote>
+<p>Recursive calls are permitted, except to the function named main (3.6.1).</p>
+</blockquote>
+<p>如果你的C++编译器能够编译过下面的代码，那么你也是编译器扩展的受害者…</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> index=<span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>,index);</span><br><span class="line">  <span class="keyword">if</span>(index==<span class="number">10</span>)&#123;</span><br><span class="line">    <span class="keyword">return</span> index;</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    ++index;</span><br><span class="line">    <span class="built_in">main</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="const对象的文件作用域链接"><a href="#const对象的文件作用域链接" class="headerlink" title="const对象的文件作用域链接"></a>const对象的文件作用域链接</h3><p>在C和C++中，同样位于<strong>文件作用域(file scope)**的<code>const</code>对象的链接是不同的。<br>先来看一下</strong>文件作用域(file scope)**的定义：</p>
+<blockquote>
+<p><strong>[ISO/IEC 9899:1999]**If the declarator or type specifier that declares the identifier appears outside of any block or list of parameters, the identifier has **file scope</strong>, which terminates at the end of the translation unit.</p>
+</blockquote>
+<p>well,假设我们具有文件作用域的以下对象：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> cival=<span class="number">123</span>;</span><br></pre></td></tr></table></figure>
+<p>则上面代码使用C编译器和C++编译器具有不同的链接:</p>
+<ul>
+<li>C语言中具有外部链接</li>
+<li>C++中具有内部链接</li>
+</ul>
+<p>来测试一下(手动通过编译器实现链接的方式请看<a href="https://imzlp.com/posts/27118/">C/C++编译和链接模型分析</a>):</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// test.c</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> cival=<span class="number">123</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>使用C语言编译器编译出目标文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ gcc -c test.c -o test.o</span><br><span class="line">$ nm test.o</span><br><span class="line">-------- U __main</span><br><span class="line">00000000 R cival</span><br><span class="line">00000000 T main</span><br></pre></td></tr></table></figure>
+<p>而使用C++编译器编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ g++ -c test.c -o test.o</span><br><span class="line">$ nm test.o</span><br><span class="line">-------- U __main</span><br><span class="line">00000000 T main</span><br></pre></td></tr></table></figure>
+<p>可以看到目标文件中的<code>cival</code>符号不见了。</p>
+<p>至于原因，C++标准中给了充足的描述：</p>
+<blockquote>
+<p><strong>Change:</strong> A name of file scope that is explicitly declared const, and not explicitly declared extern, has internal linkage, while in C it would have external linkage.<br><strong>Rationale:</strong> Because const objects can be used as compile-time values in C ++ , this feature urges programmers to provide explicit initializer values for each const. This feature allows the user to put constobjects in header files that are included in many compilation units.</p>
+</blockquote>
+<p>总的来说，在C中，全局const默认具有外部链接；在C++中则不是，必须进行初始化，除非显式声明了<code>extern</code>。</p>
+<h3 id="函数定义的参数列表"><a href="#函数定义的参数列表" class="headerlink" title="函数定义的参数列表"></a>函数定义的参数列表</h3><p>在C语言中允许以下函数定义方式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(a,b,c)</span><span class="type">int</span> a</span>;<span class="type">char</span> b;<span class="type">double</span> c;&#123;<span class="comment">/*...*/</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>在C++中不允许这么写，必须改为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span> a,<span class="type">char</span> b,<span class="type">double</span> c;)</span></span>&#123;<span class="comment">/*...*/</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="全局变量定义"><a href="#全局变量定义" class="headerlink" title="全局变量定义"></a>全局变量定义</h3><p>在C中，无需<code>extern</code>说明符即可在单一翻译单元中多次声明一个全局数据对象。只要<strong>至多</strong>只有一个提供了初始化器，次对象就被认为只定义了一次。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在C中可以编译通过</span></span><br><span class="line"><span class="type">int</span> i;</span><br><span class="line"><span class="type">int</span> i=<span class="number">123</span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>而在C++中则是重定义错误：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i;</span><br><span class="line"><span class="type">int</span> i=<span class="number">123</span>; <span class="comment">// error: redefinition of &#x27;i&#x27;</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="嵌套结构作用域"><a href="#嵌套结构作用域" class="headerlink" title="嵌套结构作用域"></a>嵌套结构作用域</h3><p>在C中，嵌套的结构的名字与外层结构的名字位于相同的作用域。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line">  <span class="type">int</span> a;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">B</span>&#123;</span><br><span class="line">    <span class="type">int</span> b;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">A</span> aobj;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">B</span> bobj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而在C++中因为有<strong>类作用域</strong>这个概念，则必须指定外层名字：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">A</span> aobj;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">A</span>::B bobj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/14446/" target="_blank">C和C++之间的不兼容</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2017年02月27日 15时25分<br/>
+             
+              <span>更新时间:</span>2017年05月23日 10时46分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有5.5k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/14446/" target="_blank" title="C和C++之间的不兼容">https://imzlp.com/posts/14446/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/14446/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/C%E8%AF%AD%E8%A8%80/" rel="tag"># C语言</a>
+              <a href="/tags/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/" rel="tag"># 标准解读</a>
+              <a href="/tags/C%E8%AF%AD%E8%A8%80%E6%A0%87%E5%87%86/" rel="tag"># C语言标准</a>
+              <a href="/tags/C-%E6%A0%87%E5%87%86/" rel="tag"># C++标准</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/15272/" rel="prev" title="main原型考证及程序终止行为">
+      <i class="fa fa-chevron-left"></i> main原型考证及程序终止行为
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/21831/" rel="next" title="C++中declaration与define的区别">
+      C++中declaration与define的区别 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E5%A3%B0%E6%98%8E-%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">函数声明&#x2F;定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sizeof%E6%93%8D%E4%BD%9C"><span class="nav-number">2.</span> <span class="nav-text">sizeof操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#enum"><span class="nav-number">3.</span> <span class="nav-text">enum</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#void-%E4%B8%8D%E8%83%BD%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2%E4%B8%BA%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%8C%87%E9%92%88"><span class="nav-number">4.</span> <span class="nav-text">void*不能隐式转换为其他类型的指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B1%BB%E5%9E%8B%E5%AE%9A%E4%B9%89%E5%9C%A8%E5%8F%82%E6%95%B0-%E8%BF%94%E5%9B%9E%E7%B1%BB%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">类型定义在参数&#x2F;返回类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E6%95%B0%E7%BB%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">6.</span> <span class="nav-text">字符数组初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E5%B8%B8%E9%87%8F%E7%9A%84%E5%9F%BA%E7%A1%80%E7%B1%BB%E5%9E%8B"><span class="nav-number">7.</span> <span class="nav-text">字符常量的基础类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#string-literal-type"><span class="nav-number">8.</span> <span class="nav-text">string literal type</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C%E7%BB%93%E6%9E%84%E5%92%8CC-%E7%B1%BB%E7%9A%84%E6%88%90%E5%91%98%E8%A6%81%E6%B1%82"><span class="nav-number">9.</span> <span class="nav-text">C结构和C++类的成员要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%92%E5%BD%92%E4%B8%BB%E5%87%BD%E6%95%B0"><span class="nav-number">10.</span> <span class="nav-text">递归主函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#const%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%96%87%E4%BB%B6%E4%BD%9C%E7%94%A8%E5%9F%9F%E9%93%BE%E6%8E%A5"><span class="nav-number">11.</span> <span class="nav-text">const对象的文件作用域链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E5%AE%9A%E4%B9%89%E7%9A%84%E5%8F%82%E6%95%B0%E5%88%97%E8%A1%A8"><span class="nav-number">12.</span> <span class="nav-text">函数定义的参数列表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F%E5%AE%9A%E4%B9%89"><span class="nav-number">13.</span> <span class="nav-text">全局变量定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B5%8C%E5%A5%97%E7%BB%93%E6%9E%84%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="nav-number">14.</span> <span class="nav-text">嵌套结构作用域</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/14446/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

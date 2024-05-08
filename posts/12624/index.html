@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="反射，是指程序在运行时进行自检的的能力，在编辑器的属性面板、序列化、GC等方面非常有用。但是C++语言本身不支持反射特性，UE在C++的语法基础上通过UHT实现了反射信息的生成，从而实现了运行时的反射的目的。 在之前的文章中，有一些涉及到UE的构建系统和反射相关的内容。 涉及了UE的构建系统文章：  Build flow of the Unreal Engine4 project UE4 Buil">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE反射实现分析：基础概念">
+<meta property="og:url" content="https://imzlp.com/posts/12624/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="反射，是指程序在运行时进行自检的的能力，在编辑器的属性面板、序列化、GC等方面非常有用。但是C++语言本身不支持反射特性，UE在C++的语法基础上通过UHT实现了反射信息的生成，从而实现了运行时的反射的目的。 在之前的文章中，有一些涉及到UE的构建系统和反射相关的内容。 涉及了UE的构建系统文章：  Build flow of the Unreal Engine4 project UE4 Buil">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206153018.webp">
+<meta property="article:published_time" content="2020-12-12T23:56:24.000Z">
+<meta property="article:modified_time" content="2020-12-12T23:56:24.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="反射">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206153018.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/12624/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE反射实现分析：基础概念 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/12624/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE反射实现分析：基础概念<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-12-12-12624.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-12-12 23:56 23:56:24:56" itemprop="dateCreated datePublished" datetime="2020-12-12T23:56:24+00:00">2020-12-12 23:56</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E5%8F%8D%E5%B0%84/" itemprop="url" rel="index"><span itemprop="name">反射</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/12624/" class="post-meta-item leancloud_visitors" data-flag-title="UE反射实现分析：基础概念" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>反射</strong>，是指程序在运行时进行自检的的能力，在编辑器的属性面板、序列化、GC等方面非常有用。但是C++语言本身不支持反射特性，UE在C++的语法基础上通过UHT实现了反射信息的生成，从而实现了运行时的反射的目的。</p>
+<p>在之前的文章中，有一些涉及到UE的构建系统和反射相关的内容。</p>
+<p>涉及了UE的构建系统文章：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/6362/">Build flow of the Unreal Engine4 project</a></li>
+<li><a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/blog/posts/16643/">UE4 Build System：Target and Module</a></li>
+<li><a href="https://imzlp.com/posts/20425/">UEC++ 与标准 C++ 的区别与联系</a></li>
+</ul>
+<p>基于UE的反射机制来做一些奇淫巧技的文章：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/15049/">UE4：Hook UObject</a></li>
+</ul>
+<p>UE的反射实现是依赖于构建系统中UHT来执行代码生成的，本篇文章对UE的反射做一个基础概念介绍，后续会花几篇文章完整地介绍UE里反射的实现机制。</p>
+<span id="more"></span>
+
+<p>UE的反射可以实现Enum的反射(<code>UEnum</code>)、类反射(<code>UClass</code>)、结构反射(<code>UStruct</code>)、数据成员反射(<code>UProperty</code>/<code>FProperty</code>)、成员函数反射(<code>UFunction</code>)，可以在运行时访问到它们，其实反射被称作<strong>属性系统</strong>应该更合适。</p>
+<p>可以根据这些反射信息来获取它们的类型信息，本篇文章以类反射为例子介绍一下UE的反射。</p>
+<p>如以下纯C++代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ClassRef</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    int32 ival = <span class="number">666</span>;</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">func</span><span class="params">(int32 InIval)</span></span>&#123; <span class="keyword">return</span> <span class="literal">false</span>;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>想要在运行时获取<code>ClassRef</code>类有哪些数据成员、函数，要如何操作？</p>
+<p>C++原生并没有提供这样的能力，相同的需求在UE中创建的类是以下形式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CoreMinimal.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;RefObject.generated.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="built_in">UCLASS</span>()</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">REF_API</span> URefObject : <span class="keyword">public</span> UObject</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">UPROPERTY</span>()</span><br><span class="line">	int32 ival = <span class="number">666</span>;</span><br><span class="line">	</span><br><span class="line">	<span class="built_in">UFUNCTION</span>()</span><br><span class="line">	<span class="function"><span class="type">bool</span> <span class="title">func</span><span class="params">(int32 InIval)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">    	<span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;Function func: %d&quot;</span>),InIval);</span><br><span class="line">    	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>其中关键需要注意的点：</p>
+<ol>
+<li><code>RefObject.generated.h</code>文件</li>
+<li>UCLASS标记</li>
+<li>GENERATED_BODY标记</li>
+<li>UPROPERTY标记</li>
+<li>UFUNCTION标记</li>
+</ol>
+<p>本文不对它们的具体含义做过多的介绍，后续的文章会做详细的分析。</p>
+<p><code>UCLASS</code>/<code>USTRUCT</code>/<code>UFUNCTION</code>/<code>UPROPERTY</code>等可以在<code>()</code>中添加很多的标记值以及meta参数，用于指导UHT来生成对应的反射代码，它们支持的参数可以在UE的文档中查看：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/Classes/Specifiers">Class Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/ProgrammingAndScripting/GameplayArchitecture/Structs/Specifiers/index.html">Struct Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-us/Programming/UnrealArchitecture/Reference/Functions/Specifiers">Function Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/ProgrammingAndScripting/GameplayArchitecture/Properties/Specifiers/index.html">Property Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/ProgrammingAndScripting/GameplayArchitecture/Metadata/index.html">Metadata Specifiers</a></li>
+</ul>
+<p>这种通过添加的<strong>代码标记</strong>来告诉UE的构建系统，由UHT来生成反射的代码，反射的代码保存在<code>gen.cpp</code>中，注意这些反射标记<strong>只是</strong>用来告诉UHT来生成代码的，在经过C++的预处理阶段后它们大多都是空宏（有些是真的C++宏），这也导致UE的反射标记有一个缺点：无法使用C++的宏来包裹UE的反射标记，因为它们先于<strong>预处理</strong>执行。</p>
+<blockquote>
+<p>而且，UHT只是简单粗暴的关键字匹配硬扫描，限制很大。</p>
+</blockquote>
+<p>对于继承自UObject的类而言，它的反射信息被创建出了一个UClass对象，可以通过这个对象在运行时获取对象类型的信息。并且，类内部的<strong>反射数据成员</strong>和<strong>反射成员函数</strong>，都会给生成对应的<code>FProperty</code>和<code>UFunction</code>对象，用来运行时访问到它们。</p>
+<p>UClass的继承关系：</p>
+<pre><code>UObjectBase
+  UObjectBaseUtility
+    UObject
+      UField
+        UStruct
+          UClass
+</code></pre>
+<p>针对继承自UObject的类，可以通过<code>GetClass()</code>来获取UClass实例，但是如果想直接获取某个类型的UClass，则可以通过<code>StaticClass&lt;UObject&gt;</code>或者<code>UObject::StaticClass()</code>来获取。</p>
+<p>UClass中记录这类的继承关系、实现的接口、各种Flag等等，具体可以直接查阅UClass的类定义，通过它可以访问到该UObject的C++类型中的信息。</p>
+<p>而且，在运行时可以通过<code>TFieldIterator</code>来遍历UClass中的反射属性：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">URefObject::<span class="built_in">URefObject</span>(<span class="type">const</span> FObjectInitializer&amp; Initializer):<span class="built_in">Super</span>(Initializer)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span>(TFieldIterator&lt;FProperty&gt; <span class="built_in">PropertyIter</span>(<span class="built_in">GetClass</span>());PropertyIter;++PropertyIter)</span><br><span class="line">    &#123;</span><br><span class="line">        FProperty* PropertyIns = *PropertyIter;</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;Property Name: %s&quot;</span>),*PropertyIns-&gt;<span class="built_in">GetName</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(TFieldIterator&lt;UFunction&gt; <span class="built_in">PropertyIter</span>(<span class="built_in">GetClass</span>());PropertyIter;++PropertyIter)</span><br><span class="line">    &#123;</span><br><span class="line">        UFunction* PropertyIns = *PropertyIter;</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;Function Name: %s&quot;</span>),*PropertyIns-&gt;<span class="built_in">GetName</span>());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行结果：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LogTemp: Property Name: ival</span><br><span class="line">LogTemp: Function Name: func</span><br><span class="line">LogTemp: Function Name: ExecuteUbergraph</span><br></pre></td></tr></table></figure>
+
+<p>那么如何通过属性和成员函数的反射信息来访问到它们呢？</p>
+<h3 id="访问数据成员"><a href="#访问数据成员" class="headerlink" title="访问数据成员"></a>访问数据成员</h3><p>首先，在C++中类内存布局中是编译时固定的，所以一个数据成员在类中的位置是固定的，C++有一个特性叫做<strong>指向类成员的指针</strong>，本质上就是描述了当前数据成员在类布局内的偏移值。这部分内容在我之前的文章中有介绍：<a href="https://imzlp.com/posts/27615/">C++中指向类成员的指针并非指针</a>。</p>
+<p>FProperty做的就是类似的事情，记录反射数据成员的类内偏移信息，UE中的实现也是通过<strong>指向成员的指针</strong>来实现的，这部分后面的文章会着重介绍，这里只介绍使用方法。</p>
+<p>通过FProperty获取对象中值的方式，需要通过调用<code>FProperty</code>的<code>ContainerPtrToValuePtr</code>来实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(TFieldIterator&lt;FProperty&gt; <span class="built_in">PropertyIter</span>(<span class="built_in">GetClass</span>());PropertyIter;++PropertyIter)</span><br><span class="line">&#123;</span><br><span class="line">    FProperty* PropertyIns = *PropertyIter;</span><br><span class="line">    <span class="keyword">if</span>(PropertyIns-&gt;<span class="built_in">GetName</span>().<span class="built_in">Equals</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ival&quot;</span>)))</span><br><span class="line">    &#123;</span><br><span class="line">        int32* i32 = PropertyIns-&gt;<span class="built_in">ContainerPtrToValuePtr</span>&lt;int32&gt;(<span class="keyword">this</span>);            </span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;Property %s value is %d&quot;</span>),*PropertyIns-&gt;<span class="built_in">GetName</span>(),*i32);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12624/fproperty-get-data-member-value.webp"></p>
+<p>这样就实现了通过FProperty来访问数据成员的目的，因为获取到的是数据成员的指针，所以修改它也是没问题的。</p>
+<h3 id="访问成员函数"><a href="#访问成员函数" class="headerlink" title="访问成员函数"></a>访问成员函数</h3><p>通过反射访问函数则要复杂一些，因为要处理参数传递和返回值的接收问题。</p>
+<p>前面已经提到了，UE的反射成员函数会生成<code>UFunction</code>对象，函数的反射信息就在它里面，因为UFUNCTION是只能标记在继承自UObject的类中，所以UE封装了一套基于UObject的反射函数调用方式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// defined in UObject</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">ProcessEvent</span></span></span><br><span class="line"><span class="function"><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    UFunction * Function,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">void</span> * Parms</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>只有两个参数，第一个是传入UFunction的指针，第二个是<code>void*</code>指针，作为通用的方式来传递参数和接收返回值。<br>对于标记为UFUNCTION的函数，UHT会为该函数生成一个Thunk函数，形如以下形式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">DEFINE_FUNCTION</span>(URefObject::execfunc)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">P_GET_PROPERTY</span>(FIntProperty,Z_Param_InIval);</span><br><span class="line">    P_FINISH;</span><br><span class="line">    P_NATIVE_BEGIN;</span><br><span class="line">    *(<span class="type">bool</span>*)Z_Param__Result=P_THIS-&gt;<span class="built_in">func</span>(Z_Param_InIval);</span><br><span class="line">    P_NATIVE_END;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>把<code>DEFINE_FUNCTION</code>宏展开之后就是固定的原型了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> DEFINE_FUNCTION(func) void func( UObject* Context, FFrame&amp; Stack, RESULT_DECL )</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">URefObject::execfunc</span><span class="params">( UObject* Context, FFrame&amp; Stack, RESULT_DECL )</span></span></span><br></pre></td></tr></table></figure>
+<p>在<code>ProcessEvent</code>会按照这个统一的原型去调用反射函数的Thunk函数，在从Thunk函数转发给真正的C++函数，实现基于反射调用到真正C++函数的目的，当然也可以通过在<code>UFUNCTION</code>中添加<code>CustomThunk</code>标记，不让UHT生成函数的Thunk函数，自己手动提供，可以用来解决特殊的需求（如unlua中的覆写）。</p>
+<p>现在回到<code>ProcessEvent</code>，它的函数原型中有三个关键点：</p>
+<ol>
+<li><code>ProcessEvent</code>是<code>UObject</code>的成员函数</li>
+<li><code>ProcessEvent</code>的第一个参数要是当前类中的UFunction</li>
+<li><code>void* Parms</code>必须要是连续内存结构</li>
+</ol>
+<p>着重要讲的就是<code>void* Parms</code>怎么用。</p>
+<p>首先，对于示例函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">func</span><span class="params">(int32 InIval)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>它接收一个参数，并返回一个bool值，如何通过一个参数来同时做这两件事情呢？</p>
+<p>把他们封装为一个结构！如同下面这种形式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">RefObject_eventFunc_Parms</span></span><br><span class="line">&#123;</span><br><span class="line">	int32 ival;</span><br><span class="line">	<span class="type">bool</span> ReturnValue;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>要传递给函数的参数排在前面，返回值为最后一个数据成员（如果有的话）。而且，也是可以通过<code>UFunction::ParmsSize</code>得到当前函数所有参数+返回值结构的大小，在运行时动态分配，并且可以通过<code>UFunction</code>的各个参数<code>FProperty</code>来访问到每个参数的内存，这部分内容暂时按下不表，后面的文章会详细的介绍。</p>
+<p>所以，当我们通过<code>UClass</code>拿到指定的UFunction之后就可以做这个事情了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(TFieldIterator&lt;UFunction&gt; <span class="built_in">PropertyIter</span>(<span class="built_in">GetClass</span>());PropertyIter;++PropertyIter)</span><br><span class="line">&#123;</span><br><span class="line">    UFunction* FuncIns = *PropertyIter;</span><br><span class="line">    <span class="keyword">if</span>(FuncIns-&gt;<span class="built_in">GetName</span>().<span class="built_in">Equals</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;func&quot;</span>)))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">struct</span> <span class="title class_">RefObject_eventFunc_Parms</span></span><br><span class="line">        &#123;</span><br><span class="line">            int32 ival;</span><br><span class="line">            <span class="type">bool</span> ReturnValue;</span><br><span class="line">        &#125;func_params;</span><br><span class="line">        func_params.ival = <span class="number">111</span>;</span><br><span class="line">        <span class="keyword">this</span>-&gt;<span class="built_in">ProcessEvent</span>(FuncIns,&amp;func_params);</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;call func return: %s&quot;</span>),func_params.ReturnValue?<span class="built_in">TEXT</span>(<span class="string">&quot;true&quot;</span>):<span class="built_in">TEXT</span>(<span class="string">&quot;false&quot;</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;Function Name: %s&quot;</span>),*FuncIns-&gt;<span class="built_in">GetName</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12624/process-event-callstack.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12624/uobject-process-event.webp"></p>
+<p>但是这样基于反射机制的函数调用有一个问题：无法处理参数和返回值为引用的情况。如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UFUNCTION</span>()</span><br><span class="line">	<span class="function">int32&amp; <span class="title">Add</span><span class="params">(int32 R, int32&amp; L)</span></span>;</span><br><span class="line"><span class="built_in">UFUNCTION</span>()</span><br><span class="line">	<span class="function">int32 <span class="title">Add</span><span class="params">(int32 R, int32 L)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>这两个函数生成的反射信息一摸一样！（对 L 参数生成的 FProperty 的 Flag 会多一个 <code>CPF_OutParm</code>，返回值的 FProperty 还具有 <code>CPF_ReturnParm</code>）。</p>
+<p>因为C++的引用必须要在初始化时进行绑定的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ClassRef</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">ClassRef</span>(<span class="type">int</span>&amp; InIval):<span class="built_in">ival</span>(InIval)&#123;&#125;</span><br><span class="line">    <span class="type">int</span>&amp; ival;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// instance</span></span><br><span class="line"><span class="type">int</span> ival =<span class="number">666</span>;</span><br><span class="line"><span class="function">ClassRef <span class="title">obj</span><span class="params">(ival)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>这就对UHT的参数结构造成了限制，因为默认情况下UHT给每个反射函数生成了参数结构，是通过先实例化，再把真正的参数赋值给该实例中成员的，就跟上面的例子一样，做了一次值拷贝。而引用无法修改，只能在初始化时设置。在调用ProcessEvent时，真正调用到C++函数的时候，如果参数有引用则是绑定到的该UHT生成的结构中数据成员，而不是我们真实传递的参数。</p>
+<p>基于反射的函数调用实际上进行了两步操作：</p>
+<ol>
+<li>把参数赋值给ProcessEvent的函数参数结构</li>
+<li>ProcessEvent再把参数结构传递给真正的C++函数</li>
+</ol>
+<p>这会造成通过 <code>UFunction*</code> 调用ProcessEvent传递的参数和想要获取的返回值也都只是原始参数的一份拷贝，而不是真正绑定的引用关系（因为本来调用时的参数传递到 ProcessEvent 之前都会被赋值到 UHT 创建出来的参数结构），在真正的C++函数中对引用参数的修改也只能改动UHT生产的参数结构实例，而非我们传递的真正的参数。</p>
+<p>本篇文章对UE的反射做了一个简单的介绍，并示例了通过<code>UClass</code>获取反射信息来访问数据成员和成员函数的方式，UE中反射的实现会在后续的文章中详细介绍，下一篇会介绍UE反射实现所依赖的C++特性，目前文章已发表：<a href="https://imzlp.com/posts/23694/">UE4 反射实现分析：C++ 特性</a>。</p>
+<p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/unreal-property-system-reflection?sessionInvalidated=true">Unreal Property System (Reflection)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/12624/" target="_blank">UE反射实现分析：基础概念</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年12月12日 23时56分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/12624/" target="_blank" title="UE反射实现分析：基础概念">https://imzlp.com/posts/12624/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/12624/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E5%8F%8D%E5%B0%84/" rel="tag"># 反射</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/23694/" rel="prev" title="UE反射实现分析：C++特性">
+      <i class="fa fa-chevron-left"></i> UE反射实现分析：C++特性
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/11043/" rel="next" title="2020 Unreal Open Day">
+      2020 Unreal Open Day <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/12624/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

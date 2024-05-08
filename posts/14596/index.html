@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="作为一个cpper，其实早就用惯了GCC这样的工具，不过不得不说啊，GCC的错误信息是真烂啊，虽然有错误提示，但是也经常需要自己肉眼Debug才能搞明白…现在福音来了，Clang的信息精准度不知道比GCC高到哪里去了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="配置SublimeText为C&#x2F;C++的轻量级IDE">
+<meta property="og:url" content="https://imzlp.com/posts/14596/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="作为一个cpper，其实早就用惯了GCC这样的工具，不过不得不说啊，GCC的错误信息是真烂啊，虽然有错误提示，但是也经常需要自己肉眼Debug才能搞明白…现在福音来了，Clang的信息精准度不知道比GCC高到哪里去了。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/windows-clang-v.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/windows-mingw-gcc-v.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/clang-hello-right.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/clang-contrast-gcc.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/big-clang-compile-code.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/big-gcc-compile-code.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/sublime-output-system-path.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/choose-compile-system.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/20160409upgrade-cpp-build.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/compile-system-test-1.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/compile-system-test-2.webp">
+<meta property="article:published_time" content="2015-12-26T21:54:01.000Z">
+<meta property="article:modified_time" content="2017-04-10T18:18:34.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="SublimeText">
+<meta property="article:tag" content="Clang">
+<meta property="article:tag" content="编程工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/14596/windows-clang-v.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/14596/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>配置SublimeText为C/C++的轻量级IDE | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/14596/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          配置SublimeText为C/C++的轻量级IDE<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2015-12-26-14596.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-12-26 21:54 21:54:01:54" itemprop="dateCreated datePublished" datetime="2015-12-26T21:54:01+00:00">2015-12-26 21:54</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2017-04-10 18:18 18:18:34:18" itemprop="dateModified" datetime="2017-04-10T18:18:34+00:00">2017-04-10 18:18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">编程工具</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/SublimeText/" itemprop="url" rel="index"><span itemprop="name">SublimeText</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/14596/" class="post-meta-item leancloud_visitors" data-flag-title="配置SublimeText为C/C++的轻量级IDE" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>作为一个cpper，其实早就用惯了GCC这样的工具，不过不得不说啊，GCC的错误信息是真烂啊，虽然有错误提示，但是也经常需要自己肉眼Debug才能搞明白…现在福音来了，<code>Clang</code>的信息精准度不知道比GCC高到哪里去了。</p>
+<span id="more"></span>
+<p>但是Clang在编译C/C++程序的时候 ，后端是MinGW，所以两者都要存在的，这也是正合我意。</p>
+<p><strong>2016.04.09-Upgrade</strong></p>
+<ol>
+<li>解决Sublime Text遇到编译错误时会输出系统PATH路径的问题（终于找到根源了）。</li>
+<li>配置Clang++和g++同时编译，且在编译出错时隐藏g++的提示信息(使用<code>1&gt;nul</code>)</li>
+<li>配置gprof来分析代码(这也是上面使用clang和g++同同时编译代码的原因)</li>
+<li>使用SublimeClang进行编码提示和错误提醒</li>
+</ol>
+<h3 id="Mingw-Clang环境配置"><a href="#Mingw-Clang环境配置" class="headerlink" title="Mingw/+Clang环境配置"></a>Mingw/+Clang环境配置</h3><p>首先可以在这里下载<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1hrrHtQG">Clang(LLVM-3.7.0-win64)</a>和<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1qXuOONy">MinGW</a>(x86_64-5.2.0-POSIX-SEH-RT_V4-REV1)。</p>
+<ol>
+<li>安装完Clang（LLVM）之后添加至系统环境变量(PATH路径)。</li>
+<li>安装WinGW.</li>
+<li>将<code>\MinGW\bin</code>和<code>\MinGW\x86_64-w64-mingw32\include</code>添加至系统环境变量(PATH路径)</li>
+<li>注销/重启之后可试一下：<code>clang -v</code>和<code>gcc/g++ -v</code>，如下图才对。</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/windows-clang-v.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/windows-mingw-gcc-v.webp"></p>
+<p>现在我们可以先试一下。<br>先祭上代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;iostream&gt;</span><br><span class="line">using namespace std;</span><br><span class="line">int main(void)</span><br><span class="line">&#123;</span><br><span class="line">  cout&lt;&lt;&quot;HelloWorld&quot;&lt;&lt;endl;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="横向对比Clang和GCC"><a href="#横向对比Clang和GCC" class="headerlink" title="横向对比Clang和GCC"></a>横向对比Clang和GCC</h3><p>先用Clang++试下：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/clang-hello-right.webp"><br>然后故意删掉一个;试试，为了对比我也用g++编译一下：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/clang-contrast-gcc.webp"><br>额，我宣布G++完败。</p>
+<p>再来试个代码量稍微多一点的：<br>Clang：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/big-clang-compile-code.webp"></p>
+<p>G++：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/big-gcc-compile-code.webp"><br>啊，让我冷静一下，真是回不去的体验。</p>
+<p>下面进入第二部分：</p>
+<h3 id="配置Sublime-Text使用clang编译代码"><a href="#配置Sublime-Text使用clang编译代码" class="headerlink" title="配置Sublime Text使用clang编译代码"></a>配置Sublime Text使用clang编译代码</h3><p>其实之前一直都用sublime默认的build系统来编译代码，但是升级到Sublime Text 3之后出现了很多奇怪的问题，<del>比如下面就是我最难忍的</del>（<strong>已解决</strong>）：</p>
+<blockquote>
+<p>解决方案：<br>1 找到sublime Text3安装路径下的Default.sublime-package，如~Sublime Text 3\Packages\Default.sublime-package<br>2 解压Default.sublime-package包（改下后缀名为zip或rar即可解压），并提取其中的exec.py文件<br>3 将该exec.py文件放到C:\Users{UserName}\AppData\Roaming\Sublime Text 3\Packages 路径下<br>4 修改exec.py文件，将文件中的<br>self.append_string(proc, self.debug_text)<br>注释掉<br>5 重启Sublime Text，即可解决。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/sublime-output-system-path.webp"><br>当编译错误时会遍历出出系统的PATH路径，重写了多次build规则无果之后，我选择狗带，忍了。但是，一直忍哪是我的Style，趁着今天折腾Clang的当口，再来折腾一下。<br>其实Sublime Text 3中C/C++默认的构建系统也是无比弱鸡的，程序输出会捕获到Sublime Text的窗口中，这样导致不能运行时输入信息的，遇到scanf/cin就挂了。所以，大部分的处理办法是使用默认的编译系统编译代码和捕获错误信息，如果编译成功使用cmd运行可执行文件。<br>所以这个球又踢回来了，我不想让他在sublime Text窗口显示错误（其实是错误爆出的PATH信息），我要让它使用一个cmd窗口显示编译/错误信息，一个窗口运行程序。<br>想法有了，本着不重复造轮子的心态我去Google了一下，貌似没人提到过这个问题，还是自己造个轮子吧。<br>Google到了一份关于Sublime Text构建系统的<a target="_blank" rel="noopener" href="https://sublime-undocs-zh.readthedocs.org/en/latest/reference/build_systems.html">文档</a>，除却基本语法外，构建系统变量这东西最重要：</p>
+<table>
+<thead>
+<tr>
+<th align="center">构建系统变量</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">$file_path</td>
+<td align="center">当前文件目录，比如，C:Files.</td>
+</tr>
+<tr>
+<td align="center">$file</td>
+<td align="center">当前文件完整路径，比如，C:FilesChapter1.txt.</td>
+</tr>
+<tr>
+<td align="center">$file_name</td>
+<td align="center">当前文件的完整文件名，比如，Chapter1.txt.</td>
+</tr>
+<tr>
+<td align="center">$file_extension</td>
+<td align="center">当前文件的扩展名，比如，txt.</td>
+</tr>
+<tr>
+<td align="center">$file_base_name</td>
+<td align="center">当前文件的名称，比如，Document.</td>
+</tr>
+<tr>
+<td align="center">$packages</td>
+<td align="center"><em>Packages</em>目录的完整路径。</td>
+</tr>
+<tr>
+<td align="center">$project</td>
+<td align="center">当前project文件完整路径.</td>
+</tr>
+<tr>
+<td align="center">$project_path</td>
+<td align="center">当前porject文件所在的完整目录。</td>
+</tr>
+<tr>
+<td align="center">$project_name</td>
+<td align="center">project文件的完整文件名。</td>
+</tr>
+<tr>
+<td align="center">$project_extension</td>
+<td align="center">当前project文件的扩展名。</td>
+</tr>
+<tr>
+<td align="center">$project_base_name</td>
+<td align="center">当前project文件的基本文件名。</td>
+</tr>
+</tbody></table>
+<p>更多的资料点这里——<a target="_blank" rel="noopener" href="https://sublime-undocs-zh.readthedocs.org/en/latest/reference/build_systems.html">Sublime Text构建系统</a>。</p>
+<p>现在有了Sublime构建系统变量名还有基本语法，按照以上的思路，要实现一键启动两个终端实现编译/运行的效果首先我们要解决以下几个问题：</p>
+<ol>
+<li>按下Ctrl+B之后，构建系统cd到源文件所在目录</li>
+<li>在此目录下使用clang编译源文件</li>
+<li>编译完成之后启动程序（一定要编译完成之后，因为如果没有编译或者编译出错后面是没有程序可运行的）</li>
+</ol>
+<p>其实前两步还好说，可以使用&amp;把两个语句连起来。<br>手动效果就是这样的：<br><code>cd C:\Users\visionsmile\Desktop &amp; clang++ -o test.exe test.cc -std=c++11 -w</code><br>所以我在上面说构建系统变量最重要啊。<br>使用构建系统变量之后，可以写成这样：<br><code>cd $file_path &amp; clang++ -o $file_base_name.exe $file_name -std=c++11 -w</code><br>再按照语法整理一下(按下Ctrl+B之后启动一个新窗口用来编译代码)：<br><code>&quot;cmd&quot;: [&quot;start&quot;, &quot;cmd&quot;, &quot;/k&quot;, &quot;cd&quot;, &quot;$file_path&quot;, &quot;&amp;&quot;, &quot;clang++&quot;, &quot;-o&quot;, &quot;$&#123;file_base_name&#125;.exe&quot;, &quot;$&#123;file_name&#125;&quot;, &quot;-std=c++11&quot;]</code><br>期间折腾的不少，这里省略了。思路就是这样的。</p>
+<p>说说遇到的问题：没想到怎么使用构建系统的语法判断编译成功了没有，所以，如果编译和运行写在一起如果编译中遇到错误，负责执行的窗口也是会执行的，不过因为没有编译成功可执行文件，会报错的，强迫症怎么能忍，我选了个折衷的方案：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/choose-compile-system.webp"><br>通过选择，执行哪一个方案，第一个是编译第二个是启动程序。</p>
+<p>下面贴上整个配置（<strong>已更新</strong>）：</p>
+<blockquote>
+<p>Build——是使用Clang++和g++同时编译<br>Build - RUN——运行Clang++编译的版本<br>Build - G++——运行G++编译的版本<br>Build - G++ Profiler——分析代码</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/20160409upgrade-cpp-build.webp"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">     &quot;cmd&quot;: [&quot;clang++&quot;, &quot;-o&quot;, &quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_clangxx.exe&quot;, &quot;$&#123;file&#125;&quot;, &quot;-std=c++11&quot;, &quot;-w&quot;,&quot;&amp;&quot;,&quot;g++&quot;, &quot;-o&quot;, &quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_gxx.exe&quot;,&quot;$&#123;file&#125;&quot;, &quot;-std=c++11&quot;, &quot;-w&quot;, &quot;-pg&quot;,&quot;2&gt;nul&quot;],</span><br><span class="line">     &quot;file_regex&quot;: &quot;^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$&quot;,</span><br><span class="line">     &quot;working_dir&quot;: &quot;$&#123;file_path&#125;&quot;,</span><br><span class="line">     &quot;selector&quot;: &quot;source.c, source.c++&quot;,</span><br><span class="line">     &quot;shell&quot;: true,</span><br><span class="line">     &quot;variants&quot;:</span><br><span class="line">     [</span><br><span class="line">          &#123;</span><br><span class="line">               &quot;name&quot;: &quot;Run&quot;,</span><br><span class="line">                  &quot;cmd&quot;: [&quot;start&quot;,&quot;console_runner&quot;, &quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_clangxx.exe&quot;]</span><br><span class="line">          &#125;,</span><br><span class="line">          &#123;</span><br><span class="line">               &quot;name&quot;: &quot;G++ Run&quot;,</span><br><span class="line">                      &quot;cmd&quot;: [&quot;start&quot;,&quot;console_runner&quot;, &quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_gxx.exe&quot;]</span><br><span class="line">          &#125;,</span><br><span class="line">          &#123;</span><br><span class="line">                &quot;name&quot;: &quot;G++ Profiler&quot;,</span><br><span class="line">                   &quot;cmd&quot;: [&quot;gprof&quot;,&quot;-b&quot;, &quot;$&#123;file_base_name&#125;_gxx.exe&quot;,&quot;gmon.out&quot;,&quot;&gt;&quot;,&quot;$&#123;file_base_name&#125;_prof.txt&quot;, &quot;&amp;&quot;, &quot;C:\\Program Files\\SystemTools\\Sublime Text 3\\sublime_text.exe&quot;, &quot;$&#123;file_base_name&#125;_prof.txt&quot;]</span><br><span class="line">          &#125;</span><br><span class="line">     ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>测试截图：</strong><br>有错误时编译：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/compile-system-test-1.webp"><br>修复错误，编译成功后运行：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/14596/compile-system-test-2.webp"></p>
+<h3 id="使用SublimeClang进行代码提示"><a href="#使用SublimeClang进行代码提示" class="headerlink" title="使用SublimeClang进行代码提示"></a>使用SublimeClang进行代码提示</h3><p>网上已经有很多教程了，不过很多都是基于4.X的win32的MinGW，在我使用这个版本Mingw(gcc version 5.2.0 (x86_64-posix-seh-rev1)库的路径是和4.X的不一样的，下面直接扔上我的配置文件吧。<br>另：SublimeClang可以在<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1o8iqViE">这里</a>下载。<br><strong>注意：所附链接的SublimeClang必须使用32bit的SublimeText，64bit的无法使用。</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;show_output_panel&quot;: false,</span><br><span class="line">    &quot;dont_prepend_clang_includes&quot;: true,</span><br><span class="line">    &quot;inhibit_sublime_completions&quot;: false,</span><br><span class="line">    &quot;hide_output_when_empty&quot;: true,</span><br><span class="line">    &quot;show_visual_error_marks&quot;: true,</span><br><span class="line">    &quot;options&quot;:</span><br><span class="line">    [</span><br><span class="line">    &quot;-m32&quot;,</span><br><span class="line">    //&quot;-w&quot;,</span><br><span class="line">    &quot;-ferror-limit=9&quot;,</span><br><span class="line">    &quot;-fgnu-runtime&quot;,</span><br><span class="line">    &quot;-fms-extensions&quot;,</span><br><span class="line">    &quot;-nostdinc&quot;,</span><br><span class="line">    // &quot;-std=c++11&quot;,</span><br><span class="line">    &quot;-std=gnu++11&quot;,</span><br><span class="line">    // &quot;-std=g++11&quot;,</span><br><span class="line">    // 此处填写自己pc中的实际位置和版本号.</span><br><span class="line">    &quot;-isystem&quot;, &quot;C:\\Program Files\\CompileBuild\\MinGW\\x86_64-w64-mingw32\\include&quot;,</span><br><span class="line">    &quot;-isystem&quot;, &quot;C:\\Program Files\\CompileBuild\\MinGW\\x86_64-w64-mingw32\\include\\c++&quot;,</span><br><span class="line">    &quot;-isystem&quot;, &quot;C:\\Program Files\\CompileBuild\\MinGW\\lib\\gcc\\x86_64-w64-mingw32\\5.2.0\\include&quot;,</span><br><span class="line">    &quot;-isystem&quot;, &quot;C:\\Program Files\\CompileBuild\\MinGW\\x86_64-w64-mingw32\\include\\c++\\x86_64-w64-mingw32&quot;,</span><br><span class="line">    &quot;-isystem&quot;, &quot;C:\\Program Files\\CompileBuild\\MinGW\\include&quot;,</span><br><span class="line">    &quot;-isystem&quot;, &quot;C:\\Program Files\\CompileBuild\\MinGW\\lib\\gcc\\x86_64-w64-mingw32\\5.2.0\\include&quot;,</span><br><span class="line">    &quot;-D__GNUC__=4&quot;,</span><br><span class="line">    &quot;-D__GNUC_MINOR__=2&quot;,</span><br><span class="line">    &quot;-D__GNUC_PATCHLEVEL__=1&quot;,</span><br><span class="line">    &quot;-D__GXX_ABI_VERSION__=1002&quot;,</span><br><span class="line">    &quot;-Di386=1&quot;,</span><br><span class="line">    &quot;-D__i386=1&quot;,</span><br><span class="line">    &quot;-D__i386__=1&quot;,</span><br><span class="line">    &quot;-DWIN32=1&quot;,</span><br><span class="line">    &quot;-D_WIN32=1&quot;,</span><br><span class="line">    &quot;-D__WIN32=1&quot;,</span><br><span class="line">    &quot;-D__WIN32__=1&quot;,</span><br><span class="line">    &quot;-DWINNT=1&quot;,</span><br><span class="line">    &quot;-D__WINNT=1&quot;,</span><br><span class="line">    &quot;-D__WINNT__=1&quot;,</span><br><span class="line">    &quot;-D_X86_=1&quot;,</span><br><span class="line">    &quot;-D__MSVCRT__=1&quot;,</span><br><span class="line">    &quot;-D__MINGW32__=1&quot;,</span><br><span class="line">    &quot;-D__STDC_VERSION__=201112L&quot;</span><br><span class="line">    ],</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>后记</strong><br>其实这个是没什么技术含量的，这里写下来主要是想提醒自己，多看文档多看文档多看文档，比不明所以地Google或自己埋头造轮子强的太多了。</p>
+<p>我的配置文件可以在这里下载：<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1dFJNcf3">SublimeText</a></p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/14596/" target="_blank">配置SublimeText为C/C++的轻量级IDE</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2015年12月26日 21时54分<br/>
+             
+              <span>更新时间:</span>2017年04月10日 18时18分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.2k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/14596/" target="_blank" title="配置SublimeText为C/C++的轻量级IDE">https://imzlp.com/posts/14596/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/14596/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/SublimeText/" rel="tag"># SublimeText</a>
+              <a href="/tags/Clang/" rel="tag"># Clang</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/" rel="tag"># 编程工具</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/38656/" rel="prev" title="C++中错用宏定义造成的二义性">
+      <i class="fa fa-chevron-left"></i> C++中错用宏定义造成的二义性
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/8531/" rel="next" title="使用Wolfram|Alpha求积分">
+      使用Wolfram|Alpha求积分 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Mingw-Clang%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="nav-number">1.</span> <span class="nav-text">Mingw&#x2F;+Clang环境配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94Clang%E5%92%8CGCC"><span class="nav-number">2.</span> <span class="nav-text">横向对比Clang和GCC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AESublime-Text%E4%BD%BF%E7%94%A8clang%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">配置Sublime Text使用clang编译代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8SublimeClang%E8%BF%9B%E8%A1%8C%E4%BB%A3%E7%A0%81%E6%8F%90%E7%A4%BA"><span class="nav-number">4.</span> <span class="nav-text">使用SublimeClang进行代码提示</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/14596/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

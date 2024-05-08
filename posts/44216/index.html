@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文是之前发表在我校的一个帖子，涉及自己以往学习编程的一些经历和看法，为软件专业的学弟学妹的科普解惑之用，最近被挖出来，我都快忘了，顺便整理一下，在此贴出。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="写点自己的感悟，我的软件专业">
+<meta property="og:url" content="https://imzlp.com/posts/44216/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="本文是之前发表在我校的一个帖子，涉及自己以往学习编程的一些经历和看法，为软件专业的学弟学妹的科普解惑之用，最近被挖出来，我都快忘了，顺便整理一下，在此贴出。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/44216/cpp-books.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/44216/algorithm-classify.webp">
+<meta property="article:published_time" content="2015-01-04T22:32:01.000Z">
+<meta property="article:modified_time" content="2015-01-04T22:32:01.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="思想感悟">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/44216/cpp-books.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/44216/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>写点自己的感悟，我的软件专业 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/44216/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          写点自己的感悟，我的软件专业<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2015-01-04-44216.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-01-04 22:32 22:32:01:32" itemprop="dateCreated datePublished" datetime="2015-01-04T22:32:01+00:00">2015-01-04 22:32</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%80%9D%E6%83%B3%E6%84%9F%E6%82%9F/" itemprop="url" rel="index"><span itemprop="name">思想感悟</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/44216/" class="post-meta-item leancloud_visitors" data-flag-title="写点自己的感悟，我的软件专业" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文是之前发表在我校的一个帖子，涉及自己以往学习编程的一些经历和看法，为软件专业的学弟学妹的科普解惑之用，最近被挖出来，我都快忘了，顺便整理一下，在此贴出。</p>
+<span id="more"></span>
+
+<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>博主假设阅读本文的人是未接触过计算机相关的但希望从事此专业的人，可能有不严谨之处，望各位谅解。</p>
+<p>我的计算机之旅很久之前就开始了，那时喜欢鼓捣各种各样的计算机小技巧，然后就去逛各种各样的“黑客”技术论坛，2010年以前的这些性质的论坛还不像现在那么扯淡，最起码还是遵循着技术共享的原则，去泡论坛可以学到很多东西，尝试着拿站，下木马拿肉鸡，充其量也算是个脚本小子吧，没什么技术含量。<br>我真正接触编程的时候是在高一，因为当时我到的技术文档好多里面都是一坨一坨的代码，我才终于知道编程的含义，也明白了编程的重要性，不想做脚本小子就只有深入学习编程。<br>我的编程之路就这样开始了，我还记得我买的第一本书是谭浩强的《c语言程序设计》，这本书不怎么好，错误（也可能是勘误）太多，我看完C Primer Plus后才真正觉得谭浩强简直是误人子弟。我会在后面给大家推荐一些好的书籍。<br>高中的时间过得飞快，平时看编程的书用的时间也很多（大多数时间都是），高中的时候没有电脑，没办法调试代码，我就把代码写到本子上，有时间去网吧了敲上在调试，成绩一落千丈。不过我坚定了自己的梦想，要走什么样的路。<br>高考完了之后因为成绩太差根本没思考上什么学校，只有两个原则：有学上，且必须是软件专业。<br>其实本校还是不错的，最起码环境不错，但是学习氛围就不是太好了（图文楼二楼阅览室看书的人很多，我感觉那才是学习的地方）。本校的软件专业不是强势专业，老师的教学水平不再多说，关键就是本校的课程安排问题，什么都学也什么都学不好，面试的时候问学过xxx没，说学过，再问就不知道了，我觉得也是咱们学校教学最大的弊端吧。<br>如果以后想在计算机相关的职位发展，最重要的一点就是有甄别的去上对自己专业有益的课，因为在本校的时间只有两年多一点。在此感谢我的辅导员陈老师对我的支持，谢谢！！<br>下面来讲一下软件相关职位对于文凭的要求。</p>
+<h3 id="文凭重要吗？"><a href="#文凭重要吗？" class="headerlink" title="文凭重要吗？"></a>文凭重要吗？</h3><p>在现在这个注重学位和能力的时代，很难说清楚学位和能力哪一个更重要，在计划写这份文章之前我去面试了四五家企业，小到刚创办没几年的小型企业大到上市的科技公司，我发现，几乎没有面试官都不会特地询问你的学校和成绩，大概开场就是你对这个行业的看法，以及对希望应聘的职位的理解，还有工作经验，实际能力(笔试)等等。其中又一次的时候我问那位面试官说：你们公司对学历有什么要求吗？那位面试官说：现在在我们公司，主要以能力为评判标准，如果你的专业实力够强，高中都可以。当然，像现在人们所熟知的大公司而言，一般来说对于学历的要求是本科，像华为，腾讯等等，国内的科技行业主要是BAT（百度阿里腾讯）三家，他们对于雇员的技能要求是很高的，但是之前去XX面试的时候，XX的面试官说，如果通过了XX的考核会有XX的免费的猎头服务，其中百度对于雇员的要求就没有提对于学历的最低需求。<br>总的来说，现在的科技行业，尤其是IT圈，大部分公司主要还是看能力的，但是文凭作为面试的敲门砖也是非常重要的。但是这个文凭是否重要这也不能盖棺定论，不同的公司的公司文化不一样，同时公司的产品对于雇员的技能要求也不一定，比如就像游戏引擎开发商，人家需要的是高数很厉害的雇员，这种情况下，公司的招聘文凭要求最起码要本科以上。像一般公司需要雇员的技能在于能够很好的调控好自己的代码，使用公司内部的接口，不要求太高的数学水平，那么这种公司对于招聘雇员的文凭要求肯定会低一些。<br>总的来说，现在IT圈还是很好的时代，文凭不能决定一切，但是有的话作为面试的敲门砖也是很好的，当然，不管怎么样，自己都要有很好的专业技能，IT圈需要的知识很广泛，现在，不管有没有学位，学好专业技能才是最重要的。</p>
+<h3 id="IT求职的技能要求"><a href="#IT求职的技能要求" class="headerlink" title="IT求职的技能要求"></a>IT求职的技能要求</h3><p>IT圈对于雇员的技能要求的话，这个比较多，不同职位的专业要求也各不相同，在这我就结合之前的面试数据先单独讲一下软件开发相关的技能要求。<br>其实对于软件开发相关的工作来说也是有很多方向的，比如现在很火的安卓还有iOS的开发需要的JAVA和Objective-C，还有开发应用需要的C++或者C#等等，语言太多，这里就不再赘述，我就讲一下这些软件开发的方向中他们相通的地方。<br>软件开发，顾名思义，开发计算机程式。现在一般的大学来说软件工程系中的专业（比如计算机科学，软件工程，网络工程等等）都会教授一两门的编程语言（大部分刚开始都是C语言），因为学习一门编程语言有助于你了解简单的计算机运行原理，同样，软件开发需要的技能最基本的也是编程语言，可能有很多人会说，现在有那么多编程语言怎么学啊，当然，每种语言都有它优势的地方，只是应用的方向不同而已。关键的是要有自己的编程思想，简单的来说就是利用编程来解决问题的办法。这也是求职中最基本的技能——有自己的编程思想。<br>其次，不同的公司也有对于编程语言的要求，有的公司从事安卓游戏开发，那就使用JAVA，有的公司是主要做iOS开发那就使用Objective-C(当然SWIFT也是可以的)有的需要开发Windows下的程序那大多数用C#，如果想要开发出效率要求比较高跨平台的程序可以使用C/C++，人工智能方面可以用LISP，都有优势的方面。所以这个技能——熟悉一门编程语言（最好是面向对象）和拥有编程思想化为求职的基本技能一类。</p>
+<h3 id="程序员的求职进阶"><a href="#程序员的求职进阶" class="headerlink" title="程序员的求职进阶"></a>程序员的求职进阶</h3><p>在面试的过程中，我特地注意到了，现在大部分公司对雇员的要求不仅仅限于编程语言这一基本技能一类，还有很多的专业技能要求。<br>在我之前的面试中，有一次，刚开始面试，面试官张口就来：做过什么项目？对于W行以上的项目有什么管理经验？使用什么数据库？是否熟悉linux环境开发？对于你需要面试的这个职位你有什么经验？可谓一棍子打倒闷和尚，没有准备的话很可能就会被问懵了。当然，这也可以看出来，软件开发需要的技能要求。<br>第一， 如果去面试时有拿得出手的项目更好，会让面试官清楚的明白你的专业技能水平，当然了，如果是应届生没有什么拿得出手的项目怎么办？这就要靠自己平时多写几个Demo了<br>第二， 项目经验，其实可能都以为项目经验这个东西应该是院校牛人或入行几年的工程师才会有的，其实也不尽然，没有项目经验可以讲一下自己的编程经验，代码管理经验等等。<br>第三， 数据库，不管你需要什么语言谋生，这个肯定是必学的。其实数据库本身是管理数据方式，像MySQL和Access都是比较有名的。对于数据库，还是先好好学学SQL语法吧。<br>第四， Linux,其实不管你是不是一个Linuxer,还是希望能够学习一下linux下的基本操作和开发方式，因为很多公司的开发环境就完全在linux下，大部分的公司网站都是运行在linux服务器上，还是建议安装Linux发行版来用（如果是C#开发的话就不用了…）。<br>第五， 数据结构和算法，本来想把他们两个拆开来写，然后发现我在这个写过的东西基本还要在重复一遍，那就先把他们两个放一块吧。先说数据结构，数据结构就是计算机存储、组织数据的方式，设计原因主要是用来减小存储空间——空间复杂度（O(f(n))）和效率——时间复杂度（O(f(n))）。数据结构中有很多很多的算法，这也是数据结构和算法不分开写的原因，数据结构是抽象的，需要算法描述。算法，按照字面意思看的话可能被理解为计算方法，其实算法应该称为是计算机处理问题的方法。比如最简单的，判断a,b两个整型哪一个是MAXIMA，脑海里浮现出来怎么才能知道这两个数那个大呢？如果你想到：他们两个比一下不就行了。那么，恭喜你找到一个算法了。就这么简单，当然编程就是设计算法并实现算法，也是编程的精华和最难的部分，多写多练就是了。<br>到此，关于软件专业求职的技能要求就先写这么多，现在来看，IT行业的技术人才主要是需要自己的专业能力。</p>
+<p>在此我写一下对于软件专业来说需要什么东西。电脑一台（打着学习的幌子买好电脑的人用来打游戏的人，可耻。这个初学期间几乎没什么性能要求，不想买电脑，花个几百买块树莓派就够了），不玩游戏（这个最重要），多看书多练习，尽量学好数学和英语（英语把我折腾的蛋都快碎了…），有自己坚持的梦想。</p>
+<h3 id="推荐书籍"><a href="#推荐书籍" class="headerlink" title="推荐书籍"></a>推荐书籍</h3><p>下面是推荐的书籍：（阅读顺序尽量按排列先后顺序）<br>《C Primer Plus》《C和指针》《数据结构（严蔚敏版）》《C++ Primer》(C++) 《Effective C++》(C++)《算法导论》//之后的书籍可以根据你的想要工作职位的方向来选择，因为学JAVA和学C++需要看的书是不一样的，看过上面几本之后你一定会有自己的方向。</p>
+<h3 id="后记补充"><a href="#后记补充" class="headerlink" title="后记补充"></a>后记补充</h3><p>补充几句:如果数学不错的话学编程应该容易一些，因为编程中很多算法都能在数学中找到抽象模型，两种思想互补，再看也很容易理解的。就像find算法，就是一堆交并补集而已，类似的太多不再赘述，数学能抽象出一切！<br>另外很多学弟学妹询问的如何才能学好编程问题，目前来说，这个没什么硬性要求，入门的话，识字（看书），会用电脑（写代码，查资料），肯用心（耐得住寂寞）就可以。至于数学和英语是进阶，提前埋坑，还是很有用的。</p>
+<h3 id="附思维导图"><a href="#附思维导图" class="headerlink" title="附思维导图"></a>附思维导图</h3><p>下面是之前做的思维导图，几本书的目录，算是路线，在此扔上来。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/44216/cpp-books.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/44216/algorithm-classify.webp"></p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/44216/" target="_blank">写点自己的感悟，我的软件专业</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2015年01月04日 22时32分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/44216/" target="_blank" title="写点自己的感悟，我的软件专业">https://imzlp.com/posts/44216/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/44216/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%80%9D%E6%83%B3%E6%84%9F%E6%82%9F/" rel="tag"># 思想感悟</a>
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/14660/" rel="prev" title="C/C++速查表">
+      <i class="fa fa-chevron-left"></i> C/C++速查表
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/55550/" rel="next" title="使用Github来管理博客源文件">
+      使用Github来管理博客源文件 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E5%87%AD%E9%87%8D%E8%A6%81%E5%90%97%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">文凭重要吗？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IT%E6%B1%82%E8%81%8C%E7%9A%84%E6%8A%80%E8%83%BD%E8%A6%81%E6%B1%82"><span class="nav-number">3.</span> <span class="nav-text">IT求职的技能要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E6%B1%82%E8%81%8C%E8%BF%9B%E9%98%B6"><span class="nav-number">4.</span> <span class="nav-text">程序员的求职进阶</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E8%8D%90%E4%B9%A6%E7%B1%8D"><span class="nav-number">5.</span> <span class="nav-text">推荐书籍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0%E8%A1%A5%E5%85%85"><span class="nav-number">6.</span> <span class="nav-text">后记补充</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%84%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE"><span class="nav-number">7.</span> <span class="nav-text">附思维导图</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/44216/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

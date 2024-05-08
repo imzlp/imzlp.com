@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="HotPatcher项目开源这一年多以来，经过了不少的更新和优化，也被越来越多的开发者选择作为自己项目的热更新方案，期间有不少人陆陆续续询问UE4热更新相关遇到的问题，很多问题比较常见，重复询问的频率也比较多，所以我准备把一些常见的问题进行整理，方便初步上手UE4热更新方案的人能够尽快地排查问题。 本篇文章会持续更新UE4热更新和HotPatcher相关的Q&amp;A内容，有疑问的地方也可以直接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE热更新：Questions &amp; Answers">
+<meta property="og:url" content="https://imzlp.com/posts/16895/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="HotPatcher项目开源这一年多以来，经过了不少的更新和优化，也被越来越多的开发者选择作为自己项目的热更新方案，期间有不少人陆陆续续询问UE4热更新相关遇到的问题，很多问题比较常见，重复询问的频率也比较多，所以我准备把一些常见的问题进行整理，方便初步上手UE4热更新方案的人能够尽快地排查问题。 本篇文章会持续更新UE4热更新和HotPatcher相关的Q&amp;A内容，有疑问的地方也可以直接">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206152457.webp">
+<meta property="article:published_time" content="2021-03-12T10:45:44.000Z">
+<meta property="article:modified_time" content="2021-03-12T10:45:44.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="HotPatcher">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206152457.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/16895/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE热更新：Questions & Answers | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/16895/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE热更新：Questions & Answers<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-03-13-16895.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-03-12 10:45 10:45:44:45" itemprop="dateCreated datePublished" datetime="2021-03-12T10:45:44+00:00">2021-03-12 10:45</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E7%83%AD%E6%9B%B4%E6%96%B0/" itemprop="url" rel="index"><span itemprop="name">热更新</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/16895/" class="post-meta-item leancloud_visitors" data-flag-title="UE热更新：Questions & Answers" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>18 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>项目开源这一年多以来，经过了不少的更新和优化，也被越来越多的开发者选择作为自己项目的热更新方案，期间有不少人陆陆续续询问UE4热更新相关遇到的问题，很多问题比较常见，重复询问的频率也比较多，所以我准备把一些常见的问题进行整理，方便初步上手UE4热更新方案的人能够尽快地排查问题。</p>
+<p>本篇文章会持续更新UE4热更新和<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>相关的Q&amp;A内容，有疑问的地方也可以直接在本篇文章中评论，我会定期统一回答和整理，也可以加入我的UE4热更新群讨论遇到的问题(QQ群958363331)。</p>
+<span id="more"></span>
+
+<h2 id="HotPatcher相关问题"><a href="#HotPatcher相关问题" class="headerlink" title="HotPatcher相关问题"></a>HotPatcher相关问题</h2><ol>
+<li>是否可以用在商业项目中？</li>
+</ol>
+<p><strong>本软件的开源协议：允许在商业项目中免费使用功能，但不允许任何第三方基于该插件进行任何形式的二次收费，包括但不限于录制收费课程、对插件及代码的二次分发等。</strong></p>
+<ol start="2">
+<li><p>是否可以热更C++？<br>不能，只能用来更新uasset和Non-Asset（lua/db/json等等）。</p>
+</li>
+<li><p>支持移动端热更吗？<br>支持，本身<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>是没有平台限制的，可以打包和管理UE支持的任意平台。</p>
+</li>
+</ol>
+<p>注意：使用HotPatcher打包时，需要避免一个目录既包含uasset又包含non-asset的情况，不然会导致未被cook的uasset打包。</p>
+<h2 id="热更新系列文章"><a href="#热更新系列文章" class="headerlink" title="热更新系列文章"></a>热更新系列文章</h2><p>我写的UE4热更新的系列文章，可以作为工程实践的参考：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/17371">UE热更新：需求分析与方案设计</a></li>
+<li><a href="https://imzlp.com/posts/17590/">UE资源热更打包工具HotPatcher</a></li>
+<li><a href="https://imzlp.com/posts/10938/">UE热更新：基于HotPatcher的自动化流程</a></li>
+<li><a href="https://imzlp.com/posts/11043/">2020 Unreal Open Day</a></li>
+<li><a href="https://imzlp.com/posts/13765/">UE热更新：拆分基础包</a></li>
+<li><a href="https://imzlp.com/posts/3675">UE热更新：资产管理与审计工具</a></li>
+<li><a href="https://imzlp.com/posts/5867/">UE热更新：Create Shader Patch</a></li>
+<li><a href="https://imzlp.com/posts/16895/">UE热更新：Questions &amp; Answers</a></li>
+<li><a href="https://imzlp.com/posts/25136/">UE热更新：资源的二进制补丁方案</a></li>
+<li><a href="https://imzlp.com/posts/15810/">UE热更新：Shader 更新策略</a></li>
+</ul>
+<h2 id="pak的自动挂载目录"><a href="#pak的自动挂载目录" class="headerlink" title="pak的自动挂载目录"></a>pak的自动挂载目录</h2><p>以下三个路径中的Pak会在引擎启动时自动挂载：</p>
+<ul>
+<li>Engine/Content/Paks</li>
+<li>GAME_DIR/Content/Paks</li>
+<li>GAME_DIR/Saved/Paks</li>
+</ul>
+<figure class="highlight cpp"><figcaption><span>Runtime\PakFile\Private\IPlatformFilePak.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FPakPlatformFile::GetPakFolders</span><span class="params">(<span class="type">const</span> TCHAR* CmdLine, TArray&lt;FString&gt;&amp; OutPakFolders)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !UE_BUILD_SHIPPING</span></span><br><span class="line">  <span class="comment">// Command line folders</span></span><br><span class="line">  FString PakDirs;</span><br><span class="line">  <span class="keyword">if</span> (FParse::<span class="built_in">Value</span>(CmdLine, <span class="built_in">TEXT</span>(<span class="string">&quot;-pakdir=&quot;</span>), PakDirs))</span><br><span class="line">  &#123;</span><br><span class="line">    TArray&lt;FString&gt; CmdLineFolders;</span><br><span class="line">    PakDirs.<span class="built_in">ParseIntoArray</span>(CmdLineFolders, <span class="built_in">TEXT</span>(<span class="string">&quot;*&quot;</span>), <span class="literal">true</span>);</span><br><span class="line">    OutPakFolders.<span class="built_in">Append</span>(CmdLineFolders);</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// @todo plugin urgent: Needs to handle plugin Pak directories, too</span></span><br><span class="line">  <span class="comment">// Hardcoded locations</span></span><br><span class="line">  OutPakFolders.<span class="built_in">Add</span>(FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%sPaks/&quot;</span>), *FPaths::<span class="built_in">ProjectContentDir</span>()));</span><br><span class="line">  OutPakFolders.<span class="built_in">Add</span>(FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%sPaks/&quot;</span>), *FPaths::<span class="built_in">ProjectSavedDir</span>()));</span><br><span class="line">  OutPakFolders.<span class="built_in">Add</span>(FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%sPaks/&quot;</span>), *FPaths::<span class="built_in">EngineContentDir</span>()));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这三个路径下的pak的默认优先级不同（除非通过_1_P.pak这种形式命名）：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\PakFile\Private\IPlatformFilePak.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">int32 <span class="title">FPakPlatformFile::GetPakOrderFromPakFilePath</span><span class="params">(<span class="type">const</span> FString&amp; PakFilePath)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (PakFilePath.<span class="built_in">StartsWith</span>(FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%sPaks/%s-&quot;</span>), *FPaths::<span class="built_in">ProjectContentDir</span>(), FApp::<span class="built_in">GetProjectName</span>())))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">4</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (PakFilePath.<span class="built_in">StartsWith</span>(FPaths::<span class="built_in">ProjectContentDir</span>()))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">3</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (PakFilePath.<span class="built_in">StartsWith</span>(FPaths::<span class="built_in">EngineContentDir</span>()))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (PakFilePath.<span class="built_in">StartsWith</span>(FPaths::<span class="built_in">ProjectSavedDir</span>()))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Mount-Point的作用"><a href="#Mount-Point的作用" class="headerlink" title="Mount Point的作用"></a>Mount Point的作用</h2><p>在Mount Pak的时候，有一个参数可以指定MountPoint:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Mounts a pak file at the specified path.</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* @param InPakFilename Pak filename.</span></span><br><span class="line"><span class="comment">* @param InPath Path to mount the pak at.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">Mount</span><span class="params">(<span class="type">const</span> TCHAR* InPakFilename, uint32 PakOrder, <span class="type">const</span> TCHAR* InPath = <span class="literal">NULL</span>, <span class="type">bool</span> bLoadIndex = <span class="literal">true</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>那么它是干什么的呢？<br>首先从Mount函数开始：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (InPath != <span class="literal">NULL</span>)</span><br><span class="line">&#123;</span><br><span class="line">  Pak-&gt;<span class="built_in">SetMountPoint</span>(InPath);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果在调用Mount时传递了<code>InPath</code>，则通过加载Pak的FPakFile实例调用<code>SetMountPoint</code>，把InPath设置给它。<br>其实在FPakFile中，MountPath是有默认值的（从Pak文件中读取），在FPakFile的构造函数中调用了<code>Initialize(Reader, bLoadIndex);</code>，Initialize中又调用了<code>LoadIndex</code>，在<code>LoadIndex</code>中从Pak中读取Pak的Mount Point的逻辑：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/PakFile/Private/IPlatformFilePak.cpp</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FPakFile::LoadIndex</span><span class="params">(FArchive* Reader)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (CachedTotalSize &lt; (Info.IndexOffset + Info.IndexSize))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogPakFile, Fatal, <span class="built_in">TEXT</span>(<span class="string">&quot;Corrupted index offset in pak file.&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (Info.Version &gt;= FPakInfo::PakFile_Version_FrozenIndex &amp;&amp; Info.bIndexIsFrozen)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">SCOPED_BOOT_TIMING</span>(<span class="string">&quot;PakFile_LoadFrozen&quot;</span>);</span><br><span class="line"></span><br><span class="line">      <span class="comment">// read frozen data</span></span><br><span class="line">      Reader-&gt;<span class="built_in">Seek</span>(Info.IndexOffset);</span><br><span class="line">      int32 FrozenSize = Info.IndexSize;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// read in the index, etc data in one lump</span></span><br><span class="line">      <span class="type">void</span>* DataMemory = FMemory::<span class="built_in">Malloc</span>(FrozenSize);</span><br><span class="line">      Reader-&gt;<span class="built_in">Serialize</span>(DataMemory, FrozenSize);</span><br><span class="line">      Data = <span class="built_in">TUniquePtr</span>&lt;FPakFileData&gt;((FPakFileData*)DataMemory);</span><br><span class="line"></span><br><span class="line">      <span class="comment">// cache the number of entries</span></span><br><span class="line">      NumEntries = Data-&gt;Files.<span class="built_in">Num</span>();</span><br><span class="line">      <span class="comment">// @todo loadtime: it is nice to serialize the mountpoint right into the Data so that IndexSize is right here</span></span><br><span class="line">      <span class="comment">// but it takes this to copy it out, because it&#x27;s too painful for the string manipulation when dealing with</span></span><br><span class="line">      <span class="comment">// MemoryImageString everywhere MountPoint is used</span></span><br><span class="line">      MountPoint = Data-&gt;MountPoint;</span><br><span class="line">    &#125;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>简单的可以理解为：如果Mount时不传递Mount Point就会从Pak文件中读取，如果有传入就设置为传入的值（Pak文件中的MountPoint是Pak中所有文件的公共路径）。</p>
+<p>那么，给Pak设置MountPoint的作用是什么呢？<br>真实目的是，检测要加载的文件是否存在于当前Pak中！因为Pak的Mount Point的默认含义是当前Pak中所有文件的公共路径，所以只需要检测要读取的文件是否以这个路径开头，就可以首先排除掉基础路径不对的文件（基础路径都不对，意味着这个文件在Pak中也不存在）。</p>
+<p>具体逻辑可以看这个函数的实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/PakFile/Public/IPlatformFilePak.h</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Finds a file in the specified pak files.</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* @param Paks Pak files to find the file in.</span></span><br><span class="line"><span class="comment">* @param Filename File to find in pak files.</span></span><br><span class="line"><span class="comment">* @param OutPakFile Optional pointer to a pak file where the filename was found.</span></span><br><span class="line"><span class="comment">* @return Pointer to pak entry if the file was found, NULL otherwise.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">bool</span> <span class="title">FindFileInPakFiles</span><span class="params">(TArray&lt;FPakListEntry&gt;&amp; Paks,<span class="type">const</span> TCHAR* Filename,FPakFile** OutPakFile,FPakEntry* OutEntry = <span class="literal">nullptr</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">FString <span class="title">StandardFilename</span><span class="params">(Filename)</span></span>;</span><br><span class="line">    FPaths::<span class="built_in">MakeStandardFilename</span>(StandardFilename);</span><br><span class="line"></span><br><span class="line">    int32 DeletedReadOrder = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (int32 PakIndex = <span class="number">0</span>; PakIndex &lt; Paks.<span class="built_in">Num</span>(); PakIndex++)</span><br><span class="line">    &#123;</span><br><span class="line">        int32 PakReadOrder = Paks[PakIndex].ReadOrder;</span><br><span class="line">        <span class="keyword">if</span> (DeletedReadOrder != <span class="number">-1</span> &amp;&amp; DeletedReadOrder &gt; PakReadOrder)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">//found a delete record in a higher priority patch level, but now we&#x27;re at a lower priority set - don&#x27;t search further back or we&#x27;ll find the original, old file.</span></span><br><span class="line">            <span class="built_in">UE_LOG</span>( LogPakFile, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;Delete Record: Accepted a delete record for %s&quot;</span>), Filename );</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        FPakFile::EFindResult FindResult = Paks[PakIndex].PakFile-&gt;<span class="built_in">Find</span>(*StandardFilename, OutEntry);</span><br><span class="line">        <span class="keyword">if</span> (FindResult == FPakFile::EFindResult::Found )</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (OutPakFile != <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                *OutPakFile = Paks[PakIndex].PakFile;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">UE_CLOG</span>( DeletedReadOrder != <span class="number">-1</span>, LogPakFile, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;Delete Record: Ignored delete record for %s - found it in %s instead (asset was moved between chunks)&quot;</span>), Filename, *Paks[PakIndex].PakFile-&gt;<span class="built_in">GetFilename</span>() );</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (FindResult == FPakFile::EFindResult::FoundDeleted )</span><br><span class="line">        &#123;</span><br><span class="line">            DeletedReadOrder = PakReadOrder;</span><br><span class="line">            <span class="built_in">UE_LOG</span>( LogPakFile, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;Delete Record: Found a delete record for %s in %s&quot;</span>), Filename, *Paks[PakIndex].PakFile-&gt;<span class="built_in">GetFilename</span>() );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">UE_CLOG</span>( DeletedReadOrder != <span class="number">-1</span>, LogPakFile, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;Delete Record: No lower priority pak files looking for %s. (maybe not downloaded?)&quot;</span>), Filename );</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当我们从Pak中读取文件时，通过对游戏中所有Mount的Pak调用<code>Find</code>函数，而<code>FPakFile::Find</code>的函数就实现了上述我说的逻辑：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/PakFile/Private/IPlatformFilePak.cpp</span></span><br><span class="line"><span class="function">FPakFile::EFindResult <span class="title">FPakFile::Find</span><span class="params">(<span class="type">const</span> FString&amp; Filename, FPakEntry* OutEntry)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">QUICK_SCOPE_CYCLE_COUNTER</span>(PakFileFind);</span><br><span class="line">  <span class="keyword">if</span> (Filename.<span class="built_in">StartsWith</span>(MountPoint))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="function">FString <span class="title">Path</span><span class="params">(FPaths::GetPath(Filename))</span></span>;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以，MountPoint的作用就是在从Pak中查找文件时，首先判断文件的路径是否与Pak中所有文件的<strong>基础路径</strong>相匹配（StartWith），如果不存在也就不会进入后续的流程了。</p>
+<h2 id="Pak无法被挂载"><a href="#Pak无法被挂载" class="headerlink" title="Pak无法被挂载"></a>Pak无法被挂载</h2><p>在本体包中开启signature后，打包出来的Pak无法被挂载<br>同样是pak的signature的错误，是因为没有为pak生成对应的.sig文件。<br>Log中的内容如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LogPakFile: Warning: Couldn&#x27;t find pak signature file &#x27;../../../Pak/Content/Paks/1.0.3_WindowsNoEditor_P.pak&#x27;</span><br><span class="line">LogPakFile: Warning: Unable to create pak &quot;../../../Pak/Content/Paks/1.0.3_WindowsNoEditor_P.pak&quot; handle</span><br><span class="line">LogPakFile: Warning: Failed to mount pak &quot;../../../Pak/Content/Paks/1.0.3_WindowsNoEditor_P.pak&quot;, pak is invalid</span><br></pre></td></tr></table></figure>
+<p>这是因为打出本体包时<code>Project Setting</code>-<code>Crypto</code>中的<code>bEnablePakSigning</code>被设置成了true，这样对打出来的包里的所有<code>pak</code>都会执行校验，目的就是为了确保<strong>只有自己打包的pak才可以被加载</strong>。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16895/project-setting-crypto.webp"></p>
+<p>相关的代码处理在：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/PakFile/Private/SignedArchiveReader.cpp</span></span><br><span class="line">FChunkCacheWorker::<span class="built_in">FChunkCacheWorker</span>(FArchive* InReader, <span class="type">const</span> TCHAR* Filename)</span><br><span class="line">  : <span class="built_in">Thread</span>(<span class="literal">nullptr</span>)</span><br><span class="line">  , <span class="built_in">Reader</span>(InReader)</span><br><span class="line">  , <span class="built_in">QueuedRequestsEvent</span>(<span class="literal">nullptr</span>)</span><br><span class="line">  , <span class="built_in">ChunkRequestAvailable</span>(<span class="literal">nullptr</span>)</span><br><span class="line">&#123;</span><br><span class="line">  FString SigFileFilename = FPaths::<span class="built_in">ChangeExtension</span>(Filename, <span class="built_in">TEXT</span>(<span class="string">&quot;sig&quot;</span>));</span><br><span class="line">  FArchive* SigFileReader = IFileManager::<span class="built_in">Get</span>().<span class="built_in">CreateFileReader</span>(*SigFileFilename);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (SigFileReader == <span class="literal">nullptr</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogPakFile, Fatal, <span class="built_in">TEXT</span>(<span class="string">&quot;Couldn&#x27;t find pak signature file &#x27;%s&#x27;&quot;</span>), *SigFileFilename);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Signatures.<span class="built_in">Serialize</span>(*SigFileReader);</span><br><span class="line">  <span class="keyword">delete</span> SigFileReader;</span><br><span class="line">  Signatures.<span class="built_in">DecryptSignatureAndValidate</span>(Filename);</span><br><span class="line"></span><br><span class="line">  <span class="type">const</span> <span class="type">bool</span> bEnableMultithreading = FPlatformProcess::<span class="built_in">SupportsMultithreading</span>();</span><br><span class="line">  <span class="keyword">if</span> (bEnableMultithreading)</span><br><span class="line">  &#123;</span><br><span class="line">    QueuedRequestsEvent = FPlatformProcess::<span class="built_in">GetSynchEventFromPool</span>();</span><br><span class="line">    ChunkRequestAvailable = FPlatformProcess::<span class="built_in">GetSynchEventFromPool</span>();</span><br><span class="line">    Thread = FRunnableThread::<span class="built_in">Create</span>(<span class="keyword">this</span>, <span class="built_in">TEXT</span>(<span class="string">&quot;FChunkCacheWorker&quot;</span>), <span class="number">0</span>, TPri_BelowNormal);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以，如果在用HotPatcher打包pak时没有与项目指定相同的加密参数，则导致放入包内的pak会加载失败（因为验证失败了）。<br>解决的办法就是，在使用HotPatcher时指定与项目相同的加密信息，当直接使用UE打出本体包时，会默认在下列路径中生成一个<code>Crypto.json</code>文件：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PROJECT_DIRECTORY\Saved\Cooked\WindowsNoEditor\PROJECT_NAME\Metadata\Crypto.json</span><br></pre></td></tr></table></figure>
+<p>它里面的内容是根据<code>Project Setting</code>-<code>Crypto</code>中的选项生产的。<br>使用方法为：<br>在HotPatcher的<code>UnrealPak</code>参数项添加参数：<code>-cryptokeys=&quot;Crypto.json&quot;</code>(在UE4.23+中还需要添加<code>-sign</code>参数):<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16895/hotpatcher-unrealpak-options-sign.webp"></p>
+<p>重新生成Pak就会在Pak的目录里生成与Pak同名的<code>.sig</code>文件了，把<code>pak</code>和<code>sig</code>文件一同拷贝到挂载目录里就可以了。</p>
+<p>UnrealPak的参数可以看我之前的一篇文章：<a href="https://imzlp.com/posts/12143/#UnrealPak%E7%9A%84%E5%8F%82%E6%95%B0">UE4工具链配置与开发技巧#UnrealPak的参数</a></p>
+<h2 id="Pak-master-signature-table-check-failed-for-pak"><a href="#Pak-master-signature-table-check-failed-for-pak" class="headerlink" title="Pak master signature table check failed for pak"></a>Pak master signature table check failed for pak</h2><ol>
+<li>使用HotPatcher打包出来的pak在挂载时Crash并具有<em>Pak master signature table check failed for pak</em>提示</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16895/hotpatcher-qa-pak-master-signing-not-match.webp"></p>
+<p>这是由于打出本体包的时候在项目设置中设置了<code>Signing</code>加密，需要在HotPatcher中的UnrealPak参数中添加相同的加密参数。</p>
+<p>在<code>IPlatformFilePak.cpp</code>中的<code>RegisterPakFile</code>中，同样做了判断：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/PakFile/Private/</span></span><br><span class="line"><span class="function">uint16* <span class="title">RegisterPakFile</span><span class="params">(FName File, int64 PakFileSize)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  uint16* PakIndexPtr = CachedPaks.<span class="built_in">Find</span>(File);</span><br><span class="line">  <span class="keyword">if</span> (!PakIndexPtr)</span><br><span class="line">  &#123;</span><br><span class="line">    FString PakFilename = File.<span class="built_in">ToString</span>();</span><br><span class="line">    <span class="built_in">check</span>(CachedPakData.<span class="built_in">Num</span>() &lt; MAX_uint16);</span><br><span class="line">    IAsyncReadFileHandle* Handle = LowerLevel-&gt;<span class="built_in">OpenAsyncRead</span>(*PakFilename);</span><br><span class="line">    <span class="keyword">if</span> (!Handle)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    CachedPakData.<span class="built_in">Add</span>(<span class="built_in">FPakData</span>(Handle, File, PakFileSize));</span><br><span class="line">    PakIndexPtr = &amp;CachedPaks.<span class="built_in">Add</span>(File, CachedPakData.<span class="built_in">Num</span>() - <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogPakFile, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;New pak file %s added to pak precacher.&quot;</span>), *PakFilename);</span><br><span class="line"></span><br><span class="line">    FPakData&amp; Pak = CachedPakData[*PakIndexPtr];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (SigningKey.<span class="built_in">IsValid</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="comment">// Load signature data</span></span><br><span class="line">      FString SignaturesFilename = FPaths::<span class="built_in">ChangeExtension</span>(*PakFilename, <span class="built_in">TEXT</span>(<span class="string">&quot;sig&quot;</span>));</span><br><span class="line">      IFileHandle* SignaturesFile = LowerLevel-&gt;<span class="built_in">OpenRead</span>(*SignaturesFilename);</span><br><span class="line">      <span class="built_in">ensure</span>(SignaturesFile);</span><br><span class="line">      FArchiveFileReaderGeneric* Reader = <span class="keyword">new</span> <span class="built_in">FArchiveFileReaderGeneric</span>(SignaturesFile, *SignaturesFilename, SignaturesFile-&gt;<span class="built_in">Size</span>());</span><br><span class="line">      Pak.Signatures.<span class="built_in">Serialize</span>(*Reader);</span><br><span class="line">      <span class="keyword">delete</span> Reader;</span><br><span class="line">      Pak.Signatures.<span class="built_in">DecryptSignatureAndValidate</span>(SigningKey, PakFilename);</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Check that we have the correct match between signature and pre-cache granularity</span></span><br><span class="line">      int64 NumPakChunks = <span class="built_in">Align</span>(PakFileSize, FPakInfo::MaxChunkDataSize) / FPakInfo::MaxChunkDataSize;</span><br><span class="line">      <span class="built_in">ensure</span>(NumPakChunks == Pak.Signatures.ChunkHashes.<span class="built_in">Num</span>());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> PakIndexPtr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="iOS热更metallib问题"><a href="#iOS热更metallib问题" class="headerlink" title="iOS热更metallib问题"></a>iOS热更metallib问题</h2><p>在4.25存在不会重新加载shaderbytecode的问题，而且引擎内部对加载metallib是单独处理的流程，无法复用usahderbytecode的流程，所以出iOS包尽量使用远程打包的方式，会生成<code>ushaderbytecode</code>，在4.25里LoadLibrary没有问题，但是如果去加载metallib就有问题。</p>
+<p>UE热更Shader相关的内容可以看之前的文章：<a href="https://imzlp.com/posts/5867/">UE热更新：Create Shader Patch</a></p>
+<h2 id="UE4-25-ShaderPatch-Crash"><a href="#UE4-25-ShaderPatch-Crash" class="headerlink" title="UE4.25+ ShaderPatch Crash"></a>UE4.25+ ShaderPatch Crash</h2><p>这是因为在4.25+引擎内部的bug导致的，<a href="https://imzlp.com/posts/5867/#4-25-ShaderPatch-Crash">UE热更新：Create Shader Patch#4.25+ ShaderPatch Crash</a>](<a href="https://imzlp.com/posts/5867/)%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E4%B8%AD%E6%8F%90%E4%BE%9B%E4%BA%86%E4%BF%AE%E6%94%B9%E6%96%B9%E6%A1%88%E3%80%82">https://imzlp.com/posts/5867/)这篇文章中提供了修改方案。</a></p>
+<h2 id="热更一个不存在的插件中的资源"><a href="#热更一个不存在的插件中的资源" class="headerlink" title="热更一个不存在的插件中的资源"></a>热更一个不存在的插件中的资源</h2><p>打包之后引擎是会从upluginmanifest中读取当前工程中具有有哪些插件的，加载插件中的资源先判断插件是否存在，从而实现一个粒度较粗的过滤效果。</p>
+<p>所以，当需要把一个在基础包中不存在的插件打包至pak中，需要在打包资源的同时需要把项目的<code>upluginmanifest</code>文件同步打包，挂载点为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../../../PROJECT_NAME/Plugins/PROJECT_NAME.upluginmanifest</span><br></pre></td></tr></table></figure>
+<p>关于<code>upluginmanifest</code>的介绍，可以看我之前的笔记：<a href="https://imzlp.com/notes/ue/#upluginmanifest">UE4#upluginmanifest</a>。</p>
+<h2 id="热更的资源没有效果"><a href="#热更的资源没有效果" class="headerlink" title="热更的资源没有效果"></a>热更的资源没有效果</h2><p>如果热更蓝图，逻辑没有变化，需要检查资源是否被Cook，可以手动在Content Browser中通过HotPatcher中提供的功能对选中资源执行Cook，也可以在打包Patch时勾选<code>bCookAsset</code>选项。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20201031181100.webp"></p>
+<h2 id="热更的资源材质丢失"><a href="#热更的资源材质丢失" class="headerlink" title="热更的资源材质丢失"></a>热更的资源材质丢失</h2><p>如果时热更了新的资源/材质，没有效果，需要检查是否把Shaderbytecode打包，如果新增材质没有打包shaderbytecode是会导致Shader获取失败使用默认材质的。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/UE4/pak-shadercode-error-in-ue425.webp"></p>
+<p>Log中的错误：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5867/shader-bytecode-error.webp"></p>
+<p>如果在打包时使用了<code>bSharedShaderLibrary</code>，在运行时手动Mount包含新shaderbytecode的pak，则需要在mount之后手动重新加载一遍shaderbytecode，这样引擎在加载材质时才能够读取到最新的Shader：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ShaderCodeLibrary.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">FShaderCodeLibrary::<span class="built_in">OpenLibrary</span>(<span class="string">&quot;NewShaderLib&quot;</span>, FPaths::<span class="built_in">ProjectContentDir</span>());</span><br></pre></td></tr></table></figure>
+<p>在mount之后，根据ShaderLib的实际路径和命名调用即可。</p>
+<p>如果没有开<code>bSharedShaderLibrary</code>，则无需处理，引擎会默认使用资源内的Inline Shader Code。</p>
+<h2 id="AssetRegistry是否必须热更"><a href="#AssetRegistry是否必须热更" class="headerlink" title="AssetRegistry是否必须热更"></a>AssetRegistry是否必须热更</h2><p>看需求，如果Runtime的代码中有通过AssetRegistry模块获取资源的引用关系、检测资源是否存在，需要热更。但是AssetRegistry并不是引擎必要的，如果肯定不会在运行时用到，可以去掉它，会节省一点内存。</p>
+<p>具体介绍可以看我之前的笔记：<a href="https://imzlp.com/notes/ue/#%E6%8E%A7%E5%88%B6AssetRegistry%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96">UE4#控制AssetRegistry的序列化</a></p>
+<h2 id="Android提示not-found-uproject"><a href="#Android提示not-found-uproject" class="headerlink" title="Android提示not found uproject"></a>Android提示not found uproject</h2><p>UE中有一个BUG，在4.25.1引擎版本中可以复现，步骤如下：</p>
+<ol>
+<li>安装apk，第一次启动游戏</li>
+<li>打开UE的沙盒数据目录<code>UE4Game/PROJECTNAME</code>，在这个目录下创建<code>Content/Paks</code>目录</li>
+<li>重新启动游戏</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16895/20210121220607.webp"></p>
+<p>Log中也有<code>Project file not found: ../../../FGame/FGame.uproject</code>提示。</p>
+<p>在Android上自动挂载的Pak文件可以放到<code>Saved/Paks</code>下，有时间具体分析一下这个问题。</p>
+<h2 id="控制资源不打到基础包中"><a href="#控制资源不打到基础包中" class="headerlink" title="控制资源不打到基础包中"></a>控制资源不打到基础包中</h2><p>拆分基础包的实践可看我的这两篇文章：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/3675/">UE热更新：资产管理与审计工具</a></li>
+<li><a href="https://imzlp.com/posts/13765/">UE热更新：拆分基础包</a></li>
+</ul>
+<h2 id="分析某个平台的包中的资源"><a href="#分析某个平台的包中的资源" class="headerlink" title="分析某个平台的包中的资源"></a>分析某个平台的包中的资源</h2><p>可以使用UE提供的Asset Audit工具，需要在每次打包时备份好Cooked/PLATFORM/PROJECT_NAME/Metadata目录中的DevelopmentAssetRegistry.bin文件。</p>
+<p>也可以使用<a target="_blank" rel="noopener" href="https://github.com/jashking/UnrealPakViewer">UnrealPakViewer</a>来直接加载Pak文件。</p>
+<p>具体可以看这篇文章的资产审计小节：<a href="https://imzlp.com/posts/3675/#%E8%B5%84%E4%BA%A7%E5%AE%A1%E8%AE%A1">UE热更新：资产管理与审计工具#资产审计</a></p>
+<h2 id="UMG子控件热更不生效"><a href="#UMG子控件热更不生效" class="headerlink" title="UMG子控件热更不生效"></a>UMG子控件热更不生效</h2><p>如果Instanced的形式引用的UMG，子UMG的变动需要递归包含所有以子控件形式引用的UMG资源。我之前在笔记中记录过这个问题：<a href="https://imzlp.com/notes/ue/#UMG%E7%9A%84%E5%AD%90%E6%8E%A7%E4%BB%B6%E5%BC%95%E7%94%A8%E7%83%AD%E6%9B%B4%E9%97%AE%E9%A2%98">UE4#UMG的子控件引用热更问题</a>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/04/18/114744.png"></p>
+<p>解决方案：HotPatcher中具有一个递归分析UMG父控件的的选项(bRecursiveWidgetTree)，开启即可。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16895/20210315103155.webp"></p>
+<p>这个问题的具体分析在我2020 UOD的演讲中有详细介绍，感兴趣的可以去这里查看视频和PPT：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/11043/">2020 Unreal Open Day</a></li>
+</ul>
+<blockquote>
+<p>注意，Instanced的UMG只对控件的序列化有影响，对于子控件中的逻辑变动无关的。</p>
+</blockquote>
+<p>如下这种情况，只打包子控件的UMG是生效的：</p>
+<ol>
+<li>UMG_Child中有一个Button，并绑定了Button事件，输出了TEST01</li>
+<li>UMG_Main中嵌入UMG_Child</li>
+<li>打出版本</li>
+<li>修改UMG_Child中Button事件的输出，改为TEST02</li>
+<li>只打包<code>UMG_Child</code></li>
+<li>创建出UMG_Main，点击它里的UMG_Child的Button，会正确输出TEST02</li>
+</ol>
+<h2 id="Pak是否可以跨引擎版本使用"><a href="#Pak是否可以跨引擎版本使用" class="headerlink" title="Pak是否可以跨引擎版本使用"></a>Pak是否可以跨引擎版本使用</h2><p>不行，要保持打包和使用的引擎版本一致。</p>
+<h2 id="从A项目打包给B项目使用的Pak"><a href="#从A项目打包给B项目使用的Pak" class="headerlink" title="从A项目打包给B项目使用的Pak"></a>从A项目打包给B项目使用的Pak</h2><p>HotPatcher中做了替换pakcommand的功能，可以通过以下参数指定：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/hotpatcher-pak-options-replace-pak-command-texts.webp"></p>
+<p>注意：From和To都必须要包含<code>../../../</code>前缀，不然会把文件的绝对路径替换了。</p>
+<h2 id="plugin-HotPatcher-faild"><a href="#plugin-HotPatcher-faild" class="headerlink" title="plugin HotPatcher faild"></a>plugin HotPatcher faild</h2><p>打包之后又如下提示：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16895/20210419171558.webp"></p>
+<p>应该是纯蓝图项目打包导致的，在项目中新建一个C++类，变成一个C++工程重新打包即可。</p>
+<h2 id="打包原始uasset资源"><a href="#打包原始uasset资源" class="headerlink" title="打包原始uasset资源"></a>打包原始uasset资源</h2><p>目前插件并没有能直接选择打包原始uasset资源的功能，但是可以使用一个取巧的方法实现。<br>可以设置<code>ReplacePakCommandTexts</code>把Cooked的目录替换为项目的<code>Content目录</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210428141549.webp"></p>
+<p>虽然<code>*pakcommand.txt</code>里依然会有<code>uexp</code>等文件的记录，但是在项目的<code>Content</code>下没有，也并不会打包到pak中去，会忽略不存在的文件，并有以下log输出：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LogPakFile: Warning: Missing file &quot;D:/Client/Content/Assets/Scene/Map/LookDev/DemoAssets/Mesh/FFXV/000.uexp&quot; will not be added to PAK file.</span><br></pre></td></tr></table></figure>
+<p>算是取巧的一种实现吧，但是可行。</p>
+<h2 id="导出跨机器的通用配置文件"><a href="#导出跨机器的通用配置文件" class="headerlink" title="导出跨机器的通用配置文件"></a>导出跨机器的通用配置文件</h2><p>Q：HotPatcher中导出的配置，有些是依赖于本地绝对路径的文件，如BaseVersion、Non-Asset文件、SavePath等，不同的机器这些绝对路径并不能保证一致，能否基于相对路径进行配置？</p>
+<p>A：可以。HotPatcher所有能够指定路径的配置项，都支持标记符替换，可以使用以下标记符来替代绝对路径。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[ENGINEDIR]</span><br><span class="line">[ENGINE_CONTENT_DIR]</span><br><span class="line">[PROJECTDIR]</span><br><span class="line">[PROJECT_CONTENT_DIR]</span><br><span class="line">[PROJECT_SAVED_DIR]</span><br><span class="line">[PROJECT_CONFIG_DIR]</span><br></pre></td></tr></table></figure>
+<p>在打包时会自动替换为当前机器的绝对路径，基于相对路径则是完全通用的配置文件。</p>
+<h2 id="依赖分析耗时"><a href="#依赖分析耗时" class="headerlink" title="依赖分析耗时"></a>依赖分析耗时</h2><p>当项目资源非常多，插件提供的依赖分析功能的耗时十分可观，其主要目的是分析被依赖的资源，防止依赖了但是没有被打包的情况。<br>如果依赖了引擎、插件中的资源，不进行依赖分析是管理不到的（或者手动指定），而且如果想要剔除没有引用的资源不分析也做不到。不需要的话也是可以关掉的，设置bAnalysisFilterDependencies就可以了。<br>这样只会对配置中所指定的目录下的所有资源、单独指定的资源，与基础版本中的进行Diff分析，能够减少依赖分析的耗时（如果资源量非常大，并且能保证所有的资源依赖都在/Game）下的可以不开启依赖分析。</p>
+<h2 id="Memory-mapped-file-has-the-wrong-alignment"><a href="#Memory-mapped-file-has-the-wrong-alignment" class="headerlink" title="Memory mapped file has the wrong alignment"></a>Memory mapped file has the wrong alignment</h2><blockquote>
+<p>注意：最新的插件中已经做了适配支持，无需再手动指定。</p>
+</blockquote>
+<p>在IOS包中出现以下Crash:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">IsAligned(MappedRegion-&gt;GetMappedPtr(), FPlatformProperties::GetMemoryMappingAlignment()), TEXT(&quot;Memory mapped file has the wrong alignment!&quot;)</span><br></pre></td></tr></table></figure>
+<p>这是因为打包IOS时没有设置<code>alignformemorymapping</code>的值导致的，默认是0，但是IOS要设置为<code>16384</code>：</p>
+<figure class="highlight cpp"><figcaption><span>Engine/Source/Runtime/Core/Public/IOS/IOSPlatformProperties.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> FORCEINLINE int64 <span class="title">GetMemoryMappingAlignment</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">16384</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>打包Pak时传递参数即可：<code>-alignformemorymapping=16384</code>。</p>
+<p>在UE默认打包时也添加了该参数：</p>
+<figure class="highlight csharp"><figcaption><span>Source\Programs\AutomationTool\Scripts\CopyBuildToStagingDirectory.Automation.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">CreatePaks</span>(<span class="params">ProjectParams Params, DeploymentContext SC, List&lt;CreatePakParams&gt; PakParamsList, EncryptionAndSigning.CryptoSettings CryptoSettings, FileReference CryptoKeysCacheFilename</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="built_in">string</span> BulkOption = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    ConfigHierarchy PlatformEngineConfig = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">if</span> (Params.EngineConfigs.TryGetValue(SC.StageTargetPlatform.PlatformType, <span class="keyword">out</span> PlatformEngineConfig))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">bool</span> bMasterEnable = <span class="literal">false</span>;</span><br><span class="line">      PlatformEngineConfig.GetBool(<span class="string">&quot;MemoryMappedFiles&quot;</span>, <span class="string">&quot;MasterEnable&quot;</span>, <span class="keyword">out</span> bMasterEnable);</span><br><span class="line">        <span class="keyword">if</span> (bMasterEnable)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">int</span> Value = <span class="number">0</span>;</span><br><span class="line">        PlatformEngineConfig.GetInt32(<span class="string">&quot;MemoryMappedFiles&quot;</span>, <span class="string">&quot;Alignment&quot;</span>, <span class="keyword">out</span> Value);</span><br><span class="line">            <span class="keyword">if</span> (Value &gt; <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                BulkOption = String.Format(<span class="string">&quot; -AlignForMemoryMapping=&#123;0&#125;&quot;</span>, Value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它读取的是<code>Config/PLATFORM/*Engine.ini</code>中<code>MemoryMappedFiles</code>Section下的<code>Alignment</code>值，如IOS：</p>
+<figure class="highlight ini"><figcaption><span>Config/IOS/IOSEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[MemoryMappedFiles]</span></span><br><span class="line"><span class="attr">MasterEnable</span>=<span class="literal">true</span></span><br><span class="line"><span class="attr">Alignment</span>=<span class="number">16384</span></span><br></pre></td></tr></table></figure>
+<p>正好对应了代码里的值，并且只有IOS的平台指定了该项的值：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/search?q=MemoryMappedFiles&unscoped_q=MemoryMappedFiles">MemoryMappedFiles</a>。</p>
+<h2 id="导入Release漏掉部分插件资源"><a href="#导入Release漏掉部分插件资源" class="headerlink" title="导入Release漏掉部分插件资源"></a>导入Release漏掉部分插件资源</h2><p>请检查插件路径名字是否与插件名完全一致。如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Plugins\HDiffPatchUE4\HDiffPatch.uplugin</span><br></pre></td></tr></table></figure>
+<p>这种情况是不允许的，路径必须要与插件名一致。</p>
+<h2 id="Editor中资源打包和真机加载流程"><a href="#Editor中资源打包和真机加载流程" class="headerlink" title="Editor中资源打包和真机加载流程"></a>Editor中资源打包和真机加载流程</h2><p>随着游戏内资源越来越多，包体越来越大，但移动端的包大小是有限制的，不能无限度地把所有的资源都打到基础包中，Android上限是2G（可以开启<code>Allow Large Obb files</code>以支持4G），IOS提交到AppStore的上限也是4G，通常会保持IOS/Android基础包内的资源统一，其余的资源用热更或动态下载的形式更新到设备上。</p>
+<p>所以，实际上在<strong>开发阶段</strong>打进基础包内的资源，只是工程中的一部分。经常无法满足策划、美术、测试同学的验证需要。</p>
+<ol>
+<li>新的地图、资源想要在真机查看</li>
+<li>包内资源有问题，提交后等待整包构建时间太久</li>
+<li>基础包的资源量超标，可能无法添加新的资源</li>
+</ol>
+<p>基于这种需求，在开发阶段，可以使用<strong>基础包</strong>+<strong>补丁</strong>的形式实现。</p>
+<h3 id="资源的打包"><a href="#资源的打包" class="headerlink" title="资源的打包"></a>资源的打包</h3><p>在我们当前的工程中，在编辑器中，可以直接在资源、目录上右键选择<strong>Cook And Pak Actions</strong>，选择对应的平台，以及选择<strong>AnalysisDependencies</strong>（分析依赖）。</p>
+<p>不同平台的包需要选择的不一样（根据自己项目实际情况选择）：</p>
+<ul>
+<li>安卓：Android_ASTC</li>
+<li>IOS：IOS</li>
+<li>PCVersion：WindowsNoEditor</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20221018124619.webp"></p>
+<p>执行之后右下角会有执行提示：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20221018125021.webp"></p>
+<p>需要等待执行完毕，这个过程不会卡住编辑器，可以做其他的编辑操作。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20221018130012.webp"></p>
+<blockquote>
+<p>执行的耗时取决于引用的资源量，以及所选择的资源之前有没有执行过打包（DDC）。</p>
+</blockquote>
+<p>执行完毕之后，会在项目的<code>Saved/HotPatcher/Paks/&#123;EXECUTE_TIME&#125;/Android_ASTC</code>下面创建出一个对应的 <strong>.pak</strong> 文件，这个 <strong>pak</strong> 文件就是打包资源的补丁包，文件名中包含了平台名，不同平台的 <strong>pak</strong> 文件<strong>不能混用</strong>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20221018130123.webp"></p>
+<h3 id="放入真机中"><a href="#放入真机中" class="headerlink" title="放入真机中"></a>放入真机中</h3><h4 id="PCVersion"><a href="#PCVersion" class="headerlink" title="PCVersion"></a>PCVersion</h4><p>PCVersion需要将这个Pak文件放到以下目录中：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WindowsNoEditor\PROJECT_NAME\Content\Paks</span><br></pre></td></tr></table></figure>
+<p>若不存在Paks目录，可手动创建。</p>
+<h4 id="Android"><a href="#Android" class="headerlink" title="Android"></a>Android</h4><p>在Android中，需要将这个 <strong>pak</strong> 文件放到下面目录中：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Game/PROJECT_NAME/PROJECT_NAME/Saved/Paks</span><br></pre></td></tr></table></figure>
+<p>如果修改了数据目录到沙盒路径，则是这个路径：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Android/data/com.xxxx.yyyy/files/UE4Game/PROJECT_NAME/PROJECT_NAME/Saved/Paks</span><br></pre></td></tr></table></figure>
+<p>如果没有Paks目录，可以手动创建一个。</p>
+<h4 id="IOS"><a href="#IOS" class="headerlink" title="IOS"></a>IOS</h4><p>IOS则要复杂一些，需要用<strong>爱思助手</strong>或<strong>iMaZing</strong>等IOS管理工具传递文件。<br>放入 <strong>文稿</strong> - <strong>PROJECT_NAME</strong> - <strong>Saved</strong> - <strong>Paks</strong>下，若不存在Paks目录，可手动创建。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20221018125828.webp"></p>
+<h3 id="检查挂载情况"><a href="#检查挂载情况" class="headerlink" title="检查挂载情况"></a>检查挂载情况</h3><p>当将<strong>pak</strong>文件放入上述目录之后，就可以启动游戏了。</p>
+<p>如果为了确认<strong>pak</strong>文件是否生效，可以从Log中查看：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LogPakFile: Display: Found Pak file ../../../PROJECT_NAME/Saved/Paks/2022.10.18-13.02.53_IOS_001_P.pak attempting to mount.</span><br><span class="line">LogPakFile: Display: Mounting pak file ../../../PROJECT_NAME/Saved/Paks/2022.10.18-13.02.53_IOS_001_P.pak.</span><br></pre></td></tr></table></figure>
+<p>有这样的Log，就代表资源包被引擎读取成功，可以直接使用，<strong>就像它被打进了基础包中一样</strong>。</p>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><blockquote>
+<p>手动打包<strong>Pak</strong>的优先级高于基础包内的资源，意味着一个资源如果<strong>补丁包</strong>和<strong>基础包</strong>中<strong>同时</strong>存在，就会<strong>替换</strong>基础包内的，就像热更新逻辑。</p>
+</blockquote>
+<ol>
+<li>不同平台的<strong>pak</strong>不能混用！</li>
+<li>测试完毕之后要把设备上的pak文件删除，不然后面新打的包可能会出现资源表现错误。</li>
+</ol>
+<h2 id="UE5-的问题排查"><a href="#UE5-的问题排查" class="headerlink" title="UE5+的问题排查"></a>UE5+的问题排查</h2><blockquote>
+<p>注意：从v82.0开始，已兼容UE5.2、5.3。</p>
+</blockquote>
+<p>在UE5中如果发现打包的Pak出现异常：</p>
+<ol>
+<li>Pak无法挂载：排查是否项目开启了IoStore，在项目设置中关闭后，重新打基础包。</li>
+</ol>
+<script src="https://gist.github.com/imzlp/5d117e9c5e1fcc46fd778fb908402593.js"></script>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                本篇文章的内容会持续更新。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/16895/" target="_blank">UE热更新：Questions & Answers</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年03月12日 10时45分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有7.3k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/16895/" target="_blank" title="UE热更新：Questions & Answers">https://imzlp.com/posts/16895/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/16895/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+              <a href="/tags/HotPatcher/" rel="tag"># HotPatcher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/19135/" rel="prev" title="UE性能分析：内存优化">
+      <i class="fa fa-chevron-left"></i> UE性能分析：内存优化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/5867/" rel="next" title="UE热更新：Create Shader Patch">
+      UE热更新：Create Shader Patch <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HotPatcher%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">HotPatcher相关问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%AD%E6%9B%B4%E6%96%B0%E7%B3%BB%E5%88%97%E6%96%87%E7%AB%A0"><span class="nav-number">2.</span> <span class="nav-text">热更新系列文章</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pak%E7%9A%84%E8%87%AA%E5%8A%A8%E6%8C%82%E8%BD%BD%E7%9B%AE%E5%BD%95"><span class="nav-number">3.</span> <span class="nav-text">pak的自动挂载目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mount-Point%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">Mount Point的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pak%E6%97%A0%E6%B3%95%E8%A2%AB%E6%8C%82%E8%BD%BD"><span class="nav-number">5.</span> <span class="nav-text">Pak无法被挂载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pak-master-signature-table-check-failed-for-pak"><span class="nav-number">6.</span> <span class="nav-text">Pak master signature table check failed for pak</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#iOS%E7%83%AD%E6%9B%B4metallib%E9%97%AE%E9%A2%98"><span class="nav-number">7.</span> <span class="nav-text">iOS热更metallib问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-25-ShaderPatch-Crash"><span class="nav-number">8.</span> <span class="nav-text">UE4.25+ ShaderPatch Crash</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%AD%E6%9B%B4%E4%B8%80%E4%B8%AA%E4%B8%8D%E5%AD%98%E5%9C%A8%E7%9A%84%E6%8F%92%E4%BB%B6%E4%B8%AD%E7%9A%84%E8%B5%84%E6%BA%90"><span class="nav-number">9.</span> <span class="nav-text">热更一个不存在的插件中的资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%AD%E6%9B%B4%E7%9A%84%E8%B5%84%E6%BA%90%E6%B2%A1%E6%9C%89%E6%95%88%E6%9E%9C"><span class="nav-number">10.</span> <span class="nav-text">热更的资源没有效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%AD%E6%9B%B4%E7%9A%84%E8%B5%84%E6%BA%90%E6%9D%90%E8%B4%A8%E4%B8%A2%E5%A4%B1"><span class="nav-number">11.</span> <span class="nav-text">热更的资源材质丢失</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AssetRegistry%E6%98%AF%E5%90%A6%E5%BF%85%E9%A1%BB%E7%83%AD%E6%9B%B4"><span class="nav-number">12.</span> <span class="nav-text">AssetRegistry是否必须热更</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android%E6%8F%90%E7%A4%BAnot-found-uproject"><span class="nav-number">13.</span> <span class="nav-text">Android提示not found uproject</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E8%B5%84%E6%BA%90%E4%B8%8D%E6%89%93%E5%88%B0%E5%9F%BA%E7%A1%80%E5%8C%85%E4%B8%AD"><span class="nav-number">14.</span> <span class="nav-text">控制资源不打到基础包中</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E6%9F%90%E4%B8%AA%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%8C%85%E4%B8%AD%E7%9A%84%E8%B5%84%E6%BA%90"><span class="nav-number">15.</span> <span class="nav-text">分析某个平台的包中的资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UMG%E5%AD%90%E6%8E%A7%E4%BB%B6%E7%83%AD%E6%9B%B4%E4%B8%8D%E7%94%9F%E6%95%88"><span class="nav-number">16.</span> <span class="nav-text">UMG子控件热更不生效</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pak%E6%98%AF%E5%90%A6%E5%8F%AF%E4%BB%A5%E8%B7%A8%E5%BC%95%E6%93%8E%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8"><span class="nav-number">17.</span> <span class="nav-text">Pak是否可以跨引擎版本使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8EA%E9%A1%B9%E7%9B%AE%E6%89%93%E5%8C%85%E7%BB%99B%E9%A1%B9%E7%9B%AE%E4%BD%BF%E7%94%A8%E7%9A%84Pak"><span class="nav-number">18.</span> <span class="nav-text">从A项目打包给B项目使用的Pak</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#plugin-HotPatcher-faild"><span class="nav-number">19.</span> <span class="nav-text">plugin HotPatcher faild</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%93%E5%8C%85%E5%8E%9F%E5%A7%8Buasset%E8%B5%84%E6%BA%90"><span class="nav-number">20.</span> <span class="nav-text">打包原始uasset资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%87%BA%E8%B7%A8%E6%9C%BA%E5%99%A8%E7%9A%84%E9%80%9A%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">21.</span> <span class="nav-text">导出跨机器的通用配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%9D%E8%B5%96%E5%88%86%E6%9E%90%E8%80%97%E6%97%B6"><span class="nav-number">22.</span> <span class="nav-text">依赖分析耗时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Memory-mapped-file-has-the-wrong-alignment"><span class="nav-number">23.</span> <span class="nav-text">Memory mapped file has the wrong alignment</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5Release%E6%BC%8F%E6%8E%89%E9%83%A8%E5%88%86%E6%8F%92%E4%BB%B6%E8%B5%84%E6%BA%90"><span class="nav-number">24.</span> <span class="nav-text">导入Release漏掉部分插件资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Editor%E4%B8%AD%E8%B5%84%E6%BA%90%E6%89%93%E5%8C%85%E5%92%8C%E7%9C%9F%E6%9C%BA%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B"><span class="nav-number">25.</span> <span class="nav-text">Editor中资源打包和真机加载流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E7%9A%84%E6%89%93%E5%8C%85"><span class="nav-number">25.1.</span> <span class="nav-text">资源的打包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%BE%E5%85%A5%E7%9C%9F%E6%9C%BA%E4%B8%AD"><span class="nav-number">25.2.</span> <span class="nav-text">放入真机中</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#PCVersion"><span class="nav-number">25.2.1.</span> <span class="nav-text">PCVersion</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Android"><span class="nav-number">25.2.2.</span> <span class="nav-text">Android</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IOS"><span class="nav-number">25.2.3.</span> <span class="nav-text">IOS</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E6%8C%82%E8%BD%BD%E6%83%85%E5%86%B5"><span class="nav-number">25.3.</span> <span class="nav-text">检查挂载情况</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">25.4.</span> <span class="nav-text">注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE5-%E7%9A%84%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5"><span class="nav-number">26.</span> <span class="nav-text">UE5+的问题排查</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/16895/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="DevOps是一种思想，以自动化进行持续集成(CI)和持续部署(CD)为基础，优化开发、测试、运维等所有环节。强调软件开发测试运维的一体化，减少各个部门或流程之间的沟通成本从而实现快速高质量的发布和迭代。 虽然在游戏领域的开发情况和传统互联网有很大区别，但借用DevOps的概念把项目中所有的生产环节最大限度地接入自动化，能够大幅提升效率。 本篇文章会介绍，UE实现自动化的基础概念，及我在虚幻引擎自">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DevOps：虚幻引擎的CI&#x2F;CD实践">
+<meta property="og:url" content="https://imzlp.com/posts/96336/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="DevOps是一种思想，以自动化进行持续集成(CI)和持续部署(CD)为基础，优化开发、测试、运维等所有环节。强调软件开发测试运维的一体化，减少各个部门或流程之间的沟通成本从而实现快速高质量的发布和迭代。 虽然在游戏领域的开发情况和传统互联网有很大区别，但借用DevOps的概念把项目中所有的生产环节最大限度地接入自动化，能够大幅提升效率。 本篇文章会介绍，UE实现自动化的基础概念，及我在虚幻引擎自">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414160114.webp">
+<meta property="article:published_time" content="2023-04-15T14:30:56.000Z">
+<meta property="article:modified_time" content="2023-04-15T14:30:56.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="CI&#x2F;CD">
+<meta property="article:tag" content="DevOps">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414160114.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/96336/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>DevOps：虚幻引擎的CI/CD实践 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/96336/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DevOps：虚幻引擎的CI/CD实践<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2023-04-15-96336.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">DevOps: CI/CD Practices for Unreal Engine</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-15 14:30 14:30:56:30" itemprop="dateCreated datePublished" datetime="2023-04-15T14:30:56+00:00">2023-04-15 14:30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/DevOps/" itemprop="url" rel="index"><span itemprop="name">DevOps</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/DevOps/CI-CD/" itemprop="url" rel="index"><span itemprop="name">CI/CD</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/96336/" class="post-meta-item leancloud_visitors" data-flag-title="DevOps：虚幻引擎的CI/CD实践" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>DevOps是一种思想，以自动化进行持续集成(CI)和持续部署(CD)为基础，优化开发、测试、运维等所有环节。强调软件开发测试运维的一体化，减少各个部门或流程之间的沟通成本从而实现快速高质量的发布和迭代。</p>
+<p>虽然在游戏领域的开发情况和传统互联网有很大区别，但借用DevOps的概念把项目中所有的生产环节最大限度地接入自动化，能够大幅提升效率。</p>
+<p>本篇文章会介绍，UE实现自动化的基础概念，及我在虚幻引擎自动化构建方面的一些尝试和实际的工程实践。</p>
+<span id="more"></span>
+
+<h2 id="Forward"><a href="#Forward" class="headerlink" title="Forward"></a>Forward</h2><p>我认为，在游戏开发中进行自动化的目标，核心诉求为以下五点：</p>
+<ol>
+<li>降低繁杂任务的人工参与</li>
+<li>降低排查问题的成本，提高效率</li>
+<li>快速迭代版本、产出可体验内容</li>
+<li>参数化控制、流程可扩展</li>
+</ol>
+<p>这些需求对应了开发过程中的各个阶段，后面我会针对这些诉求在UE中的实际痛点进行分析。在UE的就业市场中，甚至逐渐诞生了一种“构建工程师“的概念，专门处理项目中的构建需求。</p>
+<p>在工作中，面对需要处理构建任务的工作，要持有一种深入研究的心态。因为它不仅仅只是打包一种事情这么简单，而是能够涉及到整个开发流程中的所有方面去做优化。发现瓶颈和痛点，优化和解决，价值自然能得到体现。</p>
+<p>如果视野只是局限于打包这些浅层构建需要，无法深入积累对于技术人有很大劣势，积累自己很重要。</p>
+<h2 id="DevOps平台"><a href="#DevOps平台" class="headerlink" title="DevOps平台"></a>DevOps平台</h2><p>所谓的DevOps平台，简单地说，是提供一个方便可编排的执行环境。能够把自定义的机器托管上去，编排执行顺序、拉起执行命令、收集结果和任务调度。</p>
+<p>这方面的产品很多，开源的有<a target="_blank" rel="noopener" href="https://www.jenkins.io/">Jenkins</a>，Github有<a target="_blank" rel="noopener" href="https://github.com/features/actions">Github Actions</a>。大公司里可能还有自研的CI/CD系统，如腾讯有蓝盾等等。</p>
+<p>可以编辑需要执行的流水线：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414193600.webp"></p>
+<p>本文不会赘述它们的部署，因为本质上来说它们只是编排流程和拉起执行命令的环境，并不是UE在CI/CD实践中的重点。</p>
+<h2 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h2><h3 id="Engine-Editor"><a href="#Engine-Editor" class="headerlink" title="Engine/Editor"></a>Engine/Editor</h3><p>在项目开发中，除了程序开发人员之外，对于策划或者美术同学，他们没有开发能力和代码需要，通常不会使用源码版引擎，而是会构建出一个二进制的引擎版本，供他们使用。</p>
+<p>就像从EpicLauncher中安装的引擎那样：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414162820.webp"></p>
+<p>在UE项目中实现CI/CD构建的一个方面，就是要方便地构建出二进制的引擎和工程Editor版本，让非程序同学在本地完全不考虑编译。并且这个二进制引擎是可以复用的，引擎代码没有变动则不需要重新构建，只增量编译工程。</p>
+<p>这个我在文章<a href="https://imzlp.com/posts/11956/">BuildGraph：构建支持多平台打包的二进制引擎</a>中做了详细介绍，已有的东西不再重复。</p>
+<p>最终要实现的流程是这样一种逻辑：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414163940.webp"></p>
+<p>每次执行都更新引擎和Client代码，构建出一个二进制的引擎和工程，并且处于安全的考虑，也可以剔除引擎和客户端的C++代码。</p>
+<p>实现上简单来说，是使用BuildGraph从源码版引擎构建出一个二进制引擎版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RunUAT.bat BuildGraph -target=<span class="string">&quot;Make Installed Build Win64&quot;</span> -script=Engine/Build/InstalledEngineBuild.xml -<span class="built_in">set</span>:WithMac=<span class="literal">false</span> -<span class="built_in">set</span>:WithAndroid=<span class="literal">false</span> -<span class="built_in">set</span>:WithIOS=<span class="literal">false</span> -<span class="built_in">set</span>:WithTVOS=<span class="literal">false</span> -<span class="built_in">set</span>:WithLinux=<span class="literal">false</span> -<span class="built_in">set</span>:WithHTML5=<span class="literal">false</span> -<span class="built_in">set</span>:WithSwitch=<span class="literal">false</span> -<span class="built_in">set</span>:WithDDC=<span class="literal">false</span> -<span class="built_in">set</span>:WithWin32=<span class="literal">false</span> -<span class="built_in">set</span>:WithLumin=<span class="literal">false</span> -<span class="built_in">set</span>:WithPS4=<span class="literal">false</span> -<span class="built_in">set</span>:WithXboxOne=<span class="literal">false</span> -<span class="built_in">set</span>:WithHoloLens=<span class="literal">false</span> -<span class="built_in">set</span>:GameConfigurations=Development</span><br></pre></td></tr></table></figure>
+
+<p>然后用生成的二进制引擎去编译工程，就会只编译项目内的模块了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Engine\Build\BatchFiles\Build.bat</span><br><span class="line">-Target=<span class="string">&quot;XXXXEditor Win64 Development&quot;</span></span><br><span class="line">-Project=<span class="string">&quot;D:\Client\Client.uproject&quot;</span></span><br><span class="line">-WaitMutex</span><br></pre></td></tr></table></figure>
+
+<p>与在VS中启动编译执行的是相同命令。</p>
+<h4 id="传递编译参数"><a href="#传递编译参数" class="headerlink" title="传递编译参数"></a>传递编译参数</h4><p>有时在编译二进制引擎和项目时，想要传递给UE参数，根据参数来控制编译行为。这样可以动态地控制一些功能的开关。<br>在编译引擎和编译客户端时传递编译参数，是两种情况。</p>
+<p>在通过BuildGraph构建二进制引擎时，引擎默认的InstalledEngineBuild.xml不能给UBT指定参数。<br>可以自己拷贝一份<code>InstalledEngineBuild.xml</code>，在其上修改：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Option</span> <span class="attr">Name</span>=<span class="string">&quot;UBTArgs&quot;</span> <span class="attr">DefaultValue</span>=<span class="string">&quot;&quot;</span> <span class="attr">Description</span>=<span class="string">&quot;compile UE4Editor UBT Args&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">Property</span> <span class="attr">Name</span>=<span class="string">&quot;UseUBTArgs&quot;</span> <span class="attr">Value</span>=<span class="string">&quot;$(UBTArgs)&quot;</span> /&gt;</span></span><br><span class="line"><span class="comment">&lt;!-- ... --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">Compile</span> <span class="attr">Target</span>=<span class="string">&quot;UE4Editor&quot;</span> <span class="attr">Platform</span>=<span class="string">&quot;Win64&quot;</span> <span class="attr">Configuration</span>=<span class="string">&quot;Development&quot;</span> <span class="attr">Tag</span>=<span class="string">&quot;#UE4Editor Win64&quot;</span> <span class="attr">Arguments</span>=<span class="string">&quot;-precompile $(AllModules) $(CrashReporterCompileArgsWin) -WaitMutex -FromMsBuild -NoXGE $(UseUBTArgs)&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<p>在调用BuildGraph传递就可以了：<code>-set:UBTArgs=</code>。</p>
+<p>在编译Client项目时，可以直接在调用UBT编译工程的命令中追加新参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Engine\Build\BatchFiles\Build.bat</span><br><span class="line">-Target=<span class="string">&quot;XXXXEditor Win64 Development&quot;</span></span><br><span class="line">-Project=<span class="string">&quot;D:\Client\Client.uproject&quot;</span></span><br><span class="line">-WaitMutex</span><br><span class="line">-<span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+
+<p>在build.cs或target.cs中可以获取UBT的命令行参数，对编译选项进行控制：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span>[] CmdArgs = Environment.GetCommandLineArgs();</span><br><span class="line"><span class="keyword">foreach</span> (<span class="built_in">string</span> CmdLineArg <span class="keyword">in</span> CmdArgs)</span><br><span class="line">&#123;</span><br><span class="line">    Console.WriteLine(<span class="string">&quot;CmdLineArg: &quot;</span> + CmdLineArg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译时输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">0&gt;E:\UnrealEngine\Launcher\UE_4.26\Engine\Build\BatchFiles\Build.bat GWorldEditor Win64 Development -Project=&quot;E:\UnrealProjects\GWorld\GWorld.uproject&quot; -WaitMutex -FromMsBuild -test</span><br><span class="line">0&gt;CmdLineArg: ..\..\Engine\Binaries\DotNET\UnrealBuildTool.exe</span><br><span class="line">0&gt;CmdLineArg: GWorldEditor</span><br><span class="line">0&gt;CmdLineArg: Win64</span><br><span class="line">0&gt;CmdLineArg: Development</span><br><span class="line">0&gt;CmdLineArg: -Project=E:\UnrealProjects\GWorld\GWorld.uproject</span><br><span class="line">0&gt;CmdLineArg: -WaitMutex</span><br><span class="line">0&gt;CmdLineArg: -FromMsBuild</span><br><span class="line">0&gt;CmdLineArg: -test</span><br></pre></td></tr></table></figure>
+<p>基于传递的参数可以动态地修改编译行为，比如添加宏、依赖的模块等。</p>
+<p>而且，基于这种方式，影响的只是当前模块和依赖它的模块，并不需要完全重新编译，能充分里用未变动模块的编译缓存。</p>
+<h3 id="打包"><a href="#打包" class="headerlink" title="打包"></a>打包</h3><p>打包，是UE构建中最基础的需求。在UE编辑器内，提供了两种方式用于打包的选项。<br>第一种是<code>File</code>-<code>Package Project</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414200245.webp"></p>
+<p>第二种则是ProjectLauncher，可以编辑一些配置项，如Cook的平台、Cultures等选项：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414200054.webp"></p>
+<p>但它们都是通过UAT拉起来<code>BuildCookRun</code>执行的，UAT它是一个独立的程序，相当于是一个任务调度器，拉起多个进程执行不同阶段地任务，用于统筹整个打包过程，并且可以控制跳过某些阶段。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202210230933114.webp"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Engine\Engine\Build\BatchFiles\RunUAT.bat</span><br><span class="line">-ScriptsForProject=D:/Client/Blank425.uproject</span><br><span class="line">BuildCookRun</span><br><span class="line">-targetplatform=Win64</span><br><span class="line">-project=D:/Client/Blank425.uproject</span><br><span class="line">-nocompileeditor</span><br><span class="line">-nop4</span><br><span class="line">-cook</span><br><span class="line">-stage</span><br><span class="line">-archive</span><br><span class="line">-archivedirectory=D:/Client/Package</span><br><span class="line">-package</span><br><span class="line">-ue4exe=D:\GameEngine\Engine\Engine\Binaries\Win64\UE4Editor-Cmd.exe</span><br><span class="line">-pak</span><br><span class="line">-prereqs</span><br><span class="line">-nodebuginfo</span><br><span class="line">-build</span><br><span class="line">-target=Blank425</span><br><span class="line">-clientconfig=Development</span><br><span class="line">-utf8output</span><br><span class="line">-compile</span><br></pre></td></tr></table></figure>
+<p>当我们想要打包时，就可以执行上面的命令。</p>
+<p>但当要把打包集成到CI/CD系统时还需要对它的参数进行封装，比如：</p>
+<ol>
+<li>指定平台（Win64/Android/IOS等）</li>
+<li>Cook的平台（WindowsNoEditor/Android_ASTC/IOS等）</li>
+<li>Configuration（Debug/Development/Shipping）</li>
+<li>UBT编译参数</li>
+<li>传递给CookCommandlet的参数</li>
+<li>是否启用加密</li>
+<li>输出路径</li>
+</ol>
+<p>等等，所有需要进行动态控制的选项，都需要暴露成参数。</p>
+<p>可以使用python等脚本语言做个封装：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414205329.webp"></p>
+<h4 id="传递编译参数-1"><a href="#传递编译参数-1" class="headerlink" title="传递编译参数"></a>传递编译参数</h4><p>在BuildCookRun的命令中，可以通过<code>-ubtargs=</code>来指定传递给UBT的参数，用于在编译时进行动态控制行为。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Engine\Engine\Build\BatchFiles\RunUAT.bat</span><br><span class="line">-ScriptsForProject=D:/Client/Blank425.uproject</span><br><span class="line">BuildCookRun</span><br><span class="line">-targetplatform=Win64</span><br><span class="line">-project=D:/Client/Blank425.uproject</span><br><span class="line">...</span><br><span class="line">-ubtargs=<span class="string">&quot;-test1 -test2 -test3&quot;</span></span><br></pre></td></tr></table></figure>
+<p>可以在UBT的调用命令里看到，参数传递过来了：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202304150958348.webp"></p>
+<p>同样可以在<code>build.cs</code>或<code>target.cs</code>中获取：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span>[] CmdArgs = Environment.GetCommandLineArgs();</span><br><span class="line"><span class="keyword">foreach</span> (<span class="built_in">string</span> CmdLineArg <span class="keyword">in</span> CmdArgs)</span><br><span class="line">&#123;</span><br><span class="line">    Console.WriteLine(<span class="string">&quot;CmdLineArg: &quot;</span> + CmdLineArg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="传递Cook参数"><a href="#传递Cook参数" class="headerlink" title="传递Cook参数"></a>传递Cook参数</h4><p>打包时，UAT在代码编译完成后，会拉起引擎执行CookCommandlet，用于处理资源。</p>
+<p>UAT默认调用Cook的参数为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">D:\UnrealEngine\Source\UE_4.27.2\Engine\Binaries\Win64\UE4Editor-Cmd.exe</span><br><span class="line">E:\UnrealProjects\BlankExample\BlankExample.uproject</span><br><span class="line">-run=Cook</span><br><span class="line">-TargetPlatform=WindowsNoEditor</span><br><span class="line">-fileopenlog</span><br><span class="line">-ddc=DerivedDataBackendGraph</span><br><span class="line">-unversioned</span><br><span class="line">-abslog=D:\UnrealEngine\Source\UE_4.27.2\Engine\Programs\AutomationTool\Saved\Cook-2023.04.15-10.08.49.txt</span><br><span class="line">-stdout</span><br><span class="line">-CrashForUAT</span><br><span class="line">-unattended</span><br><span class="line">-NoLogTimes</span><br><span class="line">-UTF8Output</span><br></pre></td></tr></table></figure>
+<p>但是，该怎么通过UAT的命令，传递给Cook参数呢？</p>
+<p>UE为UAT的BuildCookRun提供了一个参数来实现这种需求：<code>-AdditionalCookerOptions=</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Engine\Engine\Build\BatchFiles\RunUAT.bat</span><br><span class="line">-ScriptsForProject=D:/Client/Blank425.uproject</span><br><span class="line">BuildCookRun</span><br><span class="line">-targetplatform=Win64</span><br><span class="line">-project=D:/Client/Blank425.uproject</span><br><span class="line">...</span><br><span class="line">-AdditionalCookerOptions=<span class="string">&quot;-test1 -test2 -test3&quot;</span></span><br></pre></td></tr></table></figure>
+<p>当UAT调用CookCommandlet时，就会传递这些参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">D:\UnrealEngine\Source\UE_4.27.2\Engine\Binaries\Win64\UE4Editor-Cmd.exe</span><br><span class="line">E:\UnrealProjects\BlankExample\BlankExample.uproject</span><br><span class="line">-run=Cook</span><br><span class="line">-TargetPlatform=WindowsNoEditor</span><br><span class="line">...</span><br><span class="line">-test1</span><br><span class="line">-test2</span><br><span class="line">-test3</span><br></pre></td></tr></table></figure>
+<p>它的作用，在于不用自己拆分和管理打包的过程，通过插件的形式接收这些参数，就能自动地介入到打包的过程中去。</p>
+<p>实现类似下面这张图的效果：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202210231032930.webp"></p>
+<p>我之前的几篇文章中都用到了这个方式：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/27475/">UE 插件与工具开发：Commandlet</a></li>
+<li><a href="https://imzlp.com/posts/37036/">资源管理：重塑 UE 的包拆分方案</a></li>
+<li><a href="https://imzlp.com/posts/24350/">一种灵活与非侵入式的基础包拆分方案</a></li>
+</ul>
+<p>除此之外，如果想要使用Unreal Insights分析打包过程中Cook的各部分耗时，同样可以传递Profiling参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Engine\Engine\Build\BatchFiles\RunUAT.bat</span><br><span class="line">-ScriptsForProject=D:/Client/Blank425.uproject</span><br><span class="line">BuildCookRun</span><br><span class="line">-targetplatform=Win64</span><br><span class="line">-project=D:/Client/Blank425.uproject</span><br><span class="line">...</span><br><span class="line">-AdditionalCookerOptions=<span class="string">&quot;-tracehost=127.0.0.1 -trace=cpu,memory,loadtime -statnamedevents implies -llm&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202304151022094.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202304151023917.webp"></p>
+<h2 id="Cmdlet自动化"><a href="#Cmdlet自动化" class="headerlink" title="Cmdlet自动化"></a>Cmdlet自动化</h2><p>在UE的CI/CD实践中，有相当于部分需求，是自动地从引擎中进行数据的导入导出。通过命令行拉起引擎自动化处理资源等等。</p>
+<p>我前几天写了一篇文章，介绍Commandlet的机制和工程技巧，可以详细查看：<a href="https://imzlp.com/posts/27475/">UE 插件与工具开发：Commandlet</a>。</p>
+<p>以我博客中之前的文章中利用到Cmdlet自动化的为例：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/37036/">资源管理：重塑 UE 的包拆分方案</a></li>
+<li><a href="https://imzlp.com/posts/22655">UE 中多阶段的自动化资源检查方案</a></li>
+<li><a href="https://imzlp.com/posts/20376/">基于 ResScannerUE 的资源检查自动化实践</a></li>
+<li><a href="https://imzlp.com/posts/10938/">UE 热更新：基于 HotPatcher 的自动化流程</a></li>
+<li><a href="https://imzlp.com/posts/20203/">Export Recast Navigation Data from UE4</a></li>
+</ul>
+<p>Cmdlet自动化，能导出NavMesh数据、生成基础包数据、热更包、介入到CookCmdlet过程中自动执行包拆分、扫描资源规范等等。</p>
+<p>充分利用Comdlet实现自动化，最大限度地在对资源处理等需求上无人工参与，降低出错概率，提升效率。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202304151331099.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202304151332945.webp"></p>
+<h2 id="预检查"><a href="#预检查" class="headerlink" title="预检查"></a>预检查</h2><p>在工程实践中，通常也会针对跨平台代码编译和资源检查进行预处理，这样能够尽早暴露问题，不把有问题的部分遗留到打包和运行时、确保构建产出的稳定性。</p>
+<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p>在绝大部分项目中，都是针对跨平台的开发。同一份工程，会出各个平台的包。最常见的就是Windows/Android/IOS等。</p>
+<p>大多数情况下，对于”编译“而言，同一份代码要同时兼容以下平台：</p>
+<ul>
+<li>Win64Editor</li>
+<li>Win64</li>
+<li>MacEditor</li>
+<li>Android</li>
+<li>IOS</li>
+</ul>
+<p>但是因为系统环境、不同平台编译器的标准差异、警告级别、链接库差异和UE中不同Target的编译参数差异，同一份代码在Win64Editor编译的过，不见得就能在Android或IOS编译的过。</p>
+<p>所以，在这种情况下，针对代码的跨平台编译检查是十分必要的，当代码变动之后，自动地把所有需要的平台编译一遍，检查是否有错误。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202304151102545.webp"></p>
+<p>而每个平台实际上所执行的命令都是对UBT的封装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># win为.bat, Mac上则为.sh</span></span><br><span class="line">Engine\Build\BatchFiles\Build.bat</span><br><span class="line">-Target=<span class="string">&quot;BlankExample Android Development&quot;</span> </span><br><span class="line">-Project=<span class="string">&quot;C:\BlankExmaple\BlankExample.uproject&quot;</span></span><br><span class="line">-WaitMutex</span><br></pre></td></tr></table></figure>
+
+<p>通过修改<code>-Target</code>的参数，实现编译不同的Target、Platform和Configuration。</p>
+<p>并且，在日常开发中最常见的一种编译问题，是UE合并翻译单元带来的。</p>
+<p>具体表现是，一份代码A很久没有变动了，改动的其他的代码B，导致A代码报错。<br>这是因为合并翻译单元，之前A和其他的翻译单元合并到一起，虽然A没包含所有需要的头文件，但是其他的翻译单元可能有包含，合并编译就不会报错。</p>
+<p>所以，在预编译检查中，可以关掉项目中的UnityBuild，让每个翻译单元独立编译，同样能够查找到这种错误。</p>
+<p>但关闭bUnityBuild会导致编译变慢，所以只需要在预编译中关闭，在正式的流程中还是要开始，只作检查时用。如何在编译时区分这两种场景，可以通过前面介绍到的传递编译参数的方式来实现。</p>
+<h3 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h3><p>在项目开发过程中，有相当一大部分运行时BUG的情况，是因为资源问题导致的：</p>
+<ul>
+<li>美术改了场景GameMode、误提交</li>
+<li>资源规格不规范</li>
+<li>在版本控制中覆盖了别人的资源</li>
+<li>引用了临时资源</li>
+<li>引用了NeverCook目录中的资源，运行时丢失</li>
+</ul>
+<p>等等情况不胜枚举，如果当出现问题时再去排查，会浪费很多的人力。因为首先要先排查到底是程序的BUG还是资源问题、以及是哪一个资源问题，会耗费大量的额外精力。</p>
+<p>如何一劳永逸地解决这些问题，我之前开发了一款资源扫描工具，将它介入到项目中的开发流程中去，可以多阶段地进行资源检查，最大限度的规避资源问题。</p>
+<p>通过编辑时、提交时、CI/CD、以及打包时，四种阶段协同工作，把资源异常扼杀在摇篮里！</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20220823142911.webp"></p>
+<p>详见我之前的几篇文章：</p>
+<ul>
+<li>  <a href="https://imzlp.com/posts/22655">UE 中多阶段的自动化资源检查方案</a></li>
+<li>  <a href="https://imzlp.com/posts/20376/">基于 ResScannerUE 的资源检查自动化实践</a></li>
+<li>  <a href="https://imzlp.com/posts/11750">UE 资源合规检查工具 ResScannerUE</a></li>
+</ul>
+<h2 id="效率提升"><a href="#效率提升" class="headerlink" title="效率提升"></a>效率提升</h2><p>开发阶段的效率提升，我觉得主要分为以下几个方面：</p>
+<ol>
+<li>开发、资源制作效率</li>
+<li>问题排查效率</li>
+<li>调试效率</li>
+</ol>
+<p>开发和资源制作效率，可以通过充分地利用自动化工具和各种AI辅助工具。尤其是ChatGPT和Stable Diffusion爆发的当下，充分利用AI工具能够比较高效地快速提取信息和产出内容，但也不要完全相信AI，AI还是会胡诌的。</p>
+<p>除此之外，在游戏开发中，需要发掘一些项目真实的痛点，解决它们都能够提高效率。如：</p>
+<ul>
+<li>快速验证代码变动，而不完整走打包流程，避免出包的等待时间。如可从包外加载so，实现快速更新C++代码的效果。或提供只编译代码和最基础资源的打包选项。</li>
+<li>方便地编辑引擎启动参数，避免手动编辑设备中的ue4commandlet.txt文件。(<a href="https://imzlp.com/posts/29169/">高效调试：命令行参数启动 UE Android App</a>)</li>
+<li>根据不同模块的需要，允许美术、策划、程序本地打包资源，快速验证效果。（<a href="https://imzlp.com/posts/17590/">UE资源热更打包工具 HotPatcher</a>）</li>
+<li>每个版本都归档出丰富的数据，哪些资源参与打包、类型占比，有多少冗余，哪些资源是不规范的，并且记录触发了哪个规范，等等，当游戏体验出现问题时能快速定位到它们。（<a href="https://imzlp.com/posts/22570/">UE资源管理：引擎打包资源分析</a>/<a href="https://imzlp.com/posts/22655/">UE中多阶段的自动化资源检查方案</a>）</li>
+<li>提高构建效率，降低代码和Shader的编译以及完整地出包时间。（<a target="_blank" rel="noopener" href="https://www.fastbuild.org/">FASTBuild</a>及一些Cook优化方案）</li>
+</ul>
+<p>在我看来，它们都是DevOps理念在游戏领域应用需要做的事情，这些方面都已经在我们实际的项目中落地，效果很好。有些实践在我之前的文章中可以看到实现思路和具体细节。</p>
+<p>但对于开发效率提升能做的远不止这些，在UE开发流程中还有很多方面可以用DevOps思维优化，后续我会针对具体的方面再写文章深入探讨。</p>
+<p>提高制作效率、减少Debug成本、快速验证和高效迭代版本是DevOps永恒的主题。把稀缺的人力资源应用到关键的地方中去产生更大的价值，也是降本增效的意义吧。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/96336/" target="_blank">DevOps：虚幻引擎的CI/CD实践</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2023年04月15日 14时30分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4.8k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/96336/" target="_blank" title="DevOps：虚幻引擎的CI/CD实践">https://imzlp.com/posts/96336/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/96336/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/CI-CD/" rel="tag"># CI/CD</a>
+              <a href="/tags/DevOps/" rel="tag"># DevOps</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/71467/" rel="prev" title="循迹研究：利用AI助力生活及开发探索">
+      <i class="fa fa-chevron-left"></i> 循迹研究：利用AI助力生活及开发探索
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/83875/" rel="next" title="循迹研究：在复杂的世界中寻找确定性">
+      循迹研究：在复杂的世界中寻找确定性 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Forward"><span class="nav-number">1.</span> <span class="nav-text">Forward</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DevOps%E5%B9%B3%E5%8F%B0"><span class="nav-number">2.</span> <span class="nav-text">DevOps平台</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA"><span class="nav-number">3.</span> <span class="nav-text">构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Engine-Editor"><span class="nav-number">3.1.</span> <span class="nav-text">Engine&#x2F;Editor</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E9%80%92%E7%BC%96%E8%AF%91%E5%8F%82%E6%95%B0"><span class="nav-number">3.1.1.</span> <span class="nav-text">传递编译参数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8C%85"><span class="nav-number">3.2.</span> <span class="nav-text">打包</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E9%80%92%E7%BC%96%E8%AF%91%E5%8F%82%E6%95%B0-1"><span class="nav-number">3.2.1.</span> <span class="nav-text">传递编译参数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E9%80%92Cook%E5%8F%82%E6%95%B0"><span class="nav-number">3.2.2.</span> <span class="nav-text">传递Cook参数</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cmdlet%E8%87%AA%E5%8A%A8%E5%8C%96"><span class="nav-number">4.</span> <span class="nav-text">Cmdlet自动化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E6%A3%80%E6%9F%A5"><span class="nav-number">5.</span> <span class="nav-text">预检查</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">5.1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%84%E6%BA%90"><span class="nav-number">5.2.</span> <span class="nav-text">资源</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%87"><span class="nav-number">6.</span> <span class="nav-text">效率提升</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/96336/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

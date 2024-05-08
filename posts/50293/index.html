@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="远程构建是UE中非常方便好用的一种打包IOS方式，能够只在Mac上编译代码，不COOK资源，能够极大地降低对于Mac硬件的需求。 而且，Mac的售价颇高，传统模式下，如果需要部署多个独立的IOS包构建流程，通常就需要采购多台独立的Mac机器分别部署，硬件成本较高。 况且，IOS的开发环境往往需要随着IOS系统迭代进行更新。每年WWDC发布新版本IOS，就会需要新版本的XCode支持，新版本XCod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE构建提升：优化远程构建IOS的实现">
+<meta property="og:url" content="https://imzlp.com/posts/50293/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="远程构建是UE中非常方便好用的一种打包IOS方式，能够只在Mac上编译代码，不COOK资源，能够极大地降低对于Mac硬件的需求。 而且，Mac的售价颇高，传统模式下，如果需要部署多个独立的IOS包构建流程，通常就需要采购多台独立的Mac机器分别部署，硬件成本较高。 况且，IOS的开发环境往往需要随着IOS系统迭代进行更新。每年WWDC发布新版本IOS，就会需要新版本的XCode支持，新版本XCod">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816155049.png">
+<meta property="article:published_time" content="2023-08-16T10:43:50.000Z">
+<meta property="article:modified_time" content="2023-09-05T20:11:12.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="BuildSystem">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816155049.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/50293/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE构建提升：优化远程构建IOS的实现 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/50293/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE构建提升：优化远程构建IOS的实现<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2023-08-16-50293.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">UE build improvement: optimize the implementation of remote build IOS</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-08-16 10:43 10:43:50:43" itemprop="dateCreated datePublished" datetime="2023-08-16T10:43:50+00:00">2023-08-16 10:43</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-09-05 20:11 20:11:12:11" itemprop="dateModified" datetime="2023-09-05T20:11:12+00:00">2023-09-05 20:11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/BuildSystem/" itemprop="url" rel="index"><span itemprop="name">BuildSystem</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/50293/" class="post-meta-item leancloud_visitors" data-flag-title="UE构建提升：优化远程构建IOS的实现" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>远程构建是UE中非常方便好用的一种打包IOS方式，能够只在Mac上编译代码，不COOK资源，能够极大地降低对于Mac硬件的需求。</p>
+<p>而且，Mac的售价颇高，传统模式下，如果需要部署多个独立的IOS包构建流程，通常就需要采购多台独立的Mac机器分别部署，硬件成本较高。</p>
+<p>况且，IOS的开发环境往往需要随着IOS系统迭代进行更新。每年WWDC发布新版本IOS，就会需要新版本的XCode支持，新版本XCode又依赖新版本的MacOS，套娃式的链式依赖。如果Mac的构建环境增多，那么更新这些机器的构建环境也会变为一个繁琐的重复任务。</p>
+<p>远程构建IOS也能够比较好的解决这个问题，一台独立的Mac，可以同时给多个IOS构建流程提供支持，如果需要更新环境也只需要处理一台即可。而且编译代码的耗时相对固定，且能够进行增量编译，理论上来说只要不是所有的机器同时执行全量编译，那么对于Mac的性能压力就没有那么大。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816154208.png"></p>
+<p>博客中也有开启远程构建IOS的文章：<a href="https://imzlp.com/posts/1948/#%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BAiOS">UE 开发笔记：Mac/iOS 篇</a>，可以参考基础配置启用。</p>
+<p>但UE默认实现的IOS远程构建在实际使用中也存在不少的问题，无法实现从部署到构建全自动化流程，本篇文章会针对远程构建在实际的工程应用中痛点进行优化。</p>
+<span id="more"></span>
+
+<h2 id="RemoteServer指定端口号"><a href="#RemoteServer指定端口号" class="headerlink" title="RemoteServer指定端口号"></a>RemoteServer指定端口号</h2><p>这是一个贯穿所有UE4版本的问题，引擎默认RemoteServer的SSHD端口号为22，大多数情况下也确实是，但是因为各种原因，公司内的网络策略不允许开放22端口，如果想要SSH连接只能将SSHD改为其他端口。</p>
+<p>在这种情况下，如果在ProjectSettings中配置了<code>IP:PORT</code>形式的RemoteServerName，就会导致SSHKey的查询失败，因为UE默认是直接把RemoteServerName拼接到路径里的。</p>
+<p>所以，需要修改引擎支持，让<code>IP:PORT</code>形式的配置不影响SSHKey的查找。</p>
+<p>变动文件为<code>Runtime/IOS/IOSRuntimeSettings/Private/IOSRuntimeSettings.cpp</code>的<code>PostInitProperties</code>函数：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816161102.png"></p>
+<blockquote>
+<p>本问题在UE5中已解决，我提交的PR（<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/pull/7737">EpicGames/UnrealEngine/pull/7737</a>）已被合入UE5，但UE4中仍然存在。</p>
+</blockquote>
+<h2 id="自动化导入证书与Provision"><a href="#自动化导入证书与Provision" class="headerlink" title="自动化导入证书与Provision"></a>自动化导入证书与Provision</h2><p>默认情况下，当在Win和Mac上需要打包IOS时，不管是远程构建还是Mac直接出包，都需要在引擎内导入对应bundle id的证书和provision。<br>并且会弹窗输入证书密码：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816165253.png"></p>
+<p>整个过程时纯手工操作的，非常繁琐。有多少台机器就要进行多少次导入配置，如果证书过期或者provision更新，所有机器又要手动来一遍，简直折磨。</p>
+<p>为了解决这个问题，我排查了引擎中导入证书和provision的实现，寻找可以完全自动化的方法。</p>
+<p>引擎中具有一个独立的程序，iPhonePackager，可以导入证书和provision，以及安装IPA到设备上、对IPA重签名等功能。虽然它提供了命令行，但是却不能指定证书密码，执行时会弹窗提示，如上图在编辑器内导入的情况。</p>
+<p>所以，我修改了引擎中iPhonePackager的代码，支持通过命令行参数<code>-cerpassword</code>指定证书密码，避免弹窗的问题。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816170056.png"></p>
+<p>这样就能够通过下列命令进行静默式的证书导入了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导入证书</span></span><br><span class="line">IPhonePackager.exe Install Engine -project G:\Client\Game.uproject -certificate G:\Client\Source\ThirdParty\iOS\com.xxxx.yyyy\Development\com.xxxx.yyyy_Development.p12 -cerpassword cerpassword -bundlename com.xxxx.yyyy</span><br><span class="line"><span class="comment"># 导入provision</span></span><br><span class="line">IPhonePackager.exe Install Engine -project G:\Client\Game.uproject -provision G:\Client\Source\ThirdParty\iOS\com.xxxx.yyyy\Development\com.xxxx.yyyy_Development.mobileprovision -bundlename com.xxxx.yyyy</span><br></pre></td></tr></table></figure>
+
+<p>但默认编译引擎时不会编译这个程序，没法使用最新的变动，为了避免这个情况，可以将预编译好的iPhonePackager放到了工程中，通过这个预编译的版本执行导入。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816165855.png"></p>
+<p>到目前为止，静默式地更新证书和provision的底层支持已经实现了，但还需要确定导入证书的时机。</p>
+<p>我选择的时机时，通过在项目的target.cs中写一段逻辑，检测当前的编译环境、iPhonePackager的路径、证书路径等等，构造出一个导入命令，调用iPhonePackager执行。</p>
+<p>这样就能够在编译的时候就执行导入，而且UE的编译过程也是能够比较方便地往UBT里传递编译参数，进而在Target.cs检测参数并按需执行。</p>
+<p>并且，自动导入功能默认最好是关闭的，通过一个UBT的命令行参数开启，这样就能通过参数开关在流水线上自动导入证书了。</p>
+<p>在Target.cs中检测参数进行证书导入的代码为：</p>
+<figure class="highlight csharp"><figcaption><span>target.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">bool</span> bExportCer = IsContainInCmd(<span class="string">&quot;-importcer&quot;</span>);</span><br><span class="line"><span class="keyword">if</span> (Target.Platform == UnrealTargetPlatform.Win64 &amp;&amp; bExportCer)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">string</span> EngineSourceDirectory = System.IO.Directory.GetCurrentDirectory();  </span><br><span class="line">	<span class="built_in">string</span> IPhonePackagerExePath = Path.GetFullPath(Path.Combine(EngineSourceDirectory, <span class="string">&quot;..\\Binaries\\DotNET\\IOS/IPhonePackager.exe&quot;</span>).Normalize());</span><br><span class="line">	<span class="built_in">string</span> UProjectFile = Target.ProjectFile.ToString();</span><br><span class="line">	Console.WriteLine(<span class="string">&quot;uproject file:&quot;</span> + UProjectFile);</span><br><span class="line">	Console.WriteLine(<span class="string">&quot;IPhonePackagerExePath:&quot;</span> + IPhonePackagerExePath);</span><br><span class="line">	<span class="keyword">if</span> (File.Exists(IPhonePackagerExePath))</span><br><span class="line">	&#123;</span><br><span class="line">		Dictionary&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt; BundleIdMap = <span class="keyword">new</span> Dictionary&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt;();</span><br><span class="line">		BundleIdMap.Add(<span class="string">&quot;com.xxx.yyy&quot;</span>,<span class="string">&quot;password1&quot;</span>);</span><br><span class="line">		BundleIdMap.Add(<span class="string">&quot;com.xxx.yyy.zzz&quot;</span>,<span class="string">&quot;password2&quot;</span>);</span><br><span class="line">		<span class="built_in">string</span>[] Configurations = &#123; <span class="string">&quot;Development&quot;</span> &#125;;</span><br><span class="line">		<span class="built_in">string</span> CerRelativePath = <span class="string">&quot;Source/ThirdParty/iOS/&quot;</span>;</span><br><span class="line">		</span><br><span class="line">		DirectoryReference ProjectDir = ProjectFile.Directory;</span><br><span class="line">		<span class="keyword">foreach</span> (KeyValuePair&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt; BundleIdPair <span class="keyword">in</span> BundleIdMap)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">string</span> BundleId = BundleIdPair.Key;</span><br><span class="line">			<span class="keyword">for</span> (<span class="built_in">int</span> ConfigurationIndex = <span class="number">0</span>; ConfigurationIndex &lt; Configurations.Length; ConfigurationIndex++)</span><br><span class="line">			&#123;</span><br><span class="line">				<span class="built_in">string</span> PackageConfiguration = Configurations[ConfigurationIndex];</span><br><span class="line">				<span class="built_in">string</span> mobileprovision_name = BundleId + <span class="string">&quot;_&quot;</span> + PackageConfiguration + <span class="string">&quot;.mobileprovision&quot;</span>;</span><br><span class="line">				<span class="built_in">string</span> cer_file_name = BundleId + <span class="string">&quot;_&quot;</span> + PackageConfiguration + <span class="string">&quot;.p12&quot;</span>;</span><br><span class="line">				<span class="built_in">string</span> cerPath = Path.Combine(ProjectDir.FullName, CerRelativePath,BundleId,PackageConfiguration,cer_file_name);</span><br><span class="line">				<span class="built_in">string</span> proversionPath = Path.Combine(ProjectDir.FullName, CerRelativePath,BundleId,PackageConfiguration,mobileprovision_name);</span><br><span class="line"></span><br><span class="line">				<span class="keyword">if</span> (File.Exists(cerPath) &amp;&amp; File.Exists(proversionPath))</span><br><span class="line">				&#123;</span><br><span class="line">					<span class="built_in">string</span> cerPassword = BundleIdPair.Value;</span><br><span class="line">					<span class="built_in">string</span>[] Cmds =</span><br><span class="line">					&#123;</span><br><span class="line">						String.Format(</span><br><span class="line">						<span class="string">&quot;Install Engine -project &#123;0&#125; -certificate &#123;1&#125; -cerpassword &#123;2&#125; -bundlename &#123;3&#125;&quot;</span>,</span><br><span class="line">						UProjectFile, cerPath, cerPassword, BundleId),</span><br><span class="line">						String.Format(</span><br><span class="line">						<span class="string">&quot;Install Engine -project &#123;0&#125; -provision &#123;1&#125; -bundlename &#123;2&#125;&quot;</span>,</span><br><span class="line">						UProjectFile, proversionPath, BundleId),</span><br><span class="line">					&#125;;</span><br><span class="line">					<span class="keyword">for</span> (<span class="built_in">int</span> CmdIndex = <span class="number">0</span>;CmdIndex &lt; Cmds.Length;CmdIndex++)</span><br><span class="line">					&#123;</span><br><span class="line">						ProcessStartInfo startInfo = <span class="keyword">new</span> ProcessStartInfo();</span><br><span class="line">						startInfo.CreateNoWindow = <span class="literal">true</span>;</span><br><span class="line">						startInfo.UseShellExecute = <span class="literal">false</span>;</span><br><span class="line">						startInfo.FileName = IPhonePackagerExePath;</span><br><span class="line">						startInfo.Arguments = Cmds[CmdIndex];</span><br><span class="line">						Console.WriteLine(String.Format(<span class="string">&quot;Import Cer&amp;Provision cmd: &#123;0&#125; &#123;1&#125;&quot;</span>,startInfo.FileName,startInfo.Arguments));</span><br><span class="line">						Process.Start(startInfo);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果在编译时给UBT传递了<code>-importcer</code>参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Build\BatchFiles\Build.bat -Target=<span class="string">&quot;GameEditor Win64 Development&quot;</span> -Project=<span class="string">&quot;G:\Client\Game.uproject&quot;</span> -WaitMutex -importcer  </span><br></pre></td></tr></table></figure>
+
+<p>在编译日志里就能看到证书和provision的导入日志了：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">2023-08-15 20:13:09:055 : AssemblyDir: G:\UE4_27\Engine</span><br><span class="line">2023-08-15 20:13:09:055 : EngineAssemblyFileName: G:\UE4_27\Engine\Intermediate\Build\BuildRules\UE4Rules.dll</span><br><span class="line">2023-08-15 20:13:09:205 : ProjectDir:G:\Client</span><br><span class="line">2023-08-15 20:13:09:205 : uproject file:G:\Client\FGame.uproject</span><br><span class="line">2023-08-15 20:13:09:205 : IPhonePackagerExePath:G:\Client\Source\ThirdParty\iOS\iPhonePackager\IPhonePackager.exe</span><br><span class="line">2023-08-15 20:13:09:205 : Import Cer&amp;Provision cmd: G:\Client\Source\ThirdParty\iOS\iPhonePackager\IPhonePackager.exe Install Engine -project G:\Client\FGame.uproject -certificate G:\Client\Source\ThirdParty\iOS\com.xxx.yyy\Development\com.xxx.yyy_Development.p12 -cerpassword keystore -bundlename com.xxx.yyy</span><br><span class="line">2023-08-15 20:13:09:256 : Import Cer&amp;Provision cmd: G:\Client\Source\ThirdParty\iOS\iPhonePackager\IPhonePackager.exe Install Engine -project G:\Client\FGame.uproject -provision G:\Client\Source\ThirdParty\iOS\com.xxx.yyy\Development\com.xxx.yyy_Development.mobileprovision -bundlename com.xxx.yyy</span><br></pre></td></tr></table></figure>
+
+<h2 id="新机器SSH连接指纹验证"><a href="#新机器SSH连接指纹验证" class="headerlink" title="新机器SSH连接指纹验证"></a>新机器SSH连接指纹验证</h2><p>因为远程构建IOS的实质上，是在Win上发起构建，在Win上由UBT通过SSH和rsync传递命令和传输引擎和代码文件，再通过rsync拉回编译结果的过程。</p>
+<p>关键点：<strong>SSH连接</strong>。</p>
+<p>当一台SSH Client去连接一台新的IP时，会触发首次连接到服务器时的安全机制，会给予提示并且等待用户输入<code>yes</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816161525.png"></p>
+<p>当你连接到一个新的服务器时，它询问你是否信任这个新服务器并希望将其添加到known_hosts文件中。如果输入<code>yes</code>，SSH会将服务器的公钥添加到你本地机器的known_hosts文件中。这样，在后续连接到该服务器时，SSH可以比较服务器提供的公钥与known_hosts文件中的公钥，以确保你正在连接到相同的服务器，防止被中间人攻击(Man-in-the-Middle Attack)。</p>
+<p>但是，这个问题在我们使用IOS远程构建时，造成了配置噩梦：</p>
+<ol>
+<li>如果修改了项目中的RemoteServerIP，需要对所有参与连接的PC机器，都在手动执行一遍SSH连接，并允许。</li>
+<li>部署了一台新的PC机器，要使用远程构建，同样需要手动执行一遍SSH连接</li>
+</ol>
+<p>如果不进行配置，引擎默认SSH连接时使用的是<code>-BatchMode=yes</code>，如果需要用户输入则会直接触发构建失败！我曾分析过这个问题，详见：<a href="https://imzlp.com/posts/11956/#%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BA%E6%97%B6SSH%E8%BF%9E%E6%8E%A5%E9%94%99%E8%AF%AF">远程构建时 SSH 连接错误</a></p>
+<p>整个过程异常繁琐，违背了我们完全实现自动化构建的初衷。</p>
+<p>同样地，为了解决这个问题，需要对引擎中的实现稍加变动，让引擎在使用SSH与rsync连接时，都忽略指纹验证。</p>
+<p>需要变动的代码，在<code>ToolChain/RemoteMac.cs</code>中修改SSH的连接参数：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816163223.png" alt="SSH连接参数"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816163504.png" alt="rsync的连接参数"></p>
+<p>改动完毕，终于，这个世界清静了…</p>
+<h2 id="UPL对plist的修改被覆盖"><a href="#UPL对plist的修改被覆盖" class="headerlink" title="UPL对plist的修改被覆盖"></a>UPL对plist的修改被覆盖</h2><p>当使用远程构建IOS时，会在Mac上生成stub文件，用于在Windows上合成最终的IPA。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230816172230.png"></p>
+<p>我们在UPL中写的逻辑，会在从Mac上生成的stub中有体现，但Windows上也会在<code>StagedBuilds/IOS</code>下生成一个<code>Info.plist</code>文件，是创建出来的模板信息：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">plist</span> <span class="keyword">PUBLIC</span> <span class="string">&quot;-//Apple//DTD PLIST 1.0//EN&quot;</span> <span class="string">&quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">plist</span> <span class="attr">version</span>=<span class="string">&quot;1.0&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">dict</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">key</span>&gt;</span>CFBundleURLTypes<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">array</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">dict</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">key</span>&gt;</span>CFBundleURLName<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">string</span>&gt;</span>com.Epic.Unreal<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">key</span>&gt;</span>CFBundleURLSchemes<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">array</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">string</span>&gt;</span>FGame<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">array</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">dict</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">array</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- .... --&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">dict</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plist</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>在使用iPhonePackager把Mac上生成的stub与资源打包成最终的IPA时，会把stub中的Info.plist与<code>StagedBuilds/IOS/Info.plist</code>中的进行合并：</p>
+<p>iPhonePackager的执行命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:\UE4.27\Engine\Binaries\DotNET\IOS\IPhonePackager.exe RepackageFromStage <span class="string">&quot;D:\Client\GWorld.uproject&quot;</span> -config Development -schemename GWorld -schemeconfig <span class="string">&quot;Development&quot;</span> -targetname GWorld -sign -codebased -stagedir <span class="string">&quot;D:\Client\Saved\StagedBuilds\IOS&quot;</span> -project <span class="string">&quot;D:\Client\GWorld.uproject&quot;</span> -provision <span class="string">&quot;com.imzlp.gworld_Development.mobileprovision&quot;</span> -certificate <span class="string">&quot;iPhone Developer: Created via API (XXXX)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>在<code>Programs/IOS/iPhonePackager/CookTime.cs</code>的<code>RepackageIPAFromStub</code>函数中，实现的合并过程：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/463443057fb97f1af0d2951705324ce8818d2a55/Engine/Source/Programs/IOS/iPhonePackager/CookTime.cs#L226-L258">iPhonePackager/CookTime.cs#L226-L258</a></p>
+<p>合并时会有如下LOG：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">----------</span><br><span class="line">Executing command &#x27;Clean&#x27; ...</span><br><span class="line">Cleaning temporary files from PC ...</span><br><span class="line"> ... cleaning: D:\Client\Intermediate\IOS-Deploy\GWorld\Development\</span><br><span class="line">2023-07-10 14:33:45:817 :   </span><br><span class="line">Loaded stub IPA from &#x27;D:\Client\Binaries\IOS\GWorld.stub&#x27; ...</span><br><span class="line"> ... &#x27;D:\Client\Binaries\IOS\GWorld.stub&#x27; -&gt; &#x27;D:\Client\Binaries\IOS\GWorld.ipa&#x27;</span><br><span class="line">     Copy: D:\Client\Binaries\IOS\GWorld.stub -&gt; D:\Client\Binaries\IOS\GWorld.ipa, last modified at 2023/7/10 12:26:52</span><br><span class="line">Found Info.plist (D:\Client\Saved\StagedBuilds\IOS\Info.plist) in stage, which will be merged in with stub plist contents</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>合并plist在引擎里的实现，是将<strong>StagedBuilds中的plist</strong>合并到<strong>stub的plist</strong>（注意这个顺序）。</p>
+<p>如果<strong>StagedBuilds的plist</strong>中的元素在<strong>stub的plist</strong>中已存在，会先移除<strong>stub的plist</strong>中的元素，再将<strong>StagedBuilds的plist</strong>中的元素添加到<strong>stub的plist</strong>结果中。</p>
+<p><code>MergePlistIn</code>的实现在：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/463443057fb97f1af0d2951705324ce8818d2a55/Engine/Source/Programs/IOS/iPhonePackager/Utilities.cs#L399">iPhonePackager/Utilities.cs#L399</a></p>
+<p>如果我们通过UPL操作了生成<code>StagedBuilds/IOS/Info.plist</code>中已存在的元素值，在这样的逻辑中，我们修改的值将永远被默认值覆盖，导致最终打出来的IPA与stub中的plist的值不同。</p>
+<p>这应该是引擎中的BUG，修复的方案就是让<strong>StagedBuilds的plist</strong>去合并<strong>stub的plist</strong>即可，就是把上述的过程反过来。</p>
+<figure class="highlight csharp"><figcaption><span>CookTime.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Merge the two plists, using the staged one as the authority when they conflict</span></span><br><span class="line"><span class="built_in">byte</span>[] StagePListBytes = File.ReadAllBytes(PossiblePList);</span><br><span class="line"><span class="built_in">string</span> StageInfoString = Encoding.UTF8.GetString(StagePListBytes);</span><br><span class="line"></span><br><span class="line"><span class="built_in">byte</span>[] StubPListBytes = FileSystem.ReadAllBytes(<span class="string">&quot;Info.plist&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//++[lipengzha] Fix the problem that the modification of plist in UPL is overwritten </span></span><br><span class="line">Utilities.PListHelper StageInfo = <span class="keyword">new</span> Utilities.PListHelper(StageInfoString);</span><br><span class="line">StageInfo.MergePlistIn(Encoding.UTF8.GetString(StubPListBytes));</span><br><span class="line"><span class="comment">// Write it back to the cloned stub, where it will be used for all subsequent actions</span></span><br><span class="line"><span class="built_in">byte</span>[] MergedPListBytes = Encoding.UTF8.GetBytes(StageInfo.SaveToString());</span><br><span class="line"><span class="comment">//--[lipengzha]</span></span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230710164801.png"></p>
+<blockquote>
+<p>而且，使用UBT单独编译引擎，并不会把iPhonePackager这个程序也编译了，所以需要对它单独执行一次编译，或者封装脚本，在每次编译引擎时，把引擎的tools都编译一遍，比较保险。实在不行也能把预编译好的iPhonePackager提交到引擎中。</p>
+</blockquote>
+<h2 id="远程构建上传路径修改"><a href="#远程构建上传路径修改" class="headerlink" title="远程构建上传路径修改"></a>远程构建上传路径修改</h2><p>在UE4.26及之前的引擎版本中，默认会上传到<code>~</code>目录下，这是在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/4.26/Engine/Source/Programs/UnrealBuildTool/ToolChain/RemoteMac.cs#L277">RemoteMac.cs</a>中写死的逻辑，无法配置：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 4.27 or before</span></span><br><span class="line"><span class="comment">// Get the remote base directory</span></span><br><span class="line">StringBuilder Output;</span><br><span class="line"><span class="keyword">if</span>(ExecuteAndCaptureOutput(<span class="string">&quot;&#x27;echo ~&#x27;&quot;</span>, <span class="keyword">out</span> Output) != <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> BuildException(<span class="string">&quot;Unable to determine home directory for remote user. SSH output:\n&#123;0&#125;&quot;</span>, StringUtils.Indent(Output.ToString(), <span class="string">&quot;  &quot;</span>));</span><br><span class="line">&#125;</span><br><span class="line">RemoteBaseDir = String.Format(<span class="string">&quot;&#123;0&#125;/UE4/Builds/&#123;1&#125;&quot;</span>, Output.ToString().Trim().TrimEnd(<span class="string">&#x27;/&#x27;</span>), Environment.MachineName);</span><br></pre></td></tr></table></figure>
+
+<p><code>echo ~</code>输出的就是当前<code>~</code>的绝对路径。</p>
+<p>在UE4.27中，引擎增加了配置项，可以在<code>IOSRuntimeSettings</code>中配置<code>RemoteServerOverrideBuildPath</code>：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 4.27 or later</span></span><br><span class="line"><span class="comment">// Get the remote base directory</span></span><br><span class="line"><span class="built_in">string</span> RemoteServerOverrideBuildPath;</span><br><span class="line"><span class="keyword">if</span> (Ini.GetString(<span class="string">&quot;/Script/IOSRuntimeSettings.IOSRuntimeSettings&quot;</span>, <span class="string">&quot;RemoteServerOverrideBuildPath&quot;</span>, <span class="keyword">out</span> RemoteServerOverrideBuildPath) &amp;&amp; !String.IsNullOrEmpty(RemoteServerOverrideBuildPath))</span><br><span class="line">&#123;</span><br><span class="line">	RemoteBaseDir = String.Format(<span class="string">&quot;&#123;0&#125;/&#123;1&#125;&quot;</span>, RemoteServerOverrideBuildPath.Trim().TrimEnd(<span class="string">&#x27;/&#x27;</span>), Environment.MachineName);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">	StringBuilder Output;</span><br><span class="line">	<span class="keyword">if</span> (ExecuteAndCaptureOutput(<span class="string">&quot;&#x27;echo ~&#x27;&quot;</span>, <span class="keyword">out</span> Output) != <span class="number">0</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> BuildException(<span class="string">&quot;Unable to determine home directory for remote user. SSH output:\n&#123;0&#125;&quot;</span>, StringUtils.Indent(Output.ToString(), <span class="string">&quot;  &quot;</span>));</span><br><span class="line">	&#125;</span><br><span class="line">	RemoteBaseDir = String.Format(<span class="string">&quot;&#123;0&#125;/UE4/Builds/&#123;1&#125;&quot;</span>, Output.ToString().Trim().TrimEnd(<span class="string">&#x27;/&#x27;</span>), Environment.MachineName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果配置了会优先获取，如果不存在才会通过<code>echo ~</code>获取。</p>
+<p>如果默认上传路径的磁盘不足，可以使用这种方式将远程构建的上传路径修改到其他的磁盘中。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/50293/" target="_blank">UE构建提升：优化远程构建IOS的实现</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2023年08月16日 10时43分<br/>
+             
+              <span>更新时间:</span>2023年09月05日 20时11分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.6k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/50293/" target="_blank" title="UE构建提升：优化远程构建IOS的实现">https://imzlp.com/posts/50293/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/50293/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/BuildSystem/" rel="tag"># BuildSystem</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/31438/" rel="prev" title="循迹旅行：香港旅游攻略">
+      <i class="fa fa-chevron-left"></i> 循迹旅行：香港旅游攻略
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/71467/" rel="next" title="循迹研究：利用AI助力生活及开发探索">
+      循迹研究：利用AI助力生活及开发探索 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RemoteServer%E6%8C%87%E5%AE%9A%E7%AB%AF%E5%8F%A3%E5%8F%B7"><span class="nav-number">1.</span> <span class="nav-text">RemoteServer指定端口号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E5%AF%BC%E5%85%A5%E8%AF%81%E4%B9%A6%E4%B8%8EProvision"><span class="nav-number">2.</span> <span class="nav-text">自动化导入证书与Provision</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B0%E6%9C%BA%E5%99%A8SSH%E8%BF%9E%E6%8E%A5%E6%8C%87%E7%BA%B9%E9%AA%8C%E8%AF%81"><span class="nav-number">3.</span> <span class="nav-text">新机器SSH连接指纹验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UPL%E5%AF%B9plist%E7%9A%84%E4%BF%AE%E6%94%B9%E8%A2%AB%E8%A6%86%E7%9B%96"><span class="nav-number">4.</span> <span class="nav-text">UPL对plist的修改被覆盖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BA%E4%B8%8A%E4%BC%A0%E8%B7%AF%E5%BE%84%E4%BF%AE%E6%94%B9"><span class="nav-number">5.</span> <span class="nav-text">远程构建上传路径修改</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/50293/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="The next generation of Unreal Engine!">
+<meta property="og:type" content="website">
+<meta property="og:title" content="UE5">
+<meta property="og:url" content="https://imzlp.com/notes/ue5/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="The next generation of Unreal Engine!">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle_typical_vbar.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle260_typical_combined.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/0.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/1.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/2.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/3.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/20201222102108.webp">
+<meta property="article:published_time" content="2020-12-21T21:55:33.000Z">
+<meta property="article:modified_time" content="2020-12-21T21:55:33.000Z">
+<meta property="article:author" content="查利鹏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle.webp">
+
+<link rel="canonical" href="https://imzlp.com/notes/ue5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : false,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE5 | 循迹研究室
+</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+  
+
+      
+
+        
+        <ul id="sub-menu" class="sub-menu menu">
+          
+            
+          
+          
+              
+  <li class="menu-item menu-item-ue5">
+
+    <a href="/notes/ue5/" rel="section"><i class="fas fa-cubes fa-fw"></i>UE5</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-gamedev">
+
+    <a href="/notes/gamedev/" rel="section"><i class="fab fa-steam-square fa-fw"></i>GameDev</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-cpp">
+
+    <a href="/notes/cpp/" rel="section"><i class="fas fa-keyboard fa-fw"></i>C++</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-rust">
+
+    <a href="/notes/rust/" rel="section"><i class="fab fa-rust fa-fw"></i>Rust</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-graphics">
+
+    <a href="/notes/graphics/" rel="section"><i class="fas fa-magic fa-fw"></i>Graphics</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-vr">
+
+    <a href="/notes/vr/" rel="section"><i class="fas fa-vr-cardboard fa-fw"></i>VR</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-computerscience">
+
+    <a href="/notes/computerscience/" rel="section"><i class="fas fa-satellite fa-fw"></i>Computer Science</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-linux">
+
+    <a href="/notes/linux/" rel="section"><i class="fab fa-brands fa-linux fa-fw"></i>Linux</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-tools">
+
+    <a href="/notes/tools/" rel="section"><i class="fa fa-solid fa-hammer fa-fw"></i>Tools</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-tips">
+
+    <a href="/notes/tips/" rel="section"><i class="fa fa-rocket fa-fw"></i>Tips</a>
+
+  </li>
+
+
+          
+        </ul>
+        
+
+        
+
+                
+                
+        
+      
+
+      
+      
+
+      
+      
+
+      
+      
+  
+
+          <div class="content page posts-expand">
+            
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN">
+      <header class="post-header">
+	<h1 class="post-title" itemprop="name headline">UE5<a href="https://github.com/imzlp/blog-md/blob/master/notes/ue5/index.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+	</h1>
+	<div class="post-meta">
+	    <div class="post-description">The next generation of Unreal Engine!</div>
+	  
+  <ul class="breadcrumb">
+          
+            <li><a href="/notes/">NOTES</a></li>
+          <li>UE5</li>
+        
+  </ul>
+
+	</div>
+
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+          <p>收集一些关于UE5的资料，以及我对目前Epic News的一些想法和分析。</p>
+<script src="https://gist.github.com/imzlp/1bb948d5361b68e6856fa2de9ad45a31.js"></script>
+
+<p>UE5.1发布首个预览版：<a target="_blank" rel="noopener" href="https://forums.unrealengine.com/t/unreal-engine-5-1-preview/662523">Unreal Engine 5.1 Preview</a><br>UE5.0正式发布！更新日志：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.0/en-US/unreal-engine-5-0-release-notes/">Unreal Engine 5.0 Release Notes</a></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://portal.productboard.com/epicgames/1-unreal-engine-public-roadmap/tabs/80-unreal-engine-5-1-in-progress">Unreal Engine 5.1 Roadmap</a></li>
+</ul>
+<p>博客中UE5相关的文章：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/8724/">UE5：新一代虚幻引擎初探</a></li>
+<li><a href="https://imzlp.com/posts/17658/">UE5：Game Feature预研</a></li>
+</ul>
+<h2 id="Game-Feature"><a href="#Game-Feature" class="headerlink" title="Game Feature"></a>Game Feature</h2><p>Game Feature是UE在4.27和UE5中推出的一种模块化Gameplay的模式，我对它进行了预研分析，并支持HotPatcher打包Game Feature，从Gameplay到资源打包，实现真正的Modular Gameplay。<br>详见文章：<a href="https://imzlp.com/posts/17658/">UE5：Game Feature预研</a>。</p>
+<h2 id="ECS支持"><a href="#ECS支持" class="headerlink" title="ECS支持"></a>ECS支持</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.reddit.com/r/unrealengine/comments/q0xxpb/upcoming_ecs_in_ue5_mass/">Upcoming ECS in UE5 (Mass)</a></li>
+</ul>
+<h2 id="Oodle-Compression"><a href="#Oodle-Compression" class="headerlink" title="Oodle Compression"></a>Oodle Compression</h2><img align="right" data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle.webp" style="zoom:25%;" />
+
+<p>和我当初预想的一样，2021.04.01的Feeds：Epic把Oodle集成到UE4.27和UE5中了。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/oodle-now-free-to-use-in-unreal-engine-via-github">Oodle now free to use in Unreal Engine via GitHub</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/development-discussion/rendering/1876442-rad-game-tools%E2%80%99-oodle%E2%80%94cross-platform-data-compression-solutions">RAD Game Tools’ Oodle—cross-platform data compression solutions</a></li>
+<li><a target="_blank" rel="noopener" href="https://dev.epicgames.com/community/learning/tutorials/ry2D/unreal-engine-reducing-package-sizes-with-oodle-compression">Reducing Package Sizes with Oodle Compression</a></li>
+</ul>
+<p>他们会提供四种Oodle系列的压缩算法：</p>
+<ul>
+<li>Oodle Data Compression：最快和最高压缩比的压缩算法，可以用于数据压缩、打包压缩等。</li>
+<li>Oodle Texture：用来压缩Texture，可以压缩BC1-BC7Texture，能够减少50%的Texture大小（官方数据）。</li>
+<li>Oodle Network Compression：压缩TCP/UDP数据，降低与服务器传输占用的带宽。</li>
+<li>Oodle Lossless Image Compression：无损图像压缩算法，比png小很多且具有非常高的解压速度。</li>
+</ul>
+<p>目前（2021.04.05）可以拉取UE的<code>master</code>分支，下载依赖之后在以下目录下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">E:\UnrealEngine\Source\UnrealEngine\Engine\Plugins\Compression</span><br><span class="line">E:\UnrealEngine\Source\UnrealEngine\Engine\Plugins\Developer\TextureFormatOodle</span><br></pre></td></tr></table></figure>
+<p>具有<code>OodleData</code>和<code>OodleNetwork</code>、<code>TextureFormatOodle</code>三个插件，注意必须要下载依赖。不然代码中只有<code>.h</code>接口，并没有各个平台的链接库。</p>
+<p>比较遗憾的是在更早的引擎版本中不支持，我从UE的开发分支把这部分代码抽离了出来，放到了单独的仓库中：<a target="_blank" rel="noopener" href="https://github.com/hxhb/oodle-compression">oodle-compression</a>，看了代码并没有依赖新版本引擎相关的东西，但是直接在低版本引擎启用会有编译错误，我已修复。插件中的实现也是通过SDK把Oodle添加到了UE的Compression的Modular Feature中，同样可以按照我之前这篇文章的介绍中的方法使用：<a href="https://imzlp.com/posts/8470/">ModularFeature：为UE4集成ZSTD压缩算法</a>。</p>
+<blockquote>
+<p>注意：默认打包时启用Oodle需要给UnrealPak添加OodleData的插件依赖，这需要重新编译UnrealPak。</p>
+</blockquote>
+<p>通过传递给UnrealPak命令行参数<code>-compressionformats=Oodle</code>来指定Oodle，以及<code>-compresslevel=Leviathan</code>来指定压缩级别，经过测试，一个使用zlib压缩之后有295M的pak文件使用Oodle压缩降低到了282M，但是Oodle的解压速度完胜zlib。</p>
+<p>Oodle的压缩性能在RAD网站上有对比数据：<a target="_blank" rel="noopener" href="http://www.radgametools.com/oodle.htm">Oodle Compression</a></p>
+<img align="center" data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle_typical_vbar.webp" style="zoom:37%;" />
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/oodle260_typical_combined.webp"></p>
+<p>其他的对比数据：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://cbloomrants.blogspot.com/2016/05/ps4-battle-lz4-vs-lzsse-vs-oodle.html">PS4 Battle : LZ4 vs LZSSE vs Oodle</a></li>
+</ul>
+<p>压缩算法的选择就是要在压缩率/解压速度上来做一个权衡，就是压缩率最低的<code>Selkie</code>也比zlib要强一点点，但是decompress速度比zlib高了十几倍，对于游戏而言解压速度非常直观地影响到游戏性能，这应该也是UE选择收购RAD的原因吧。</p>
+<p>其他资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://cbloomrants.blogspot.com/2020/09/how-oodle-kraken-and-oodle-texture.html">How Oodle Kraken and Oodle Texture supercharge the IO system of the Sony PS5</a></li>
+<li><a target="_blank" rel="noopener" href="https://cbloomrants.blogspot.com/">cbloom rants</a></li>
+<li><a target="_blank" rel="noopener" href="https://encode.su/threads/3426-Oodle-Texture-compression">Oodle Texture compression</a></li>
+<li><a target="_blank" rel="noopener" href="https://wccftech.com/ps5-io-system-to-be-supercharged-by-oodle-texture-bandwidth-goes-up-to-17-38gb-s/">PS5 IO System to Be ‘Supercharged’ by Oodle Texture, Bandwidth Goes Up to 17.38GB/s</a></li>
+</ul>
+<h2 id="Epic收购RAD-Game-Tools"><a href="#Epic收购RAD-Game-Tools" class="headerlink" title="Epic收购RAD Game Tools"></a>Epic收购RAD Game Tools</h2><p>Epic收购了RAD Game Tools，又开启了买买买模式，Fortnite使用的Oodle压缩算法就是这家做的。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.epicgames.com/site/en-US/news/epic-acquires-rad-game-tools">Gaming Software Pioneer RAD Game Tools Now Part of Epic Games</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.radgametools.com/">RAD Game Tools</a></li>
+</ul>
+<p>大概看了下这家做的东西，内容挺多的涵盖了，视频解码、压缩算法、Profile、美术资源处理、音频工具等等，对完善UE的工具链生态是个好事。</p>
+<p>我觉得对于Epic而言，收购它目前比较重要的是得到压缩相关的技术积累，这一点对UE5格外重要，因为UE5可以直接使用影视级别的素材资源，资源的大小和相对应的加载时间会成为瓶颈（我认为这也是UE5的首发演示是在PS5上的主要原因），所以需要针对UE5进行定制化的资源压缩方案。希望UE5在2021年的第一季度末尾能顺利出beta版本，不要跳票。</p>
+<h2 id="Epic-Verse"><a href="#Epic-Verse" class="headerlink" title="Epic Verse"></a>Epic Verse</h2><h3 id="Haskell-eXchange的进展"><a href="#Haskell-eXchange的进展" class="headerlink" title="Haskell eXchange的进展"></a>Haskell eXchange的进展</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://simon.peytonjones.org/verse-calculus/">The Verse Calculus: a core calculus for functional logic programming</a></li>
+</ul>
+<p>The Verse Calculus: a Core Calculus for Functional Logic Programming：(<a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/picgo/2022/12/verse-conf.pdf">backup</a>)</p>
+<div class="pdfobject-container" data-target="https://simon.peytonjones.org/assets/pdfs/verse-conf.pdf" data-height="700px"></div>
+
+<p>Beyond Functional Programming: The Verse Programming Lanaguage: (<a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/picgo/2022/12/haskell-exchange-22.pdf">backup</a>)</p>
+<div class="pdfobject-container" data-target="https://simon.peytonjones.org/assets/pdfs/haskell-exchange-22.pdf" data-height="700px"></div>
+
+<p>ycombinator上的相关讨论：<a target="_blank" rel="noopener" href="https://news.ycombinator.com/item?id=33946933">Beyond Functional Programming: The Verse Programming Language</a></p>
+<h3 id="Epic-Verse-语法介绍"><a href="#Epic-Verse-语法介绍" class="headerlink" title="Epic Verse 语法介绍"></a>Epic Verse 语法介绍</h3><p>认真看了一下<a target="_blank" rel="noopener" href="https://www.twitch.tv/videos/840713360?t=1h6m20s">Inside Unreal:2020 Year In Review</a>里展示的Epic Verse代码，看起来新的脚本语言很像<code>pascal</code>和<code>Python</code>的结合体，而且还有点ruby味，Verse具有静态类型，某些语法与<a target="_blank" rel="noopener" href="https://skookumscript.com/docs/v3.0/#ojb-id-potential-reference">SkookumScript</a>非常像。</p>
+<p>2019年初Epic收购了<a target="_blank" rel="noopener" href="https://skookumscript.com/blog/2019/01-23-epic-aquires-agog/">Agog Labs (and SkookumScript)</a>，应该是要来打造UE5的脚本语言，所以UE5的语法结构和SkookumScript比较像应该是比较合理的，根据视频里的展示情况，我认为UE5的脚本语言应该就是Agog Labs做的。</p>
+<p>但是这场展示中并没有展示该脚本语言如何与引擎进行交互，也没有展示引擎中的符号信息，与C++的交互方式目前只能观望。目前介绍一下视频里有展示的语言内容。</p>
+<p>视频展示的代码如下：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/0.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/1.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/2.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/epicverse/3.webp"></p>
+<p>手敲了遍文本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># This is a BoxFight prototype game.</span></span><br><span class="line">BoxFight=<span class="keyword">class</span>(FortGameScriptBase):</span><br><span class="line">    GameStarted^: <span class="built_in">bool</span>=false </span><br><span class="line">    GameEnded^: <span class="built_in">bool</span>=false </span><br><span class="line">    CurrentRound^: <span class="built_in">int</span>=<span class="number">0</span></span><br><span class="line">    RunGame()</span><br><span class="line">        <span class="comment"># Pause until all players in the matchmaking session</span></span><br><span class="line">        <span class="comment"># have connected to the server.</span></span><br><span class="line">        MaitForPlayersToJoin()</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Start the game.</span></span><br><span class="line">        GameStarted := true </span><br><span class="line">        <span class="keyword">for</span>(i = <span class="number">1.</span>.NumberofRounds):</span><br><span class="line"></span><br><span class="line">            <span class="comment"># Perform round setup.</span></span><br><span class="line">            currentRound := i</span><br><span class="line">            EnableBarriers()</span><br><span class="line">            SetBuildingDisallowed()</span><br><span class="line">            <span class="keyword">if</span>(!SetupPlayersAndSpawnPoints()?):</span><br><span class="line"></span><br><span class="line">                <span class="comment"># We hit an error and are unable to start the round.</span></span><br><span class="line">                ShutdownGame()</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="comment"># Begin the round start countdown.</span></span><br><span class="line">                Players.PutAllInStasisAllowEmotes()</span><br><span class="line">                Players.SetAllInvulnerable(true)</span><br><span class="line">                SimpleUI.ShowcountDown(<span class="number">7</span>)</span><br><span class="line">                Wait(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># Enable building at the end of the countdown.</span></span><br><span class="line">                SimpleUI.ShowMessage(<span class="string">&quot;Building Enabled&quot;</span>)</span><br><span class="line">                SetBuildingAllowed()</span><br><span class="line">                Players.RemoveAllFromStasis()</span><br><span class="line">                Players.SetAllInRound()</span><br><span class="line">                <span class="comment"># Wait for the start countdown to complete.</span></span><br><span class="line">                Wait(<span class="number">4.7</span>)</span><br><span class="line">                SimpleUI.HideMessage()</span><br><span class="line">                <span class="comment"># Begin combat and initialize the storm.</span></span><br><span class="line"></span><br><span class="line">                Players.SetAllInvulnerable(false)</span><br><span class="line">                DisableBarriers()</span><br><span class="line"></span><br><span class="line">                <span class="comment"># Hide the round start after it&#x27;s had a second to display.</span></span><br><span class="line">                Wait(<span class="number">1.3</span>)</span><br><span class="line">                simpleUI.HideCountDown()</span><br><span class="line">                Storm.Startstorm(<span class="number">60.0</span>, CurrentRound^)</span><br><span class="line"></span><br><span class="line">                <span class="comment">#Wait for the round end conditions </span></span><br><span class="line">                <span class="keyword">if</span>(IsSoloGame()?):</span><br><span class="line">                    race:</span><br><span class="line">                        <span class="comment">#Setup Solo specific end conditions for testing</span></span><br><span class="line">                        WaitForZeroRemaining()</span><br><span class="line">                        WaitForRoundTimeout()</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    race:</span><br><span class="line">                        <span class="comment"># Setup Solo specific end conditions for testing</span></span><br><span class="line">                        WaitForOneRemaining()</span><br><span class="line">                        WaitForZeroRemaining()</span><br><span class="line">                        WaitForRoundTimeout()</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># Handle round complete.</span></span><br><span class="line">                <span class="comment"># Give everyone a quick completion message.</span></span><br><span class="line">                SimpleUI.ShowMessage(<span class="string">&quot;Round Complete&quot;</span>)</span><br><span class="line">                Wait(<span class="number">2.0</span>)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># Disable combat and the storm.</span></span><br><span class="line">                SimpleUI.HideMessage()</span><br><span class="line">                Players.PutAllInstasisAllowEmotes()</span><br><span class="line">                Players.SetAllInvulnerable(true)</span><br><span class="line">                SetBuildingDisallowed()</span><br><span class="line">                Storm.stopstorm()</span><br><span class="line">                Players.SetAllEndRound()</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># Display the scoreboard.</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="class定义"><a href="#class定义" class="headerlink" title="class定义"></a>class定义</h4><p>首先是class定义（暂且标记为继承形式）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">BoxFight = <span class="built_in">class</span>(FortGameScriptBase):</span><br></pre></td></tr></table></figure>
+
+<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><blockquote>
+<p>具有静态类型，并且无需<code>;</code></p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GameStarted^: <span class="type">bool</span> = <span class="literal">false</span></span><br><span class="line">CurrentRound^: <span class="type">int</span> = <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="变量赋值"><a href="#变量赋值" class="headerlink" title="变量赋值"></a>变量赋值</h4><blockquote>
+<p>类似与<code>pascal</code>语言（SkookumScript也是如此）</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GameStarted := <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="代码块"><a href="#代码块" class="headerlink" title="代码块"></a>代码块</h4><p>类似于Python的缩进，需要使用<code>:</code>标识：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(!<span class="built_in">SetupPlayerAndSpwanPoints</span>()?):</span><br><span class="line">	<span class="built_in">ShutdownGame</span>()</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	Players.<span class="built_in">PutAllInStasisAllowEmotes</span>()</span><br><span class="line">	Players.<span class="built_in">SetAllInvulnerable</span>(<span class="literal">true</span>)</span><br><span class="line">	SimpleUI.<span class="built_in">ShowcountDown</span>(<span class="number">7</span>)</span><br><span class="line">	<span class="built_in">Wait</span>(<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+
+<p><code>?</code>在SkookumScript是谓词，只能够应用到<code>boolean</code>的对象。在SkookumScript的文档中介绍是可选的，用于标识返回值为布尔类型：</p>
+<blockquote>
+<p>Optional ‘?’ used as convention to indicate predicate variable or method of return type Boolean (true or false). </p>
+</blockquote>
+<h4 id="循环语句"><a href="#循环语句" class="headerlink" title="循环语句"></a>循环语句</h4><p>整型迭代：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(i = <span class="number">1.</span>.NumberOfRounds):</span><br></pre></td></tr></table></figure>
+<p>这个形式有点类似于ruby语言里的for：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span>..<span class="number">100</span> <span class="keyword">do</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="函数调用"><a href="#函数调用" class="headerlink" title="函数调用"></a>函数调用</h4><p>使用<code>.</code>来调用成员函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Players.<span class="built_in">SetAllInRound</span>()</span><br></pre></td></tr></table></figure>
+
+<h4 id="具有类似协程的形式"><a href="#具有类似协程的形式" class="headerlink" title="具有类似协程的形式"></a>具有类似协程的形式</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(<span class="built_in">IsSoloGame</span>()?):</span><br><span class="line">	race:</span><br><span class="line">		<span class="built_in">WaitForZeroRemaining</span>()</span><br><span class="line">		<span class="built_in">WairForRoundTimeout</span>()</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	race:</span><br><span class="line">		<span class="built_in">WaitForOntRemaining</span>()</span><br><span class="line">		<span class="built_in">WaitForZeroRemaining</span>()</span><br><span class="line">		<span class="built_in">WaitForRoundTimeout</span>()</span><br></pre></td></tr></table></figure>
+<p>这里代码的含义上类似于UE的行为树中的<code>Sequences</code>的节点，只有当它的所有子节点都执行成功（完毕）了，它才执行成功。</p>
+<p>这门脚本语言看起来更像是以<a target="_blank" rel="noopener" href="https://skookumscript.com/docs/v3.0/#ojb-id-potential-reference">SkookumScript</a>为基础，糅合了数种编程语言的集合体，目前展示的代码还太少，不好说具体的上手表现怎么样，持续关注。</p>
+<h3 id="UE5可能的脚本语言"><a href="#UE5可能的脚本语言" class="headerlink" title="UE5可能的脚本语言"></a>UE5可能的脚本语言</h3><p>在Epic的<a target="_blank" rel="noopener" href="https://www.twitch.tv/videos/840713360?t=1h6m20s">Inside Unreal:2020 Year In Review</a>中介绍了一个全新的脚本语言，有可能被称作<code>Epic Verse</code>。</p>
+<p>reddit上关于该脚本语言的讨论：<a target="_blank" rel="noopener" href="https://www.reddit.com/r/unrealengine/comments/kf8z27/epic_showed_off_their_new_unreal_verse_scripting/">Epic showed off their new Unreal Verse scripting language that will probably end up in UE5</a></p>
+<p>UE4的蓝图极大地降低了非专业开发者的上手门槛，图形化编程的方式从线性角度很容易理解，但是也会造成混乱。上了一定规模的项目还是需要文本化的脚本语言的，主要解决以下几个问题：</p>
+<ol>
+<li>文本化方便协同开发，不会造成资源的冲突（BP是资源）</li>
+<li>方便直观地进行diff</li>
+<li>方便迁移引擎版本，而没有资源的升/降级问题</li>
+</ol>
+<p>而且我认为，脚本语言最好是强类型语言，写惯了C++这种静态强类型语言，其实对Lua这种弱类型语言还是挺不习惯的，之前有一种语言叫做<a target="_blank" rel="noopener" href="https://www.angelcode.com/">AngelScript</a>的静态强类型脚本语言，和C++非常像，被第三方集成到了UE中，但是目前只支持PC和主机平台，不支持移动端。</p>
+<p>对于UE4中目前在手游开发中主流的脚本语言支持，为腾讯开源的<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua">UnLua</a>和<a target="_blank" rel="noopener" href="https://github.com/Tencent/sluaunreal">SLua</a>两款插件，都是以反射形式集成的，有一些实现上的缺点和社区支持不够，希望Epic能出一款官方支持的脚本工具，原本以为Python有比较大的可能，因为UE在编辑器下对Python的支持已经挺好了，而且Python有比较大的用户群体，上手难度也不高。</p>
+<p>如果引入一门新的脚本语言，在UE中可以使用的编程方式：</p>
+<ol>
+<li>C++</li>
+<li>蓝图</li>
+<li>Python（编辑器）</li>
+<li>Epic Verse</li>
+</ol>
+<p>处理不同的需求有不同的语言，有些过于复杂了。</p>
+<p>目前还不知道UE出的这个新脚本具体表现和语法形式怎么样，其实新增一门语言大大增加了用户的学习成本，也不知道UE是如何设计BP和新脚本语言的关联的，等最新的消息再看。</p>
+<p>两年前Tim在Reddit上有一些相关的回复和讨论：<a target="_blank" rel="noopener" href="https://www.reddit.com/r/unrealengine/comments/aezhdv/it_seems_people_at_epic_are_considering_adding/edxha25/">It seems people at Epic are considering adding some intermediate script language between C++ and Blueprints</a></p>
+<p>社区的帖子讨论：<a target="_blank" rel="noopener" href="https://forums.unrealengine.com/t/verse-the-new-unreal-scripting-language/156617/33">Verse, the new unreal scripting language</a>。<br>Fornite Creative 2.0的泄露情况：<a target="_blank" rel="noopener" href="https://fortniteintel.com/fortnite-creative-2-0-release-date-new-features-and-more/40982/">Fortnite Creative 2.0: Release date, new features, and more</a></p>
+<h2 id="UE5的PS5真机视频"><a href="#UE5的PS5真机视频" class="headerlink" title="UE5的PS5真机视频"></a>UE5的PS5真机视频</h2><p>Epic发布的UE5的PS5的真机视频：<br><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1BK411W75W?from=search&seid=15995162156836004073"><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue5/index/20201222102108.webp"></a></p>
+<p>Epic Feeds里的介绍：<a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/a-first-look-at-unreal-engine-5">A first look at Unreal Engine 5</a></p>
+<p>在UE5中最大的变化应该是引入了<code>Lumen</code>和<code>Nanite</code>这两个核心的渲染技术，看视频里的效果十分的棒，不知道真是发布时对移动端支持怎么样。</p>
+<p>对两项技术进行讨论和分析的文章:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.eurogamer.net/articles/digitalfoundry-2020-unreal-engine-5-playstation-5-tech-demo-analysis">Inside Unreal Engine 5: how Epic delivers its generational leap</a></li>
+<li><a target="_blank" rel="noopener" href="https://news.itmo.ru/en/startups_and_business/innovations/news/9473/">Lumen in the Land of Nanite: What the Unreal Engine 5 Demo Tells Us About the Future of Video Game Graphics</a></li>
+</ul>
+<p>对于目前UE4的项目，在文章中有介绍Epic正在开发UE5的前向兼容，使UE4项目能够升级到UE5中，从这个角度来看，UE5的升级也不是完全推翻式的重构，我理解为在UE4基础上更新的一个大版本。</p>
+<blockquote>
+<p>We’re designing for forward compatibility, so you can get started with next-gen development now in UE4 and move your projects to UE5 when ready. </p>
+</blockquote>
+<p>预计UE5将在2021年初发布预览版，在年底发布正式版，希望不会跳票，Epic NB!</p>
+
+      </div>
+      
+      
+      
+    </div>
+    
+  <ul class="breadcrumb">
+          
+            <li><a href="/notes/">NOTES</a></li>
+          <li>UE5</li>
+        
+  </ul>
+
+    
+    
+    
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Game-Feature"><span class="nav-number">1.</span> <span class="nav-text">Game Feature</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ECS%E6%94%AF%E6%8C%81"><span class="nav-number">2.</span> <span class="nav-text">ECS支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Oodle-Compression"><span class="nav-number">3.</span> <span class="nav-text">Oodle Compression</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Epic%E6%94%B6%E8%B4%ADRAD-Game-Tools"><span class="nav-number">4.</span> <span class="nav-text">Epic收购RAD Game Tools</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Epic-Verse"><span class="nav-number">5.</span> <span class="nav-text">Epic Verse</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Haskell-eXchange%E7%9A%84%E8%BF%9B%E5%B1%95"><span class="nav-number">5.1.</span> <span class="nav-text">Haskell eXchange的进展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Epic-Verse-%E8%AF%AD%E6%B3%95%E4%BB%8B%E7%BB%8D"><span class="nav-number">5.2.</span> <span class="nav-text">Epic Verse 语法介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#class%E5%AE%9A%E4%B9%89"><span class="nav-number">5.2.1.</span> <span class="nav-text">class定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E"><span class="nav-number">5.2.2.</span> <span class="nav-text">变量声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E8%B5%8B%E5%80%BC"><span class="nav-number">5.2.3.</span> <span class="nav-text">变量赋值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%9D%97"><span class="nav-number">5.2.4.</span> <span class="nav-text">代码块</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E8%AF%AD%E5%8F%A5"><span class="nav-number">5.2.5.</span> <span class="nav-text">循环语句</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8"><span class="nav-number">5.2.6.</span> <span class="nav-text">函数调用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B7%E6%9C%89%E7%B1%BB%E4%BC%BC%E5%8D%8F%E7%A8%8B%E7%9A%84%E5%BD%A2%E5%BC%8F"><span class="nav-number">5.2.7.</span> <span class="nav-text">具有类似协程的形式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UE5%E5%8F%AF%E8%83%BD%E7%9A%84%E8%84%9A%E6%9C%AC%E8%AF%AD%E8%A8%80"><span class="nav-number">5.3.</span> <span class="nav-text">UE5可能的脚本语言</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE5%E7%9A%84PS5%E7%9C%9F%E6%9C%BA%E8%A7%86%E9%A2%91"><span class="nav-number">6.</span> <span class="nav-text">UE5的PS5真机视频</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.1.2/es5/tex-mml-chtml.min.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/notes/ue5/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

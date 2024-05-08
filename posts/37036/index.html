@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="之前我写了一篇文章，介绍UE默认的拆包方式(UE 热更新：拆分基础包)，但UE默认的拆包方式在大规模资源项目中不够灵活，无法满足对超大规模资源项目的精细化管理需求。 为了解决UE默认打包和资源拆分的痛点，我基于HotPatcherCore开发了一个扩展，能够能够解决默认拆包流程的缺点，足够地灵活与强大。博客中有篇文章，介绍它的整体实现机制： 一种灵活与非侵入式的基础包拆分方案。 HotChunke">
+<meta property="og:type" content="article">
+<meta property="og:title" content="资源管理：重塑UE的包拆分方案">
+<meta property="og:url" content="https://imzlp.com/posts/37036/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="之前我写了一篇文章，介绍UE默认的拆包方式(UE 热更新：拆分基础包)，但UE默认的拆包方式在大规模资源项目中不够灵活，无法满足对超大规模资源项目的精细化管理需求。 为了解决UE默认打包和资源拆分的痛点，我基于HotPatcherCore开发了一个扩展，能够能够解决默认拆包流程的缺点，足够地灵活与强大。博客中有篇文章，介绍它的整体实现机制： 一种灵活与非侵入式的基础包拆分方案。 HotChunke">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230220171922.webp">
+<meta property="article:published_time" content="2023-03-15T11:24:32.000Z">
+<meta property="article:modified_time" content="2023-03-15T11:24:32.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="资源管理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230220171922.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/37036/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>资源管理：重塑UE的包拆分方案 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/37036/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          资源管理：重塑UE的包拆分方案<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2023-03-15-37036.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Resource Management: Reshaping UnrealEngine Subcontracting Solution</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-15 11:24 11:24:32:24" itemprop="dateCreated datePublished" datetime="2023-03-15T11:24:32+00:00">2023-03-15 11:24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">资源管理</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/37036/" class="post-meta-item leancloud_visitors" data-flag-title="资源管理：重塑UE的包拆分方案" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>之前我写了一篇文章，介绍UE默认的拆包方式(<a href="https://imzlp.com/posts/13765/">UE 热更新：拆分基础包</a>)，但UE默认的拆包方式在大规模资源项目中不够灵活，无法满足对超大规模资源项目的精细化管理需求。</p>
+<p>为了解决<a href="https://imzlp.com/posts/37036/#UE%E9%BB%98%E8%AE%A4%E6%89%93%E5%8C%85%E7%9A%84%E9%97%AE%E9%A2%98">UE默认打包和资源拆分的痛点</a>，我基于HotPatcherCore开发了一个扩展，能够能够解决默认拆包流程的缺点，足够地灵活与强大。博客中有篇文章，介绍它的整体实现机制： <a href="https://imzlp.com/posts/24350/">一种灵活与非侵入式的基础包拆分方案</a>。</p>
+<p>HotChunker能够非侵入式地集成到UE默认的打包流程中，无需手动做任何的处理，只要UE默认打包，就会自动拉起HotChunker的拆包流程，实现资源的Cook、打包，以及自动Copy到StagedBuilds目录中。</p>
+<p>本篇文章会着重介绍，使用HotChunker在进行资源拆分的配置方式和自动化构建、最大限度地降低资源冗余、以及进行并行打包的实现。</p>
+<span id="more"></span>
+<h2 id="UE默认打包的问题"><a href="#UE默认打包的问题" class="headerlink" title="UE默认打包的问题"></a>UE默认打包的问题</h2><p>UE默认使用的<code>CookerOnTheFly</code>-<code>UnrealPak</code>的模式本身存在一些问题：</p>
+<ol>
+<li>不能够精确地打包和灵活控制自定义拆包的行为</li>
+<li>没有全平台通用的pak进包过滤机制（只有安卓的<code>ObbFilter</code>）</li>
+<li>强依赖Cook流程，无法单独打包某一个Chunk</li>
+<li>无法方便地进行程序化的拆包</li>
+<li>无法配置Chunk包含Not-uasset文件</li>
+<li>所有Not-uasset文件均在0号Chunk   </li>
+<li>无法基于chunk拆分Metadatas</li>
+</ol>
+<p>HotChunker的实现能够比较好的解决上面的问题，每个Chunk都是自包含的：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228200915.webp"></p>
+<p>最终效果，UE打包的资源配置，只有那些最基础的资源由UE自己管理打包，其余的都可以通过HotChunker的配置来拆分。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315143842.webp"></p>
+<p>文章的后续部分会介绍如何配置做到这一点。</p>
+<h2 id="Chunk配置"><a href="#Chunk配置" class="headerlink" title="Chunk配置"></a>Chunk配置</h2><p>Chunk的配置，是进行包拆分的最小单元，在UE中，每个Chunk会打包为一个独立的pak文件。</p>
+<p>对于HotChunker的实现，单个Chunk的配置可以包含以下这些属性：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228203921.webp"></p>
+<p>Chunk的资源的配置提供了两种模式：Rule/Getter，用于<strong>指定打包的资源路径</strong>或<strong>从代码中通过程序化的方式获取</strong>。</p>
+<p>每个Chunk都可以添加的外部文件，以及控制Shader的序列化方式、AssetRegistry的序列化等等。并且Chunk的metadta是自包含的，最显著的就是降低安装包内ShaderLirary的大小。</p>
+<p>默认情况下，UE打包项目的Shader都被序列化到了同一个文件内，并且这个文件是被打包到pakchunk0之内的，也就是整个项目完整的Shader都在安装包之内。资源规模上来之后ShaderLibrary大小非常恐怖，可能会达到数百M。<br>让每个Chunk的Shader自包含，能够比较好地解决这个问题。并且配合上我之前的<a href="https://imzlp.com/posts/26943/">一种高效的 ZSTD Shader 字典训练方案</a>，组合起来能够最大限度地降低ShaderLibrary的大小，实现Shader的按需下载。</p>
+<h3 id="Rule"><a href="#Rule" class="headerlink" title="Rule"></a>Rule</h3><p>Rule模式的配置和HotPatcher的配置类似，可以指定包含路径、资源、忽略的资源。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315124916.webp"></p>
+<p>这种模式适合配置比较固定的资源，如打包某个目录、某个地图等。</p>
+<h3 id="Getter"><a href="#Getter" class="headerlink" title="Getter"></a>Getter</h3><p>除了直接指定资源之外，我还提供了一种Getter的配置模式，可以指定一个继承自<code>UHPLGetter</code>的类，从代码中动态地获取Chunk管理的资源。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315130036.webp"></p>
+<p>之所以会有这样一种模式，是期望与策划的配置建立起直接的对应关系。基于策划的配置来控制打包。</p>
+<p>比如，当前版本包含了哪几个地图、哪些职业的角色等等，这些配置是会随着开发进程不断变化的，而数据源头在策划，在UE默认的方式中，还需要在工程中进行修改打包配置。<br>但，HotChunker通过Getter这种配置方式建立起<strong>打包</strong>与<strong>策划配置</strong>的对应关系，就能够策划来直接控制打包哪些资源。</p>
+<h2 id="Chunk管理"><a href="#Chunk管理" class="headerlink" title="Chunk管理"></a>Chunk管理</h2><h3 id="HPL资源"><a href="#HPL资源" class="headerlink" title="HPL资源"></a>HPL资源</h3><p>与PrimaryLabel类似，我给Chunk的配置增加了一个等价物，我将其称之为<code>HPL</code>（HotPatcherPrimaryLabel）。</p>
+<p>可以创建一个HPL资源用于编辑要打包的资源，每个HPL是一个独立的Chunk。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228202219.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228202419.webp"></p>
+<p>在打包中，需要在<code>Project Settings</code>-<code>Plugins</code>-<code>HotChunker</code>中添加扫描路径：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228202942.webp"></p>
+<p>在HotChunker的打包中，会自动扫描所有配置的目录下的HPL资源，进行打包。</p>
+<h3 id="DataTable"><a href="#DataTable" class="headerlink" title="DataTable"></a>DataTable</h3><p>如果想要创建多个Chunk，可以创建多个HPL的资源，但是为了方便管理，我还支持了DataTable配置。<br>选择创建DataTable，<code>RoleStructure</code>选择<code>HPLChunkSetting</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228204447.webp"></p>
+<p>打开编辑，每个元素就是一个独立的HPL的Chunk配置：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228202600.webp"></p>
+<p>并且我为HPL的DataTable添加了一个专门的打包按钮，可以直接在表格界面中选择打包哪个Chunk：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228203107.webp"><br>它会拉起一个单独的进程执行，不会阻塞当前编辑器。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228203252.webp"></p>
+<p>同样的，当创建了一个HPL的DataTable，想要将其参与打包，需要在<code>Project Settings</code>-<code>Plugins</code>-<code>HotChunker</code>中添加<code>ImportRuleTables</code>配置：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228204359.webp"></p>
+<h3 id="动态注册"><a href="#动态注册" class="headerlink" title="动态注册"></a>动态注册</h3><p>为了实现程序化自动进行分包的需要，我为拆分配置增加了动态注册的机制，只需要绑定该Delegate：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FHotChunkerDelegates::OnNotyfyChunkRegister.<span class="built_in">AddStatic</span>(&amp;FGameEditorModule::OnNotyfyChunkRegister);</span><br></pre></td></tr></table></figure>
+<p>在该函数中将Chunk注册进去：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228202005.webp"></p>
+<p>通过动态注册或者前面提到的Getter机制，可以把策划配置与打包建立起一种对应关系，可以完全按照策划的配置，来自动控制要打包哪些资源，解放程序的配置任务。</p>
+<h2 id="编辑器支持"><a href="#编辑器支持" class="headerlink" title="编辑器支持"></a>编辑器支持</h2><p>我为Chunk的DT配置提供了编辑器选项，能够比较方便地选择打包某个Chunk，在开发过程中，可以让美术同学自己方便地打包自己所需要的资源，避免出包的等待。</p>
+<ol>
+<li>打包单个Chunk</li>
+<li>打包DT中所有的Chunk</li>
+<li>导入/导出Chunk的配置</li>
+<li>不阻塞编辑器</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315130612.webp"></p>
+<h2 id="全局配置与流程扩展"><a href="#全局配置与流程扩展" class="headerlink" title="全局配置与流程扩展"></a>全局配置与流程扩展</h2><p>在<code>Project Settings</code>-<code>Plugins</code>-<code>HotChunker</code>中可以进行全局配置，和逻辑替换（ChunkerManager）。</p>
+<ol>
+<li>HPL扫描路径</li>
+<li>Chunk规则DT配置</li>
+<li>Pak Setting</li>
+<li>功能开关</li>
+<li>替换ChunkerManager</li>
+<li>全局重载</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315120919.webp"></p>
+<h3 id="介入Chunker的各个阶段"><a href="#介入Chunker的各个阶段" class="headerlink" title="介入Chunker的各个阶段"></a>介入Chunker的各个阶段</h3><p>为了实现足够的灵活性，在实现过程中，我为Chunk的打包留了很多可以介入到各个阶段的口子。</p>
+<ol>
+<li>按需对资源资源分析、处理</li>
+<li>获取打包状态、结果</li>
+<li>获取完整的Manifest信息</li>
+<li>进行包体审计</li>
+</ol>
+<p>在框架之内，可以非侵入式地实现项目的各种分析需求。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228203716.webp"></p>
+<h2 id="冗余控制"><a href="#冗余控制" class="headerlink" title="冗余控制"></a>冗余控制</h2><p>我在<a href="https://imzlp.com/posts/13765/#Priority%E6%89%93%E5%8C%85%E6%97%B6%E5%A4%B1%E6%95%88">UE热更新：拆分基础包#Priority 打包时失效</a>中介绍了通过UE默认的拆包形式，优先级不生效的情况，并提供了解决方案。</p>
+<p>HotChunker在实现时，就已经规避了这些问题，Chunk的配置也支持<code>Priority</code>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230228143440.webp"></p>
+<p>如果Chunk的Priority是平级的，则它们之间就没有依赖关系，统计资源会冗余一些。  </p>
+<p>打进安装包内的Chunk之间是没有资源冗余的，在安装包之外的Chunk，可以优先级来进行冗余控制。</p>
+<h2 id="Commandlet支持"><a href="#Commandlet支持" class="headerlink" title="Commandlet支持"></a>Commandlet支持</h2><p>我为HotChunker添加了多种Commandlet支持，能够比较方便地使用命令行打包。</p>
+<ol>
+<li>打包工程里所有配置的Chunk</li>
+<li>打包一组Chunks</li>
+<li>打包单个Chunk</li>
+<li>打包某个命名的Chunk</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-run=HotChunker -TargetPlatform=IOS</span><br><span class="line">-run=HotMultiChunker -config=G:/HPL/HPL_ChunkerSettings.json -TargetPlatform=IOS</span><br><span class="line">-run=HotSingleChunker -config=G:/HPL/ChunkerSetting.json -TargetPlatform=IOS</span><br><span class="line">-run=HotNamedChunk -ChunkName=XXXX -TargetPlatform=IOS</span><br></pre></td></tr></table></figure>
+
+<h2 id="打包控制与动态开关"><a href="#打包控制与动态开关" class="headerlink" title="打包控制与动态开关"></a>打包控制与动态开关</h2><p>Chunk的打包控制，分为三种类型：</p>
+<ol>
+<li>bUseHPL：是否启用HotChunker的配置打包chunk</li>
+<li>ALL：所有的chunk</li>
+<li>BASEBUILDS：安装包内的Chunk</li>
+<li>EXTERNAL：安装包之外的Chunk</li>
+</ol>
+<p>在项目设置中可以控制默认打包的类型<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315121324.webp"></p>
+<p>除了固定配置之外，还可以在commandlet传递命令来覆盖引擎中的配置，能够比较方便地在CI/CD上进行控制。</p>
+<p>目前支持了两个动态开关：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># true/false</span></span><br><span class="line">-bUseHPL=</span><br><span class="line"><span class="comment"># ALL/BASEBUILDS/EXTERNAL</span></span><br><span class="line">-GenerateType=</span><br></pre></td></tr></table></figure>
+
+<p>在拉起UE的CookCommandlet时传递，就会自动地控制Chunker的打包开关和生成的Chunk类型。</p>
+<p>如果是自己在CI/CD中调用<code>HotChunkerCommandlet</code>，也可以传递这两个动态开关。<br>如，只打包非安装包内的Chunk：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-run=HotChunker -TargetPlatform=IOS -GenerateType=EXTERNAL</span><br></pre></td></tr></table></figure>
+
+<p>能够比较方便地集成到CI/CD系统中：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315121715.webp"></p>
+<p>通过这种机制，可以实现打包时的精确控制。在一些测试场景中，可以实现快速出包，避免每次打包都要处理完整资源。</p>
+<h2 id="Chunk的加密"><a href="#Chunk的加密" class="headerlink" title="Chunk的加密"></a>Chunk的加密</h2><p>使用HotChunker方式管理并打包的Chunk，默认复用项目配置中里<code>DefaultCrypto.ini</code>的配置。</p>
+<p>在<code>Project Settings</code>-<code>Plugins</code>-<code>HotChunker</code>-<code>HPLPakSettings</code>-<code>EnceyptSettings</code>中配置：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315123852.webp"></p>
+<p><code>bUseDefaultCryptoIni</code>：使用项目设置中的配置。如果不复用，可以通过<code>CryptoKeys</code>来指定crypto.json进行加密。</p>
+<h2 id="通用的包过滤方案"><a href="#通用的包过滤方案" class="headerlink" title="通用的包过滤方案"></a>通用的包过滤方案</h2><p>在<a href="https://imzlp.com/posts/13765/">UE 热更新：拆分基础包</a>这篇文章里，我介绍了Android和IOS包过滤的方法。<br>引擎默认只为Android提供了<code>ObbFilter</code>，但没有为IOS提供等价物，需要自己实现。</p>
+<p>在HotChunker的实现中，我对包过滤的机制做了补充，可以在创建每个Chunk时，直接指定它是否进安装包。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315122047.webp"></p>
+<p>并且，可以针对某个平台特殊处理：如，默认情况下进基础包，但在WindowsNoEditor平台不进。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315122130.webp"></p>
+<p>如果不想要对每个Chunk都单独配置，可以在项目设置中配置全局重载：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315122357.webp"></p>
+<p>这个配置意味着，在打包WindowsNoEditor平台时，HotChunker所有管理的chunk都会归档到安装包之内。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315145347.webp"></p>
+<h2 id="流程优化"><a href="#流程优化" class="headerlink" title="流程优化"></a>流程优化</h2><p>默认情况下，UE使用CookerOnTheFly的过程，是要把当前工程中所有参与打包的资源都执行Cook之后，才进入到Pak打包过程。</p>
+<p>本质上是一个串行的过程：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315131233.webp"></p>
+<p>但是当资源规模庞大之后，这个过程非常之久。</p>
+<p>但实际上，我们并不一定需要把所有的资源处理完，才能打安装包。因为在手游中，安装包内的资源只是一少部分，其余的资源都是热更动态下载下来的。</p>
+<p>在HotChunker的实现中，可以把安装包内Chunk的打包与动态下载的Chunk进行并行执行：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230315131835.webp"></p>
+<p>这样就能够节省大量的时间，用最快的速度打出安装包，再用一个独立的打包任务<strong>并行执行</strong>动态下载的Chunk的打包。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>基于HotChunker的包管理方案，是一种强大和精确地包管理机制。能够在精确拆分资源的同时，保证配置的灵活性，并且支持强大的Commandlet能力。能够方便地非侵入式扩展流程和进行资源审计。</p>
+<p>而且，该方案是非侵入式集成，无需对默认的打包过程做任何处理也不需要修改引擎，整个实现都是插件化的，只要启用插件后拉起UE默认的打包就会自动执行。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/37036/" target="_blank">资源管理：重塑UE的包拆分方案</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2023年03月15日 11时24分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4.2k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/37036/" target="_blank" title="资源管理：重塑UE的包拆分方案">https://imzlp.com/posts/37036/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/37036/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+              <a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" rel="tag"># 资源管理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/27475/" rel="prev" title="UE插件与工具开发：Commandlet">
+      <i class="fa fa-chevron-left"></i> UE插件与工具开发：Commandlet
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/56381/" rel="next" title="内存扩展：UE中利用IOS新的内存特性">
+      内存扩展：UE中利用IOS新的内存特性 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E9%BB%98%E8%AE%A4%E6%89%93%E5%8C%85%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">UE默认打包的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chunk%E9%85%8D%E7%BD%AE"><span class="nav-number">2.</span> <span class="nav-text">Chunk配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Rule"><span class="nav-number">2.1.</span> <span class="nav-text">Rule</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Getter"><span class="nav-number">2.2.</span> <span class="nav-text">Getter</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chunk%E7%AE%A1%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">Chunk管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HPL%E8%B5%84%E6%BA%90"><span class="nav-number">3.1.</span> <span class="nav-text">HPL资源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DataTable"><span class="nav-number">3.2.</span> <span class="nav-text">DataTable</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E6%B3%A8%E5%86%8C"><span class="nav-number">3.3.</span> <span class="nav-text">动态注册</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E6%94%AF%E6%8C%81"><span class="nav-number">4.</span> <span class="nav-text">编辑器支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E9%85%8D%E7%BD%AE%E4%B8%8E%E6%B5%81%E7%A8%8B%E6%89%A9%E5%B1%95"><span class="nav-number">5.</span> <span class="nav-text">全局配置与流程扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8B%E5%85%A5Chunker%E7%9A%84%E5%90%84%E4%B8%AA%E9%98%B6%E6%AE%B5"><span class="nav-number">5.1.</span> <span class="nav-text">介入Chunker的各个阶段</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%97%E4%BD%99%E6%8E%A7%E5%88%B6"><span class="nav-number">6.</span> <span class="nav-text">冗余控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Commandlet%E6%94%AF%E6%8C%81"><span class="nav-number">7.</span> <span class="nav-text">Commandlet支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%93%E5%8C%85%E6%8E%A7%E5%88%B6%E4%B8%8E%E5%8A%A8%E6%80%81%E5%BC%80%E5%85%B3"><span class="nav-number">8.</span> <span class="nav-text">打包控制与动态开关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chunk%E7%9A%84%E5%8A%A0%E5%AF%86"><span class="nav-number">9.</span> <span class="nav-text">Chunk的加密</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9A%E7%94%A8%E7%9A%84%E5%8C%85%E8%BF%87%E6%BB%A4%E6%96%B9%E6%A1%88"><span class="nav-number">10.</span> <span class="nav-text">通用的包过滤方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%81%E7%A8%8B%E4%BC%98%E5%8C%96"><span class="nav-number">11.</span> <span class="nav-text">流程优化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">12.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/37036/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

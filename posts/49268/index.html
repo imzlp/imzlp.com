@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="近期想研究下Boost库，网络上提供的大都是使用IDE(VS&#x2F;Code::Blocks等)的教程，但是只是写一些测试代码就要开个臃肿的IDE我是很不爽的，今天折腾了一下在SublimeText中编译&#x2F;链接使用Boost库的代码。顺便把折腾过程&#x2F;工具整理了出来，如果别人有这样的需求而且恰好能看到这篇文章的话，就能少浪费时间了。 2016.11.01 Update使用最新版本MinGW64-GCC6.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="配置SublimeText为Boost开发环境">
+<meta property="og:url" content="https://imzlp.com/posts/49268/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="近期想研究下Boost库，网络上提供的大都是使用IDE(VS&#x2F;Code::Blocks等)的教程，但是只是写一些测试代码就要开个臃肿的IDE我是很不爽的，今天折腾了一下在SublimeText中编译&#x2F;链接使用Boost库的代码。顺便把折腾过程&#x2F;工具整理了出来，如果别人有这样的需求而且恰好能看到这篇文章的话，就能少浪费时间了。 2016.11.01 Update使用最新版本MinGW64-GCC6.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/49268/00.webp">
+<meta property="article:published_time" content="2016-10-13T09:24:16.000Z">
+<meta property="article:modified_time" content="2016-10-13T09:24:16.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="SublimeText">
+<meta property="article:tag" content="编程工具">
+<meta property="article:tag" content="Boost">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/49268/00.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/49268/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>配置SublimeText为Boost开发环境 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/49268/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          配置SublimeText为Boost开发环境<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2016-10-13-49268.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-10-13 09:24 09:24:16:24" itemprop="dateCreated datePublished" datetime="2016-10-13T09:24:16+00:00">2016-10-13 09:24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">编程工具</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/SublimeText/" itemprop="url" rel="index"><span itemprop="name">SublimeText</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/49268/" class="post-meta-item leancloud_visitors" data-flag-title="配置SublimeText为Boost开发环境" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>16 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>近期想研究下<a target="_blank" rel="noopener" href="http://www.boost.org/">Boost</a>库，网络上提供的大都是使用IDE(VS/Code::Blocks等)的教程，但是只是写一些测试代码就要开个臃肿的IDE我是很不爽的，今天折腾了一下在SublimeText中编译/链接使用Boost库的代码。顺便把折腾过程/工具整理了出来，如果别人有这样的需求而且恰好能看到这篇文章的话，就能少浪费时间了。</p>
+<p><strong>2016.11.01 Update</strong><br>使用最新版本MinGW64-GCC6.2(x86_64-6.2.0-posix-seh-rt_v5-rev1)来编译出LLVM/Clang 3.9，再使用编译出来的Clang编译Boost1.62，之前在Clang中链接编译出来的Boost库出现的报错情况消失了。<br><strong>注意：使用Clang编译Boost时，最好确保当前的clang版本是由当前系统中gcc的版本编译而来的，不然使用clang链接编译出来的静态链接库时会出现奇怪的问题。</strong></p>
+<p>可以在这里下载我编译好的版本：<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1i5PpoB7">MinGW62-GCC6.2(x86_64-6.2.0-posix-seh-rt_v5-rev1)</a>，使用GCC6.2(上面的MinGW版本)编译的<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1pKLyZ7H">LLVM/Clang3.9</a>，以及<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1eRZU26u">Boost(MinGW64-GCC6.2/LLVM3.9/VC14-ALL)</a>，需要的链接库版本(debug/release/static等)可以自行选择。<br>完整的编译工具链可以<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1pKN0TPh">点此下载</a>。</p>
+<span id="more"></span>
+
+<p><strong>原文章</strong><br>首先确保你电脑上装有LLVM(clang)+GCC(MinGW)/MSVC(这篇文章只写Clang/GCC版本)——或者下载我的<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1mhIgvck">C++工具链(Cmake/Mingw/LLVM/Cppcheck)</a>添加到系统的PATH路径。</p>
+<p>我所使用的GCC版本为6.2.0 (x86_64-posix-seh-rev1),LLVM(Clang 3.9)版本为x86_64-w64-windows-gnu(Thread model: posix)。</p>
+<p>然后从<a target="_blank" rel="noopener" href="http://www.boost.org/">boost.org</a>下载最新版本<a target="_blank" rel="noopener" href="https://sourceforge.net/projects/boost/files/boost/1.62.0/">源码</a>/<a target="_blank" rel="noopener" href="https://sourceforge.net/projects/boost/files/boost-binaries/">安装包</a>)。</p>
+<p>假定上一步你下载的是源码版本，下载到本地之后解压出来，其目录下会有<code>bootstrap.bat</code>文件，执行会自动编译出<code>b2.exe</code>与<code>bjam.exe</code>。</p>
+<p>然后开始编译(使用Clang/GCC/MSVC14)，这里我选择的是使用clang：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Clang编译</span></span><br><span class="line">$ bjam stage --toolset=clang --stagedir=<span class="string">&quot;D:\boost\clang&quot;</span> <span class="built_in">link</span>=static runtime-link=shared runtime-link=static threading=multi debug release</span><br><span class="line"><span class="comment"># GCC编译</span></span><br><span class="line">$ bjam stage --toolset=gcc --stagedir=<span class="string">&quot;D:\boost\mingw&quot;</span> <span class="built_in">link</span>=static runtime-link=shared runtime-link=static threading=multi debug release</span><br><span class="line"><span class="comment"># MSVC2015编译</span></span><br><span class="line">$ bjam stage --toolset=msvc-14.0 address-model=64 --stagedir=<span class="string">&quot;D:\boost\vc14&quot;</span> <span class="built_in">link</span>=static runtime-link=shared runtime-link=static threading=multi debug release</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>--toolset</code>表示编译boost所使用的工具集。</li>
+<li><code>address-model=64</code>：编译出来的是32位还是64位版本，该参数跟在<code>--toolset</code>之后，使用VS编译时若未指定，则默认时32位。</li>
+<li><code>--stagedir</code>：指定编译结果的存放目录。</li>
+<li><code>--link</code>：表示链接库的类型，<code>static</code>是静态链接库，<code>shared</code>是动态链接库。</li>
+<li><code>--runtime-link</code>：指定使用运行库的方式，<code>static</code>表示静态链接C/C++运行库(<code>/MT</code>与<code>/MTd</code>)，<code>shared</code>标识动态链接C/C++运行库(<code>/MD</code>与<code>/MDd</code>)，用混链接库会产生LNK2038的链接错误。</li>
+<li><code>--threading</code>：使用多线程库还是单线程库，<code>multi</code>多线程，<code>single</code>单线程。</li>
+<li><code>--address-model</code>：编译出64位还是32位。</li>
+<li><code>--stage</code>：表示只生成dll 或 lib，而不生成包含include目录的头文件目录，  如果要生成包含头文件的include目录，需要使用<code>install</code>参数。</li>
+<li><code>debug</code>/<code>release</code>：生成debug或release版本。<blockquote>
+<p>注意：clang和gcc编译出来的Boost版本(x86/x64)取决于你的编译器版本(x86/x64)，而MSVC编译出来的默认是x86，所以使用上面默认编译的方案在VS中是不能用x64-debug或者x64-release来编译的，解决方案是，在编译Boost时指定编译x64版本<code>address-model=64</code></p>
+</blockquote>
+</li>
+</ul>
+<p>使用上面任意一种都会编译出四个版本的lib来，分别是(multiThread-Release/multiThread-Debug/multiThread-StaticLink-Release/multiThread-StaticLink-Debug)，在<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1pKYVwan">这里</a>可以下载我编译的这三个(clang/gcc/msvc)版本的boost。<br>大概需要几十分钟的时间，编译完毕后会在D盘根目录生成一个Boost文件夹。</p>
+<p>通过编译参数我们可以看出生成的lib与对应的版本：<br>１、以“lib”开头的是“link-static”版本的，而直接以“boost”开头的是“link-shared”版本的。<br>２、有“d”的为debug版本，没有的则是release版本。<br>３、有“s”的为“runtime-link-static”版本，没有的则是“runtime-link-shared”版本。<br>４、有“mt”的为“threading-multi”版本，没有的则是“threading-single”版本。</p>
+<p>如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用这个命令编译会产生四个文件</span></span><br><span class="line">$ bjam stage --toolset=msvc-14.0 address-model=64 --stagedir=<span class="string">&quot;D:\boost\vc14&quot;</span> <span class="built_in">link</span>=static runtime-link=shared runtime-link=static threading=multi debug release</span><br><span class="line"></span><br><span class="line"><span class="comment"># 多线程(mt)/MT的Release版本(无d)</span></span><br><span class="line">libboost_system-vc140-mt-s-1_62.lib</span><br><span class="line"><span class="comment"># 多线程(mt)/MD的Release版本(无d)</span></span><br><span class="line">libboost_system-vc140-mt-1_62.lib</span><br><span class="line"><span class="comment"># 多线程(mt)/MT的Debug版本(无d)</span></span><br><span class="line">libboost_system-vc140-mt-sgd-1_62.lib</span><br><span class="line"><span class="comment"># 多线程(mt)/MD/的Debug版本</span></span><br><span class="line">libboost_system-vc140-mt-gd-1_62.lib</span><br></pre></td></tr></table></figure>
+
+<p>将Boost源码中的/boost复制到<code>LLVM/include/</code>下，将编译生成的<code>D:/Boost/lib</code>中的文件复制到<code>LLVM/lib</code>下(或者说你直接将boost源码(<del>/Boost/boost)和lib(</del>/Boost/lib)所在的目录(~/boost)添加到系统的PATH路径，下面同理)。</p>
+<p>OK，到这一步，Boost已经安装到你的电脑里了。如果需要定制模块，网上关于如何编译安装Boost的教程很多，一搜即可。</p>
+<p>但是，编译和链接还是个很大的问题。很多教程都使用IDE来写Boost，但是我作为一个ST控我不喜欢臃肿的IDE，所以编译和链接命令都要自己手写了。</p>
+<p>我们先可以测试以下代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// printDirC.cc</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;boost/filesystem.hpp&gt;</span></span></span><br><span class="line"><span class="keyword">namespace</span> fs = boost::filesystem;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 输出当前目录下的所有文件和目录名称</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// 获取当前目录</span></span><br><span class="line">	<span class="function">fs::path <span class="title">full_path</span><span class="params">(fs::current_path())</span></span>;</span><br><span class="line">	fs::directory_iterator end_iter;</span><br><span class="line">	<span class="keyword">for</span> ( fs::directory_iterator <span class="built_in">dir_itr</span>( full_path ); dir_itr != end_iter; ++dir_itr )</span><br><span class="line">	&#123;</span><br><span class="line">		std::cout &lt;&lt; dir_itr-&gt;<span class="built_in">path</span>().<span class="built_in">filename</span>() &lt;&lt; std::endl;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用clang++编译该代码的命令为:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ clang++ -o boost.exe boost.cc -I<span class="string">&quot;C:\Program Files\BuildPath\LLVM\include&quot;</span> -static -L<span class="string">&quot;C:\Program Files\BuildPath\LLVM\lib&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>另外，因为上面的代码中使用了<code>boost_filesystem</code>所以我们在编译时要链接<code>boost_filesystem</code>库，而且由于<code>boost_filesystem</code>依赖<code>boost_system</code>，所以这里的连接选项中将<code>boost_system</code>也要加上。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ g++ -o printDirC.exe printDirC.cc -I<span class="string">&quot;C:\Program Files\BuildPath\LLVM\include&quot;</span>  -L<span class="string">&quot;C:\Program Files\BuildPath\LLVM\lib&quot;</span> -libboost_system-clang39-mt-s-1_62 -libboost_filesystem-clang39-mt-s-1_62</span><br></pre></td></tr></table></figure>
+
+<p>网上很多文章都说要使用<code>-lboost_system</code>和，其实在Boost1.62.0使用clang编译的版本中名字不是这样的，而是<code>libboost_system-clang39-mt-s-1_62.lib</code>(gcc编译的是libboost_system-mgw62-mt-s-1_62.a)之类的。</p>
+<p>MinGW连接静态库的时候，会自动增加prefix lib和.a的扩展名，而clang只会自动增加.a扩展名，然后在可用的路径下寻找对应库文件。</p>
+<p>比如我们写<code>-llibboost_system-clang39-mt-s-1_62</code>会找到<code>libboost_system-clang39-mt-s-1_62.lib</code>(使用gcc编译的版本是写<code>-lboost_system-mgw62-mt-s-1_62</code>会找到<code>libboost_system-mgw62-mt-s-1_62.lib</code>)</p>
+<p>所以我们想要链接库的库参数(GCC版本)为<strong>该静态库文件去掉头部的lib和文件后缀</strong>，Clang版本为<strong>去掉文件后缀</strong>。</p>
+<p>Boost中我们所有可以链接的库和编译时的链接参数为(<code>clang39</code>/<code>1_62</code>为编译器版本和Boost版本，这里我只写出multiThread-StaticLink-Release版本的lib)：</p>
+<table>
+<thead>
+<tr>
+<th align="left">库</th>
+<th align="left">clang版本链接参数</th>
+<th align="left">GCC版本链接参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">boost_atomic</td>
+<td align="left">-llibboost_atomic-clang39-mt-s-1_62</td>
+<td align="left">-lboost_atomic-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_chrono</td>
+<td align="left">-llibboost_chrono-clang39-mt-s-1_62</td>
+<td align="left">-lboost_chrono-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_container</td>
+<td align="left">-llibboost_container-clang39-mt-s-1_62</td>
+<td align="left">-lboost_container-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_context</td>
+<td align="left"></td>
+<td align="left">-lboost_context-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_coroutine</td>
+<td align="left"></td>
+<td align="left">-lboost_coroutine-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_date_time</td>
+<td align="left">-llibboost_date_time-clang39-mt-s-1_62</td>
+<td align="left">-lboost_date_time-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_exception</td>
+<td align="left">-llibboost_exception-clang39-mt-s-1_62</td>
+<td align="left">-lboost_exception-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_filesystem</td>
+<td align="left">-llibboost_filesystem-clang39-mt-s-1_62</td>
+<td align="left">-lboost_filesystem-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_graph</td>
+<td align="left">-llibboost_graph-clang39-mt-s-1_62</td>
+<td align="left">-lboost_graph-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_iostreams</td>
+<td align="left">-llibboost_iostreams-clang39-mt-s-1_62</td>
+<td align="left">-lboost_iostreams-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_locale</td>
+<td align="left"></td>
+<td align="left">-lboost_locale-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_log_setup</td>
+<td align="left">-llibboost_log_setup-clang39-mt-s-1_62</td>
+<td align="left">-lboost_log_setup-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_log</td>
+<td align="left">-llibboost_log-clang39-mt-s-1_62</td>
+<td align="left">-lboost_log-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_math_c99f</td>
+<td align="left">-llibboost_math_c99f-clang39-mt-s-1_62</td>
+<td align="left">-lboost_math_c99f-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_math_c99l</td>
+<td align="left">-llibboost_math_c99l-clang39-mt-s-1_62</td>
+<td align="left">-lboost_math_c99l-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_math_c99</td>
+<td align="left">-llibboost_math_c99-clang39-mt-s-1_62</td>
+<td align="left">-lboost_math_c99-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_math_tr1f</td>
+<td align="left">-llibboost_math_tr1f-clang39-mt-s-1_62</td>
+<td align="left">-lboost_math_tr1f-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_math_tr1l</td>
+<td align="left">-llibboost_math_tr1l-clang39-mt-s-1_62</td>
+<td align="left">-lboost_math_tr1l-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_math_tr1</td>
+<td align="left">-llibboost_math_tr1-clang39-mt-s-1_62</td>
+<td align="left">-lboost_math_tr1-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_prg_exec_monitor</td>
+<td align="left">-llibboost_prg_exec_monitor-clang39-mt-s-1_62</td>
+<td align="left">-lboost_prg_exec_monitor-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_program_options</td>
+<td align="left">-llibboost_program_options-clang39-mt-s-1_62</td>
+<td align="left">-lboost_program_options-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_python3</td>
+<td align="left">-llibboost_python-clang39-mt-s-1_62</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">boost_python</td>
+<td align="left">-llibboost_python-clang39-mt-s-1_62</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">boost_random</td>
+<td align="left">-llibboost_random-clang39-mt-s-1_62</td>
+<td align="left">-lboost_random-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_regex</td>
+<td align="left">-llibboost_regex-clang39-mt-s-1_62</td>
+<td align="left">-lboost_regex-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_serialization</td>
+<td align="left">-llibboost_serialization-clang39-mt-s-1_62</td>
+<td align="left">-lboost_serialization-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_signals</td>
+<td align="left">-llibboost_signals-clang39-mt-s-1_62</td>
+<td align="left">-lboost_signals-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_system</td>
+<td align="left">-llibboost_system-clang39-mt-s-1_62</td>
+<td align="left">-lboost_system-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_test_exec_monitor</td>
+<td align="left">-llibboost_test_exec_monitor-clang39-mt-s-1_62</td>
+<td align="left">-lboost_test_exec_monitor-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_thread</td>
+<td align="left">-llibboost_thread-clang39-mt-s-1_62</td>
+<td align="left">-lboost_thread-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_timer</td>
+<td align="left">-llibboost_timer-clang39-mt-s-1_62</td>
+<td align="left">-lboost_timer-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_type_erasure</td>
+<td align="left">-llibboost_type_erasure-clang39-mt-s-1_62</td>
+<td align="left">-lboost_type_erasure-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_unit_test_framework</td>
+<td align="left">-llibboost_unit_test_framework-clang39-mt-s-1_62</td>
+<td align="left">-lboost_unit_test_framework-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_wave</td>
+<td align="left">-llibboost_wave-clang39-mt-s-1_62</td>
+<td align="left">-lboost_wave-mgw62-mt-s-1_62</td>
+</tr>
+<tr>
+<td align="left">boost_wserialization</td>
+<td align="left">-llibboost_wserialization-clang39-mt-s-1_62</td>
+<td align="left">-lboost_wserialization-mgw62-mt-s-1_62</td>
+</tr>
+</tbody></table>
+<p>为了避免在编译时需要手动添加，我们可以把这些链接参数都写到ST的构建系统里，注意<code>-I</code>和<code>-L</code>的位置要改为你自己的Boost路径。关于如何修改SublimeText构建系统可以看我之前的文章——<a href="https://imzlp.com/2015/12/26/use-clang-and-configuration-sublimetext-build-system/">配置SublimeText为C/C++的轻量级IDE</a>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	&quot;name&quot;: &quot;Clang++ &amp; Boost&quot;,</span><br><span class="line">	&quot;cmd&quot;: [&quot;cmd&quot;, &quot;/c&quot;,&quot;clang++&quot;,&quot;-o&quot;,&quot;$&#123;file_base_name&#125;_gxx.exe&quot;, &quot;$&#123;file&#125;&quot;,&quot;-std=c++11&quot;,&quot;-IC:\\Program Files\\BuildPath\\LLVM\\include&quot;,&quot;-LC:\\Program Files\\BuildPath\\LLVM\\lib&quot;,&quot;-llibboost_atomic-clang39-mt-s-1_62&quot;,&quot;-llibboost_chrono-clang39-mt-s-1_62&quot;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将所有的静态库链接参数写到里面：</p>
+<p>注意链接顺序，因为链接时会先找到最前面的链接库，如果前面的链接库依赖于后面链接库的东西编译就会出错。<br>例如boost中的boost_filename模块依赖于boost_system，所以boost_system的链接要在boost_filename之前：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ clang++ -o <span class="built_in">test</span> test.cc -std=c++11 -IC:\\Program Files\\BuildPath\\LLVM\\include -LC:\\Program Files\\BuildPath\\LLVM\\lib -llibboost_system-clang39-mt-s-1_62 -llibboost_filesystem-clang39-mt-s-1_62</span><br></pre></td></tr></table></figure>
+
+<p>关于链接顺序更多的讨论可以看<a target="_blank" rel="noopener" href="http://www.network-theory.co.uk/docs/gccintro/gccintro_18.html">这里</a>还有<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/16159356/mongodb-2-4-c-driver-causes-link-error/16166274?noredirect=1#16166274">stackoverflow的讨论</a>,以及<a target="_blank" rel="noopener" href="http://zhiqiang.org/note/md/order-is-important-in-gcc-ld.html">GCC LD对依赖库的输入顺序敏感</a></p>
+<p>另外，如果有需要，可以用<code>-Wl,-Bstatic</code>来指定后面的部分是静态链接的，而<code>-Wl,-Bdynamic</code>则是指定后面的部分是动态链接的。<br>Clang版本：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">       &quot;name&quot;: &quot;Clang++&quot;,</span><br><span class="line">       &quot;cmd&quot;: [&quot;cmd&quot;, &quot;/c&quot;,&quot;clang++&quot;,&quot;-o&quot;,&quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_clangxx.exe&quot;, &quot;$&#123;file&#125;&quot;,&quot;-std=c++11&quot;,&quot;-pthread&quot;,&quot;-IC:\\Program Files\\CompileBuild\\Boost\\include&quot;,&quot;-LC:\\Program Files\\CompileBuild\\Boost\\lib\\clang39\\lib&quot;,&quot;-Wl,-Bstatic&quot;,&quot;-llibboost_atomic-clang39-mt-s-1_62&quot;,&quot;-llibboost_container-clang39-mt-s-1_62&quot;,&quot;-llibboost_date_time-clang39-mt-s-1_62&quot;,&quot;-llibboost_filesystem-clang39-mt-s-1_62&quot;,&quot;-llibboost_graph-clang39-mt-s-1_62&quot;,&quot;-llibboost_iostreams-clang39-mt-s-1_62&quot;,&quot;-llibboost_log_setup-clang39-mt-s-1_62&quot;,&quot;-llibboost_log-clang39-mt-s-1_62&quot;,&quot;-llibboost_math_c99f-clang39-mt-s-1_62&quot;,&quot;-llibboost_math_c99l-clang39-mt-s-1_62&quot;,&quot;-llibboost_math_c99-clang39-mt-s-1_62&quot;,&quot;-llibboost_math_tr1f-clang39-mt-s-1_62&quot;,&quot;-llibboost_math_tr1l-clang39-mt-s-1_62&quot;,&quot;-llibboost_math_tr1-clang39-mt-s-1_62&quot;,&quot;-llibboost_prg_exec_monitor-clang39-mt-s-1_62&quot;,&quot;-llibboost_program_options-clang39-mt-s-1_62&quot;,&quot;-llibboost_python-clang39-mt-s-1_62&quot;,&quot;-llibboost_random-clang39-mt-s-1_62&quot;,&quot;-llibboost_regex-clang39-mt-s-1_62&quot;,&quot;-llibboost_serialization-clang39-mt-s-1_62&quot;,&quot;-llibboost_signals-clang39-mt-s-1_62&quot;,&quot;-llibboost_type_erasure-clang39-mt-s-1_62&quot;,&quot;-llibboost_wave-clang39-mt-s-1_62&quot;,&quot;-llibboost_wserialization-clang39-mt-s-1_62&quot;,&quot;-llibboost_chrono-clang39-mt-s-1_62&quot;,&quot;-llibboost_exception-clang39-mt-s-1_62&quot;,&quot;-llibboost_system-clang39-mt-s-1_62&quot;,&quot;-llibboost_test_exec_monitor-clang39-mt-s-1_62&quot;,&quot;-llibboost_thread-clang39-mt-s-1_62&quot;,&quot;-llibboost_timer-clang39-mt-s-1_62&quot;,&quot;-llibboost_unit_test_framework-clang39-mt-s-1_62&quot;,&quot;&amp;&amp;&quot;, &quot;start&quot;, &quot;console_runner&quot;, &quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_clangxx.exe&quot;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>GCC版本(与clang版本的区别就是使用g++编译，而且链接时不写链接库文件名的lib(<code>-lboost...</code>))：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;name&quot;: &quot;G++&quot;,</span><br><span class="line">    &quot;cmd&quot;: [&quot;cmd&quot;, &quot;/c&quot;,&quot;g++&quot;,&quot;-o&quot;,&quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_gxx.exe&quot;, &quot;$&#123;file&#125;&quot;,&quot;-std=c++11&quot;,&quot;-pthread&quot;,&quot;-IC:\\Program Files\\BuildPath\\Boost\\include&quot;,&quot;-LC:\\Program Files\\BuildPath\\Boost\\lib\\mingw52\\x64&quot;,&quot;-Wl,-Bstatic&quot;,&quot;-lboost_atomic-mgw62-mt-s-1_62&quot;,&quot;-lboost_container-mgw62-mt-s-1_62&quot;,&quot;-lboost_date_time-mgw62-mt-s-1_62&quot;,&quot;-lboost_filesystem-mgw62-mt-s-1_62&quot;,&quot;-lboost_graph-mgw62-mt-s-1_62&quot;,&quot;-lboost_iostreams-mgw62-mt-s-1_62&quot;,&quot;-lboost_log_setup-mgw62-mt-s-1_62&quot;,&quot;-lboost_log-mgw62-mt-s-1_62&quot;,&quot;-lboost_math_c99f-mgw62-mt-s-1_62&quot;,&quot;-lboost_math_c99l-mgw62-mt-s-1_62&quot;,&quot;-lboost_math_c99-mgw62-mt-s-1_62&quot;,&quot;-lboost_math_tr1f-mgw62-mt-s-1_62&quot;,&quot;-lboost_math_tr1l-mgw62-mt-s-1_62&quot;,&quot;-lboost_math_tr1-mgw62-mt-s-1_62&quot;,&quot;-lboost_prg_exec_monitor-mgw62-mt-s-1_62&quot;,&quot;-lboost_program_options-mgw62-mt-s-1_62&quot;,&quot;-lboost_python-mgw62-mt-s-1_62&quot;,&quot;-lboost_random-mgw62-mt-s-1_62&quot;,&quot;-lboost_regex-mgw62-mt-s-1_62&quot;,&quot;-lboost_serialization-mgw62-mt-s-1_62&quot;,&quot;-lboost_signals-mgw62-mt-s-1_62&quot;,&quot;-lboost_type_erasure-mgw62-mt-s-1_62&quot;,&quot;-lboost_wave-mgw62-mt-s-1_62&quot;,&quot;-lboost_wserialization-mgw62-mt-s-1_6&quot;-lboost_chrono-mgw62-mt-s-1_62&quot;,&quot;-lboost_exception-mgw62-mt-s-1_62&quot;,&quot;-lboost_system-mgw62-mt-s-1_62&quot;,&quot;-lboost_test_exec_monitor-mgw62-mt-s-1_62&quot;,&quot;-lboost_thread-mgw62-mt-s-1_62&quot;,&quot;-lboost_timer-mgw62-mt-s-1_62&quot;,&quot;-lboost_unit_test_framework-mgw62-mt-s-1_62&quot;,&quot;&amp;&amp;&quot;, &quot;start&quot;, &quot;console_runner&quot;, &quot;$&#123;file_path&#125;/$&#123;file_base_name&#125;_gxx.exe&quot;]</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意：如果编译成功运行时提示找不到<code>console_runner</code>，可以在<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1c2JYQCK">这里</a>下载后放到你的PATH路径中的目录里即可(如MinGW/bin)。</p>
+<p>若是在VS中配置Boost，需要配置win32和x64版本的，根据上面自己编译出来x86/x64版本的在<strong>视图-&gt;属性管理器</strong>中指定(win32-debug/win32-release)和(x64-debug/x64-release)两组。这样在VS中分别使用x86/x64就不会报错了。</p>
+<p>可以使用下面的代码来测试编译器和链接库的版本:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;boost/version.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;boost/config.hpp&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc,<span class="type">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	cout&lt;&lt;BOOST_VERSION&lt;&lt;endl;</span><br><span class="line">	cout&lt;&lt;BOOST_LIB_VERSION&lt;&lt;endl;</span><br><span class="line">	cout&lt;&lt;BOOST_PLATFORM&lt;&lt;endl;</span><br><span class="line">	cout&lt;&lt;BOOST_COMPILER&lt;&lt;endl;</span><br><span class="line">	cout&lt;&lt;BOOST_STDLIB&lt;&lt;endl;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>分别使用G++和Clang编译结果如下:<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/49268/00.webp"></p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/49268/" target="_blank">配置SublimeText为Boost开发环境</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2016年10月13日 09时24分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有6.5k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/49268/" target="_blank" title="配置SublimeText为Boost开发环境">https://imzlp.com/posts/49268/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/49268/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/SublimeText/" rel="tag"># SublimeText</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/" rel="tag"># 编程工具</a>
+              <a href="/tags/Boost/" rel="tag"># Boost</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/18194/" rel="prev" title="Boost源码分析笔记">
+      <i class="fa fa-chevron-left"></i> Boost源码分析笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/354/" rel="next" title="使用Docker部署shadowsocks服务">
+      使用Docker部署shadowsocks服务 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/49268/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

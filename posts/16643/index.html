@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Module是构成Unreal的基本元素，每一个Module封装和实现了一组功能，并且可以供其他的Module使用，整个Unreal Engine就是靠各个Module组合驱动的，连我们创建的游戏项目本身，都是一个单独的Module。 那么UE又是怎么创建和构建这这些Module的呢？这是写这篇文章的主要目的，研究一下Unreal的构建系统以及它们(Target和Module)支持的各种属性。 建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE Build System：Target and Module">
+<meta property="og:url" content="https://imzlp.com/posts/16643/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="Module是构成Unreal的基本元素，每一个Module封装和实现了一组功能，并且可以供其他的Module使用，整个Unreal Engine就是靠各个Module组合驱动的，连我们创建的游戏项目本身，都是一个单独的Module。 那么UE又是怎么创建和构建这这些Module的呢？这是写这篇文章的主要目的，研究一下Unreal的构建系统以及它们(Target和Module)支持的各种属性。 建">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323191402.webp">
+<meta property="article:published_time" content="2019-09-12T13:14:22.000Z">
+<meta property="article:modified_time" content="2019-09-12T13:14:22.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="UBT">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323191402.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/16643/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE Build System：Target and Module | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/16643/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE Build System：Target and Module<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2019-09-12-16643.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-09-12 13:14 13:14:22:14" itemprop="dateCreated datePublished" datetime="2019-09-12T13:14:22+00:00">2019-09-12 13:14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/Build-System/" itemprop="url" rel="index"><span itemprop="name">Build System</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/16643/" class="post-meta-item leancloud_visitors" data-flag-title="UE Build System：Target and Module" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>24 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Module是构成Unreal的基本元素，每一个Module封装和实现了一组功能，并且可以供其他的Module使用，整个Unreal Engine就是靠各个Module组合驱动的，连我们创建的游戏项目本身，都是一个单独的Module。</p>
+<p>那么UE又是怎么创建和构建这这些Module的呢？这是写这篇文章的主要目的，研究一下Unreal的构建系统以及它们(Target和Module)支持的各种属性。</p>
+<p>建议在看这篇文章之前先看一下我之前的这篇文章：<a href="https://imzlp.com/posts/6362/">Build flow of the Unreal Engine4 project</a>，主要内容是大致过一遍UE的构建流程，本篇文章只是UE构建系统中的一环。</p>
+<span id="more"></span>
+<p>对于UE项目比较熟悉的都知道，当使用UE创建一个C++游戏项目时，会在项目路径下创建<code>Source</code>文件夹，默认包含了下列文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Example\GWorld\Source&gt;tree /a /f</span><br><span class="line">|   GWorld.Target.cs</span><br><span class="line">|   GWorldEditor.Target.cs</span><br><span class="line">|</span><br><span class="line">\---GWorld</span><br><span class="line">        GWorld.Build.cs</span><br><span class="line">        GWorld.cpp</span><br><span class="line">        GWorld.h</span><br><span class="line">        GWorldGameModeBase.cpp</span><br><span class="line">        GWorldGameModeBase.h</span><br></pre></td></tr></table></figure>
+<p>其中，<code>*.Target.cs</code>与<code>*.Build.cs</code>是Unreal构建系统的实际控制者，UBT通过扫描这两个文件来确定整个编译环境，它们也是本篇文章研究的重点。<br>它们的职责各不相同：</p>
+<ul>
+<li><code>*.Target.cs</code>控制的是生成的可执行程序的外部编译环境，就是所谓的<strong>Target</strong>。比如，生成的是什么<code>Type</code>(Game/Client/Server/Editor/Program)，开不开启RTTI(<code>bForceEnableRTTI</code>)，CRT使用什么方式链接(<code>bUseStaticCRT</code>) 等等。</li>
+<li><code>*.Build.cs</code>控制的是Module编译过程，由它来控制所属Module的对其他Module的依赖、文件包含、链接、宏定义等等相关的操作，<code>*.Build.cs</code>告诉UE的构建系统，它是一个Module，并且编译的时候要做哪些事情。</li>
+</ul>
+<p>以一言以蔽之：与外部编译环境相关的都归<code>*.target.cs</code>管，与Module自身相关的都归<code>*.build.cs</code>管。</p>
+<p>插个题外话，在<code>GWorld.h</code>和<code>GWorld.cpp</code>中定义的是Module真正的执行逻辑，使用<code>IMPLEMENT_MODULE</code>定义。UE中所有的Module都是继承自<code>IModuleInterface</code>，具有以下接口：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">IModuleInterface</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">virtual</span> ~<span class="built_in">IModuleInterface</span>();</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">StartupModule</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PreUnloadCallback</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PostLoadCallback</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">ShutdownModule</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">SupportsDynamicReloading</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">SupportsAutomaticShutdown</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">IsGameModule</span><span class="params">()</span></span>; <span class="type">const</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>IModuleInterface</code>来驱动Module的启动与关闭，不过一般<code>Game Module</code>不使用这个控制游戏流程。<br>这部分的详细内容可以看我之前的文章：<a href="https://imzlp.com/posts/24007/">UE4 Modules:Load and Startup</a></p>
+<h2 id="Target"><a href="#Target" class="headerlink" title="Target"></a>Target</h2><p>每一个基于Unreal的项目，都有一个<code>Tergat.cs</code>，具有一个继承自<code>TargetRules</code>的类定义；并且默认需要关联着一个同名(非必要，但建议)的<code>Module</code>的定义，否则编译时会有Module未定义错误，它的含意时将指定的<code>Module</code>编译到<code>Target</code>中：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UnrealBuildTool : error : Could not find definition for module &#x27;GWorld&#x27; (referenced via GWorld.Target.cs)</span><br></pre></td></tr></table></figure>
+<p>与<code>Target</code>关联的<code>Module</code>的名字可以通过<code>ExtraModuleNames</code>来指定：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">GWorldTarget</span> : <span class="title">TargetRules</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">GWorldTarget</span>(<span class="params">TargetInfo Target</span>) : <span class="title">base</span>(<span class="params">Target</span>)</span></span><br><span class="line">  &#123;</span><br><span class="line">    Type = TargetType.Game;</span><br><span class="line">    ExtraModuleNames.AddRange( <span class="keyword">new</span> <span class="built_in">string</span>[] &#123; <span class="string">&quot;GWorld&quot;</span> &#125; );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面指定的是<code>GWorld</code>，UBT解析的时候就会去找<code>GWorld</code>这个Module的定义，也就是<code>GWorld.build.cs</code>这个文件中的<code>GWorld</code>类定义，如果没有就会产生上面的Module未定义错误。</p>
+<blockquote>
+<p>注意，与<code>Target</code>关联的<code>Module</code>不仅仅只是一个指定的名字这么简单，所有代码中使用的<code>XXXX_API</code>都是与<code>Module</code>的名字相关的。</p>
+</blockquote>
+<p>如果我进行以下改动：<code>ExtraModuleNames.AddRange( new string[] &#123; &quot;GWorldAAA&quot; &#125; );</code>，那么需要对项目中所有的源文件进行的改动有：</p>
+<ol>
+<li>将原有的<code>GWorld.build.cs</code>文件改名为<code>GWorldAAA.build.cs</code>，并将文件内容的所有<code>GWorld</code>替换为<code>GWorldAAA</code>；</li>
+<li>将项目内所有头文件的<code>GWORLD_API</code>改名为<code>GWORLDAAA_API</code>，因为<code>XXX_API</code>的导出符号是依赖于<code>ModuleName</code>的；</li>
+</ol>
+<p>实在是个不小的工作量，所以还是建议将<code>ExtraModuleNames</code>中指定的名字与<code>Game Module</code>同名。<br>通过上面的内容，我们可以知道了<code>Target.cs</code>是如何与<code>Build.cs</code>关联的。那么，其实<code>Game</code>/<code>Server</code>/<code>Client</code>/<code>Editor</code>的<code>Target</code>可以共用同一个<code>Module</code>，将他们的<code>ExtraModuleNames</code>都设置成同一个就可以了(如果你想要针对每个Target类型单独写也可以)。</p>
+<p><code>TargetRules</code>的代码在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs">UnrealBuildTools/Configuration/ModuleRules</a>（<code>ReadOnlyTargetRules</code>也定义其中），可以看一下所支持参数的默认值；UE对<code>Target</code>支持属性的描述文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/BuildTools/UnrealBuildTool/TargetFiles/index.html">Targets</a>。</p>
+<p>但是UE的官方文档里面也只是代码里的注释，有些描述看了之后摸不着头脑，后面我会分析一下<code>TargetRule</code>一些属性的含义，先埋个坑。</p>
+<h3 id="Type-TargetType"><a href="#Type-TargetType" class="headerlink" title="Type(TargetType)"></a>Type(TargetType)</h3><p><code>TargetRules</code>中的属性<code>Type</code>，其类型为<code>TargetType</code>，定义为<code>TargetRules.cs</code>中，是指定项目要编译出来的是什么程序。</p>
+<ul>
+<li><strong>Game</strong> - A standalone game which requires cooked data to run.</li>
+<li><strong>Client</strong> - Same as Game, but does not include any server code. Useful for networked games.</li>
+<li><strong>Server</strong> - Same as Game, but does not include any client code. Useful for dedicated servers in networked games.</li>
+<li><strong>Editor</strong> - A target which extends the Unreal Editor.</li>
+<li><strong>Program</strong> - A standalone utility program built on top of the Unreal Engine.</li>
+</ul>
+<h3 id="LinkType-TargetLinkType"><a href="#LinkType-TargetLinkType" class="headerlink" title="LinkType(TargetLinkType)"></a>LinkType(TargetLinkType)</h3><p><code>TargetRules</code>中的<code>LinkType</code>，其类型为<code>TargetLinkType</code>，定义在<code>TargetRules.cs</code>中，是指定项目的链接类型。</p>
+<p><code>TargetLinkType</code>具有三个枚举值：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// &lt;summary&gt;</span></span><br><span class="line"><span class="comment">/// Specifies how to link all the modules in this target</span></span><br><span class="line"><span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line">[Serializable]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> <span class="title class_">TargetLinkType</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/// &lt;summary&gt;</span></span><br><span class="line">    <span class="comment">/// Use the default link type based on the current target type</span></span><br><span class="line">    <span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line">    Default,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// &lt;summary&gt;</span></span><br><span class="line">    <span class="comment">/// Link all modules into a single binary</span></span><br><span class="line">    <span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line">    Monolithic,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// &lt;summary&gt;</span></span><br><span class="line">    <span class="comment">/// Link modules into individual dynamic libraries</span></span><br><span class="line">    <span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line">    Modular,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>TargetLinkType.Default</code>是<code>LinkType</code>的默认值，在此种状态下，如果当前<code>Target</code>的<code>Type</code>为<code>Editor</code>则使用<code>Modular</code>类型，链接所有的模块的方式为动态链接库。</li>
+<li><code>TargetLinkType.Modular</code>：以动态链接库的方式链接Module</li>
+<li><code>TargetLinkType.Monolithic</code>：将所有的模块链接到单个文件(静态链接)</li>
+</ul>
+<p>可以通过修改<code>LinkType</code>来修改。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// &lt;summary&gt;</span></span><br><span class="line"><span class="comment">/// Backing storage for the LinkType property.</span></span><br><span class="line"><span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line">[RequiresUniqueBuildEnvironment]</span><br><span class="line">[<span class="built_in">CommandLine</span>(<span class="string">&quot;-Monolithic&quot;</span>, Value =<span class="string">&quot;Monolithic&quot;</span>)]</span><br><span class="line">[<span class="built_in">CommandLine</span>(<span class="string">&quot;-Modular&quot;</span>, Value =<span class="string">&quot;Modular&quot;</span>)]</span><br><span class="line">TargetLinkType LinkTypePrivate = TargetLinkType.Default;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// &lt;summary&gt;</span></span><br><span class="line"><span class="comment">/// Specifies how to link modules in this target (monolithic or modular). This is currently protected for backwards compatibility. Call the GetLinkType() accessor</span></span><br><span class="line"><span class="comment">/// until support for the deprecated ShouldCompileMonolithic() override has been removed.</span></span><br><span class="line"><span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line"><span class="keyword">public</span> TargetLinkType LinkType</span><br><span class="line">&#123;</span><br><span class="line">    get</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> (LinkTypePrivate != TargetLinkType.Default) ? LinkTypePrivate : ((Type == global::UnrealBuildTool.TargetType.Editor) ? TargetLinkType.Modular : TargetLinkType.Monolithic);</span><br><span class="line">    &#125;</span><br><span class="line">    set</span><br><span class="line">    &#123;</span><br><span class="line">        LinkTypePrivate = value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Name-string"><a href="#Name-string" class="headerlink" title="Name(string)"></a>Name(string)</h3><p>Target的名字，只读属性，传进来的项目名字。</p>
+<h3 id="Platform-UnrealTargetPlatform"><a href="#Platform-UnrealTargetPlatform" class="headerlink" title="Platform(UnrealTargetPlatform)"></a>Platform(UnrealTargetPlatform)</h3><p><code>Platform</code>的类型为<code>UnrealTargetPlatform</code>，它是一个枚举，定义在<code>UnrealBuildTool\Configuration\UEBuildTarget.cs</code>。</p>
+<p>它记录着当前Target的平台信息，如Win32/Win64等等，目前<code>UE_4.22</code>的版本支持的平台为：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> UnrealTargetPlatform</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Unknown target platform</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Unknown,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> 32-bit Windows</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Win32,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> 64-bit Windows</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Win64,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Mac</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Mac,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> XboxOne</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  XboxOne,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Playstation 4</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  PS4,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> iOS</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  IOS,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Android</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Android,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> HTML5</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  HTML5,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Linux</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Linux,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> All desktop platforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  AllDesktop,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> TVOS</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  TVOS,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Nintendo Switch</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Switch,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> NDA&#x27;d platform Quail</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Quail,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Confidential platform</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Lumin,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以在<code>build.cs</code>或者<code>target.cs</code>中通过判断Platform来做不同的事情。</p>
+<p>如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(Target.Platform != UnrealTargetPlatform.Win32 &amp;&amp; Target.Platform != UnrealTargetPlatform.Win64)</span><br><span class="line">&#123;</span><br><span class="line">  PublicDefinitions.<span class="built_in">Add</span>(<span class="string">&quot;HAVE_PTHREAD&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="IsInPlatformGroup"><a href="#IsInPlatformGroup" class="headerlink" title="IsInPlatformGroup"></a>IsInPlatformGroup</h3><p>这是一个函数<code>bool IsInPlatformGroup(UnrealPlatformGroup Group)</code>，定义在<code>TargetRules.cs</code>中，它用来判断当前的<code>Platform</code>是否输入某一组。</p>
+<p>需要传入的参数为<code>UnrealTargetformGroup</code>枚举类型，它定义在<code>UEBuildTarget.cs</code>中：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Platform groups</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> UnrealPlatformGroup</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> this group is just to lump Win32 and Win64 into Windows directories, removing the special Windows logic in MakeListOfUnsupportedPlatforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Windows,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Microsoft platforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Microsoft,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Apple platforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Apple,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> making IOS a group allows TVOS to compile IOS code</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  IOS,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Unix platforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Unix,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Android platforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Android,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Sony platforms</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  Sony,</span><br><span class="line"></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Target all desktop platforms (Win64, Mac, Linux) simultaneously</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  AllDesktop,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Configuration-UnrealTargetConfiguration"><a href="#Configuration-UnrealTargetConfiguration" class="headerlink" title="Configuration(UnrealTargetConfiguration)"></a>Configuration(UnrealTargetConfiguration)</h3><p>当前编译的配置，类型为<code>UnrealTargetConfiguration</code>的枚举，定义在<code>UEBuildTarget.cs</code>中，由VS中的<code>Configuration</code>构造而来，如：</p>
+<ul>
+<li>Development</li>
+<li>Shipping</li>
+<li>DebugGame</li>
+<li>Debug</li>
+<li>Test</li>
+<li>Unknow</li>
+</ul>
+<p>也就是通过这个设置，UBT才在编译环境中添加了下列宏：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="type">void</span> <span class="title">SetUpConfigurationEnvironment</span><span class="params">(ReadOnlyTargetRules Target, CppCompileEnvironment GlobalCompileEnvironment, LinkEnvironment GlobalLinkEnvironment)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// other code</span></span><br><span class="line">	UnrealTargetConfiguration CheckConfig = Target.Configuration;</span><br><span class="line">	<span class="keyword">switch</span> (CheckConfig)</span><br><span class="line">	&#123;</span><br><span class="line">	  <span class="keyword">default</span>:</span><br><span class="line">	  <span class="keyword">case</span> UnrealTargetConfiguration.Debug:</span><br><span class="line">	    GlobalCompileEnvironment.Definitions.<span class="built_in">Add</span>(<span class="string">&quot;UE_BUILD_DEBUG=1&quot;</span>);</span><br><span class="line">	    <span class="keyword">break</span>;</span><br><span class="line">	  <span class="keyword">case</span> UnrealTargetConfiguration.DebugGame:</span><br><span class="line">	  <span class="comment">// Default to Development; can be overridden by individual modules.</span></span><br><span class="line">	  <span class="keyword">case</span> UnrealTargetConfiguration.Development:</span><br><span class="line">	    GlobalCompileEnvironment.Definitions.<span class="built_in">Add</span>(<span class="string">&quot;UE_BUILD_DEVELOPMENT=1&quot;</span>);</span><br><span class="line">	    <span class="keyword">break</span>;</span><br><span class="line">	  <span class="keyword">case</span> UnrealTargetConfiguration.Shipping:</span><br><span class="line">	    GlobalCompileEnvironment.Definitions.<span class="built_in">Add</span>(<span class="string">&quot;UE_BUILD_SHIPPING=1&quot;</span>);</span><br><span class="line">	    <span class="keyword">break</span>;</span><br><span class="line">	  <span class="keyword">case</span> UnrealTargetConfiguration.Test:</span><br><span class="line">	    GlobalCompileEnvironment.Definitions.<span class="built_in">Add</span>(<span class="string">&quot;UE_BUILD_TEST=1&quot;</span>);</span><br><span class="line">	  <span class="keyword">break</span>;bUseDebugCRT</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// other code</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Architecture-string"><a href="#Architecture-string" class="headerlink" title="Architecture(string)"></a>Architecture(string)</h3><p>所运行的平台的架构信息：<code>x86</code>/<code>arm</code>等等。</p>
+<h3 id="CppStandard-CppStandardVersion"><a href="#CppStandard-CppStandardVersion" class="headerlink" title="CppStandard(CppStandardVersion)"></a>CppStandard(CppStandardVersion)</h3><p>用于指定编译项目时所用的C++标准版本（在新版本引擎(4.23)中才有）。<br><code>CppStandardVersion</code>：</p>
+<ul>
+<li><code>Latast</code></li>
+<li><code>Cpp17</code></li>
+<li>Cpp14</li>
+</ul>
+<p>这个选项本质上就是将<code>/std:c++xxx</code>添加到VS的编译选项中。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">AppendCLArguments_CPP</span><span class="params">(CppCompileEnvironment CompileEnvironment, List&lt;string&gt; Arguments)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// other code...</span></span><br><span class="line">  <span class="keyword">if</span>(CompileEnvironment.CppStandard &gt;= CppStandardVersion.Latest)</span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/std:c++latest&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span>(CompileEnvironment.CppStandard &gt;= CppStandardVersion.Cpp17)</span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/std:c++17&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span>(CompileEnvironment.CppStandard &gt;= CppStandardVersion.Cpp14)</span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/std:c++14&quot;</span>);</span><br><span class="line">  &#125;  </span><br><span class="line">  <span class="comment">// other code...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="bUseDebugCRT-bool"><a href="#bUseDebugCRT-bool" class="headerlink" title="bUseDebugCRT(bool)"></a>bUseDebugCRT(bool)</h3><p>用来控制输出的<code>Runtime Librart</code>类型是<code>MT</code>还是<code>MD</code>；<br>还用来控制添加<code>_DEBUG</code>和<code>NODEBUG</code>宏：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="type">void</span> <span class="title">SetUpConfigurationEnvironment</span><span class="params">(ReadOnlyTargetRules Target, CppCompileEnvironment GlobalCompileEnvironment, LinkEnvironment GlobalLinkEnvironment)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (GlobalCompileEnvironment.bUseDebugCRT)</span><br><span class="line">  &#123;</span><br><span class="line">    GlobalCompileEnvironment.Definitions.<span class="built_in">Add</span>(<span class="string">&quot;_DEBUG=1&quot;</span>); <span class="comment">// the engine doesn&#x27;t use this, but lots of 3rd party stuff does</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    GlobalCompileEnvironment.Definitions.<span class="built_in">Add</span>(<span class="string">&quot;NDEBUG=1&quot;</span>); <span class="comment">// the engine doesn&#x27;t use this, but lots of 3rd party stuff does</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// other code</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ProjectDefinitions-List-lt-string-gt"><a href="#ProjectDefinitions-List-lt-string-gt" class="headerlink" title="ProjectDefinitions(List&lt;string&gt;)"></a>ProjectDefinitions(List&lt;string&gt;)</h3><p>为当前项目添加的宏定义，在整个项目中可用。</p>
+<h3 id="GlobalDefinitions-List-lt-string-gt"><a href="#GlobalDefinitions-List-lt-string-gt" class="headerlink" title="GlobalDefinitions(List&lt;string&gt;)"></a>GlobalDefinitions(List&lt;string&gt;)</h3><p>添加在整个Target中都可以用的宏定义。</p>
+<h3 id="bShouldCompileAsDLL-bool"><a href="#bShouldCompileAsDLL-bool" class="headerlink" title="bShouldCompileAsDLL(bool)"></a>bShouldCompileAsDLL(bool)</h3><p>将Target编译为DLL，为<code>true</code>时要求<code>LinkType</code>为<code>Monolithic</code>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// &lt;summary&gt;</span></span><br><span class="line"><span class="comment">/// Whether this target should be compiled as a DLL.  Requires LinkType to be set to TargetLinkType.Monolithic.</span></span><br><span class="line"><span class="comment">/// &lt;/summary&gt;</span></span><br><span class="line">[RequiresUniqueBuildEnvironment]</span><br><span class="line"><span class="keyword">public</span> <span class="type">bool</span> bShouldCompileAsDLL = <span class="literal">false</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="AdditionalCompilerArguments-String"><a href="#AdditionalCompilerArguments-String" class="headerlink" title="AdditionalCompilerArguments(String)"></a>AdditionalCompilerArguments(String)</h3><p>传递给编译器的参数。</p>
+<h3 id="AdditionalLinkerArguments-String"><a href="#AdditionalLinkerArguments-String" class="headerlink" title="AdditionalLinkerArguments(String)"></a>AdditionalLinkerArguments(String)</h3><p>传递给连接器的参数。</p>
+<h3 id="bUsesSlate-bool"><a href="#bUsesSlate-bool" class="headerlink" title="bUsesSlate(bool)"></a>bUsesSlate(bool)</h3><p>控制打包时时候把<code>Slate</code>相关的图片资源打包到pak中。</p>
+<h3 id="bUseInlining-bool"><a href="#bUseInlining-bool" class="headerlink" title="bUseInlining(bool)"></a>bUseInlining(bool)</h3><p>是否开启内联优化，内联的本质是把展开函数，降低函数调用的开销。</p>
+<p>但可能会存在一些问题，如引擎中的<code>Engine</code>模块中的<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/463443057fb97f1af0d2951705324ce8818d2a55/Engine/Source/Runtime/Engine/Classes/Engine/World.h#L784-L844">FStreamingLevelsToConsider</a>函数，它并没有导出符号<code>ENGINE_API</code>。</p>
+<p>而在<code>Engine/World.h</code>中的<code>IsStreamingLevelBeingConsidered</code>函数，以头文件中定义的形式调用了它：</p>
+<figure class="highlight cpp"><figcaption><span>Engine/World.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Returns true if StreamingLevel is part of the levels being considered for update */</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">IsStreamingLevelBeingConsidered</span><span class="params">(ULevelStreaming* StreamingLevel)</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> StreamingLevelsToConsider.<span class="built_in">Contains</span>(StreamingLevel); &#125;</span><br></pre></td></tr></table></figure>
+<p>在头文件中定义的函数，是由编译器实现的隐式内联的，如果对<code>World-&gt;IsStreamingLevelBeingConsidered</code>的调用，在其他的模块中被内联，会导致链接错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Undefined symbols for architecture x86_64:</span><br><span class="line">  &quot;FStreamingLevelsToConsider::Contains(ULevelStreaming*) const&quot;, referenced from:</span><br><span class="line">      UWorldMgr::WorldCompositionTick(float) in Module.FGame.8_of_8.cpp.o</span><br><span class="line">ld: symbol(s) not found for architecture x86_64</span><br><span class="line">clang: error: linker command failed with exit code 1 (use -v to see invocation)</span><br></pre></td></tr></table></figure>
+<p>因为内联展开之后，就相当于在调用处直接执行，而恰好<code>FStreamingLevelsToConsider</code>符号未导出，所以会产生链接错误。</p>
+<p>要解决这样的问题，要么修改引擎，导出符号，要么在target.cs中关闭内联：</p>
+<figure class="highlight csharp"><figcaption><span>target.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bOverrideBuildEnvironment = <span class="literal">true</span>;</span><br><span class="line">bUseInlining = <span class="literal">false</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在UBT的代码里有检测它的值，然后添加实际的编译参数：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// </span></span><br><span class="line"><span class="keyword">if</span> (!CompileEnvironment.bUseInlining)</span><br><span class="line">&#123;</span><br><span class="line">	Result += <span class="string">&quot; -fno-inline-functions&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Module"><a href="#Module" class="headerlink" title="Module"></a>Module</h2><p>与<code>Target</code>类似，每一个Unreal的<code>Module</code>，都有一个专属的<code>ModuleName.Build.cs</code>里面定义着专属的<code>ModuleName</code>类，它由<code>ModuleRules</code>继承而来，我们对<code>Module</code>构建时进行的操作就是通过它来控制。</p>
+<blockquote>
+<p>注意：不管是Game Module还是Plugin Module，只要是<strong>项目依赖</strong>的Module，编译时它们都会接收到当前使用的<code>Target</code>信息。</p>
+</blockquote>
+<p><code>ModuleRules</code>的代码在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Programs/UnrealBuildTool/Configuration/ModuleRules.cs">UnrealBuildTools/Configuration/ModuleRules</a>，同样可以看一下支持的属性默认值；UE对<code>Modules</code>描述的官方文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/BuildTools/UnrealBuildTool/ModuleFiles/index.html">Modules</a>，这里也同样只有代码的注释内容，没有实际例子，我就先来分析一些在工程中常见的<strong>Build.cs</strong>中属性的含义。</p>
+<p><code>*.Build.cs</code>中可以通过它构造接收的<code>ReadOnlyTargetRules Target</code>参数来获取<code>*.Target.cs</code>中的属性信息。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> UnrealBuildTool;</span><br><span class="line"><span class="keyword">using</span> System.IO;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">GWorld</span> : <span class="title">ModuleRules</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">GWorld</span>(<span class="params">ReadOnlyTargetRules ReadOnlyTargetRules</span>) : <span class="title">base</span>(<span class="params">Target</span>)</span></span><br><span class="line">  &#123;</span><br><span class="line">    PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;</span><br><span class="line">    <span class="comment">// something</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过<code>Target</code>对象，可以在<code>*.build.cs</code>中控制对不同的平台(Platform)，架构(Architecture)，以及其他的选项来对Module进行不同的操作(比如定义不同的宏/包含不同的ThridParty/链接不同的Lib等等)。</p>
+<h3 id="ModuleDirectory"><a href="#ModuleDirectory" class="headerlink" title="ModuleDirectory"></a>ModuleDirectory</h3><ul>
+<li><code>string ModuleDirectory</code>：项目的源码路径<code>PROJECT_NAME/Source/PROJECT_NAME</code>的绝对路径。</li>
+</ul>
+<h3 id="EngineDirectory"><a href="#EngineDirectory" class="headerlink" title="EngineDirectory"></a>EngineDirectory</h3><ul>
+<li><code>string EngineDirectory</code>：引擎目录<code>Engine/</code>在当前环境的绝对路径。</li>
+</ul>
+<h3 id="PublicAdditionalLibraries"><a href="#PublicAdditionalLibraries" class="headerlink" title="PublicAdditionalLibraries"></a>PublicAdditionalLibraries</h3><p>添加静态链接库文件(注意与<code>PublicLibraryPaths</code>的区别)，一般是用于第三方库的链接。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PublicAdditionalLibraries.<span class="built_in">AddRange</span>(</span><br><span class="line">  <span class="keyword">new</span> string[]</span><br><span class="line">  &#123;</span><br><span class="line">    Path.<span class="built_in">Combine</span>(ThridPartyPath,<span class="string">&quot;protobuf/lib/Win64/MD/Release&quot;</span>,<span class="string">&quot;libprotobuf.lib&quot;</span>),</span><br><span class="line">    Path.<span class="built_in">Combine</span>(ThridPartyPath,<span class="string">&quot;protobuf/lib/Win64/MD/Release&quot;</span>,<span class="string">&quot;libprotobuf-lite.lib&quot;</span>),</span><br><span class="line">    Path.<span class="built_in">Combine</span>(ThridPartyPath,<span class="string">&quot;protobuf/lib/Win64/MD/Release&quot;</span>,<span class="string">&quot;libprotoc.lib&quot;</span>),</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>详细的内容可以看：<a target="_blank" rel="noopener" href="https://wiki.unrealengine.com/Linking_Static_Libraries_Using_The_Build_System">Linking Static Libraries Using The Build System</a></p>
+<blockquote>
+<p>同样可以用在DLL的导入库，与<code>PublicDelayLoadDLLs</code>和<code>RuntimeDependencies</code>配合使用。</p>
+</blockquote>
+<h3 id="PublicAdditionalShadowFiles"><a href="#PublicAdditionalShadowFiles" class="headerlink" title="PublicAdditionalShadowFiles"></a>PublicAdditionalShadowFiles</h3><p>当执行远程编译的时候，指定当前模块需要复制到远程服务器上的文件，确保能够链接成功。</p>
+<p>如远程打包IOS平台时，需要把当前模块依赖的静态链接库添加到里面（如Game模块依赖某个插件中的<code>External</code>模块）。</p>
+<h3 id="RuntimeDependencies"><a href="#RuntimeDependencies" class="headerlink" title="RuntimeDependencies"></a>RuntimeDependencies</h3><ul>
+<li><code>list&lt;RuntimeDependency&gt; RuntimeDependencies</code>：Module在运行时依赖的文件(<code>.so</code>/<code>.dll</code>等)，打包时将会拷贝到存储目录。</li>
+</ul>
+<p>在打包Windows时会直接把文件拷贝到打包的对应目录下，但是在Android上会把文件放到Apk包的main.obb.webp中。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16643/android-runtimedependencies.webp"></p>
+<h3 id="PublicDelayLoadDLLs"><a href="#PublicDelayLoadDLLs" class="headerlink" title="PublicDelayLoadDLLs"></a>PublicDelayLoadDLLs</h3><ul>
+<li><code>List&lt;string&gt; PublicDelayLoadDLLs</code>：延迟加载的DLL列表，通常用于第三方库。</li>
+</ul>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// build.cs</span></span><br><span class="line">PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, <span class="string">&quot;myExternalLib.lib&quot;</span>));</span><br><span class="line">PublicDelayLoadDLLs.Add(<span class="string">&quot;myExternalLib.dll&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>含义是不在程序启动时立即加载DLL的列表，等到首次需要使用他们的符号后再进行加载。这样可以在模块的<code>StartupModule</code>中自行指定位置并加载他们，从而实现可以不把dll放到exe的目录。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FString AbsPath = FileManager::<span class="built_in">Get</span>().<span class="built_in">ConvertToAbsolutePathForExternalAppForRead</span>(*MyLibPath);</span><br><span class="line">FPlatformProcess::<span class="built_in">AddDllDirectory</span>(AbsPath)</span><br><span class="line">FPlatformProcess::<span class="built_in">PushDllDirectory</span>(*AbsPath);</span><br><span class="line"><span class="comment">// direct call dll function</span></span><br><span class="line"><span class="comment">// or load dll handle</span></span><br><span class="line"><span class="comment">// void* DLLHandle3 = FPlatformProcess::GetDllHandle( L&quot;myExternalLib.dll&quot; );</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>PS：配合<code>PublicAdditionalLibraries</code>可以用在使用DLL导入库的第三方库。</p>
+</blockquote>
+<ol>
+<li>使用PublicAdditionalLibraries添加lib</li>
+<li>DLL的名字添加至PublicDelayLoadDLLs</li>
+<li>使用RuntimeDependencies打包时拷贝dll</li>
+<li>如果拷贝到的目录不是exe路径，需要StartupModule里执行<code>AddDllDirectory</code>和<code>PushDllDirectory</code>把dll的路径添加到里面<blockquote>
+<p>PublicDelayLoadDLLs只添加xxxx.dll 就可以了，不需要路径。</p>
+</blockquote>
+</li>
+</ol>
+<p>我使用<code>GoogleInstantPreview</code>测试使用DLL+导入库并将DLL放在非exe目录的例子：<a href="ue4-plugin-GoogleInstanceIns.7z">ue4-plugin-GoogleInstanceIns.7z</a></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/49172258/runtime-error-when-referencing-external-library-in-unreal-engine">Runtime error when referencing external library in Unreal Engine</a></li>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/development-discussion/c-gameplay-programming/121369-how-unreal-build-tool-works">How Unreal Build Tool works</a></li>
+</ul>
+<h3 id="PublicDefinitions"><a href="#PublicDefinitions" class="headerlink" title="PublicDefinitions"></a>PublicDefinitions</h3><ul>
+<li><code>List&lt;string&gt; PublicDefinitions</code>：为当前Module添加公开宏定义，等同于传统VS项目在项目设置中添加一个预处理宏。</li>
+</ul>
+<p>它被UBT分析之后会在产生一个<code>Definitions.PROJECT_NAME.h</code>的头文件，里面定了各种宏。</p>
+<figure class="highlight pp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Intermediate\Build\Win64\UE4Editor\Development\ReflectionExample\Definitions.ReflectionExample.h</span><br></pre></td></tr></table></figure>
+
+<h3 id="PublicSystemIncludePaths"><a href="#PublicSystemIncludePaths" class="headerlink" title="PublicSystemIncludePaths"></a>PublicSystemIncludePaths</h3><ul>
+<li><code>List&lt;string&gt; PublicSystemIncludePaths</code>：文档介绍是用于添加系统的Include路径，与<code>PublicIncludePaths</code>的区别是会跳过头文件解析检查(但是经我测试，使用这种方式包含的代码依然会检测下列错误(UE_4.20)):</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error : Expected mpack-platform.h to be first header included.</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：如果不指定路径，则默认的IncludePath路径是<code>Engine/Source</code>。</p>
+</blockquote>
+<p>比如：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PublicSystemIncludePaths.AddRange(</span><br><span class="line">  <span class="keyword">new</span> <span class="built_in">string</span>[] &#123;</span><br><span class="line">    <span class="string">&quot;TEST_LIB&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>它表示的路径是：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:\UnrealEngine\Epic\UE_4.21\Engine\Source\TEST_LIB</span><br></pre></td></tr></table></figure>
+<p>所有可以在<code>*.build.cs</code>中指定的<code>*IncludePaths</code>，默认的路径都是<code>Engine/Source</code>.</p>
+<h3 id="PrivateRuntimeLibraryPaths"><a href="#PrivateRuntimeLibraryPaths" class="headerlink" title="PrivateRuntimeLibraryPaths"></a>PrivateRuntimeLibraryPaths</h3><ul>
+<li><code>List&lt;string&gt; PrivateRuntimeLibraryPaths</code>：运行时库的搜索路径。例如<code>.so</code>或者<code>.dll</code>。</li>
+</ul>
+<h3 id="PublicRuntimeLibraryPaths"><a href="#PublicRuntimeLibraryPaths" class="headerlink" title="PublicRuntimeLibraryPaths"></a>PublicRuntimeLibraryPaths</h3><ul>
+<li><code>List&lt;string&gt; PublicRuntimeLibraryPaths</code>：运行时库的搜索路径。例如<code>.so</code>或者<code>.dll</code>。</li>
+</ul>
+<p>因为动态链接库的查找路径默认只有：</p>
+<ol>
+<li>系统的PATH路径；</li>
+<li>可执行程序的当前目录；</li>
+</ol>
+<p>如果我们的动态链接库在其他的位置，运行时就会错误，可以通过<code>PublicRuntimeLibraryPaths</code>或者<code>PrivateRuntimeLibraryPaths</code>来添加。</p>
+<h3 id="PublicLibraryPaths"><a href="#PublicLibraryPaths" class="headerlink" title="PublicLibraryPaths"></a>PublicLibraryPaths</h3><p>添加链接库文件的<strong>路径</strong>，如在源码中使用的:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(lib,<span class="string">&quot;Lua.lib&quot;</span>)</span></span><br></pre></td></tr></table></figure>
+
+<p>可以通过<code>PublicLibraryPaths</code>来添加依赖的Lib。</p>
+<h3 id="DynamicallyLoadedModuleNames"><a href="#DynamicallyLoadedModuleNames" class="headerlink" title="DynamicallyLoadedModuleNames"></a>DynamicallyLoadedModuleNames</h3><ul>
+<li><code>List&lt;string&gt; DynamicallyLoadedModuleNames</code>：添加需要运行时动态加载的Module，使用<code>FModuleManager::LoadModuleChecked&lt;MODULE_TYPE&gt;(TEXT(&quot;MODULE_NAME&quot;))</code>等函数启动。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// e.g</span></span><br><span class="line">FModuleManager::<span class="built_in">LoadModuleChecked</span>&lt; IAIModule &gt;( <span class="string">&quot;AIModule&quot;</span> );</span><br></pre></td></tr></table></figure>
+
+<h3 id="PublicDependencyModuleNames"><a href="#PublicDependencyModuleNames" class="headerlink" title="PublicDependencyModuleNames"></a>PublicDependencyModuleNames</h3><ul>
+<li><code>List&lt;string&gt; PublicDependencyModuleNames</code>：添加对执行Module的源文件依赖，自动添加所依赖Module的<code>Public</code>和<code>Private</code>源文件包含。</li>
+</ul>
+<h3 id="PrivateDependencyModuleNames"><a href="#PrivateDependencyModuleNames" class="headerlink" title="PrivateDependencyModuleNames"></a>PrivateDependencyModuleNames</h3><ul>
+<li><code>List&lt;string&gt; PrivateDependencyModuleNames</code>：与<code>PublicDependencyModuleNames</code>不同的是，意味着所依赖的Module中的源文件只可以在<code>Private</code>中使用。</li>
+</ul>
+<p>假如现在有一个模块A，还有一个模块B，他们中都是UE的<code>Module/Public</code>和<code>Module/Private</code>的文件结构。</p>
+<ul>
+<li>如果B中依赖A，如果使用的是<code>PrivateDependencyModuleNames</code>的方式添加的依赖，则A模块的源文件只可以在B的<code>Private</code>目录下的源文件中使用，在<code>Public</code>目录下的源文件使用时会报<code>No such file or directory</code>的错误。</li>
+<li>如果使用的是<code>PublicDependencyModuleNames</code>方式添加的依赖，则A的源文件在B的<code>Public</code>与<code>Private</code>中都可用。</li>
+</ul>
+<p>除了上述的区别之外，还影响依赖于B模块的模块 ，当一个模块C依赖模块B的时候，只能访问到B模块的PublicDependencyModule中的模块暴露出来的类。<br>例如，C依赖B，B依赖A；那么，假如C想访问A中的类则有两种方式：</p>
+<ol>
+<li>在C的依赖中添加上A模块</li>
+<li>确保B在<code>PublicDependencyModuleNames</code>依赖中添加的A模块，这样C就可以间接的访问到A。</li>
+</ol>
+<p>经过测试发现，其实对于<strong>游戏模块</strong>(<code>PROJECT_NAME/Source/PROJECT_NAME.target.cs</code>)使用而言，所依赖的模块是使用<code>PublicDependencyModuleNames</code>还是<code>PrivateDependencyModuleNames</code>包含，没什么区别。<br>使用<code>Private</code>方式依赖的Module中的头文件依然可以在游戏模块的<code>Public</code>中用，这一点与插件等其他模块有所不同（但是这只有在所依赖的模块不是<code>bUsePrecompiled</code>的基础上的，如果所依赖的模块是<code>bUsePrecompiled</code>的，则与其他的模块一样，<code>PrivateDependencyModuleNames</code>依赖的模块不可以在<code>Pulibc</code>目录下的源文件使用），这个行为比较奇怪：有时候出错有时又不出错。</p>
+<blockquote>
+<p>注意：在游戏项目中使用依赖其他Module时尽量确定性需求地使用<code>PrivateDependencyModuleNames</code>或者<code>PublicDependencyModuleNames</code>，在组合其他的选项时可能会有一些奇怪的行为。</p>
+</blockquote>
+<p>相关的讨论：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/23384/what-is-the-difference-between-publicdependencymod.html">What is the difference between PublicDependencyModuleNames and PrivateDependencyModuleNames</a></li>
+<li><a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/20310/explanation-of-source-code-folder-structure.html">Explanation of Source Code folder structure?</a></li>
+</ol>
+<h3 id="bPrecompile与bUsePrecompiled"><a href="#bPrecompile与bUsePrecompiled" class="headerlink" title="bPrecompile与bUsePrecompiled"></a>bPrecompile与bUsePrecompiled</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Whether this module should be precompiled. Defaults to the bPrecompile flag from the target. Clear this flag to prevent a module being precompiled.</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> bPrecompile;</span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Whether this module should use precompiled data. Always true for modules created from installed assemblies.</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> bUsePrecompiled;</span><br></pre></td></tr></table></figure>
+
+<p>这个两个属性需要组合来使用。</p>
+<p>考虑下列需求：<br>如果我们写好的一个模块A希望拿给别人来用，但是又不想把所有代码开放出来，该怎么办？</p>
+<p>在传统的C++领域，我应该会说：把代码编译成DLL，然后把头文件和DLL发放给用户就可以啦。<br>对！其实<code>bPrecompile</code>和<code>bUsePrecompiled</code>就是做的类似的事情。</p>
+<p>当我们对模块A进行编译之前，在它的<code>*.build.cs</code>中添加：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">A</span> : <span class="title">ModuleRules</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">A</span>(<span class="params">ReadOnlyTargetRules Target</span>) : <span class="title">base</span>(<span class="params">Target</span>)</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    bPrecompile=<span class="literal">true</span>;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后编译模块A。编译完成之后，将模块A的<code>Source/Private</code>删除(删除之前请确保你已经备份)，然后删除模块目录下的<code>Intermediate</code>，但是要保留<code>Binaries</code>目录。<br>最后，打开模块A的<code>A.build.cs</code>，将<code>bPrecompile=true;</code>删掉，然后再添加：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">A</span> : <span class="title">ModuleRules</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">A</span>(<span class="params">ReadOnlyTargetRules Target</span>) : <span class="title">base</span>(<span class="params">Target</span>)</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    bUsePrecompiled=<span class="literal">true</span>;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此时我们想要实现的目标都已经完成了：不发布实现代码(<code>Private</code>)，发布预先编译好的二进制，但是这样无法进行静态链接，如果只是暴露给蓝图使用可以，在其他的Module中使用它的符号会有符号未定义错误。</p>
+<h3 id="OptimizeCode-CodeOptimization"><a href="#OptimizeCode-CodeOptimization" class="headerlink" title="OptimizeCode(CodeOptimization)"></a>OptimizeCode(CodeOptimization)</h3><p>这个属性是用来控制当前模块是否要开启优化代码，在我们用VS调试时，有时候会看到“变量已被优化，因而不可用”，这就是因为被优化了。</p>
+<p>可以使用它来关闭优化：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// build.cs</span></span><br><span class="line">OptimizeCode = CodeOptimization.Never;</span><br></pre></td></tr></table></figure>
+
+<p><code>CodeOptimization</code>支持几种值，默认是<code>Default</code>，开启优化：</p>
+<ul>
+<li>Never</li>
+<li>Default</li>
+<li>InNonDebugBuilds</li>
+<li>InShippingBuildsOnly</li>
+</ul>
+<p>相关的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UnrealBuildTool/Configutation/UEBuildModuleCPP.cs</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="type">static</span> <span class="type">bool</span> <span class="title">ShouldEnableOptimization</span><span class="params">(ModuleRules.CodeOptimization Setting, UnrealTargetConfiguration Configuration, <span class="type">bool</span> bIsEngineModule)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">switch</span>(Setting)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">case</span> ModuleRules.CodeOptimization.Never:</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">case</span> ModuleRules.CodeOptimization.Default:</span><br><span class="line">    <span class="keyword">case</span> ModuleRules.CodeOptimization.InNonDebugBuilds:</span><br><span class="line">      <span class="keyword">return</span> (Configuration == UnrealTargetConfiguration.Debug)? <span class="literal">false</span> : (Configuration != UnrealTargetConfiguration.DebugGame || bIsEngineModule);</span><br><span class="line">    <span class="keyword">case</span> ModuleRules.CodeOptimization.InShippingBuildsOnly:</span><br><span class="line">      <span class="keyword">return</span> (Configuration == UnrealTargetConfiguration.Shipping);</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数在<code>UEBuildModuleCPP.cs</code>的<code>CreateModuleCompileEnvironment</code>中调用，将结果赋值给了<code>CppCompileEnvironment.bOptimizeCode</code>，进而又在<code>VCToolChain.cs</code>中被使用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">UnrealBuildTool\Platform\Windows\VCToolChain.<span class="function">cs</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">AppendCLArguments_Global</span><span class="params">(CppCompileEnvironment CompileEnvironment, List&lt;string&gt; Arguments)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// other code ...</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">//  Debug</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="keyword">if</span> (CompileEnvironment.Configuration == CppConfiguration.Debug)</span><br><span class="line">	&#123;</span><br><span class="line">	  <span class="comment">// Disable compiler optimization.</span></span><br><span class="line">	  Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Od&quot;</span>);</span><br><span class="line"></span><br><span class="line">	  <span class="comment">// Favor code size (especially useful for embedded platforms).</span></span><br><span class="line">	  Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Os&quot;</span>);</span><br><span class="line"></span><br><span class="line">	  <span class="comment">// Allow inline method expansion unless E&amp;C support is requested</span></span><br><span class="line">	  <span class="keyword">if</span> (!CompileEnvironment.bSupportEditAndContinue &amp;&amp; CompileEnvironment.bUseInlining)</span><br><span class="line">	  &#123;</span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Ob2&quot;</span>);</span><br><span class="line">	  &#125;</span><br><span class="line"></span><br><span class="line">	  <span class="keyword">if</span> ((CompileEnvironment.Platform == CppPlatform.Win32) ||</span><br><span class="line">	    (CompileEnvironment.Platform == CppPlatform.Win64))</span><br><span class="line">	  &#123;</span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/RTCs&quot;</span>);</span><br><span class="line">	  &#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">//  Development and LTCG</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">	&#123;</span><br><span class="line">	  <span class="keyword">if</span>(!CompileEnvironment.bOptimizeCode)</span><br><span class="line">	  &#123;</span><br><span class="line">	    <span class="comment">// Disable compiler optimization.</span></span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Od&quot;</span>);</span><br><span class="line">	  &#125;</span><br><span class="line">	  <span class="keyword">else</span></span><br><span class="line">	  &#123;</span><br><span class="line">	    <span class="comment">// Maximum optimizations.</span></span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Ox&quot;</span>);</span><br><span class="line"></span><br><span class="line">	    <span class="comment">// Favor code speed.</span></span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Ot&quot;</span>);</span><br><span class="line"></span><br><span class="line">	    <span class="comment">// Coalesce duplicate strings</span></span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/GF&quot;</span>);</span><br><span class="line"></span><br><span class="line">	    <span class="comment">// Only omit frame pointers on the PC (which is implied by /Ox) if wanted.</span></span><br><span class="line">	    <span class="keyword">if</span> (CompileEnvironment.bOmitFramePointers == <span class="literal">false</span></span><br><span class="line">	    &amp;&amp; ((CompileEnvironment.Platform == CppPlatform.Win32) ||</span><br><span class="line">	      (CompileEnvironment.Platform == CppPlatform.Win64)))</span><br><span class="line">	    &#123;</span><br><span class="line">	      Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Oy-&quot;</span>);</span><br><span class="line">	    &#125;</span><br><span class="line">	  &#125;</span><br><span class="line"></span><br><span class="line">	  <span class="comment">// Allow inline method expansion</span></span><br><span class="line">	  Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/Ob2&quot;</span>);</span><br><span class="line"></span><br><span class="line">	  <span class="comment">//</span></span><br><span class="line">	  <span class="comment">// LTCG</span></span><br><span class="line">	  <span class="comment">//</span></span><br><span class="line">	  <span class="keyword">if</span> (CompileEnvironment.bAllowLTCG)</span><br><span class="line">	  &#123;</span><br><span class="line">	    <span class="comment">// Enable link-time code generation.</span></span><br><span class="line">	    Arguments.<span class="built_in">Add</span>(<span class="string">&quot;/GL&quot;</span>);</span><br><span class="line">	  &#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// other code...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，在<code>Debug</code>的环境下，是默认关闭优化的。在非<code>Debug</code>时根据<code>CompileEnvironment.bOptimizeCode</code>的值来决定是否开启优化。<br>调试效果：<br>当使用默认时（<code>OptimizeCode = CodeOptimization.Default;</code>）:<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16643/UE-codeoptimize-default.webp"></p>
+<p>当关闭代码优化时(<code>OptimizeCode = CodeOptimization.Never;</code>)：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16643/UE-codeoptimize-never.webp"></p>
+<p>建议使用<code>OptimizeCode = CodeOptimization.InShippingBuildsOnly;</code>。</p>
+<blockquote>
+<p>注意：这个选项和普通的C++项目在VS中的<code>Properties</code>-<code>Configuration</code>-<code>C/C++</code>-<code>Optimization</code>-<code>Optimization</code>的设置时一样的。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/16643/vs-disable-optimization.webp"></p>
+<h3 id="bEnableUndefinedIdentifierWarnings-bool"><a href="#bEnableUndefinedIdentifierWarnings-bool" class="headerlink" title="bEnableUndefinedIdentifierWarnings (bool)"></a>bEnableUndefinedIdentifierWarnings (bool)</h3><p>是否启用在预处理代码<code>#if</code>中使用未定义标识符的警告。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> GOOGLE_PROTOBUF_USE_UNALIGNED</span></span><br></pre></td></tr></table></figure>
+
+<p>如果这个宏未定义，在启用<code>bEnableUndefinedIdentifierWarnings</code>的情况下会产生<code>C4688</code>错误。</p>
+<p>相关的代码时定义在UBT的代码中的:</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Source\Programs\UnrealBuildTool\Platform\Windows\VCToolChain.cs</span></span><br><span class="line"><span class="keyword">if</span>(WindowsPlatform.bUseVCCompilerArgs &amp;&amp; CompileEnvironment.bEnableUndefinedIdentifierWarnings)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (CompileEnvironment.bUndefinedIdentifierWarningsAsErrors)</span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.Add(<span class="string">&quot;/we4668&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.Add(<span class="string">&quot;/w44668&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="bUseRTTI-bool"><a href="#bUseRTTI-bool" class="headerlink" title="bUseRTTI (bool)"></a><strong>bUseRTTI</strong> (bool)</h4><p>UE4默认关闭了RTTI，所以在工程的代码中写了类似<code>typeid</code>的代码，会产生下列错误：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">In file included from C:\UnrealProject_\Source\GWorld\Private\Modules\Flibs\FLibIniConfigHelper.cpp:<span class="number">10</span>:</span><br><span class="line">C:/UnrealProject_/Source/GWorld/Public/Modules/Flibs\FlibMateReflectionHelper.<span class="built_in">h</span>(<span class="number">29</span>,<span class="number">41</span>):  error: cannot use <span class="keyword">typeid</span> with -fno-rtti</span><br><span class="line">    FString EnumTypeName = <span class="built_in">ANSI_TO_TCHAR</span>(<span class="built_in">typeid</span>(ENUM_TYPE).<span class="built_in">name</span>());</span><br></pre></td></tr></table></figure>
+
+<p>解决办法只有两个：去掉<code>rtti</code>相关的代码，或者在当前<code>Module</code>的<code>build.cs</code>中把<code>bUseRTTI</code>设置为<code>true</code>。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                未完待续，如有谬误请不吝指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/16643/" target="_blank">UE Build System：Target and Module</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2019年09月12日 13时14分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有9.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/16643/" target="_blank" title="UE Build System：Target and Module">https://imzlp.com/posts/16643/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/16643/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/UBT/" rel="tag"># UBT</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/30042/" rel="prev" title="Oculus Quest Development with UE4">
+      <i class="fa fa-chevron-left"></i> Oculus Quest Development with UE4
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/12143/" rel="next" title="UE工具链配置与开发技巧">
+      UE工具链配置与开发技巧 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Target"><span class="nav-number">1.</span> <span class="nav-text">Target</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Type-TargetType"><span class="nav-number">1.1.</span> <span class="nav-text">Type(TargetType)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LinkType-TargetLinkType"><span class="nav-number">1.2.</span> <span class="nav-text">LinkType(TargetLinkType)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Name-string"><span class="nav-number">1.3.</span> <span class="nav-text">Name(string)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Platform-UnrealTargetPlatform"><span class="nav-number">1.4.</span> <span class="nav-text">Platform(UnrealTargetPlatform)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IsInPlatformGroup"><span class="nav-number">1.5.</span> <span class="nav-text">IsInPlatformGroup</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configuration-UnrealTargetConfiguration"><span class="nav-number">1.6.</span> <span class="nav-text">Configuration(UnrealTargetConfiguration)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Architecture-string"><span class="nav-number">1.7.</span> <span class="nav-text">Architecture(string)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CppStandard-CppStandardVersion"><span class="nav-number">1.8.</span> <span class="nav-text">CppStandard(CppStandardVersion)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bUseDebugCRT-bool"><span class="nav-number">1.9.</span> <span class="nav-text">bUseDebugCRT(bool)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ProjectDefinitions-List-lt-string-gt"><span class="nav-number">1.10.</span> <span class="nav-text">ProjectDefinitions(List&lt;string&gt;)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GlobalDefinitions-List-lt-string-gt"><span class="nav-number">1.11.</span> <span class="nav-text">GlobalDefinitions(List&lt;string&gt;)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bShouldCompileAsDLL-bool"><span class="nav-number">1.12.</span> <span class="nav-text">bShouldCompileAsDLL(bool)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AdditionalCompilerArguments-String"><span class="nav-number">1.13.</span> <span class="nav-text">AdditionalCompilerArguments(String)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AdditionalLinkerArguments-String"><span class="nav-number">1.14.</span> <span class="nav-text">AdditionalLinkerArguments(String)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bUsesSlate-bool"><span class="nav-number">1.15.</span> <span class="nav-text">bUsesSlate(bool)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bUseInlining-bool"><span class="nav-number">1.16.</span> <span class="nav-text">bUseInlining(bool)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Module"><span class="nav-number">2.</span> <span class="nav-text">Module</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ModuleDirectory"><span class="nav-number">2.1.</span> <span class="nav-text">ModuleDirectory</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EngineDirectory"><span class="nav-number">2.2.</span> <span class="nav-text">EngineDirectory</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicAdditionalLibraries"><span class="nav-number">2.3.</span> <span class="nav-text">PublicAdditionalLibraries</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicAdditionalShadowFiles"><span class="nav-number">2.4.</span> <span class="nav-text">PublicAdditionalShadowFiles</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RuntimeDependencies"><span class="nav-number">2.5.</span> <span class="nav-text">RuntimeDependencies</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicDelayLoadDLLs"><span class="nav-number">2.6.</span> <span class="nav-text">PublicDelayLoadDLLs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicDefinitions"><span class="nav-number">2.7.</span> <span class="nav-text">PublicDefinitions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicSystemIncludePaths"><span class="nav-number">2.8.</span> <span class="nav-text">PublicSystemIncludePaths</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PrivateRuntimeLibraryPaths"><span class="nav-number">2.9.</span> <span class="nav-text">PrivateRuntimeLibraryPaths</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicRuntimeLibraryPaths"><span class="nav-number">2.10.</span> <span class="nav-text">PublicRuntimeLibraryPaths</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicLibraryPaths"><span class="nav-number">2.11.</span> <span class="nav-text">PublicLibraryPaths</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DynamicallyLoadedModuleNames"><span class="nav-number">2.12.</span> <span class="nav-text">DynamicallyLoadedModuleNames</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublicDependencyModuleNames"><span class="nav-number">2.13.</span> <span class="nav-text">PublicDependencyModuleNames</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PrivateDependencyModuleNames"><span class="nav-number">2.14.</span> <span class="nav-text">PrivateDependencyModuleNames</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bPrecompile%E4%B8%8EbUsePrecompiled"><span class="nav-number">2.15.</span> <span class="nav-text">bPrecompile与bUsePrecompiled</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OptimizeCode-CodeOptimization"><span class="nav-number">2.16.</span> <span class="nav-text">OptimizeCode(CodeOptimization)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bEnableUndefinedIdentifierWarnings-bool"><span class="nav-number">2.17.</span> <span class="nav-text">bEnableUndefinedIdentifierWarnings (bool)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bUseRTTI-bool"><span class="nav-number">2.17.1.</span> <span class="nav-text">bUseRTTI (bool)</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/16643/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

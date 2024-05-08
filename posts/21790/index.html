@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在C++编程中比较痛恨欲绝的事莫过于：编译器瞒着程序员做了太多事。本篇文章是从C++标准([ISO&#x2F;IEC 14882:2014])中整理摘录出来的关于编译器生成类的默认构造函数(default constructor)&#x2F;拷贝&#x2F;移动构造函数(copy&#x2F;move constructor)&#x2F;拷贝&#x2F;移动赋值操作符(copy&#x2F;move assignment operator)&#x2F;析构函数(destructo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="特殊成员函数的隐式声明及其标准行为">
+<meta property="og:url" content="https://imzlp.com/posts/21790/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在C++编程中比较痛恨欲绝的事莫过于：编译器瞒着程序员做了太多事。本篇文章是从C++标准([ISO&#x2F;IEC 14882:2014])中整理摘录出来的关于编译器生成类的默认构造函数(default constructor)&#x2F;拷贝&#x2F;移动构造函数(copy&#x2F;move constructor)&#x2F;拷贝&#x2F;移动赋值操作符(copy&#x2F;move assignment operator)&#x2F;析构函数(destructo">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-05-04T23:37:05.000Z">
+<meta property="article:modified_time" content="2017-05-04T23:37:05.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="技术笔记">
+<meta property="article:tag" content="编程笔记">
+<meta property="article:tag" content="C++标准">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://imzlp.com/posts/21790/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>特殊成员函数的隐式声明及其标准行为 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/21790/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          特殊成员函数的隐式声明及其标准行为<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2017-05-04-21790.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-05-04 23:37 23:37:05:37" itemprop="dateCreated datePublished" datetime="2017-05-04T23:37:05+00:00">2017-05-04 23:37</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">标准解读</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/C-%E6%A0%87%E5%87%86/" itemprop="url" rel="index"><span itemprop="name">C++标准</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/21790/" class="post-meta-item leancloud_visitors" data-flag-title="特殊成员函数的隐式声明及其标准行为" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>21k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>54 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在C++编程中比较痛恨欲绝的事莫过于：编译器瞒着程序员做了太多事。<br>本篇文章是从C++标准([ISO/IEC 14882:2014])中整理摘录出来的关于编译器生成类的<code>默认构造函数(default constructor)</code>/<code>拷贝/移动构造函数(copy/move constructor)</code>/<code>拷贝/移动赋值操作符(copy/move assignment operator)</code>/<code>析构函数(destructor)</code>这六个特殊成员函数的几种情况以及其实际行为的文档。可以作为《Inside The C++ Object Model》的辅助资料，组合观看效果更佳(通过标准描述来理解编译器的实现)。<br>另外，《Inside The C++ Object Model》主要是从“编译器实现”的角度来描述的，但是从“C++标准”的角度来看，书里很多是依赖于编译器实现的，就像虚函数表，标准并没有规定编译器应该用何种方式实现多态行为，自然也就不可能描述关于虚函数表的东西。<br>还有很多对于“编译器生成”的行为在主观意识中带有歧义的理解，都可以在这里找到解答，这也是读C++标准的乐趣所在——不论好坏，标准<strong>规定</strong>不会出错，所有不符合标准描述的实现都是unstandard的。</p>
+<span id="more"></span>
+
+<!--
+## 概览
+简单地说，在一些情况下C++会隐式定义默认构造函数、拷贝构造函数、移动构造函数、拷贝赋值操作符、移动赋值操作符、析构函数这六个成员函数。
+**默认构造函数**：
+
+**拷贝构造函数**：
+- 类定义中没有声明的移动构造函数
+- 类定义中没有声明的移动赋值操作符
+
+隐式定义操作被**deprecated**的情况：
+- 没有用户声明的拷贝复制操作符
+- 没有用户声明的构造函数
+
+**拷贝赋值操作符**：
+- 类定义中没有声明的移动构造函数
+- 类定义中没有声明的移动赋值操作符
+
+隐式定义操作被**deprecated**的情况：
+- 具有用户声明的拷贝构造函数
+- 具有用户声明的析构函数
+
+**移动构造函数**[§12.8.9]：
+- 没有用户声明的拷贝构造函数
+- 没有用户声明的拷贝赋值操作符
+
+隐式定义操作被**deprecated**的情况：
+- 类定义中没有声明的移动赋值操作符
+- 类定义中没有声明的析构函数
+
+当没有移动构造函数被隐式声明或者显式提供，那么调用移动构造函数的表达式应该调用拷贝构造函数。
+
+**移动赋值操作符**：
+- 没有用户声明的拷贝构造
+- 没有用户声明的移动构造
+- 没有用户声明的拷贝赋值操作
+- 没有用户声明的析构函数
+
+-->
+<p>In some circumstances, C++ implementations implicitly define the <code>default constructor</code>(12.1), <code>copy constructor</code>(12.8), <code>move constructor</code>(12.8), <code>copy assignment operator</code>(12.8), <code>move assignment operator</code>(12.8), or <code>destructor</code>(12.4) member functions.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> &#123;</span><br><span class="line">	std::string s; <span class="comment">// std::string is the standard library class (Clause 21)</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	C a;</span><br><span class="line">	C b = a;</span><br><span class="line">	b = a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>the implementation will implicitly define functions to make the definition of C equivalent to</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> &#123;</span><br><span class="line">	std::string s;</span><br><span class="line">	<span class="built_in">C</span>() : <span class="built_in">s</span>() &#123; &#125;</span><br><span class="line">	<span class="built_in">C</span>(<span class="type">const</span> C&amp; x): <span class="built_in">s</span>(x.s) &#123; &#125;</span><br><span class="line">	<span class="built_in">C</span>(C&amp;&amp; x): <span class="built_in">s</span>(<span class="built_in">static_cast</span>&lt;std::string&amp;&amp;&gt;(x.s)) &#123; &#125;</span><br><span class="line">	<span class="comment">// : s(std::move(x.s)) &#123; &#125;</span></span><br><span class="line">	C&amp; <span class="keyword">operator</span>=(<span class="type">const</span> C&amp; x) &#123; s = x.s; <span class="keyword">return</span> *<span class="keyword">this</span>; &#125;</span><br><span class="line">	C&amp; <span class="keyword">operator</span>=(C&amp;&amp; x) &#123; s = <span class="built_in">static_cast</span>&lt;std::string&amp;&amp;&gt;(x.s); <span class="keyword">return</span> *<span class="keyword">this</span>; &#125;</span><br><span class="line">	<span class="comment">// &#123; s = std::move(x.s); return *this; &#125;</span></span><br><span class="line">	~<span class="built_in">C</span>() &#123; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="implicitly-declare-default-constructor"><a href="#implicitly-declare-default-constructor" class="headerlink" title="implicitly declare default constructor"></a>implicitly declare default constructor</h2><p>A default constructor for a class X is a constructor of class X that can be called without an argument. <strong>If there is no user-declared constructor for class X, a constructor having no parameters is implicitly declared as defaulted (8.4).</strong> An implicitly-declared default constructor is an inline public member of its class.</p>
+<p>A default constructor is <code>trivial</code> if it is not user-provided and if:</p>
+<ul>
+<li>its class has no virtual functions (10.3) and no virtual base classes (10.1), and</li>
+<li>no non-static data member of its class has a brace-or-equal-initializer, and</li>
+<li>all the direct base classes of its class have trivial default constructors, and</li>
+<li>for all the non-static data members of its class that are of class type (or array thereof), each such class has a trivial default constructor.<br>Otherwise, the default constructor is non-trivial.</li>
+</ul>
+<p>The implicitly-defined default constructor performs the set of initializations of the class that would be performed by a user-written default constructor for that class with no ctor-initializer (12.6.2) and an empty compound-statement. If that user-written default constructor would be ill-formed, the program is ill-formed.</p>
+<p>An implicitly-declared default constructor has an exception-speciﬁcation (15.4). An explicitly-defaulted definition might have an implicit exception-speciﬁcation, see 8.4.</p>
+<h3 id="constructor-behavior"><a href="#constructor-behavior" class="headerlink" title="constructor behavior"></a>constructor behavior</h3><p>关于构造函数执行顺序可以看我之前的一篇文章：<a href="https://imzlp.com/posts/16550/">对象的构造和析构顺序</a>。<br>Any expression in a mem-initializer is evaluated as part of the full-expression that performs the initialization. A mem-initializer where the mem-initializer-id denotes a virtual base class is ignored during execution of a constructor of any class that is not the most derived class.<br>In a non-delegating constructor, if a given potentially constructed subobject is not designated by a mem-initializer-id (including the case where there is no mem-initializer-list because the constructor has no ctor-initializer), then</p>
+<ul>
+<li>if the entity is a non-static data member that has a brace-or-equal-initializer and either<ul>
+<li>the constructor’s class is a union (9.5), and no other variant member of that union is designated by a mem-initializer-id or</li>
+<li>the constructor’s class is not a union, and, if the entity is a member of an anonymous union, no other member of that union is designated by a mem-initializer-id,<br>the entity is initialized as speciﬁed in 8.5;</li>
+</ul>
+</li>
+<li>otherwise, if the entity is an anonymous union or a variant member (9.5), no initialization is performed;</li>
+<li>otherwise, the entity is default-initialized (8.5).</li>
+</ul>
+<blockquote>
+<p>注意：未显式对类内的built-type数据成员执行初始化的会具有不确定的值。编译器生成的默认构造函数只会做必要的事。</p>
+</blockquote>
+<p>[ Note: An abstract class (10.4) is never a most derived class, thus its constructors never initialize virtual base classes, therefore the corresponding mem-initializers may be omitted. — end note ] An attempt to initialize more than one non-static data member of a union renders the program ill-formed. [ Note: After the call to a constructor for class X for an object with automatic or dynamic storage duration has completed, <strong>if the constructor was not invoked as part of value-initialization and a member of X is neither initialized nor given a value during execution of the compound-statement of the body of the constructor, the member has an indeterminate value.</strong> — end note ]</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="built_in">A</span>();</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span> &#123;</span><br><span class="line">	<span class="built_in">B</span>(<span class="type">int</span>);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> &#123;</span><br><span class="line">	<span class="built_in">C</span>() &#123; &#125; <span class="comment">// initializes members as follows:</span></span><br><span class="line">	A a; <span class="comment">// OK: calls A::A()</span></span><br><span class="line">	<span class="type">const</span> B b; <span class="comment">// error: B has no default constructor</span></span><br><span class="line">	<span class="type">int</span> i; <span class="comment">// OK: i has indeterminate value</span></span><br><span class="line">	<span class="type">int</span> j = <span class="number">5</span>; <span class="comment">// OK: j has the value 5</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>If a given non-static data member has both a brace-or-equal-initializer and a mem-initializer, the initialization speciﬁed by the mem-initializer is performed, and the non-static data member’s brace-or-equal-initializer is ignored.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="type">int</span> i = <span class="comment">/* some integer expression with side eﬀects */</span> ;</span><br><span class="line">	<span class="built_in">A</span>(<span class="type">int</span> arg) : <span class="built_in">i</span>(arg) &#123; &#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>the A(int) constructor will simply initialize i to the value of arg, and the side eﬀects in i’s brace-or-equal-initializer will not take place.<br>In a non-delegating constructor, the destructor for each potentially constructed subobject of class type is potentially invoked (12.4). [ Note: This provision ensures that destructors can be called for fully-constructed sub-objects in case an exception is thrown (15.2). — end note ]</p>
+<p>In a non-delegating constructor, initialization proceeds in the following order:</p>
+<ul>
+<li>First, and only for the constructor of the most derived class (1.8), virtual base classes are initialized in the order they appear on a depth-ﬁrst left-to-right traversal of the directed acyclic graph of base classes, where “left-to-right” is the order of appearance of the base classes in the derived class base-speciﬁer-list.</li>
+<li>Then, direct base classes are initialized in declaration order as they appear in the base-speciﬁer-list (regardless of the order of the mem-initializers).</li>
+<li>Then, non-static data members are initialized in the order they were declared in the class definition (again regardless of the order of the mem-initializers).</li>
+<li>Finally, the compound-statement of the constructor body is executed. [ Note: The declaration order is mandated to ensure that base and member subobjects are destroyed in the reverse order of initialization.– end note ]</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">V</span> &#123;</span><br><span class="line">	<span class="built_in">V</span>();</span><br><span class="line">	<span class="built_in">V</span>(<span class="type">int</span>);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> : <span class="keyword">virtual</span> V &#123;</span><br><span class="line">	<span class="built_in">A</span>();</span><br><span class="line">	<span class="built_in">A</span>(<span class="type">int</span>);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span> : <span class="keyword">virtual</span> V &#123;</span><br><span class="line">	<span class="built_in">B</span>();</span><br><span class="line">	<span class="built_in">B</span>(<span class="type">int</span>);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> : A, B, <span class="keyword">virtual</span> V &#123;</span><br><span class="line">	<span class="built_in">C</span>();</span><br><span class="line">	<span class="built_in">C</span>(<span class="type">int</span>);</span><br><span class="line">&#125;;</span><br><span class="line">A::<span class="built_in">A</span>(<span class="type">int</span> i) : <span class="built_in">V</span>(i) &#123; /∗ ... ∗/ &#125;</span><br><span class="line">B::<span class="built_in">B</span>(<span class="type">int</span> i) &#123; /∗ ... ∗/ &#125;</span><br><span class="line">C::<span class="built_in">C</span>(<span class="type">int</span> i) &#123; /∗ ... ∗/ &#125;</span><br><span class="line"><span class="function">V <span class="title">v</span><span class="params">(<span class="number">1</span>)</span></span>; <span class="comment">// use V(int)</span></span><br><span class="line"><span class="function">A <span class="title">a</span><span class="params">(<span class="number">2</span>)</span></span>; <span class="comment">// use V(int)</span></span><br><span class="line"><span class="function">B <span class="title">b</span><span class="params">(<span class="number">3</span>)</span></span>; <span class="comment">// use V()</span></span><br><span class="line"><span class="function">C <span class="title">c</span><span class="params">(<span class="number">4</span>)</span></span>; <span class="comment">// use V()</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="implictly-declare-destructor"><a href="#implictly-declare-destructor" class="headerlink" title="implictly declare destructor"></a>implictly declare destructor</h2><h3 id="default-destructor"><a href="#default-destructor" class="headerlink" title="default destructor"></a>default destructor</h3><p>If a class has no user-declared destructor, a destructor is implicitly declared as defaulted (8.4). An implicitly- declared destructor is an inline public member of its class.</p>
+<h3 id="delete-destructor"><a href="#delete-destructor" class="headerlink" title="delete destructor"></a>delete destructor</h3><p>A defaulted destructor for a class X is defined as deleted if:</p>
+<ul>
+<li>X is a union-like class that has a variant member with a non-trivial destructor,</li>
+<li>any potentially constructed subobject has class type M (or array thereof) and M has a deleted destructor or a destructor that is inaccessible from the defaulted destructor,</li>
+<li>or, for a virtual destructor, lookup of the non-array deallocation function results in an ambiguity or in a function that is deleted or inaccessible from the defaulted destructor.</li>
+</ul>
+<h3 id="trivial-destructor"><a href="#trivial-destructor" class="headerlink" title="trivial destructor"></a>trivial destructor</h3><p>A destructor is trivial if it is not user-provided and if:</p>
+<ul>
+<li>the destructor is not virtual,</li>
+<li>all of the direct base classes of its class have trivial destructors, and</li>
+<li>for all of the non-static data members of its class that are of class type (or array thereof), each such class has a trivial destructor.</li>
+<li>Otherwise, the destructor is non-trivial.</li>
+</ul>
+<p>A destructor that is defaulted and not defined as deleted is implicitly defined when it is odr-used (3.2) to destroy an object of its class type (3.7) or when it is explicitly defaulted after its ﬁrst declaration.<br>Before the defaulted destructor for a class is implicitly defined, all the non-user-provided destructors for its base classes and its non-static data members shall have been implicitly defined.</p>
+<h3 id="executing-the-destructor"><a href="#executing-the-destructor" class="headerlink" title="executing the destructor"></a>executing the destructor</h3><p>After executing the body of the destructor and destroying any automatic objects allocated within the body, a destructor for class X calls the destructors for X’s direct non-variant non-static data members, the destructors for X’s direct base classes and, if X is the type of the most derived class (12.6.2), its destructor calls the destructors for X’s virtual base classes. All destructors are called as if they were referenced with a qualiﬁed name, that is, ignoring any possible virtual overriding destructors in more derived classes. Bases and members are destroyed in the reverse order of the completion of their constructor (see 12.6.2). A return statement (6.6.3) in a destructor might not directly return to the caller; before transferring control to the caller, the destructors for the members and bases are called. Destructors for elements of an array are called in reverse order of their construction (see 12.6).</p>
+<p>A destructor can be declared virtual (10.3) or pure virtual (10.4); if any objects of that class or any derived class are created in the program, the destructor shall be defined. If a class has a base class with a virtual destructor, its destructor (whether user- or implicitly-declared) is virtual.<br>[ Note: some language constructs have special semantics when used during destruction; see 12.7. - end note ]<br>A destructor is invoked implicitly</p>
+<ul>
+<li>for a constructed object with static storage duration (3.7.1) at program termination (3.6.3),</li>
+<li>for a constructed object with thread storage duration (3.7.2) at thread exit,</li>
+<li>for a constructed object with automatic storage duration (3.7.3) when the block in which an object is created exits (6.7),</li>
+<li>for a constructed temporary object when its lifetime ends (12.2).</li>
+</ul>
+<p>In each case, the context of the invocation is the context of the construction of the object. A destructor is also invoked implicitly through use of a delete-expression (5.3.5) for a constructed object allocated by a new-expression (5.3.4); the context of the invocation is the delete-expression. [ Note: An array of class type contains several subobjects for each of which the destructor is invoked. — end note ] A destructor can also be invoked explicitly. A destructor is potentially invoked if it is invoked or as speciﬁed in 5.3.4 and 12.6.2. A program is ill-formed if a destructor that is potentially invoked is deleted or not accessible from the context of the invocation.</p>
+<h2 id="implictly-declare-copy-move-constructor"><a href="#implictly-declare-copy-move-constructor" class="headerlink" title="implictly declare copy/move constructor"></a>implictly declare copy/move constructor</h2><h3 id="copy-constructor"><a href="#copy-constructor" class="headerlink" title="copy constructor"></a>copy constructor</h3><p>If the class definition does not explicitly declare a copy constructor, one is declared implicitly. If the class definition declares a move constructor or move assignment operator, the implicitly declared copy constructor is defined as deleted; otherwise, it is defined as defaulted (8.4). The latter case is deprecated if the class has a user-declared copy assignment operator or a user-declared destructor.</p>
+<h3 id="move-constructor"><a href="#move-constructor" class="headerlink" title="move constructor"></a>move constructor</h3><p>If the definition of a class X does not explicitly declare a move constructor, one will be implicitly declared<br>as defaulted if and only if</p>
+<ul>
+<li>X does not have a user-declared copy constructor,</li>
+<li>X does not have a user-declared copy assignment operator,</li>
+<li>X does not have a user-declared move assignment operator, and</li>
+<li>X does not have a user-declared destructor.</li>
+</ul>
+<p>When the move constructor is not implicitly declared or explicitly supplied, expressions that otherwise would have invoked the move constructor may instead invoke a copy constructor.</p>
+<p>An implicitly-declared copy/move constructor is an inline public member of its class. A defaulted copy/move constructor for a class X is defined as deleted (8.4.3) if X has:</p>
+<ul>
+<li>a variant member with a non-trivial corresponding constructor and X is a union-like class,</li>
+<li>a potentially constructed subobject type M (or array thereof) that cannot be copied/moved because overload resolution (13.3), as applied to M’s corresponding constructor, results in an ambiguity or a function that is deleted or inaccessible from the defaulted constructor,</li>
+<li>any potentially constructed subobject of a type with a destructor that is deleted or inaccessible from the defaulted constructor, or,</li>
+<li>for the copy constructor, a non-static data member of rvalue reference type.</li>
+</ul>
+<p>A defaulted move constructor that is defined as deleted is ignored by overload resolution (13.3, 13.4). [ Note: A deleted move constructor would otherwise interfere with initialization from an rvalue which can use the copy constructor instead. - end note ]</p>
+<p>A copy/move constructor that is defaulted and not defined as deleted is implicitly defined if it is odr-used (3.2) or when it is explicitly defaulted after its ﬁrst declaration. [ Note: The copy/move constructor is implicitly defined even if the implementation elided its odr-use (3.2, 12.2). - end note ] If the implicitly- defined constructor would satisfy the requirements of a constexpr constructor (7.1.5), the implicitly-defined constructor is constexpr.</p>
+<p>Before the defaulted copy/move constructor for a class is implicitly defined, all non-user-provided copy/move constructors for its potentially constructed subobjects shall have been implicitly defined. [ Note: An implicitly-declared copy/move constructor has an exception-speciﬁcation (15.4). - end note ]</p>
+<h3 id="implicitly-defined-copy-move-constructor-behavior"><a href="#implicitly-defined-copy-move-constructor-behavior" class="headerlink" title="implicitly-defined copy/move constructor behavior"></a>implicitly-defined copy/move constructor behavior</h3><blockquote>
+<p>The implicitly-defined copy/move constructor for a non-union class X performs a memberwise copy/move of its bases and members.[ Note: brace-or-equal-initializers of non-static data members are ignored. See also the example in 12.6.2. - end note ] The order of initialization is the same as the order of initialization of bases and members in a user-defined constructor (see 12.6.2).Let x be either the parameter of the constructor or, for the move constructor, an xvalue referring to the parameter. Each base or non-static data member is copied/moved in the manner appropriate to its type:</p>
+</blockquote>
+<ul>
+<li>if the member is an array, each element is direct-initialized with the corresponding subobject of x;</li>
+<li>if a member m has rvalue reference type T&amp;&amp;, it is direct-initialized with static_cast&lt;T&amp;&amp;&gt;(x.m);</li>
+<li>otherwise, the base or member is direct-initialized with the corresponding base or member of x.</li>
+</ul>
+<p>Virtual base class subobjects shall be initialized only once by the implicitly-defined copy/move constructor(see 12.6.2).<br>The implicitly-defined copy/move constructor for a union X copies the object representation (3.9) of X.</p>
+<h3 id="trivial-copy-move-constructor"><a href="#trivial-copy-move-constructor" class="headerlink" title="trivial copy/move constructor"></a>trivial copy/move constructor</h3><p>A copy/move constructor for class X is trivial if it is not user-provided, its parameter-type-list is equivalent<br>to the parameter-type-list of an implicit declaration, and if</p>
+<ul>
+<li>class X has no virtual functions (10.3) and no virtual base classes (10.1), and</li>
+<li>class X has no non-static data members of volatile-qualiﬁed type, and</li>
+<li>the constructor selected to copy/move each direct base class subobject is trivial, and</li>
+<li>for each non-static data member of X that is of class type (or array thereof), the constructor selected to copy/move that member is trivial;</li>
+<li>otherwise the copy/move constructor is non-trivial.</li>
+</ul>
+<h2 id="implicit-declare-copy-move-assignment-operator"><a href="#implicit-declare-copy-move-assignment-operator" class="headerlink" title="implicit declare copy/move assignment operator"></a>implicit declare copy/move assignment operator</h2><h3 id="implicit-declare-copy-assignment-operator"><a href="#implicit-declare-copy-assignment-operator" class="headerlink" title="implicit declare copy assignment operator"></a>implicit declare copy assignment operator</h3><p>If the class definition does not explicitly declare a copy assignment operator, one is declared implicitly. If the class definition declares a move constructor or move assignment operator, the implicitly declared copy assignment operator is defined as deleted; otherwise, it is defined as defaulted (8.4). The latter case is deprecated if the class has a user-declared copy constructor or a user-declared destructor. The implicitly-declared copy assignment operator for a class X will have the form</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X&amp; X::<span class="keyword">operator</span>=(<span class="type">const</span> X&amp;)</span><br></pre></td></tr></table></figure>
+<p>if</p>
+<ul>
+<li>each direct base class B of X has a copy assignment operator whose parameter is of type const B&amp;,<br>const volatile B&amp; or B, and</li>
+<li>for all the non-static data members of X that are of a class type M (or array thereof), each such class type has a copy assignment operator whose parameter is of type const M&amp;, const volatile M&amp; or M.</li>
+<li>Otherwise, the implicitly-declared copy assignment operator will have the form</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X&amp; X::<span class="keyword">operator</span>=(X&amp;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="implicit-declare-move-assigment-operator"><a href="#implicit-declare-move-assigment-operator" class="headerlink" title="implicit declare move assigment operator"></a>implicit declare move assigment operator</h3><p>If the definition of a class X does not explicitly declare a move assignment operator, one will be implicitly declared as defaulted if and only if</p>
+<ul>
+<li>X does not have a user-declared copy constructor,</li>
+<li>X does not have a user-declared move constructor,</li>
+<li>X does not have a user-declared copy assignment operator, and</li>
+<li>X does not have a user-declared destructor.</li>
+</ul>
+<p>The class definition</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">S</span> &#123;</span><br><span class="line">	<span class="type">int</span> a;</span><br><span class="line">	S&amp; <span class="keyword">operator</span>=(<span class="type">const</span> S&amp;) = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>will not have a default move assignment operator implicitly declared because the copy assignment operator has been user-declared. The move assignment operator may be explicitly defaulted.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">S</span> &#123;</span><br><span class="line">	<span class="type">int</span> a;</span><br><span class="line">	S&amp; <span class="keyword">operator</span>=(<span class="type">const</span> S&amp;) = <span class="keyword">default</span>;</span><br><span class="line">	S&amp; <span class="keyword">operator</span>=(S&amp;&amp;) = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The implicitly-declared move assignment operator for a class X will have the form</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X&amp; X::<span class="keyword">operator</span>=(X&amp;&amp;);</span><br></pre></td></tr></table></figure>
+<p>The implicitly-declared copy/move assignment operator for class X has the return type X&amp;; it returns the object for which the assignment operator is invoked, that is, the object assigned to. An implicitly-declared copy/move assignment operator is an inline public member of its class.</p>
+<p>A defaulted copy/move assignment operator for class X is defined as deleted if X has:</p>
+<ul>
+<li>a variant member with a non-trivial corresponding assignment operator and X is a union-like class, or</li>
+<li>a non-static data member of const non-class type (or array thereof), or</li>
+<li>a non-static data member of reference type, or</li>
+<li>a potentially constructed subobject of class type M (or array thereof) that cannot be copied/moved because overload resolution (13.3), as applied to M’s corresponding assignment operator, results in an ambiguity or a function that is deleted or inaccessible from the defaulted assignment operator.<br>A defaulted move assignment operator that is defined as deleted is ignored by overload resolution (13.3,13.4).</li>
+</ul>
+<p>Because a copy/move assignment operator is implicitly declared for a class if not declared by the user, a base class copy/move assignment operator is always hidden by the corresponding assignment operator of a derived class (13.5.3). A using-declaration (7.3.3) that brings in from a base class an assignment operator with a parameter type that could be that of a copy/move assignment operator for the derived class is not considered an explicit declaration of such an operator and does not suppress the implicit declaration of the derived class operator; the operator introduced by the using-declaration is hidden by the implicitly-declared operator in the derived class.</p>
+<p>A copy/move assignment operator for a class X that is defaulted and not defined as deleted is implicitly defined when it is odr-used (3.2) (e.g., when it is selected by overload resolution to assign to an object of its class type) or when it is explicitly defaulted after its ﬁrst declaration. The implicitly-defined copy/move assignment operator is constexpr if</p>
+<ul>
+<li>X is a literal type, and</li>
+<li>the assignment operator selected to copy/move each direct base class subobject is a constexpr function,and</li>
+<li>for each non-static data member of X that is of class type (or array thereof), the assignment operator selected to copy/move that member is a constexpr function.</li>
+</ul>
+<p>Before the defaulted copy/move assignment operator for a class is implicitly defined, all non-user-provided copy/move assignment operators for its direct base classes and its non-static data members shall have been implicitly defined. [ Note: An implicitly-declared copy/move assignment operator has an exception-speciﬁcation (15.4). — end note ]</p>
+<h3 id="implicitly-copy-move-assignment-operator-behavior"><a href="#implicitly-copy-move-assignment-operator-behavior" class="headerlink" title="implicitly copy/move assignment operator behavior"></a>implicitly copy/move assignment operator behavior</h3><blockquote>
+<p>The implicitly-defined copy/move assignment operator for a non-union class X performs memberwise copy/move assignment of its subobjects. The direct base classes of X are assigned ﬁrst, in the order of their declaration in the base-speciﬁer-list, and then the immediate non-static data members of X are assigned, in the order in which they were declared in the class definition. Let x be either the parameter of the function or, for the move operator, an xvalue referring to the parameter. Each subobject is assigned in the manner appropriate to its type:</p>
+<ul>
+<li>if the subobject is of class type, as if by a call to operator= with the subobject as the object expression and the corresponding subobject of x as a single function argument (as if by explicit qualiﬁcation; that is, ignoring any possible virtual overriding functions in more derived classes);</li>
+<li>if the subobject is an array, each element is assigned, in the manner appropriate to the element type;</li>
+<li>if the subobject is of scalar type, the built-in assignment operator is used.</li>
+</ul>
+</blockquote>
+<p>It is unspeciﬁed whether subobjects representing virtual base classes are assigned more than once by the implicitly-defined copy assignment operator.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">V</span> &#123; &#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> : <span class="keyword">virtual</span> V &#123; &#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span> : <span class="keyword">virtual</span> V &#123; &#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> : B, A &#123; &#125;;</span><br></pre></td></tr></table></figure>
+<p>It is unspeciﬁed whether the virtual base class subobject V is assigned twice by the implicitly-defined copy assignment operator for C. — end example ] [ Note: This does not apply to move assignment, as a defaulted move assignment operator is deleted if the class has virtual bases. — end note ]<br>A program is ill-formed if the copy/move constructor or the copy/move assignment operator for an object is implicitly odr-used and the special member function is not accessible (Clause 11). [ Note: Copying/moving one object into another using the copy/move constructor or the copy/move assignment operator does not change the layout or size of either object. — end note ]</p>
+<h3 id="trivial-copy-move-assignment-operator"><a href="#trivial-copy-move-assignment-operator" class="headerlink" title="trivial copy/move assignment operator"></a>trivial copy/move assignment operator</h3><p>A copy/move assignment operator for class X is trivial if it is not user-provided, its parameter-type-list is<br>equivalent to the parameter-type-list of an implicit declaration, and if</p>
+<ul>
+<li>class X has no virtual functions (10.3) and no virtual base classes (10.1), and</li>
+<li>class X has no non-static data members of volatile-qualiﬁed type, and</li>
+<li>the assignment operator selected to copy/move each direct base class subobject is trivial, and</li>
+<li>for each non-static data member of X that is of class type (or array thereof), the assignment operator selected to copy/move that member is trivial;</li>
+<li>otherwise the copy/move assignment operator is non-trivial.</li>
+</ul>
+<h2 id="elision-of-copy-move"><a href="#elision-of-copy-move" class="headerlink" title="elision of copy/move"></a>elision of copy/move</h2><p>When certain criteria are met, an implementation is allowed to omit the copy/move construction of a class object, even if the constructor selected for the copy/move operation and/or the destructor for the object have side eﬀects. In such cases, the implementation treats the source and target of the omitted copy/move operation as simply two different ways of referring to the same object, and the destruction of that object occurs at the later of the times when the two objects would have been destroyed without the optimization(Because only one object is destroyed instead of two, and one copy/move constructor is not executed, there is still one object destroyed for each one constructed.). This elision of copy/move operations, called copy elision, is permitted in the following circumstances (which may be combined to eliminate multiple copies):</p>
+<ul>
+<li>in a return statement in a function with a class return type, when the expression is the name of a non-volatile automatic object (other than a function or catch-clause parameter) with the same cv- unqualiﬁed type as the function return type, the copy/move operation can be omitted by constructing the automatic object directly into the function’s return value</li>
+<li>in a throw-expression, when the operand is the name of a non-volatile automatic object (other than a function or catch-clause parameter) whose scope does not extend beyond the end of the innermost enclosing try-block (if there is one), the copy/move operation from the operand to the exception object (15.1) can be omitted by constructing the automatic object directly into the exception object</li>
+<li>when a temporary class object that has not been bound to a reference (12.2) would be copied/moved to a class object with the same cv-unqualiﬁed type, the copy/move operation can be omitted by constructing the temporary object directly into the target of the omitted copy/move</li>
+<li>when the exception-declaration of an exception handler (Clause 15) declares an object of the same type (except for cv-qualiﬁcation) as the exception object (15.1), the copy operation can be omitted by treating the exception-declaration as an alias for the exception object if the meaning of the program will be unchanged except for the execution of constructors and destructors for the object declared by the exception-declaration. [ Note: There cannot be a move from the exception object because it is always an lvalue.- end note ]</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Thing</span> &#123;</span><br><span class="line">	<span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Thing</span>();</span><br><span class="line">	~<span class="built_in">Thing</span>();</span><br><span class="line">	<span class="built_in">Thing</span>(<span class="type">const</span> Thing&amp;);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">Thing <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	Thing t;</span><br><span class="line">	<span class="keyword">return</span> t;</span><br><span class="line">&#125;</span><br><span class="line">Thing t2 = <span class="built_in">f</span>();</span><br></pre></td></tr></table></figure>
+<p>Here the criteria for elision can be combined to eliminate two calls to the copy constructor of class Thing: the copying of the local automatic object t into the temporary object for the return value of function f() and the copying of that temporary object into object t2. Eﬀectively, the construction of the local object t can be viewed as directly initializing the global object t2, and that object’s destruction will occur at program exit. Adding a move constructor to Thing has the same eﬀect, but it is the move construction from the temporary object to t2 that is elided. — end example ]</p>
+<p>When the criteria for elision of a copy/move operation are met, but not for an exception-declaration, and the object to be copied is designated by an lvalue, or when the expression in a return statement is a (possibly parenthesized) id-expression that names an object with automatic storage duration declared in the body or parameter-declaration-clause of the innermost enclosing function or lambda-expression, overload resolution to select the constructor for the copy is ﬁrst performed as if the object were designated by an rvalue. If the ﬁrst overload resolution fails or was not performed, or if the type of the ﬁrst parameter of the selected constructor is not an rvalue reference to the object’s type (possibly cv-qualiﬁed), overload resolution is performed again, considering the object as an lvalue. [ Note: This two-stage overload resolution must be performed regardless of whether copy elision will occur. It determines the constructor to be called if elision is not performed, and the selected constructor must be accessible even if the call is elided. — end note ]</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Thing</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Thing</span>();</span><br><span class="line">	~<span class="built_in">Thing</span>();</span><br><span class="line">	<span class="built_in">Thing</span>(Thing&amp;&amp;);</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="built_in">Thing</span>(<span class="type">const</span> Thing&amp;);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">Thing <span class="title">f</span><span class="params">(<span class="type">bool</span> b)</span> </span>&#123;</span><br><span class="line">	Thing t;</span><br><span class="line">	<span class="keyword">if</span>(b)</span><br><span class="line">		<span class="keyword">throw</span> t; <span class="comment">// OK: Thing(Thing&amp;&amp;) used (or elided) to throw t</span></span><br><span class="line">	<span class="keyword">return</span> t; <span class="comment">// OK: Thing(Thing&amp;&amp;) used (or elided) to return t</span></span><br><span class="line">&#125;</span><br><span class="line">Thing t2 = <span class="built_in">f</span>(<span class="literal">false</span>); <span class="comment">// OK: Thing(Thing&amp;&amp;) used (or elided) to construct t2</span></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/21790/" target="_blank">特殊成员函数的隐式声明及其标准行为</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2017年05月04日 23时37分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有21k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/21790/" target="_blank" title="特殊成员函数的隐式声明及其标准行为">https://imzlp.com/posts/21790/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/21790/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" rel="tag"># 技术笔记</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"># 编程笔记</a>
+              <a href="/tags/C-%E6%A0%87%E5%87%86/" rel="tag"># C++标准</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/15564/" rel="prev" title="技术书籍书评汇总">
+      <i class="fa fa-chevron-left"></i> 技术书籍书评汇总
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/10380/" rel="next" title="函数模板的特化和重载">
+      函数模板的特化和重载 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#implicitly-declare-default-constructor"><span class="nav-number">1.</span> <span class="nav-text">implicitly declare default constructor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#constructor-behavior"><span class="nav-number">1.1.</span> <span class="nav-text">constructor behavior</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#implictly-declare-destructor"><span class="nav-number">2.</span> <span class="nav-text">implictly declare destructor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#default-destructor"><span class="nav-number">2.1.</span> <span class="nav-text">default destructor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#delete-destructor"><span class="nav-number">2.2.</span> <span class="nav-text">delete destructor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#trivial-destructor"><span class="nav-number">2.3.</span> <span class="nav-text">trivial destructor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#executing-the-destructor"><span class="nav-number">2.4.</span> <span class="nav-text">executing the destructor</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#implictly-declare-copy-move-constructor"><span class="nav-number">3.</span> <span class="nav-text">implictly declare copy&#x2F;move constructor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#copy-constructor"><span class="nav-number">3.1.</span> <span class="nav-text">copy constructor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#move-constructor"><span class="nav-number">3.2.</span> <span class="nav-text">move constructor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#implicitly-defined-copy-move-constructor-behavior"><span class="nav-number">3.3.</span> <span class="nav-text">implicitly-defined copy&#x2F;move constructor behavior</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#trivial-copy-move-constructor"><span class="nav-number">3.4.</span> <span class="nav-text">trivial copy&#x2F;move constructor</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#implicit-declare-copy-move-assignment-operator"><span class="nav-number">4.</span> <span class="nav-text">implicit declare copy&#x2F;move assignment operator</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#implicit-declare-copy-assignment-operator"><span class="nav-number">4.1.</span> <span class="nav-text">implicit declare copy assignment operator</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#implicit-declare-move-assigment-operator"><span class="nav-number">4.2.</span> <span class="nav-text">implicit declare move assigment operator</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#implicitly-copy-move-assignment-operator-behavior"><span class="nav-number">4.3.</span> <span class="nav-text">implicitly copy&#x2F;move assignment operator behavior</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#trivial-copy-move-assignment-operator"><span class="nav-number">4.4.</span> <span class="nav-text">trivial copy&#x2F;move assignment operator</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#elision-of-copy-move"><span class="nav-number">5.</span> <span class="nav-text">elision of copy&#x2F;move</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/21790/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

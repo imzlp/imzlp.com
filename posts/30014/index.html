@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="对于个人知识管理，我非常热衷于搞一套自己的local-first和开源的self-host的服务，这样就能不依赖任何平台、数据完全自主可控、服务可随时迁移。不管是Obsidian、Hexo博客、以及本篇文章介绍的memos，都是这个选择标准。 本文的主角，memos是一个开源的轻量级笔记的服务，可以像发微博的方式记笔记，支持TAG标记和引用。具有账号系统和权限管理，网页访问随时登录，笔记可以公开">
+<meta property="og:type" content="article">
+<meta property="og:title" content="部署一个自托管的MEMOS笔记系统">
+<meta property="og:url" content="https://imzlp.com/posts/30014/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="对于个人知识管理，我非常热衷于搞一套自己的local-first和开源的self-host的服务，这样就能不依赖任何平台、数据完全自主可控、服务可随时迁移。不管是Obsidian、Hexo博客、以及本篇文章介绍的memos，都是这个选择标准。 本文的主角，memos是一个开源的轻量级笔记的服务，可以像发微博的方式记笔记，支持TAG标记和引用。具有账号系统和权限管理，网页访问随时登录，笔记可以公开">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2024/03/28/184812.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2024/03/28/185840.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2024/04/08/205319.png">
+<meta property="article:published_time" content="2024-04-13T10:34:01.000Z">
+<meta property="article:modified_time" content="2024-04-13T10:34:01.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="知识管理">
+<meta property="article:tag" content="MEMOS">
+<meta property="article:tag" content="自托管服务">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2024/03/28/184812.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/30014/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>部署一个自托管的MEMOS笔记系统 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/30014/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          部署一个自托管的MEMOS笔记系统<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2024-04-13-30014.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-04-13 10:34 10:34:01:34" itemprop="dateCreated datePublished" datetime="2024-04-13T10:34:01+00:00">2024-04-13 10:34</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%9F%A5%E8%AF%86%E7%AE%A1%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">知识管理</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%9F%A5%E8%AF%86%E7%AE%A1%E7%90%86/MEMOS/" itemprop="url" rel="index"><span itemprop="name">MEMOS</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/30014/" class="post-meta-item leancloud_visitors" data-flag-title="部署一个自托管的MEMOS笔记系统" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <!--- 我坚持不依赖任何中心化的平台服务，任何平台一旦具有盈利和监管压力，广告和内容审查不可避免。而且个人的数据，我也不想“贡献”给第三方平台。 --->
+<p>对于个人知识管理，我非常热衷于搞一套自己的local-first和开源的self-host的服务，这样就能不依赖任何平台、数据完全自主可控、服务可随时迁移。不管是Obsidian、Hexo博客、以及本篇文章介绍的<a target="_blank" rel="noopener" href="https://github.com/usememos/memos">memos</a>，都是这个选择标准。</p>
+<p>本文的主角，<a target="_blank" rel="noopener" href="https://github.com/usememos/memos">memos</a>是一个开源的轻量级笔记的服务，可以像发微博的方式记笔记，支持TAG标记和引用。具有账号系统和权限管理，网页访问随时登录，笔记可以公开或私有，非常灵活。我选择它是因为可以跟Obsidian互为补充，Obsidian还是太重了，在PC上好用但移动端体验不佳。所以我需要一个轻量级、随时可用的一种笔记服务。</p>
+<p>本篇文章会介绍，如何在VPS上用Docker部署一个Memos服务，并结合Nginx绑定域名、Certbot签发以及自动更新SSL证书和定时备份memos数据库，还有我为该服务做的一些配置优化。</p>
+<span id="more"></span>
+<h2 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h2><p>实操本文前需要你具备以下条件：</p>
+<ol>
+<li>具有一台VPS（最好是境外的，不用备案域名）</li>
+<li>域名（文中以<code>memos.example.com</code>为例）</li>
+<li>熟悉Linux系统和常用命令</li>
+</ol>
+<h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><h3 id="Docker"><a href="#Docker" class="headerlink" title="Docker"></a>Docker</h3><p>首先需要在VPS上需要安装docker：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt-get install docker</span><br><span class="line">apt-get install docker-compose</span><br></pre></td></tr></table></figure>
+
+<p>常用的docker命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 列出所有镜像</span></span><br><span class="line">docker images -a</span><br><span class="line"><span class="comment"># 删除镜像</span></span><br><span class="line">docker rmi IMAGE_ID</span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有容器</span></span><br><span class="line">docker ps -a</span><br><span class="line"><span class="comment"># 停止容器</span></span><br><span class="line">docker stop CONTAINER_ID</span><br><span class="line"><span class="comment"># 启动容器</span></span><br><span class="line">docker start CONTAINER_ID</span><br><span class="line"><span class="comment"># 删除容器</span></span><br><span class="line">docker <span class="built_in">rm</span> CONTAINER_ID</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="Memos"><a href="#Memos" class="headerlink" title="Memos"></a>Memos</h3><p>然后用docker安装并运行<a target="_blank" rel="noopener" href="https://github.com/usememos/memos">memos</a>的镜像，目前最新的版本是<code>0.21.0</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name memos -p 5230:5230 -v ~/.memos/:/var/opt/memos neosmemo/memos:stable</span><br></pre></td></tr></table></figure>
+
+<p><code>-p</code>是指定端口，<code>~/.memos/:/var/opt/memos</code>是指定memos的数据存储路径。默认的就是放在<code>~/.memos/</code>目录下，可以根据需要更换目录。</p>
+<p>执行后会产生下面几个文件：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/03/28/184812.png"></p>
+<p>其中的<code>memo_prod.db</code>就是memos的Sqlite数据库，可以通过DB Browser for Sqlite等工具打开，访问数据。</p>
+<p>当执行完上面的docker命令之后，memos服务就已经启动了，可以使用<code>localhost:5230</code>来访问了。</p>
+<h3 id="容器开机自启动"><a href="#容器开机自启动" class="headerlink" title="容器开机自启动"></a>容器开机自启动</h3><p>先查看docker id：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@vultr:~<span class="comment"># docker ps -a</span></span><br><span class="line">CONTAINER ID   IMAGE                   COMMAND     CREATED       STATUS       PORTS                                       NAMES</span><br><span class="line">3f25b36e833e   neosmemo/memos:stable   <span class="string">&quot;./memos&quot;</span>   4 hours ago   Up 4 hours   0.0.0.0:5230-&gt;5230/tcp, :::5230-&gt;5230/tcp   memos</span><br></pre></td></tr></table></figure>
+<p>然后通过update设置自启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker update --restart=always 3f25b36e833e</span><br></pre></td></tr></table></figure>
+<p>关闭自启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker update --restart=no</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="自定义域名"><a href="#自定义域名" class="headerlink" title="自定义域名"></a>自定义域名</h2><p>前面的docker命令执行完之后，就在本地启动了一个web服务。但只能以IP的形式访问，我们可以使用nginx来映射到域名。</p>
+<p>首先安装nginx：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt-get install nginx</span><br></pre></td></tr></table></figure>
+
+<p>查看nginx的默认配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">nginx -t</span><br><span class="line">nginx: the configuration file /etc/nginx/nginx.conf syntax is ok</span><br><span class="line">nginx: configuration file /etc/nginx/nginx.conf <span class="built_in">test</span> is successful</span><br></pre></td></tr></table></figure>
+
+<p>修改<code>/etc/nginx/nginx.conf</code>：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">user</span> www-data;</span><br><span class="line"><span class="attribute">worker_processes</span> auto;</span><br><span class="line"><span class="attribute">pid</span> /run/nginx.pid;</span><br><span class="line"><span class="attribute">include</span> /etc/nginx/modules-enabled/<span class="regexp">*.conf</span>;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">        <span class="attribute">worker_connections</span> <span class="number">768</span>;</span><br><span class="line">        <span class="comment"># multi_accept on;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="comment"># Basic Settings</span></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="attribute">sendfile</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="attribute">tcp_nopush</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="attribute">tcp_nodelay</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="attribute">keepalive_timeout</span> <span class="number">65</span>;</span><br><span class="line">        <span class="attribute">types_hash_max_size</span> <span class="number">2048</span>;</span><br><span class="line">        <span class="comment"># server_tokens off;</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># server_names_hash_bucket_size 64;</span></span><br><span class="line">        <span class="comment"># server_name_in_redirect off;</span></span><br><span class="line"></span><br><span class="line">        <span class="attribute">include</span> /etc/nginx/mime.types;</span><br><span class="line">        <span class="attribute">default_type</span> application/octet-stream;</span><br><span class="line"></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="comment"># SSL Settings</span></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span> TLSv1.<span class="number">3</span>; <span class="comment"># Dropping SSLv3, ref: POODLE</span></span><br><span class="line">        <span class="attribute">ssl_prefer_server_ciphers</span> <span class="literal">on</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="comment"># Logging Settings</span></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="attribute">access_log</span> /var/log/nginx/access.log;</span><br><span class="line">        <span class="attribute">error_log</span> /var/log/nginx/<span class="literal">error</span>.log;</span><br><span class="line"></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="comment"># Gzip Settings</span></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="attribute">gzip</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="comment"># gzip_vary on;</span></span><br><span class="line">        <span class="comment"># gzip_proxied any;</span></span><br><span class="line">        <span class="comment"># gzip_comp_level 6;</span></span><br><span class="line">        <span class="comment"># gzip_buffers 16 8k;</span></span><br><span class="line">        <span class="comment"># gzip_http_version 1.1;</span></span><br><span class="line">        <span class="comment"># gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="comment"># Virtual Host Configs</span></span><br><span class="line">        <span class="comment">##</span></span><br><span class="line">        <span class="attribute">include</span> /etc/nginx/conf.d/<span class="regexp">*.conf</span>;</span><br><span class="line">        <span class="attribute">include</span> /etc/nginx/sites-enabled/*;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后就可以在<code>/etc/nginx/conf.d/</code>目录下创建memo的nginx配置：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># memos.example.com.conf</span></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">server_name</span> memos.example.com;</span><br><span class="line"></span><br><span class="line">    <span class="section">location</span> / &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://localhost:5230;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里只是添加了<code>http</code>的映射，不能开启https，还需要申请SSL证书后，再配置一个<code>443</code>的nginx配置，下文介绍。</p>
+<h2 id="SSL证书"><a href="#SSL证书" class="headerlink" title="SSL证书"></a>SSL证书</h2><h3 id="Certbot"><a href="#Certbot" class="headerlink" title="Certbot"></a>Certbot</h3><blockquote>
+<p>申请证书之前，请确保DNS已经被解析到机器的IP了。</p>
+</blockquote>
+<p>安装<code>certbot</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt-get install certbot</span><br></pre></td></tr></table></figure>
+<p>然后签发证书：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certbot certonly --standalone -d example.com</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：执行命令时不能启动nginx和memos的服务，确保他们为关闭状态。<br>可以通过<code>service nginx stop</code>来关闭nginx服务，使用<code>service nginx start</code>。</p>
+</blockquote>
+<p>证书签发完毕之后会存放在<code>/etc/letsencrypt/live/</code>目录：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/03/28/185840.png"></p>
+<p>此时证书就申请好了。</p>
+<p>然后需要编辑前面创建的nginx配置文件（<code>/etc/nginx/conf.d/</code>目录下），创建一个<code>443 ssl</code>的配置，走HTTPS：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># memos.example.com.conf</span></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">    <span class="attribute">server_name</span> memos.example.com;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">client_max_body_size</span> <span class="number">1024m</span>;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">ssl_certificate</span>      /etc/letsencrypt/live/memos.example.com/fullchain.pem;</span><br><span class="line">    <span class="attribute">ssl_certificate_key</span>  /etc/letsencrypt/live/memos.example.com/privkey.pem;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">ssl_session_timeout</span>  <span class="number">5m</span>;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">ssl_ciphers</span>  HIGH:!aNULL:!MD5;</span><br><span class="line">    <span class="attribute">ssl_prefer_server_ciphers</span>  <span class="literal">on</span>;</span><br><span class="line"></span><br><span class="line">    <span class="section">location</span> / &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://localhost:5230;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样我们的域名就支持HTTPS访问了。</p>
+<h3 id="定时更新证书"><a href="#定时更新证书" class="headerlink" title="定时更新证书"></a>定时更新证书</h3><p>certbot签发的证书只有三个月，需要重新申请证书，为了自动化，可以设定crontab定时任务执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crontab -e</span><br></pre></td></tr></table></figure>
+
+<p>把下面的指令贴到后面即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 3 1 * * certbot renew --quiet --pre-hook &quot;service nginx stop&quot; --post-hook &quot;service nginx start&quot;</span><br></pre></td></tr></table></figure>
+
+<p>意思是每个月1号的凌晨三点执行签发任务，并且执行前关闭nginx服务，执行完毕后再开启nginx。</p>
+<h3 id="问题处理"><a href="#问题处理" class="headerlink" title="问题处理"></a>问题处理</h3><p>如果cerbot证书申请失败，记得检查本地端口占用情况，确保nginx服务已经退出，且不要有其他的程序占用<code>80</code>和<code>443</code>端口。<br>如果摸不准端口是否被占用，可以使用<code>lsof</code>检查端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@vultr:~<span class="comment"># lsof -i :80</span></span><br><span class="line">COMMAND     PID     USER   FD   TYPE    DEVICE SIZE/OFF NODE NAME</span><br><span class="line">nginx   1178482     root    6u  IPv4 121041008      0t0  TCP *:http (LISTEN)</span><br><span class="line">nginx   1178482     root    8u  IPv6 121041010      0t0  TCP *:http (LISTEN)</span><br><span class="line">nginx   1178483 www-data    6u  IPv4 121041008      0t0  TCP *:http (LISTEN)</span><br><span class="line">nginx   1178483 www-data    8u  IPv6 121041010      0t0  TCP *:http (LISTEN)</span><br></pre></td></tr></table></figure>
+
+<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="定时备份"><a href="#定时备份" class="headerlink" title="定时备份"></a>定时备份</h3><p>同样地，我们也可以定时备份我们的MEMOS数据库，数据安全永远是第一位的。</p>
+<p>依然可以使用<code>crontab</code>来进行自动化备份，用GIT仓库的形式提交备份。</p>
+<ol>
+<li>首先在Github上创建一个私有仓库</li>
+<li>在VPS上，定位到memos的数据目录</li>
+<li>创建一个git仓库，并做一次初始提交</li>
+<li>创建crontab定时任务</li>
+</ol>
+<p>关于备份的频率，我目前设置的是5分钟执行一次，可以根据需要控制频率。</p>
+<blockquote>
+<p>而且，需要注意的是，不要直接使用git管理正在运行中的数据库，可能会造成数据库损坏。需要将其备份出来，用git管理这个备份。</p>
+</blockquote>
+<p>我设置的<code>.gitignore</code>如下，作用是忽略<code>./memos</code>下所有的文件，只追踪<code>backup*</code>开头的文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.memos/*</span><br><span class="line">!.memos/backup*</span><br></pre></td></tr></table></figure>
+
+<p>备份数据库的命令为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlite3 memos_prod.db <span class="string">&quot;.backup backup_memos_prod.db&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>完整的crontab命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*/5 * * * * <span class="built_in">cd</span> /root/.memos/ &amp;&amp; /usr/bin/sqlite3 memos_prod.db <span class="string">&quot;.backup backup_memos_prod.db&quot;</span> &amp;&amp; /usr/bin/git add . &amp;&amp; /usr/bin/git commit -m <span class="string">&#x27;update&#x27;</span> &amp;&amp; /usr/bin/git push origin master</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：crontab的命令，要以绝对路径，<code>~</code>等相对路径，不一定能正常工作。</p>
+</blockquote>
+<h3 id="数据库修复"><a href="#数据库修复" class="headerlink" title="数据库修复"></a>数据库修复</h3><p>如果访问memos时，数据库提示下面的错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">database disk image is malformed</span><br></pre></td></tr></table></figure>
+
+<p>表示数据库损坏了，我们需要将里面的数据迁移出来，并且创建出一个新的数据库。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># install sqlite3</span></span><br><span class="line">apt-get install sqlite3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将数据库备份到sql</span></span><br><span class="line">sqlite3 memos_prod.db <span class="string">&quot;.dump&quot;</span> &gt; memos_prod.sql</span><br><span class="line"><span class="comment"># 通过sql创建新的数据库</span></span><br><span class="line">sqlite new_memos_prod.db &lt; memos_prod.sql</span><br></pre></td></tr></table></figure>
+
+<p>然后将旧的db移走或删除，把新的该名为<code>memos_prod.db</code>，再启动docker即可。</p>
+<h2 id="数据迁移"><a href="#数据迁移" class="headerlink" title="数据迁移"></a>数据迁移</h2><p>我之前的一些随笔，都是跟博客一起的，存储在一个单独的md文件中，诸如下面的形式：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 2024-04-08 17:18</span></span><br><span class="line">AAA,BBBBBBBBB,CCCCC</span><br><span class="line"></span><br><span class="line"><span class="section">## 2024-04-08 17:19</span></span><br><span class="line">DDDDDD,EEEEEEEEEEE,FFFFFFFF</span><br><span class="line">![](<span class="link">img.png</span>)</span><br></pre></td></tr></table></figure>
+<p>写了多年，已经有几百条内容了，如果需要手动搬运到Memos里，是一个比较繁琐的事情，我才不这么干。</p>
+<p>结合GPT4+手动优化代码，生成了一份从md到memos数据库的Python代码，可以直接把上面格式的md文件，自动生成出符合Memos数据库表规范的csv文件，这样只需要手动把csv导入一次，就能够实现数据迁移了。</p>
+<p>脚本：<a target="_blank" rel="noopener" href="https://gist.github.com/hxhb/b19c7daa3ee4685e25e7f3e847909432">md2memos.py</a>。</p>
+<p>执行命令会在md目录下生成两个csv文件，用于导入db数据库:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python md2memos.py --md MARKDOWN_FILE.md</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：在生成csv导入memos的数据库时，需要把csv分别导入<code>memo</code>和<code>resouece</code>表。然后对resource表做下面的操作，确保这两项位空。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UPDATE resource SET blob = NULL;</span><br><span class="line">UPDATE resource SET internal_path = &#x27;&#x27;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置优化"><a href="#配置优化" class="headerlink" title="配置优化"></a>配置优化</h2><h3 id="界面美化"><a href="#界面美化" class="headerlink" title="界面美化"></a>界面美化</h3><ol>
+<li>字体修改为霞鹜文楷</li>
+<li>接入bing的每日壁纸，这样每天打开背景都不同</li>
+<li>半透效果</li>
+<li>一些无用选项的隐藏</li>
+</ol>
+<p>css代码如下：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 修改字体 */</span></span><br><span class="line"><span class="selector-tag">body</span>&#123;<span class="attribute">font-family</span>: <span class="string">&quot;LXGW WenKai Screen&quot;</span>, sans-serif <span class="meta">!important</span>;&#125;</span><br><span class="line"><span class="comment">/* 修改Memo字号 */</span></span><br><span class="line"><span class="selector-class">.memo-wrapper</span> <span class="selector-class">.text-base</span> &#123; <span class="attribute">font-size</span>: <span class="number">0.95rem</span>&#125;</span><br><span class="line"><span class="comment">/* 修改代码块字号 */</span></span><br><span class="line"><span class="selector-class">.text-sm</span> &#123; <span class="attribute">font-size</span>: <span class="number">0.85rem</span>; &#125;</span><br><span class="line"><span class="comment">/* 隐藏 通知 选项卡 */</span></span><br><span class="line"><span class="selector-id">#header-inbox</span> &#123; <span class="attribute">display</span>: none;&#125;</span><br><span class="line"><span class="comment">/* 隐藏 个人资料 选项卡 */</span></span><br><span class="line"><span class="selector-id">#header-profile</span> &#123; <span class="attribute">display</span>: none; &#125;</span><br><span class="line"><span class="comment">/* 隐藏 探索 选项卡 */</span></span><br><span class="line"><span class="comment">/* #header-explore &#123; display: none;&#125; */</span></span><br><span class="line"><span class="comment">/* 隐藏 about 选项卡 */</span></span><br><span class="line"><span class="selector-id">#header-about</span> &#123; <span class="attribute">display</span>: none; &#125;</span><br><span class="line"><span class="comment">/* 修改编辑器字体为等宽 */</span></span><br><span class="line"><span class="selector-tag">textarea</span> &#123; <span class="attribute">font-family</span>: <span class="string">&#x27;Courier New&#x27;</span>, Courier, monospace;&#125;</span><br><span class="line"><span class="comment">/* 隐藏via memos */</span></span><br><span class="line"><span class="selector-tag">body</span> <span class="selector-class">.flex</span><span class="selector-class">.flex-row</span><span class="selector-class">.justify-between</span><span class="selector-class">.items-center</span> &gt; <span class="selector-class">.text-gray-500</span><span class="selector-class">.dark</span>:text-gray-<span class="number">400</span> &#123; <span class="attribute">display</span>: none;&#125;</span><br><span class="line"><span class="comment">/* share memos width */</span></span><br><span class="line"><span class="selector-class">.share-memo-dialog</span>&gt;<span class="selector-class">.dialog-container</span> &#123; <span class="attribute">width</span>: auto; &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* sidebar */</span></span><br><span class="line"><span class="selector-class">.w-56</span> &#123; <span class="attribute">width</span>: <span class="number">12rem</span>;&#125;</span><br><span class="line"><span class="comment">/* comment */</span></span><br><span class="line"><span class="selector-class">.pt-16</span> &#123; <span class="attribute">padding-top</span>: <span class="number">2rem</span>; &#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-tag">blockquote</span>&#123;</span><br><span class="line">    <span class="attribute">border</span>: <span class="number">1px</span> solid <span class="number">#246ad1</span> <span class="meta">!important</span>;</span><br><span class="line">    <span class="attribute">border-left</span>: <span class="number">4px</span> solid <span class="number">#246ad1</span> <span class="meta">!important</span>;</span><br><span class="line">    <span class="attribute">position</span>:relative;</span><br><span class="line"> &#125;</span><br><span class="line"> <span class="selector-class">.blockquote-center</span>&#123; <span class="attribute">background</span>: none; &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/* #root&gt;div:nth-child(1)  */</span></span><br><span class="line"> <span class="selector-tag">body</span></span><br><span class="line"> &#123;</span><br><span class="line">    <span class="attribute">background-image</span>: <span class="built_in">url</span>(<span class="string">&#x27;https://bing.immmmm.com/img/bing?region=zh-CN&amp;type=image&#x27;</span>);</span><br><span class="line">    <span class="attribute">background-position</span>: buttom;</span><br><span class="line">    backdrop-<span class="attribute">filter</span>: <span class="built_in">blur</span>(<span class="number">10px</span>);</span><br><span class="line">    <span class="attribute">background-size</span>: contain;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="selector-id">#root</span> <span class="selector-tag">main</span>,<span class="selector-id">#root</span> <span class="selector-tag">header</span>,<span class="selector-id">#root</span> <span class="selector-tag">aside</span> &#123;</span><br><span class="line">    <span class="attribute">background-color</span>: <span class="built_in">rgba</span>(<span class="number">244</span> <span class="number">244</span> <span class="number">245</span> / <span class="number">60%</span>) <span class="meta">!important</span>;</span><br><span class="line">    <span class="attribute">background</span>: content-box <span class="meta">!important</span>;</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">5px</span> <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#root</span> <span class="selector-tag">main</span>,<span class="selector-id">#root</span> <span class="selector-tag">header</span>,<span class="selector-id">#root</span> <span class="selector-tag">aside</span>&gt;<span class="selector-tag">div</span><span class="selector-pseudo">:nth-child</span>(<span class="number">2</span>),<span class="selector-id">#root</span> <span class="selector-tag">aside</span>&gt;<span class="selector-tag">div</span><span class="selector-pseudo">:nth-child</span>(<span class="number">3</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attribute">background-color</span>: white;</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">5px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.px-2</span>&#123;</span><br><span class="line">    <span class="attribute">background</span>: content-box <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="selector-class">.border-r</span> &#123;</span><br><span class="line">    <span class="attribute">border-right-width</span>: <span class="number">0px</span> <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 移动端顶栏 */</span></span><br><span class="line"><span class="selector-class">.sm</span>\:pt-<span class="number">2</span> &#123;</span><br><span class="line">    <span class="attribute">background</span>: unset <span class="meta">!important</span>;</span><br><span class="line">    <span class="attr">--tw-backdrop-blur</span>: auto <span class="meta">!important</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* 顶栏文字 */</span></span><br><span class="line"><span class="comment">/* .text-gray-700&#123;</span></span><br><span class="line"><span class="comment">    color: snow !important;</span></span><br><span class="line"><span class="comment">&#125;*/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 设置滚动条的样式 */</span></span><br><span class="line">::-webkit-scrollbar &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">5px</span> <span class="meta">!important</span>;</span><br><span class="line">  <span class="attribute">height</span>: <span class="number">5px</span> <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* 滚动槽 */</span></span><br><span class="line">::-webkit-scrollbar-track &#123;</span><br><span class="line">  <span class="attribute">background</span>: <span class="number">#eee</span> <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* 滚动条滑块 */</span></span><br><span class="line">::-webkit-scrollbar-thumb &#123;</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">5px</span> <span class="meta">!important</span>;</span><br><span class="line">  <span class="attribute">background-color</span>: <span class="number">#ccc</span> <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br><span class="line">::-webkit-scrollbar-thumb:hover &#123;</span><br><span class="line">  <span class="attribute">background-color</span>: <span class="built_in">rgb</span>(<span class="number">247</span>, <span class="number">149</span>, <span class="number">51</span>) <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>js代码：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">changeFont</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> link = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&quot;link&quot;</span>);</span><br><span class="line">  link.<span class="property">rel</span> = <span class="string">&quot;stylesheet&quot;</span>;</span><br><span class="line">  link.<span class="property">type</span> = <span class="string">&quot;text/css&quot;</span>;</span><br><span class="line">  link.<span class="property">href</span> = <span class="string">&quot;https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/lxgwwenkaiscreen.css&quot;</span>;</span><br><span class="line">  <span class="variable language_">document</span>.<span class="property">head</span>.<span class="title function_">append</span>(link);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_">changeFont</span>()</span><br></pre></td></tr></table></figure>
+
+<h3 id="S3服务"><a href="#S3服务" class="headerlink" title="S3服务"></a>S3服务</h3><p>Memos的配置和发表的文本都是存储在sqlite的db中的，但是sqlite对二进制文件不友好。而且这些二进制文件放到db里也不好管理。所以可以配置一个S3的服务（如腾讯云COS），用于存储上传的文件和图片等。</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>配置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>名称</td>
+<td>TencentCOS</td>
+</tr>
+<tr>
+<td>端点</td>
+<td><a target="_blank" rel="noopener" href="https://cos.ap-guangzhou.myqcloud.com/">https://cos.ap-guangzhou.myqcloud.com</a></td>
+</tr>
+<tr>
+<td>地区</td>
+<td>ap-guangzhou</td>
+</tr>
+<tr>
+<td>访问密钥</td>
+<td>AKIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXf7g</td>
+</tr>
+<tr>
+<td>SecretKey</td>
+<td>gZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZr</td>
+</tr>
+<tr>
+<td>存储桶</td>
+<td>memos-1888888893</td>
+</tr>
+<tr>
+<td>存储路径</td>
+<td>memos/{year}/{month}/{day}/{filename}</td>
+</tr>
+</tbody></table>
+<p>这样就能把Memos文本与文件分离了。</p>
+<h3 id="Webhook"><a href="#Webhook" class="headerlink" title="Webhook"></a>Webhook</h3><p>虽然我部署了Memos，但是我依然希望，我之前的md数据能够同步Memos的修改。</p>
+<p>而Memos也提供了调用webhook的配置，我利用flask也写了一个简易的webhook server，当Memos里发布或者修改了内容，都能触发，这样就可以操作数据，追加到md里了：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, request, jsonify</span><br><span class="line"><span class="keyword">import</span> logging</span><br><span class="line">logging.basicConfig(level=logging.DEBUG)</span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/webhook&#x27;</span>, methods=[<span class="string">&#x27;POST&#x27;</span>]</span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">webhook</span>():</span><br><span class="line">    data = request.json</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;收到的数据:&quot;</span>, data)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 这里可以添加处理Webhook数据的代码</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> jsonify(&#123;<span class="string">&#x27;status&#x27;</span>: <span class="string">&#x27;success&#x27;</span>&#125;), <span class="number">200</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    app.run(host=<span class="string">&#x27;0.0.0.0&#x27;</span>, debug=<span class="literal">True</span>, port=<span class="number">5000</span>)</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>基于web的服务还是很爽的，无需客户端，浏览器打开即可访问，随时随地能把想法记录下来。而且在iOS上safari可以直接把页面发送到桌面，就像普通的app一样打开访问，体验很好。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/04/08/205319.png"></p>
+<p>另外，<a target="_blank" rel="noopener" href="https://github.com/usememos/memos">memos</a>还有很有RESTful API，可以将它扩展到其他的服务里，如可以嵌入到IOS的快捷指令（实现日程、记账、随笔等）、或者嵌入到博客里，就更为方便了。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/30014/" target="_blank">部署一个自托管的MEMOS笔记系统</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2024年04月13日 10时34分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/30014/" target="_blank" title="部署一个自托管的MEMOS笔记系统">https://imzlp.com/posts/30014/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/30014/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E7%AE%A1%E7%90%86/" rel="tag"># 知识管理</a>
+              <a href="/tags/MEMOS/" rel="tag"># MEMOS</a>
+              <a href="/tags/%E8%87%AA%E6%89%98%E7%AE%A1%E6%9C%8D%E5%8A%A1/" rel="tag"># 自托管服务</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/posts/76004/" rel="next" title="利用HotPatcher加速真机资源验证">
+      利用HotPatcher加速真机资源验证 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">前置条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2"><span class="nav-number">2.</span> <span class="nav-text">部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Docker"><span class="nav-number">2.1.</span> <span class="nav-text">Docker</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Memos"><span class="nav-number">2.2.</span> <span class="nav-text">Memos</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF%E5%8A%A8"><span class="nav-number">2.3.</span> <span class="nav-text">容器开机自启动</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D"><span class="nav-number">3.</span> <span class="nav-text">自定义域名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SSL%E8%AF%81%E4%B9%A6"><span class="nav-number">4.</span> <span class="nav-text">SSL证书</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Certbot"><span class="nav-number">4.1.</span> <span class="nav-text">Certbot</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6"><span class="nav-number">4.2.</span> <span class="nav-text">定时更新证书</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%A4%84%E7%90%86"><span class="nav-number">4.3.</span> <span class="nav-text">问题处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">5.</span> <span class="nav-text">数据库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E6%97%B6%E5%A4%87%E4%BB%BD"><span class="nav-number">5.1.</span> <span class="nav-text">定时备份</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BF%AE%E5%A4%8D"><span class="nav-number">5.2.</span> <span class="nav-text">数据库修复</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB"><span class="nav-number">6.</span> <span class="nav-text">数据迁移</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%BC%98%E5%8C%96"><span class="nav-number">7.</span> <span class="nav-text">配置优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96"><span class="nav-number">7.1.</span> <span class="nav-text">界面美化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#S3%E6%9C%8D%E5%8A%A1"><span class="nav-number">7.2.</span> <span class="nav-text">S3服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Webhook"><span class="nav-number">7.3.</span> <span class="nav-text">Webhook</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">8.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/30014/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

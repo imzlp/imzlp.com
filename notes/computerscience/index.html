@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="计算机科学的资料收录、学习笔记。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Computer Science">
+<meta property="og:url" content="https://imzlp.com/notes/computerscience/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="计算机科学的资料收录、学习笔记。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2024/02/05/143418.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/20220905192349.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/MemoryAlign/not-align-data.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/MemoryAlign/align-data.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/systemcall-sendfile.webp">
+<meta property="og:image" content="https://imgs.imzlp.com/imgs/zlp/blog/notes/computerscience/index/forkAndCowRunResault.webp">
+<meta property="og:image" content="https://imgs.imzlp.com/imgs/zlp/blog/notes/computerscience/index/forkAndCow.webp">
+<meta property="article:published_time" content="2020-09-30T05:50:33.000Z">
+<meta property="article:modified_time" content="2020-09-30T05:50:33.000Z">
+<meta property="article:author" content="查利鹏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2024/02/05/143418.png">
+
+<link rel="canonical" href="https://imzlp.com/notes/computerscience/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : false,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Science | 循迹研究室
+</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+  
+
+      
+
+        
+        <ul id="sub-menu" class="sub-menu menu">
+          
+            
+          
+          
+              
+  <li class="menu-item menu-item-ue5">
+
+    <a href="/notes/ue5/" rel="section"><i class="fas fa-cubes fa-fw"></i>UE5</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-gamedev">
+
+    <a href="/notes/gamedev/" rel="section"><i class="fab fa-steam-square fa-fw"></i>GameDev</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-cpp">
+
+    <a href="/notes/cpp/" rel="section"><i class="fas fa-keyboard fa-fw"></i>C++</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-rust">
+
+    <a href="/notes/rust/" rel="section"><i class="fab fa-rust fa-fw"></i>Rust</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-graphics">
+
+    <a href="/notes/graphics/" rel="section"><i class="fas fa-magic fa-fw"></i>Graphics</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-vr">
+
+    <a href="/notes/vr/" rel="section"><i class="fas fa-vr-cardboard fa-fw"></i>VR</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-computerscience">
+
+    <a href="/notes/computerscience/" rel="section"><i class="fas fa-satellite fa-fw"></i>Computer Science</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-linux">
+
+    <a href="/notes/linux/" rel="section"><i class="fab fa-brands fa-linux fa-fw"></i>Linux</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-tools">
+
+    <a href="/notes/tools/" rel="section"><i class="fa fa-solid fa-hammer fa-fw"></i>Tools</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-tips">
+
+    <a href="/notes/tips/" rel="section"><i class="fa fa-rocket fa-fw"></i>Tips</a>
+
+  </li>
+
+
+          
+        </ul>
+        
+
+        
+
+                
+                
+        
+      
+
+      
+      
+
+      
+      
+
+      
+      
+  
+
+          <div class="content page posts-expand">
+            
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN">
+      <header class="post-header">
+	<h1 class="post-title" itemprop="name headline">Computer Science<a href="https://github.com/imzlp/blog-md/blob/master/notes/computerscience/index.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+	</h1>
+	<div class="post-meta">
+	    <div class="post-description">计算机科学的资料收录、学习笔记。</div>
+	  
+  <ul class="breadcrumb">
+          
+            <li><a href="/notes/">NOTES</a></li>
+          <li>COMPUTERSCIENCE</li>
+        
+  </ul>
+
+	</div>
+
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+          <script src="https://gist.github.com/imzlp/93c9f3e77bf6ed07d91acaf2213488cb.js"></script>
+
+<h2 id="CPU时钟周期的运行成本"><a href="#CPU时钟周期的运行成本" class="headerlink" title="CPU时钟周期的运行成本"></a>CPU时钟周期的运行成本</h2><p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/02/05/143418.png"></p>
+<h2 id="messsagepack"><a href="#messsagepack" class="headerlink" title="messsagepack"></a>messsagepack</h2><p><a target="_blank" rel="noopener" href="https://msgpack.org/">msgpack</a>是一种二进制的json方案：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220905192349.png"></p>
+<h2 id="Bitcon论文"><a href="#Bitcon论文" class="headerlink" title="Bitcon论文"></a>Bitcon论文</h2><p>中本聪的去中心化货币论文：</p>
+<div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/bitcoin/bitcon_zh.pdf" data-height="700px"></div>
+
+<p>英文原版下载：<a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/bitcoin/bitcon.pdf">Bitcoin:A Peer-to-Peer Electronic Cash System</a></p>
+<h2 id="mov是图灵完备的论文"><a href="#mov是图灵完备的论文" class="headerlink" title="mov是图灵完备的论文"></a>mov是图灵完备的论文</h2><p>汇编语言里的mov就是图灵完备的：</p>
+<div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/mov-is-turing-complete.pdf" data-height="700px"></div>
+
+<h2 id="a-lib格式"><a href="#a-lib格式" class="headerlink" title="a/lib格式"></a>a/lib格式</h2><p><code>.a</code>和<code>.lib</code>是静态链接库格式，它们是<code>ar</code>压缩的<code>.o</code>和<code>.obj</code>文件，并且内部有txt文件来记录每个目标文件中的符号信息。</p>
+<p>在IOS和MacOS上的txt中的符号名都以<code>_</code>开头。</p>
+<h2 id="JNI调用签名对照表"><a href="#JNI调用签名对照表" class="headerlink" title="JNI调用签名对照表"></a>JNI调用签名对照表</h2><p>Java中的基础类型和签名对照：</p>
+<table>
+<thead>
+<tr>
+<th align="center">Java</th>
+<th align="center">Native</th>
+<th align="center">Signature</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">byte</td>
+<td align="center">jbyte</td>
+<td align="center">B</td>
+</tr>
+<tr>
+<td align="center">char</td>
+<td align="center">jchar</td>
+<td align="center">C</td>
+</tr>
+<tr>
+<td align="center">double</td>
+<td align="center">jdouble</td>
+<td align="center">D</td>
+</tr>
+<tr>
+<td align="center">float</td>
+<td align="center">jfloat</td>
+<td align="center">F</td>
+</tr>
+<tr>
+<td align="center">int</td>
+<td align="center">jint</td>
+<td align="center">I</td>
+</tr>
+<tr>
+<td align="center">short</td>
+<td align="center">jshort</td>
+<td align="center">S</td>
+</tr>
+<tr>
+<td align="center">long</td>
+<td align="center">jlong</td>
+<td align="center">J</td>
+</tr>
+<tr>
+<td align="center">boolean</td>
+<td align="center">jboolean</td>
+<td align="center">Z</td>
+</tr>
+<tr>
+<td align="center">void</td>
+<td align="center">void</td>
+<td align="center">V</td>
+</tr>
+</tbody></table>
+<p>如下列函数的签名为<code>()V</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="type">void</span> <span class="title">AndroidThunkJava_SetFullScreenDisplayForP</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>非内置类型的签名规则为：</p>
+<ol>
+<li>以<code>L</code>开头</li>
+<li>以<code>;</code>结尾</li>
+<li>中间用<code>/</code>隔开包和类名</li>
+</ol>
+<p>如Java中的String：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ()Ljava/lang/String;</span></span><br><span class="line"><span class="keyword">public</span> String <span class="title function_">AndroidThunkJava_GetDeviceId</span><span class="params">()</span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注：括号内是参数的签名，括号右侧是返回值类型的签名。</p>
+</blockquote>
+<p>如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// (Ljava/lang/String;Ljava/lang/String;)I</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">Func</span><span class="params">(String,String)</span>;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="信号量的竞态条件"><a href="#信号量的竞态条件" class="headerlink" title="信号量的竞态条件"></a>信号量的竞态条件</h2><blockquote>
+<p>[CSAPP,2E,12.5.2]当有多个线程在等待同一个信号量的时候，不能够预测V操作要重启哪个线程。</p>
+</blockquote>
+<h2 id="内存对齐的作用"><a href="#内存对齐的作用" class="headerlink" title="内存对齐的作用"></a>内存对齐的作用</h2><p>之前写过一篇文章来介绍C++里内存对齐的规则：<a href="https://imzlp.com/posts/61962/">结构体成员内存对齐问题</a></p>
+<p>但是，为什么呢？</p>
+<p>首先，内存中数据的排列方式被称为<strong>内存布局</strong>。结构中不同的排列方式，占用的内存不同，也会简介影响CP访问内存的效率（无论是否对齐，CPU都可以正常处理，但又效率问题）。为了权衡空间占用情况和访问效率，引入了内存对齐规则。</p>
+<p>CPU在单位时间内能处理的一组二进制数称为<strong>字</strong>，这组二进制数的位数称为<strong>字长</strong>。如果是32位CPU，其字长位32位也就是4字节。一般来说，字长越大，计算机处理信息的速度就越快。</p>
+<p>以32位CPU为例，CPU每次只能从内存中读取4个字节的数据，所以每次只能对4的倍数的地址进行读取。</p>
+<p>假设现在有一个4字节整数类型数据，首地址并不是4的倍数，假定位<code>0x3</code>，则该类型存储在地址为<code>0x3~0x7</code>的内存空间中。因此CPU如果像读取该数据，则需要分别在<code>0x1</code>和<code>0x5</code>处进行两次读取，而且还需要对读取到的数据进行处理才能得到该整数，如图：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/MemoryAlign/not-align-data.webp"></p>
+<p>CPU的处理速度比从内存中读取数据的速度快很多，所以减少CPU对内存空间的访问是提供程序性能的关键。因此采取内存对齐策略是提高程序性能的关键，因为是32为CPU，所以只需要按4字节对齐，上面的例子可以变为CPU只需要读取一次：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/MemoryAlign/align-data.webp"></p>
+<p>因为对齐的是字节，所以内存对齐也叫<strong>字节对齐</strong>。内存对齐在C++中是编译器处理的，一般不用人为指定，但是需要了解内存对齐的规则，这样有助于写出既节省内存又性能最佳的程序。</p>
+<p>参考资料：</p>
+<ul>
+<li>《Rust编程之道》4.1.3 P101.</li>
+<li>《深入理解计算机系统第三版》3.9.3 P189</li>
+</ul>
+<h2 id="检查二进制文件的Runtime-Library类型"><a href="#检查二进制文件的Runtime-Library类型" class="headerlink" title="检查二进制文件的Runtime Library类型"></a>检查二进制文件的Runtime Library类型</h2><p>在之前的笔记中写到过，在VS中编译C++项目时，可以指定生成目标的<code>Runtime Library</code>类型：<code>MT</code>与<code>MD</code>。<br>之前的笔记中也写到了使用<code>dumpbin.exe</code>来判断一个二进制文件的平台信息(x86/x64)，现在有了一个类似的问题，怎么判断一个二进制文件的<code>Runtime Library</code>是<code>MT</code>还是<code>MD</code>呢？<br>回答这个问题，依然要用<code>dumpbin.exe</code>这个工具，通过查看二进制文件依赖的DLL信息来判断它的Runtime Library类型，但是这个方法的缺点是没办法判断是<code>Debug</code>还是<code>Release</code>的，一般混用debug/release的链接库会连接错误。<br>使用下列命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dumpbin.exe BINARY_FILE /dependents | findstr dll</span><br></pre></td></tr></table></figure>
+<p>如果具有以下输出，则是<code>MD</code>的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">MSVCP140.dll</span><br><span class="line">VCRUNTIME140.dll</span><br><span class="line">api-ms-win-crt-runtime-l1<span class="number">-1</span><span class="number">-0.</span>dll</span><br><span class="line">api-ms-win-crt-math-l1<span class="number">-1</span><span class="number">-0.</span>dll</span><br><span class="line">api-ms-win-crt-stdio-l1<span class="number">-1</span><span class="number">-0.</span>dll</span><br><span class="line">api-ms-win-crt-locale-l1<span class="number">-1</span><span class="number">-0.</span>dll</span><br><span class="line">api-ms-win-crt-heap-l1<span class="number">-1</span><span class="number">-0.</span>dll</span><br><span class="line">KERNEL32.dll</span><br></pre></td></tr></table></figure>
+<p>之所以可以断定他是MD的，是因为这个二进制文件中依赖了CRT DLL.</p>
+<p>修改<code>Runtime library</code>的类型为<code>MT</code>之后，再次测试：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">KERNEL32.dll</span><br></pre></td></tr></table></figure>
+<p>只有一个<code>KERNEL32.dll</code>，不依赖任何其他的CRT DLL，所以他是MT的。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/28687620/how-to-check-the-runtime-library-type-of-a-binary-exe-generated-from-vc">How to check the runtime library type of a binary exe generated from VC++</a></li>
+</ul>
+<h2 id="查看二进制文件是x64还是x86版本"><a href="#查看二进制文件是x64还是x86版本" class="headerlink" title="查看二进制文件是x64还是x86版本"></a>查看二进制文件是x64还是x86版本</h2><p>给一个dll或者lib，怎么判断它是64位还是32位的呢？<br>可以使用VS工具链中的<code>dumpbin</code>查看可执行文件中的各个段，文件头中有machine的信息，如果没有装VS，可以在<a href="index/dumpbin.7z">这里下载</a>，Github上有人开发了一个GUI版本(<a target="_blank" rel="noopener" href="https://github.com/paul-michalik/dumpbinGUI">DumpbinGUI</a>)，但是Release中没有提供二进制下载，我编译了一下可以在<a href="index/dumpbinGUI.7z">这里下载</a>。<br>然后使用命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">$ dumpbin.exe /headers EXECUTABLE_FILE</span><br><span class="line"><span class="comment"># fox example</span></span><br><span class="line">$ dumpbin.exe /headers UE4Launcher.exe</span><br><span class="line">Microsoft (R) COFF/PE Dumper Version 14.00.24234.1</span><br><span class="line">Copyright (C) Microsoft Corporation.  All rights reserved.</span><br><span class="line">Dump of file UE4Launcher.exe</span><br><span class="line">PE signature found</span><br><span class="line">File Type: EXECUTABLE IMAGE</span><br><span class="line">FILE HEADER VALUES</span><br><span class="line">            8664 machine (x64)</span><br><span class="line">               7 number of sections</span><br><span class="line">        5D70B753 time <span class="built_in">date</span> stamp Thu Sep  5 15:20:51 2019</span><br><span class="line">               0 file pointer to symbol table</span><br><span class="line">               0 number of symbols</span><br><span class="line">              F0 size of optional header</span><br><span class="line">              22 characteristics</span><br><span class="line">                   Executable</span><br><span class="line">                   Application can handle large (&gt;2GB) addresses</span><br><span class="line">// ...</span><br></pre></td></tr></table></figure>
+
+<p>后面的一堆可以不看，需要关注的重点就是<code>machine</code>这一项，对于64位的文件这里是<code>x64</code>，32位的就是<code>x86</code>。</p>
+<h2 id="Guide-to-x86-64"><a href="#Guide-to-x86-64" class="headerlink" title="Guide to x86-64"></a>Guide to x86-64</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://web.stanford.edu/class/cs107/guide/x86-64.html">Guide to x86-64</a></li>
+</ul>
+<h2 id="浮点的零值"><a href="#浮点的零值" class="headerlink" title="浮点的零值"></a>浮点的零值</h2><p>浮点的零值应该用<code>0.0f</code>，因为浮点值并不是精确存储的，有浮点舍入，所以不能用位全为0的0.0比较。</p>
+<h2 id="sendfile的优势"><a href="#sendfile的优势" class="headerlink" title="sendfile的优势"></a>sendfile的优势</h2><p>通常，我们从一个文件描述符fd中读取数据，然后再写入另一个fd：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> ((n = <span class="built_in">read</span>(diskfilefd, buf, BUZ_SIZE)) &gt; <span class="number">0</span>)</span><br><span class="line">  <span class="built_in">write</span>(sockfd, buf, n);</span><br></pre></td></tr></table></figure>
+<p>但是频繁传输使用这样的方式很不高效，为了传输文件必须使用两个系统调用：一个用来将文件内容从内核缓冲区cache拷贝到用户空间，另一个来将用户空间缓冲区拷贝至内核空间，以此进行传输。<br>但是如果我们只是传输而不对传输的数据进行任何处理这种两步式的操作就是一种浪费。<br>系统调用<code>sendfile</code>就是被设计为来抵消这种低效性。<br>Unix system call interface:<a target="_blank" rel="noopener" href="http://www.unix.com/apropos-man/posix/1/sendfile">sendfile</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sendfile.h&gt;</span></span></span><br><span class="line"><span class="comment">// retuens number of bytes transferres,or -1 on error</span></span><br><span class="line"><span class="function"><span class="type">ssize_t</span> <span class="title">sendfile</span><span class="params">(<span class="type">int</span> out_fd, <span class="type">int</span> in_fd, <span class="type">off_t</span> *offset, <span class="type">size_t</span> count)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>其作用为：</p>
+<blockquote>
+<p>transfer data between file descriptors</p>
+</blockquote>
+<p>比如，当我们通过socket描述符来传输数据时，通过<code>sendfile</code>会直接将数据传送到套接字上，而不会经过用户空间，这种技术叫做**零拷贝传输(zero-copy transfer)**。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/computerscience/index/systemcall-sendfile.webp"><br>系统调用<code>sendfile</code>在代表输入文件的描述符in_fd和代表输出的描述符out_fd之间传送文件内容（字节）。描述符out_fd必须指向一个套接字。参数in_fd指向的文件必须是可以进行mmap()操作的。在实践中，这通常表示一个普通文件，这些局限多少限制了<code>sendfile</code>的使用。我们可以使用<code>sendfile</code>将数据从文件传递到套接字上，但反过来就不行。另外，我们也不能通过<code>sendfile</code>在两个套接字之间直接传送数据。</p>
+<blockquote>
+<p>在Linux2.4以及早期版本中，out_fd是可以指向一个普通文件的。</p>
+</blockquote>
+<h2 id="并发和并行-concurrency-and-parallel"><a href="#并发和并行-concurrency-and-parallel" class="headerlink" title="并发和并行(concurrency and parallel)"></a>并发和并行(concurrency and parallel)</h2><p>以下内容摘自CASPP,2e(其实用流描述并行和并发是依赖于操作系统实现的)<br>A logical flow whose execution overlaps in time with another flow is called a <code>concurrent flow</code>, and the two flows are said to run concurrently. More precisely, flows X and Y are concurrent with respect to each other if and only if X begins after Y begins and before Y finishes, or Y begins after X begins and before X finishes. For example, in Figure 8.12, processes A and B run concurrently, as do A and C. On the other hand, B and C do not run concurrently, because the last instruction of B executes before the first instruction of C.<br>The general phenomenon of multiple flows executing concurrently is known as <code>concurrency</code>. The notion of a process taking turns with other processes is also known as <code>multitasking</code>. Each time period that a process executes a portion of its flow is called a <code>time slice</code>. Thus, multitasking is also referred to as <code>time slicing</code>. For example, in Figure 8.12, the flow for Process A consists of two time slices.<br>Notice that the idea of concurrent flows is independent of the number of processor cores or computers that the flows are running on. If two flows overlap in time, then they are concurrent, even if they are running on the same processor. However, we will sometimes find it useful to identify a proper subset of concurrent flows known as parallel flows. If two flows are running concurrently on different processor cores or computers, then we say that they are <code>parallel flows</code>, that they are running in parallel, and have parallel execution.</p>
+<h2 id="为什么socket的IP地址是一个结构？"><a href="#为什么socket的IP地址是一个结构？" class="headerlink" title="为什么socket的IP地址是一个结构？"></a>为什么socket的IP地址是一个结构？</h2><p>一个IPv4的地址就是一个32位的无符号整数。但是经常通过一个<code>in_addr</code>这个结构来存储。<br>该结构定义在<code>&lt;netinet/in.h&gt;</code>头文件中：<br>The <code>&lt;netinet/in.h&gt;</code> header shall define the <code>in_addr</code> structure, which shall include at least the following member:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">in_addr</span>&#123;</span><br><span class="line">  <span class="type">in_addr_t</span> s_addr;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>in_addr_t Equivalent to the type <code>uint32_t</code> as described in <code>&lt;inttypes.h&gt;</code>.</p>
+</blockquote>
+<p>但是为什么要用一个结构来存放IP地址呢？</p>
+<blockquote>
+<p>[CSAPP,2e]把一个标量地址存放在结构中，是socket接口早期实现的不幸产物。为IP地址定义一个标量类型应该更有意义，但是现在更改已经太迟了，因为已经有大量应用基于此了。</p>
+</blockquote>
+<h2 id="TCP-IP协议族"><a href="#TCP-IP协议族" class="headerlink" title="TCP/IP协议族"></a>TCP/IP协议族</h2><p>TCP/IP的协议族是一组不同的协议组合在一起构成的协议族(应用层协议(FTP/Telnet等)、运输层(TCP/UDP)、网络层(IP/ICMP/IGMP)、链路层(设备驱动程序及网络接口设备))。尽管通常称该协议族为TCP/IP，但TCP和IP只是其中的两种协议而已。</p>
+<h2 id="POSIX-data-types"><a href="#POSIX-data-types" class="headerlink" title="POSIX data types"></a>POSIX data types</h2><blockquote>
+<p>[IEEE Std 1003.1™ 2008]The implementation shall support one or more programming environments in which the widths of <code>blksize_t</code>, <code>pid_t</code>, <code>size_t</code>, <code>ssize_t</code>, and <code>suseconds_t</code> are no greater than the width of type <code>long</code>.</p>
+</blockquote>
+<h2 id="MMU和COW"><a href="#MMU和COW" class="headerlink" title="MMU和COW"></a>MMU和COW</h2><p>来看一下COW的一个实例：在child process中修改从parent process中获取到的变量触发COW然后对child process和parent process中的分别取地址，可能会获取到相同的结果，但是他们并不在位于一个物理地址。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc,<span class="type">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">int</span> x=<span class="number">12</span>;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;start before: x = %d\n&quot;</span>,x);</span><br><span class="line">  <span class="built_in">setbuf</span>(stdout,<span class="literal">NULL</span>);</span><br><span class="line">  <span class="type">pid_t</span> child;</span><br><span class="line">  <span class="keyword">if</span>((child=fork())&lt;<span class="number">0</span>)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;error!\n&quot;</span>);</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(child&gt;<span class="number">0</span>)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;x initial value on parent scope is %d address is %x\n&quot;</span>,x,&amp;x);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;parent! process ID is %d\n&quot;</span>,<span class="built_in">getpid</span>());</span><br><span class="line">    x=<span class="number">1</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;x on parent scope is %d address is %x\n\n&quot;</span>,x,&amp;x);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;x initial value on child scope is %d address is %x\n&quot;</span>,x,&amp;x);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;child! process ID is %d\n&quot;</span>,<span class="built_in">getpid</span>());</span><br><span class="line">    <span class="comment">// x=2;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;x on child scope is %d address is %x\n\n&quot;</span>,x,&amp;x);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://imgs.imzlp.com/imgs/zlp/blog/notes/computerscience/index/forkAndCowRunResault.webp" alt="fork And COW Run Resault"><br>看上面的运行结果图，在运行时可以看到在子进程中对x取地址和父进程中对x取地址得到的结果相同，简单直觉上这不符号COW的规则，子进程中在对x写入操作时应该与原来父进程的地址是不一样的。<br>原因就是&amp;取得的是虚拟地址，不同进程的同一个虚拟地址被MMU映射到不同的物理地址。所以他们的虚拟地址虽然相同，但是他们实际上还是指向不同的物理地址的。<br><img data-src="https://imgs.imzlp.com/imgs/zlp/blog/notes/computerscience/index/forkAndCow.webp" alt="fork And COW"></p>
+
+      </div>
+      
+      
+      
+    </div>
+    
+  <ul class="breadcrumb">
+          
+            <li><a href="/notes/">NOTES</a></li>
+          <li>COMPUTERSCIENCE</li>
+        
+  </ul>
+
+    
+    
+    
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU%E6%97%B6%E9%92%9F%E5%91%A8%E6%9C%9F%E7%9A%84%E8%BF%90%E8%A1%8C%E6%88%90%E6%9C%AC"><span class="nav-number">1.</span> <span class="nav-text">CPU时钟周期的运行成本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#messsagepack"><span class="nav-number">2.</span> <span class="nav-text">messsagepack</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Bitcon%E8%AE%BA%E6%96%87"><span class="nav-number">3.</span> <span class="nav-text">Bitcon论文</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mov%E6%98%AF%E5%9B%BE%E7%81%B5%E5%AE%8C%E5%A4%87%E7%9A%84%E8%AE%BA%E6%96%87"><span class="nav-number">4.</span> <span class="nav-text">mov是图灵完备的论文</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#a-lib%E6%A0%BC%E5%BC%8F"><span class="nav-number">5.</span> <span class="nav-text">a&#x2F;lib格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JNI%E8%B0%83%E7%94%A8%E7%AD%BE%E5%90%8D%E5%AF%B9%E7%85%A7%E8%A1%A8"><span class="nav-number">6.</span> <span class="nav-text">JNI调用签名对照表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E7%AB%9E%E6%80%81%E6%9D%A1%E4%BB%B6"><span class="nav-number">7.</span> <span class="nav-text">信号量的竞态条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">8.</span> <span class="nav-text">内存对齐的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E7%9A%84Runtime-Library%E7%B1%BB%E5%9E%8B"><span class="nav-number">9.</span> <span class="nav-text">检查二进制文件的Runtime Library类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E6%98%AFx64%E8%BF%98%E6%98%AFx86%E7%89%88%E6%9C%AC"><span class="nav-number">10.</span> <span class="nav-text">查看二进制文件是x64还是x86版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Guide-to-x86-64"><span class="nav-number">11.</span> <span class="nav-text">Guide to x86-64</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%AE%E7%82%B9%E7%9A%84%E9%9B%B6%E5%80%BC"><span class="nav-number">12.</span> <span class="nav-text">浮点的零值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sendfile%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">13.</span> <span class="nav-text">sendfile的优势</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B9%B6%E5%8F%91%E5%92%8C%E5%B9%B6%E8%A1%8C-concurrency-and-parallel"><span class="nav-number">14.</span> <span class="nav-text">并发和并行(concurrency and parallel)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88socket%E7%9A%84IP%E5%9C%B0%E5%9D%80%E6%98%AF%E4%B8%80%E4%B8%AA%E7%BB%93%E6%9E%84%EF%BC%9F"><span class="nav-number">15.</span> <span class="nav-text">为什么socket的IP地址是一个结构？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP-IP%E5%8D%8F%E8%AE%AE%E6%97%8F"><span class="nav-number">16.</span> <span class="nav-text">TCP&#x2F;IP协议族</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#POSIX-data-types"><span class="nav-number">17.</span> <span class="nav-text">POSIX data types</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MMU%E5%92%8CCOW"><span class="nav-number">18.</span> <span class="nav-text">MMU和COW</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.1.2/es5/tex-mml-chtml.min.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/notes/computerscience/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

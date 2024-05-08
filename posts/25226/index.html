@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在大世界项目以及疫情导致的远程办公需求，开发中的协同编辑显得格外重要。在UE的资源机制中，地图是单个的资源，虽然可以使用Sub-level的形式拆分，但是最小元素仍然是单个资源，当不同的Designer修改相同的资源时，就会造成文件冲突，也没办法像文本那样合并。并且每个人负责编辑单个子关卡也没有办法实时预览整个场景的效果，在协同开发中，这是一个瓶颈。在UE4.23之后，UE官方推出了一个多人协作机">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE多用户协同编辑服务部署指南">
+<meta property="og:url" content="https://imzlp.com/posts/25226/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在大世界项目以及疫情导致的远程办公需求，开发中的协同编辑显得格外重要。在UE的资源机制中，地图是单个的资源，虽然可以使用Sub-level的形式拆分，但是最小元素仍然是单个资源，当不同的Designer修改相同的资源时，就会造成文件冲突，也没办法像文本那样合并。并且每个人负责编辑单个子关卡也没有办法实时预览整个场景的效果，在协同开发中，这是一个瓶颈。在UE4.23之后，UE官方推出了一个多人协作机">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051839284.webp">
+<meta property="article:published_time" content="2021-08-05T16:15:28.000Z">
+<meta property="article:modified_time" content="2021-08-05T16:15:28.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="UnrealMultiUserServer">
+<meta property="article:tag" content="多用户协同">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051839284.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/25226/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE多用户协同编辑服务部署指南 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/25226/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE多用户协同编辑服务部署指南<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-08-05-25226.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-08-05 16:15 16:15:28:15" itemprop="dateCreated datePublished" datetime="2021-08-05T16:15:28+00:00">2021-08-05 16:15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">工具开发</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/25226/" class="post-meta-item leancloud_visitors" data-flag-title="UE多用户协同编辑服务部署指南" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>11 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在大世界项目以及疫情导致的远程办公需求，开发中的协同编辑显得格外重要。在UE的资源机制中，地图是单个的资源，虽然可以使用Sub-level的形式拆分，但是最小元素仍然是单个资源，当不同的Designer修改相同的资源时，就会造成文件冲突，也没办法像文本那样合并。并且每个人负责编辑单个子关卡也没有办法实时预览整个场景的效果，在协同开发中，这是一个瓶颈。<br>在UE4.23之后，UE官方推出了一个多人协作机制，可以使多人共同地编辑同一份地图，并不会造成冲突，并且可以同步其他变动的资源并能够实时生效，作为版本控制的补充，能够比较完美地解决同步协作的问题。<br>本篇文章记录一下启用流程、使用规范以及网络策略等问题，也会提取独立的Server端程序而无需依赖完整的引擎，实现Server端的方便部署。</p>
+<span id="more"></span>
+<p>UE官方多用户编辑，其实现是一个C/S架构的方案，官方文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/MultiUserEditing/">Multi-User Editing</a>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210729202731.webp"></p>
+<p>本质上是创建一个Server进程，用于管理多用户编辑的Session，并向各个Client之间传递相互变动的数据。每个Session代表着协同编辑的一个“房间”，只有加入到这个“房间”的人，才能够实时地预览和同步其他人的提交，每个Server上可以创建多个Session，可以由不同的用户创建、加入。</p>
+<p><strong>注意</strong>：UE并不是直接把变动的资源拷贝到各个Client，而是通过传递变动的数据到各个Client实现相同的表现，在传输效率上更好，但会带来一个问题，对于相同操作的资源，对于uasset来说，并不完全相同，即A用户修改了Weapon.uasset，将会把变动的数据同步到B用户，如果A和B用户都提交了Weapon这个资源，他们的二进制并不完全相同，在合并提交时会有冲突，提交规范还是需要注意的。</p>
+<h2 id="使用流程"><a href="#使用流程" class="headerlink" title="使用流程"></a>使用流程</h2><p>多用户编辑支持，依赖UE的<code>Multi-User Editing</code>插件：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210729203335300.webp"></p>
+<p>启用之后可以在<code>Project Settings</code>-<code>Plugins</code>中看到<code>Multi-User Editing</code>和<code>Multi-User Transactions</code>选项：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210729203605963.webp" alt="Multi-User Editing"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210729203703864.webp" alt="Multi-User Transactions"></p>
+<p>能够配置多用户协作的参数。</p>
+<p>在开启插件之后，可以在编辑器<code>Windows</code>-<code>Developer Tools</code>中看到<code>Multi-User Browser</code>选项（也可以在<code>Project Settings</code>-<code>Plugins</code>-<code>Multi-User Editing</code>中开启<code>Enable Multi-User Toolbar Button</code>）：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210729204709785.webp"></p>
+<p>启动之后会自动搜索网络内可见的<code>UnrealMultiUserServer</code>服务器：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210729204942481.webp" alt="Multi-User Browser"></p>
+<p>也可以通过<code>Launch a Server</code>拉起一个<code>UnrealMultiUserServer</code>进程，在本地创建一个Server。通常情况下，会有一个独立的机器作为Server，供其他用户连接。</p>
+<p><code>Mulit-User Browser</code>作为Client连接Server时，使用的是UDP协议，默认连接端口号为<code>6666</code>（<code>Launch a Server</code>启动默认是6666），也可以自己修改想要指定的端口号，Client会自动检测网络内可达的Server列表，创建Session时可以选择在哪个Server上创建。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210729205737922.webp" alt="Launch a Server"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210730101133.webp"></p>
+<p><strong>注意</strong>：<code>Mulit-User Browser</code>依赖<code>UDP Messaging</code>插件作为网络传输的方式，所以，如果我们想要修改默认连接的端口号，就需要修改<code>UDP Messaging</code>中的默认端口号。</p>
+<p>可以在<code>Project Settings</code>-<code>Plugins</code>-<code>Networking</code>中修改（将<code>230.0.0.1:6666</code>修改为<code>230.0.0.1:XXXXX</code>即可）：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210729192239.webp"></p>
+<p><strong>注意</strong>：230.0.0.1是RFC 5771(IPV4)和RFC 4291(IPV6)定义的多播地址，不能改成其他的地址。</p>
+<p>在编辑器中修改<code>UDP Messaging</code>的端口设置，默认是被保存在<code>Saved/Config/Windows/Engine.ini</code>下：</p>
+<figure class="highlight ini"><figcaption><span>Saved/Config/Windows/Engine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/UdpMessaging.UdpMessagingSettings]</span></span><br><span class="line"><span class="attr">EnableTransport</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">bAutoRepair</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">bStopServiceWhenAppDeactivates</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">UnicastEndpoint</span>=<span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">0</span></span><br><span class="line"><span class="attr">MulticastEndpoint</span>=<span class="number">230.0</span>.<span class="number">0.1</span>:<span class="number">11111</span></span><br><span class="line"><span class="attr">MessageFormat</span>=CborPlatformEndianness</span><br><span class="line"><span class="attr">MulticastTimeToLive</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">EnableTunnel</span>=<span class="literal">False</span></span><br><span class="line"><span class="attr">TunnelUnicastEndpoint</span>=</span><br><span class="line"><span class="attr">TunnelMulticastEndpoint</span>=</span><br><span class="line"></span><br><span class="line"><span class="section">[/Script/Concert.ConcertClientConfig]</span></span><br><span class="line"><span class="attr">bInstallEditorToolbarButton</span>=<span class="literal">True</span></span><br></pre></td></tr></table></figure>
+<p>并不会存储在项目的<code>Config</code>中，如果想要该配置随着项目提交，可以把上面的配置添加到<code>Config/DefaultEngine.ini</code>中（<code>Enable Multi-ser Toolbar Button</code>也同理）。</p>
+<p>修改完毕后，启动UnrealMultiUserServer即可使用变动后的端口：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210729192422.webp"></p>
+<h2 id="网络策略"><a href="#网络策略" class="headerlink" title="网络策略"></a>网络策略</h2><p>Multi-User Editing主要是面对相同的LAN或者VPN网络的，但是，针对同一LAN下的不同类型的网络类型，有些区别。</p>
+<h3 id="LAN的相同子网"><a href="#LAN的相同子网" class="headerlink" title="LAN的相同子网"></a>LAN的相同子网</h3><p>如果Server和Client全部在相同的子网，如Server在192.168.2.123，Client在192.168.2.X，这种情况下，只需要把<code>UnicastEndpoint</code>设置为<code>0.0.0.0:0</code>或者<code>192.168.2.X:0</code>，<code>MulticastEndpoint</code>保持为<code>230.0.0.1:11111</code>这种形式即可。<br>这种配置就能够顺利地在Client搜索到Server，也是前文中介绍的方法。</p>
+<h3 id="LAN的不同子网"><a href="#LAN的不同子网" class="headerlink" title="LAN的不同子网"></a>LAN的不同子网</h3><p>对于Server与有些Client在同一子网，另一些Client又不在同一子网的情况，就复杂一些。<br>如：<br>Server：192.168.2.123<br>Client A：192.168.2.124<br>Client B：192.168.3.125</p>
+<p>对于这种情况，如果使用上一节在相同子网的配置，会导致Client B搜索不到Server，针对这种情况，需要单独设置<code>UnicastEndpoint</code>。</p>
+<p>首先，Server端在启动时，不能再把<code>UnicastEndpoint</code>设置为<code>0.0.0.0:0</code>，需要指定当前Server的IP和链接端口，如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Engine/Binaries/Win64/UnrealMultiUserServer.exe -UDPMESSAGING_TRANSPORT_UNICAST=192.168.2.123:11112 -UDPMESSAGING_TRANSPORT_MULTICAST=230.0.0.1:11111</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210805160920.webp"></p>
+<p>客户端则需要在UE编辑器的<code>Project Settings</code>-<code>Plugins</code>-<code>UDP Messaging</code>中设置Server的<code>Static EndPoints</code>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210805161239.webp"></p>
+<p><code>Static EndPoints</code>的值要是<code>ServerIP:UNICAST_PORT</code>这种形式，如上面的Server启动配置<code>192.168.2.123:11112</code>。</p>
+<p>进行这种配置之后就可以在同一LAN的不同子网搜索到启动的Server了（但也需要注意把UNICAST/MULTICAST的端口加入防火墙的放行端口）。</p>
+<h2 id="防火墙策略"><a href="#防火墙策略" class="headerlink" title="防火墙策略"></a>防火墙策略</h2><p>注意，因为Multi-User Editing使用的是UDP协议，所以指定的端口必须被防火墙放行才能够检测到Server。</p>
+<p>Windows可以使用以下批处理进行添加防火墙规则，保存为<code>.bat</code>使用管理员权限执行即可：</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">netsh advfirewall firewall add rule name=&quot;allowMultiUserServer&quot; protocol=TCP <span class="built_in">dir</span>=out localport=<span class="number">11111</span>,<span class="number">11112</span> action=allow</span><br><span class="line">netsh advfirewall firewall add rule name=&quot;allowMultiUserServer&quot; protocol=TCP <span class="built_in">dir</span>=<span class="keyword">in</span> localport=<span class="number">11111</span>,<span class="number">11112</span> action=allow</span><br><span class="line">netsh advfirewall firewall add rule name=&quot;allowMultiUserServer&quot; protocol=UDP <span class="built_in">dir</span>=out localport=<span class="number">11111</span>,<span class="number">11112</span> action=allow</span><br><span class="line">netsh advfirewall firewall add rule name=&quot;allowMultiUserServer&quot; protocol=UDP <span class="built_in">dir</span>=<span class="keyword">in</span> localport=<span class="number">11111</span>,<span class="number">11112</span> action=allow</span><br></pre></td></tr></table></figure>
+
+<p>Mac和Linux可以使用ufw进行防火墙配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ufw allow 11111/udp</span><br><span class="line">$ ufw allow 11111/tcp</span><br></pre></td></tr></table></figure>
+
+<h2 id="独立的Server进程"><a href="#独立的Server进程" class="headerlink" title="独立的Server进程"></a>独立的Server进程</h2><p>前面介绍是从UE编辑器中通过<code>Multi-User Browser</code>中Launch a Server，但是对于Server而言，其实并不需要启动编辑器，UE也是通过拉起一个新的进程传递命令行参数来启动Server的，所以，我们可以自己使用命令行来启动<code>Multi-User Server</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Engine/Binaries/Win64/UnrealMultiUserServer.exe -UDPMESSAGING_TRANSPORT_UNICAST=0.0.0.0:0 -UDPMESSAGING_TRANSPORT_MULTICAST=230.0.0.1:11111</span><br></pre></td></tr></table></figure>
+<p>Server的配置可以通过命令行参数或者配置文件的形式指定，独立的Server进程的配置文件在：</p>
+<figure class="highlight ini"><figcaption><span>Engine/Programs/UnrealMultiUserServer/Saved/Config/WindowsNoEditor/Engine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/UdpMessaging.UdpMessagingSettings]</span></span><br><span class="line"><span class="attr">EnableTransport</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">UnicastEndpoint</span>=<span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">0</span></span><br><span class="line"><span class="attr">MulticastEndpoint</span>=<span class="number">230.0</span>.<span class="number">0.1</span>:<span class="number">11111</span></span><br><span class="line"><span class="attr">MulticastTimeToLive</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">EnableTunnel</span>=<span class="literal">False</span></span><br><span class="line"><span class="attr">TunnelUnicastEndpoint</span>=</span><br><span class="line">TunnelMulticastEndpoint=</span><br></pre></td></tr></table></figure>
+<p>与通过命令行指定是一样的。</p>
+<h2 id="独立的Server程序"><a href="#独立的Server程序" class="headerlink" title="独立的Server程序"></a>独立的Server程序</h2><p>因为UE的Multi-User Server会拉起一个独立的<code>UnrealMultiUserServer</code>进程，需要我们完整地把引擎Clone下载之后才能启动<code>Multi-User Server</code>程序，对于我们的需求而言，很浪费，因为我们并不需要完整的引擎功能，只是需要这个独立的Server程序而已，所以可以想办法把它抽离出来。</p>
+<p><code>UnrealMultiUserServer</code>是引擎中的一个<code>Programs</code>类型的程序，我之前有一些文章介绍相关的内容：<a href="https://imzlp.com/posts/31962/">Create A Standalone Application in UE4</a>。它本质上是用了UE的代码库和插件的独立程序，和UE4Editor是一种类型的程序，但是默认情况下它的<code>LinkType</code>是<code>Modular</code>的，即代码中引用的的模块功能都在每个独立的DLL中，这也符合UE编辑器的设计模式。</p>
+<p>所以，默认情况下<code>UnrealMultiUserServer</code>程序只有几十kb，具体的功能实现都是使用动态链接库方式调用DLL的，我们需要修改编译的模式，把它用到的引擎模块都编译到一个exe中，修改<code>UnrealMultiUserServer.targetr.cs</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// from</span><br><span class="line">LinkType = TargetLinkType.Modular;</span><br><span class="line">// to</span><br><span class="line">LinkType = TargetLinkType.Monolithic;</span><br></pre></td></tr></table></figure>
+
+<p>改成<code>Monolithic</code>后再执行编译，UBT就会把该Program引用到的模块最终链接一个可执行程序。这部分内容在我之前的另一篇文章中有介绍：<a href="https://imzlp.com/posts/16643/">UE Build System：Target and Module</a></p>
+<p>这个操作<strong>只能</strong>解决<strong>引擎内模块</strong>的引用，<code>UnrealMultiUserServer</code>还引用了其他的插件，在<code>target.cs</code>里开启了Program的插件支持：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bCompileWithPluginSupport = <span class="literal">true</span>;</span><br><span class="line">bBuildDeveloperTools = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+
+<p>至于具体依赖了哪些插件，可以打开<code>UnrealMultiUserServer.target</code>查看其中的<code>RuntimeDependencies</code>项：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;RuntimeDependencies&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;Path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$(EngineDir)/Plugins/Messaging/UdpMessaging/UdpMessaging.uplugin&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;UFS&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;Path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$(EngineDir)/Plugins/Developer/Concert/ConcertSync/ConcertSyncServer/ConcertSyncServer.uplugin&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;UFS&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;Path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$(EngineDir)/Plugins/Developer/Concert/ConcertMain/ConcertMain.uplugin&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;UFS&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;Path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$(EngineDir)/Plugins/Developer/Concert/ConcertSync/ConcertSyncCore/ConcertSyncCore.uplugin&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;UFS&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;Path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$(EngineDir)/Plugins/Runtime/Database/SQLiteCore/SQLiteCore.uplugin&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;UFS&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+
+<p>表示<code>UnrealMultiUserServer</code>引用了这几个插件，需要把引擎中的这几个插件目录放到独立程序的相应目录下（与引擎中的相对路径保持一致）。</p>
+<p>但是这样还不够，需要把插件加入到启用列表，不然程序启动时不会加载插件，导致模块加载错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">LogPaths: Warning: No paths for game localization data were specifed in the game configuration.</span><br><span class="line">LogInit: Warning: No paths for engine localization data were specifed in the engine configuration.</span><br><span class="line">LogInit: WinSock: version 1.1 (2.2), MaxSocks=32767, MaxUdp=65467</span><br><span class="line">LogUdpMessaging: Initializing bridge on interface 0.0.0.0:0 to multicast group 230.0.0.1:6666.</span><br><span class="line">LogSyncServer: Error: ConcertSyncServer Module is needed for proper execution. Initialization failed!</span><br><span class="line">LogSyncServer: Error: ConcertSyncServer Module is needed for proper execution. Initialization failed!</span><br><span class="line">LogSyncServer: Display: Multi-User Editing Server Shutdown</span><br><span class="line">LogSyncServer: Display: Multi-User Editing Server Shutdown</span><br><span class="line">LogExit: Preparing to exit.</span><br><span class="line">LogExit: Object subsystem successfully closed.</span><br></pre></td></tr></table></figure>
+
+<p>解决的办法就是在<code>target.cs</code>里添加<code>EnablePlugins</code>列表：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">EnablePlugins.AddRange(<span class="keyword">new</span> <span class="built_in">string</span>[]</span><br><span class="line">&#123;</span><br><span class="line">	<span class="string">&quot;UdpMessaging&quot;</span>,</span><br><span class="line">	<span class="string">&quot;ConcertSyncServer&quot;</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>这样我们抽离出来的独立程序就会在程序启动时加载需要的这两个插件了。<br>最后，还需要把原本引擎中<code>Engine/Content</code>下的<code>Internationalization</code>/<code>Localization</code>两个文件夹提取出来。</p>
+<p>我们也不需要代码和调试符号，可以删除多余的文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">find . -name <span class="string">&quot;Source&quot;</span>|xargs <span class="built_in">rm</span> -rf</span><br><span class="line">find . -name <span class="string">&quot;Intermediate&quot;</span>|xargs <span class="built_in">rm</span> -rf</span><br><span class="line">find . -name <span class="string">&quot;*.pdb&quot;</span>|xargs <span class="built_in">rm</span> -rf</span><br><span class="line">find . -name <span class="string">&quot;*.modules&quot;</span>|xargs <span class="built_in">rm</span> -rf</span><br></pre></td></tr></table></figure>
+
+<p>最终独立的<code>UnrealMultiUserServer</code>程序的目录结构为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">+---Binaries</span><br><span class="line">|   \---Win64</span><br><span class="line">|           UnrealMultiUserServer.exe</span><br><span class="line">+---Content</span><br><span class="line">|   +---Internationalization</span><br><span class="line">|   +---Localization</span><br><span class="line">|           </span><br><span class="line">\---Plugins</span><br><span class="line">    +---ConcertMain</span><br><span class="line">    |   |   ConcertMain.uplugin</span><br><span class="line">    |   |   </span><br><span class="line">    |   \---Binaries</span><br><span class="line">    |       \---Win64</span><br><span class="line">    |               UE4Editor-Concert.dll</span><br><span class="line">    |               UE4Editor-ConcertTransport.dll</span><br><span class="line">    |               UnrealMultiUserServer-Concert.dll</span><br><span class="line">    |               UnrealMultiUserServer-ConcertTransport.dll</span><br><span class="line">    |               </span><br><span class="line">    +---ConcertSyncCore</span><br><span class="line">    |   |   ConcertSyncCore.uplugin</span><br><span class="line">    |   |   </span><br><span class="line">    |   +---Binaries</span><br><span class="line">    |   |   \---Win64</span><br><span class="line">    |   |           UE4Editor-ConcertSyncCore.dll</span><br><span class="line">    |   |           UnrealMultiUserServer-ConcertSyncCore.dll</span><br><span class="line">    |   |           </span><br><span class="line">    |   \---Config</span><br><span class="line">    |           BaseConcertSyncCore.ini</span><br><span class="line">    |           </span><br><span class="line">    +---ConcertSyncServer</span><br><span class="line">    |   |   ConcertSyncServer.uplugin</span><br><span class="line">    |   |   </span><br><span class="line">    |   \---Binaries</span><br><span class="line">    |       \---Win64</span><br><span class="line">    |               UE4Editor-ConcertSyncServer.dll</span><br><span class="line">    |               UnrealMultiUserServer-ConcertSyncServer.dll</span><br><span class="line">    |               </span><br><span class="line">    +---SQLiteCore</span><br><span class="line">    |   |   SQLiteCore.uplugin</span><br><span class="line">    |   |   </span><br><span class="line">    |   \---Binaries</span><br><span class="line">    |       \---Win64</span><br><span class="line">    |               UE4Editor-SQLiteCore.dll</span><br><span class="line">    |               UnrealMultiUserServer-SQLiteCore.dll</span><br><span class="line">    |               </span><br><span class="line">    \---UdpMessaging</span><br><span class="line">        |   UdpMessaging.uplugin</span><br><span class="line">        |   </span><br><span class="line">        +---Binaries</span><br><span class="line">        |   \---Win64</span><br><span class="line">        |           UE4Editor-UdpMessaging.dll</span><br><span class="line">        |           UnrealFrontend-UdpMessaging.dll</span><br><span class="line">        |           UnrealLightmass-UdpMessaging.dll</span><br><span class="line">        |           UnrealMultiUserServer-UdpMessaging.dll</span><br><span class="line">        |           </span><br><span class="line">        \---Resources</span><br><span class="line">                Icon128.webp</span><br></pre></td></tr></table></figure>
+
+<p>执行效果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\lipengzha\Desktop\UnrealMultiUserServer\Engine\Binaries\Win64&gt;UnrealMultiUserServer.exe</span><br><span class="line">LogPaths: Warning: No paths for game localization data were specifed in the game configuration.</span><br><span class="line">LogInit: Warning: No paths for engine localization data were specifed in the engine configuration.</span><br><span class="line">LogInit: WinSock: version 1.1 (2.2), MaxSocks=32767, MaxUdp=65467</span><br><span class="line">LogUdpMessaging: Initializing bridge on interface 0.0.0.0:0 to multicast group 230.0.0.1:6666.</span><br><span class="line">LogTemp: IConcertSyncServerModule::Get().ParseServerSettings</span><br><span class="line">LogSyncServer: Display: Multi-User Editing Server Initialized (Name: lipengzha-PC0, Version: 4.25, Role: MultiUser)</span><br><span class="line">LogSyncServer: Display: Multi-User Editing Server Initialized (Name: lipengzha-PC0, Version: 4.25, Role: MultiUser</span><br></pre></td></tr></table></figure>
+
+<h2 id="Session的配置存储"><a href="#Session的配置存储" class="headerlink" title="Session的配置存储"></a>Session的配置存储</h2><p>当<code>Multi-User Server</code>启动之后，所有由用户创建的Session信息都会被保存在Server端，默认存储在以下路径中：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\lipengzha\Desktop\UnrealMultiUserServer\Engine\Programs&gt;tree /a /f</span><br><span class="line">\---UnrealMultiUserServer</span><br><span class="line">    +---Intermediate</span><br><span class="line">    |   \---MultiUser</span><br><span class="line">    |       \---35E93D4D493990231B6D30B582298091</span><br><span class="line">    |               Session.db</span><br><span class="line">    |               Session.db-wal</span><br><span class="line">    |               SessionInfo.json</span><br><span class="line">    |</span><br><span class="line">    \---Saved</span><br><span class="line">        +---Logs</span><br><span class="line">        |       UnrealMultiUserServer.log</span><br><span class="line">        |</span><br><span class="line">        \---MultiUser</span><br><span class="line">                Repositories.json</span><br></pre></td></tr></table></figure>
+
+<p>当下次Server启动的时候这些Session会自动创建，可以避免需要重复创建的问题。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本篇文章记录了UE中多用户编辑的启动和配置流程，并提取了独立的Multi-User Server程序，无需完整的引擎内容，能够实现非常方便地部署多用户编辑服务。后续有时间会深入分析一下内部的实现机制以及同步策略。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/MultiUserEditing/">Multi-User Editing</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/MultiUserEditing/Overview/">Multi-User Editing Overview</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=MPIpOdNmNGE&ab_channel=UnrealEngine">Explore Collaboration with Unreal Engine’s Multi-User Editor | Webinar</a></li>
+<li><a href="https://imzlp.com/posts/16643/">UE Build System：Target and Module</a></li>
+<li><a href="https://imzlp.com/posts/31962/">Create A Standalone Application in UE4</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/25226/" target="_blank">UE多用户协同编辑服务部署指南</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年08月05日 16时15分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4.4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/25226/" target="_blank" title="UE多用户协同编辑服务部署指南">https://imzlp.com/posts/25226/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/25226/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/UnrealMultiUserServer/" rel="tag"># UnrealMultiUserServer</a>
+              <a href="/tags/%E5%A4%9A%E7%94%A8%E6%88%B7%E5%8D%8F%E5%90%8C/" rel="tag"># 多用户协同</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/14154/" rel="prev" title="Profiling IOS With Unreal Insights">
+      <i class="fa fa-chevron-left"></i> Profiling IOS With Unreal Insights
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/30732/" rel="next" title="Zlib/Oodle/ZSTD压缩算法性能对比">
+      Zlib/Oodle/ZSTD压缩算法性能对比 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">使用流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E7%AD%96%E7%95%A5"><span class="nav-number">2.</span> <span class="nav-text">网络策略</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LAN%E7%9A%84%E7%9B%B8%E5%90%8C%E5%AD%90%E7%BD%91"><span class="nav-number">2.1.</span> <span class="nav-text">LAN的相同子网</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LAN%E7%9A%84%E4%B8%8D%E5%90%8C%E5%AD%90%E7%BD%91"><span class="nav-number">2.2.</span> <span class="nav-text">LAN的不同子网</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B2%E7%81%AB%E5%A2%99%E7%AD%96%E7%95%A5"><span class="nav-number">3.</span> <span class="nav-text">防火墙策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8B%AC%E7%AB%8B%E7%9A%84Server%E8%BF%9B%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">独立的Server进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8B%AC%E7%AB%8B%E7%9A%84Server%E7%A8%8B%E5%BA%8F"><span class="nav-number">5.</span> <span class="nav-text">独立的Server程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Session%E7%9A%84%E9%85%8D%E7%BD%AE%E5%AD%98%E5%82%A8"><span class="nav-number">6.</span> <span class="nav-text">Session的配置存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">7.</span> <span class="nav-text">结语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">8.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/25226/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

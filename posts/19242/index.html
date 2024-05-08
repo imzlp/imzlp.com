@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="C&#x2F;C++的很多资料网上数不胜数，但是经常会遇到看了一些文章资料后，我觉得作者自己都没彻底明白到底写的是什么(回头看看我以前写的文章也是，那时的眼光太片面和浅显了)。所以对于C&#x2F;C++的东西我觉得还是要直接来翻标准文档才行，因为标准是不会出现歧义的。不能盲目地只是在网上搜寻并相信别人二次消化过的资料。我认为对于C&#x2F;C++语言特性的知识，查阅这四份文档就足够了(点击即可在线预览或下载)：  ISO&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#x2F;C++标准的一些摘录">
+<meta property="og:url" content="https://imzlp.com/posts/19242/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="C&#x2F;C++的很多资料网上数不胜数，但是经常会遇到看了一些文章资料后，我觉得作者自己都没彻底明白到底写的是什么(回头看看我以前写的文章也是，那时的眼光太片面和浅显了)。所以对于C&#x2F;C++的东西我觉得还是要直接来翻标准文档才行，因为标准是不会出现歧义的。不能盲目地只是在网上搜寻并相信别人二次消化过的资料。我认为对于C&#x2F;C++语言特性的知识，查阅这四份文档就足够了(点击即可在线预览或下载)：  ISO&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/19242/lvalueAndRvalue.webp">
+<meta property="article:published_time" content="2016-11-12T01:19:51.000Z">
+<meta property="article:modified_time" content="2017-04-05T15:19:57.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="标准解读">
+<meta property="article:tag" content="C++标准">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/19242/lvalueAndRvalue.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/19242/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>C/C++标准的一些摘录 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/19242/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C/C++标准的一些摘录<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2016-11-12-19242.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-11-12 01:19 01:19:51:19" itemprop="dateCreated datePublished" datetime="2016-11-12T01:19:51+00:00">2016-11-12 01:19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2017-04-05 15:19 15:19:57:19" itemprop="dateModified" datetime="2017-04-05T15:19:57+00:00">2017-04-05 15:19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">标准解读</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/C-%E6%A0%87%E5%87%86/" itemprop="url" rel="index"><span itemprop="name">C++标准</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/19242/" class="post-meta-item leancloud_visitors" data-flag-title="C/C++标准的一些摘录" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>43k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1:47</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>C/C++的很多资料网上数不胜数，但是经常会遇到看了一些文章资料后，我觉得作者自己都没彻底明白到底写的是什么(回头看看我以前写的文章也是，那时的眼光太片面和浅显了)。<br>所以对于C/C++的东西我觉得还是要直接来翻标准文档才行，因为标准是不会出现歧义的。不能盲目地只是在网上搜寻并相信别人二次消化过的资料。<br>我认为对于C/C++语言特性的知识，查阅这四份文档就足够了(点击即可在线预览或下载)：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=docs/standard/isoc99.pdf">ISO/IEC 9899:1999 (E)</a> (C99标准)</li>
+<li><a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=docs/clang/TCPL2E.pdf">The C Programming language Second Edition</a> (C语言之父Dennis Ritchie和Brian Kernighan的大作)</li>
+<li><a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=docs/standard/isocpp2014.pdf">ISO/IEC 14882:2014(E)</a> (C++14标准)</li>
+<li><a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=docs/cpp/TCPPPL4E.pdf">The C++ Programming Language Fourth Edition</a> (C++之父撰写，依据C++11标准)</li>
+</ul>
+<p>之所以C语言标准没有依据最新的C11标准是因为目前的C++标准(C++14)的<code>Normative references</code>的C部分是<strong>ISO/IEC 9899:1999</strong>，使用TCPL和TC++PL可以作为C/C++标准的应用性描述，可以相互印证。<br>更多的关于C++<code>Normative references</code>的内容可参照<a target="_blank" rel="noopener" href="https://o66j3dueo.qnssl.com/Document/ISOIEC.14882.2014%28C++14%29.pdf">ISO/IEC 14882:2014(E)</a> §1.2 Normative references.<br>我会逐渐把一些常见的会让人觉得模棱两可的语言特性查阅的标准规范摘录到这里来，可以保证写出的东西在标准文档中都有依据。</p>
+<span id="more"></span>
+<h2 id="exit-behavior"><a href="#exit-behavior" class="headerlink" title="exit() behavior"></a>exit() behavior</h2><p>function prototype:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The attribute-token noreturn specifies that a function does not return.</span></span><br><span class="line">[[noreturn]] <span class="function"><span class="type">void</span> <span class="title">exit</span><span class="params">(<span class="type">int</span> status)</span></span></span><br></pre></td></tr></table></figure>
+<p>The function exit() has additional behavior in this International Standard:</p>
+<ul>
+<li>First, objects with thread storage duration and associated with the current thread are destroyed.Next, objects with static storage duration are destroyed and functions registered by calling atexit<br>are called.See 3.6.3 for the order of destructions and calls. (Automatic objects are not destroyed as a result of calling exit().)<br>If control leaves a registered function called by exit because the function does not provide a handler for a thrown exception, std::terminate() shall be called (15.5.1).</li>
+<li>Next, all open C streams (as mediated by the function signatures declared in <cstdio>) with unwritten buffered data are ﬂushed, all open C streams are closed, and all files created by calling tmpfile() are removed.</li>
+<li>Finally, control is returned to the host environment. If status is zero or EXIT_SUCCESS, an implementation-defined form of the status successful termination is returned. If status is EXIT_FAILURE, an implementation-defined form of the status unsuccessful termination is returned.Otherwise the status returned is implementation-defined.</li>
+</ul>
+<h2 id="return-statement"><a href="#return-statement" class="headerlink" title="return statement"></a>return statement</h2><p>A function returns to its caller by the return statement.<br>A return statement with neither an expression nor a braced-init-list can be used only in functions that do not return a value, that is, a function with the return type cv void, a constructor (12.1), or a destructor (12.4).<br>A return statement with an expression of non-void type can be used only in functions returning a value; the value of the expression is returned to the caller of the function. The value of the expression is implicitly converted to the return type of the function in which it appears. A return statement can involve the construction and copy or move of a temporary object (12.2). [ Note: A copy or move operation associated with a return statement may be elided or considered as an rvalue for the purpose of overload resolution in selecting a constructor (12.8). — end note ]A return statement with a braced-init-list initializes the object or reference to be returned from the function by copy-list-initialization (8.5.4) from the specified initializer list.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::pair&lt;std::string,<span class="type">int</span>&gt; <span class="title">f</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* p, <span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> &#123;p,x&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>A return statement with an expression of type void can be used only in functions with a return type of cv void; the expression is evaluated just before the function returns to its caller.</p>
+<p>Flowing off the end of a function is equivalent to a return with no value; this results in undefined behavior in a value-returning function.(注意：main函数不遵从这个规则)<br>由于C++中main函数的返回值是用作std::exit的参数的，所以标准特地规定，在main函数末尾不显式返回，程序执行效果等价于<code>return 0</code>;<br>A return statement in main has the effect of leaving the main function (destroying any objects with automatic storage duration) and calling std::exit with the return value as the argument. If control reaches the end of main without encountering a return statement, the effect is that of executing</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+<p>关于main函数的原型和返回值有更详细的文章：<a target="_blank" rel="noopener" href="https://github.com/FrankHB/pl-docs/blob/master/zh-CN/main-function.md">关于main函数的原型和返回值</a></p>
+<h2 id="non-deduced-context"><a href="#non-deduced-context" class="headerlink" title="non-deduced context"></a>non-deduced context</h2><p>The non-deduced contexts are:</p>
+<ul>
+<li>The nested-name-specifier of a type that was specified using a qualified-id.</li>
+<li>The expression of a decltype-specifier.</li>
+<li>A non-type template argument or an array bound in which a subexpression references a template parameter.</li>
+<li>A template parameter used in the parameter type of a function parameter that has a default argument that is being used in the call for which argument deduction is being done.</li>
+<li>A function parameter for which argument deduction cannot be done because the associated function argument is a function, or a set of overloaded functions (13.4), and one or more of the following apply:<ul>
+<li>more than one function matches the function parameter type (resulting in an ambiguous deduc-tion), or</li>
+<li>no function matches the function parameter type, or</li>
+<li>the set of functions supplied as an argument contains one or more function templates.</li>
+</ul>
+</li>
+<li>A function parameter for which the associated argument is an initializer list (8.5.4) but the parameter does not have std::initializer_list or reference to possibly cv-qualified std::initializer_list type.<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt; <span class="type">void</span> <span class="title">g</span><span class="params">(T)</span></span>;</span><br><span class="line"><span class="built_in">g</span>(&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;); <span class="comment">// error: no argument deduced for T</span></span><br></pre></td></tr></table></figure></li>
+<li>A function parameter pack that does not occur at the end of the parameter-declaration-list.</li>
+</ul>
+<h2 id="构造和析构时抛出异常"><a href="#构造和析构时抛出异常" class="headerlink" title="构造和析构时抛出异常"></a>构造和析构时抛出异常</h2><p>An object of any storage duration whose initialization or destruction is terminated by an exception will have destructors executed for all of its fully constructed subobjects (excluding the variant members of a union-like class), that is, for subobjects for which the principal constructor (12.6.2) has completed execution and the destructor has not yet begun execution.</p>
+<h2 id="对象析构时的执行顺序"><a href="#对象析构时的执行顺序" class="headerlink" title="对象析构时的执行顺序"></a>对象析构时的执行顺序</h2><blockquote>
+<p>After executing the body of the destructor and destroying any automatic objects allocated within the body, a destructor for class X calls the destructors for X’s direct non-variant non-static data members, the destructors for X’s direct base classes and, if X is the type of the most derived class (12.6.2), its destructor calls the destructors for X’s virtual base classes. All destructors are called as if they were referenced with a qualified name, that is, ignoring any possible virtual overriding destructors in more derived classes. Bases and members are destroyed in the reverse order of the completion of their constructor (see 12.6.2). A return statement (6.6.3) in a destructor might not directly return to the caller; before transferring control to the caller, the destructors for the members and bases are called. Destructors for elements of an array are called in reverse order of their construction (see 12.6).</p>
+</blockquote>
+<h2 id="对象构造时的执行顺序"><a href="#对象构造时的执行顺序" class="headerlink" title="对象构造时的执行顺序"></a>对象构造时的执行顺序</h2><p>In a non-delegating constructor, initialization proceeds in the following order:</p>
+<ul>
+<li>First, and only for the constructor of the most derived class (1.8), virtual base classes are initialized in the order they appear on a depth-first left-to-right traversal of the directed acyclic graph of base classes,where “left-to-right” is the order of appearance of the base classes in the derived class base-specifier-list.</li>
+<li>Then, direct base classes are initialized in declaration order as they appear in the base-specifier-list(regardless of the order of the mem-initializers).</li>
+<li>Then, non-static data members are initialized in the order they were declared in the class definition(again regardless of the order of the mem-initializers).</li>
+<li>Finally, the compound-statement of the constructor body is executed.</li>
+</ul>
+<p>[ Note: The declaration order is mandated to ensure that base and member subobjects are destroyed inthe reverse order of initialization. - end note ]</p>
+<h2 id="类的内置类型数据成员初始化"><a href="#类的内置类型数据成员初始化" class="headerlink" title="类的内置类型数据成员初始化"></a>类的内置类型数据成员初始化</h2><p>若没有显式提供构造函数初始化该成员，则其值是未定义的。–在标准12.6.2 Initializing bases and members(P268)</p>
+<blockquote>
+<p>Note: An abstract class (10.4) is never a most derived class, thus its constructors never initialize virtual<br>base classes, therefore the corresponding mem-initializers may be omitted. -end note ] An attempt to<br>initialize more than one non-static data member of a union renders the program ill-formed. [Note: After the call to a constructor for class X for an object with automatic or dynamic storage duration has completed, if the constructor was not invoked as part of value-initialization and a member of X is neither initialized nor given a value during execution of the compound-statement of the body of the constructor, the member has an indeterminate value. -end note</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="built_in">A</span>();</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span> &#123;</span><br><span class="line">	<span class="built_in">B</span>(<span class="type">int</span>);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> &#123;</span><br><span class="line">	<span class="built_in">C</span>() &#123; &#125; <span class="comment">// initializes members as follows:</span></span><br><span class="line">	A a; <span class="comment">// OK: calls A::A()</span></span><br><span class="line">	<span class="type">const</span> B b; <span class="comment">// error: B has no default constructor</span></span><br><span class="line">	<span class="type">int</span> i; <span class="comment">// OK: i has indeterminate value</span></span><br><span class="line">	<span class="type">int</span> j = <span class="number">5</span>; <span class="comment">// OK: j has the value 5</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>If a given non-static data member has both a <em>brace-or-equal-initializer</em> and a <em>mem-initializer</em>, the <em>initializa-tion</em> specified by the <em>mem-initializer</em> is performed, and the <em>non-static</em> data member’s <em>brace-or-equal-initializer</em> is ignored. [ Example: Given</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="type">int</span> i = <span class="comment">/* some integer expression with side effects */</span> ;</span><br><span class="line">	<span class="built_in">A</span>(<span class="type">int</span> arg) : <span class="built_in">i</span>(arg) &#123; &#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>the A(int) constructor will simply initialize i to the value of arg, and the side effects in i’s <em>brace-or-equal-initializer</em> will not take place. - end example ]</p>
+<h2 id="Undefined-Behavior"><a href="#Undefined-Behavior" class="headerlink" title="Undefined Behavior"></a>Undefined Behavior</h2><p>behavior for which this International Standard imposes no requirements[ Note: Undefined behavior may be expected when this International Standard omits any explicit definition of behavior or when a program uses an erroneous construct or erroneous data. Permissible undefined behavior ranges from ignoring the situation completely with unpredictable results, to behaving during translation or program execution in a documented manner characteristic of the environment (with or without the issuance of a diagnostic message), to terminating a translation or execution (with the issuance of a diagnostic message).Many erroneous program constructs do not engender undefined behavior; they are required to be diagnosed.- end note ]</p>
+<h2 id="求值顺序"><a href="#求值顺序" class="headerlink" title="求值顺序"></a>求值顺序</h2><p>C++没有明确规定表达式中子表达式的求值顺序。你不能假设表达式是按照从左到右的顺序求值的。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 到底是先调用f()还是g()并没有明确的规定</span></span><br><span class="line"><span class="type">int</span> x=<span class="built_in">f</span>(<span class="number">2</span>)+<span class="built_in">g</span>(<span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>还有下面这样的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i=<span class="number">1</span>;</span><br><span class="line">v[i]=i++; <span class="comment">// UB</span></span><br></pre></td></tr></table></figure>
+<p>其中的赋值行为有可能执行为v[1]=1，也可能执行v[2]=1;</p>
+<h2 id="闭包-closure"><a href="#闭包-closure" class="headerlink" title="闭包(closure)"></a>闭包(closure)</h2><p>直接贴标准吧…<br>ISOIEC 14882 2014(C++14) §5.1.2 p90</p>
+<p>**The evaluation of a lambda-expression results in a prvalue temporary (12.2). This temporary is called the **<code>closure object</code>. A lambda-expression shall not appear in an unevaluated operand (Clause 5), in a template-argument, in an alias-declaration, in a typedef declaration, or in the declaration of a function or function template outside its function body and default arguments. [ Note: The intention is to prevent lambdas from appearing in a signature. - end note ] [ Note: A closure object behaves like a function object (20.9). - endnote ]<br>The type of the lambda-expression (which is also the type of the closure object) is a unique, unnamed non-union class type - called the closure type - whose properties are described below. This class type is neither an aggregate (8.5.1) nor a literal type (3.9). The closure type is declared in the smallest block scope, class scope, or namespace scope that contains the corresponding lambda-expression. [ Note: This determines the set of namespaces and classes associated with the closure type (3.4.2). The parameter types of a lambda-declarator do not affect these associated namespaces and classes. - end note ] An implementation may define the closure type differently from what is described below provided this does not alter the observable behavior of the program other than by changing:</p>
+<ul>
+<li>the size and/or alignment of the closure type,</li>
+<li>whether the closure type is trivially copyable (Clause 9),</li>
+<li>whether the closure type is a standard-layout class (Clause 9), or</li>
+<li>whether the closure type is a POD class (Clause 9).</li>
+</ul>
+<h2 id="Lvalue-and-rvalue"><a href="#Lvalue-and-rvalue" class="headerlink" title="Lvalue and rvalue"></a>Lvalue and rvalue</h2><p>Expressions are categorized according to the taxonomy in Figure.</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/19242/lvalueAndRvalue.webp"></p>
+<ul>
+<li><strong>An lvalue (so called, historically, because lvalues could appear on the left-hand side of an assignment expression) designates a function or an object.</strong> [ Example: If E is an expression of pointer type, then *E is an lvalue expression referring to the object or function to which E points. As another example,the result of calling a function whose return type is an lvalue reference is an lvalue. - end example ]</li>
+<li><strong>An xvalue (an “eXpiring” value) also refers to an object, usually near the end of its lifetime (so that its resources may be moved, for example). An xvalue is the result of certain kinds of expressions involving rvalue references (8.3.2).</strong> [ Example: The result of calling a function whose return type is an rvalue reference is an xvalue. - end example ]</li>
+<li><strong>A glvalue (“generalized” lvalue) is an lvalue or an xvalue.</strong></li>
+<li><strong>An rvalue (so called, historically, because rvalues could appear on the right-hand side of an assignment expression) is an xvalue, a temporary object (12.2) or subobject thereof, or a value that is not associated with an object.</strong></li>
+<li><strong>A prvalue (“pure” rvalue) is an rvalue that is not an xvalue.</strong> [ Example: The result of calling a function whose return type is not a reference is a prvalue. The value of a literal such as 12, 7.3e5, or true is also a prvalue. - end example ]</li>
+</ul>
+<p>Every expression belongs to exactly one of the fundamental classifications in this taxonomy: lvalue,xvalue, or prvalue. This property of an expression is called its value category. [ Note: The discussion of each built-in operator in Clause 5 indicates the category of the value it yields and the value categories of the operands it expects. For example, the built-in assignment operators expect that the left operand is an lvalue and that the right operand is a prvalue and yield an lvalue as the result. User-defined operators are functions, and the categories of values they expect and yield are determined by their parameter and return types. - end note ]</p>
+<h2 id="构造不允许int-gt-double的原因"><a href="#构造不允许int-gt-double的原因" class="headerlink" title="{}构造不允许int-&gt;double的原因"></a>{}构造不允许int-&gt;double的原因</h2><p>因为如果int和double所占的位数一样，则其中的某些int向double转换必将损失信息。</p>
+<p>It sometimes comes as a surprise that {}-construction doesn’t allow int to double conversion, but if (as is not uncommon) the size of an int is the same as the size of a double, then some such conver-sions must lose information. Consider:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">static_assert</span>(<span class="built_in">sizeof</span>(<span class="type">int</span>)==siz <span class="built_in">eof</span>(<span class="type">double</span>),<span class="string">&quot;unexpected sizes&quot;</span>);</span><br><span class="line"><span class="type">int</span> x = numeric_limits&lt;<span class="type">int</span>&gt;::<span class="built_in">max</span>();  <span class="comment">//largest possible integer</span></span><br><span class="line"><span class="type">double</span> d = x;</span><br><span class="line"><span class="type">int</span> y = x;</span><br></pre></td></tr></table></figure>
+<p>We  will not get x==y. Howev er, we can still initialize a double with an integer literal that can be represented exactly.</p>
+<h2 id="char带不带符号由实现定义"><a href="#char带不带符号由实现定义" class="headerlink" title="char带不带符号由实现定义"></a>char带不带符号由实现定义</h2><p>It is implementation-defined whether a plain char is considered signed or unsigned. –[TCPL 6.2.3.1]</p>
+<p><strong>[14882:2014(E) § 3.9.1]:</strong><br>A char, a signed char, and an unsigned char occupy the same amount of storage and have the same alignment requirements.<br>In any particular implementation, a plain char object can take on either the same values as a signed char or an unsigned char; which one is implementation-defined.</p>
+<p>For each value i of type unsigned char in the range 0 to 255 inclusive, there exists a value j of type char such that the result of an integral conversion (4.7) from i to char is j, and the result of an integral conversion from j to unsigned char is i.</p>
+<h2 id="默认参数的几个反例"><a href="#默认参数的几个反例" class="headerlink" title="默认参数的几个反例"></a>默认参数的几个反例</h2><p>Default arguments for a member function of a class template shall be specified on the initial declaration of the member function within the class template.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">C</span> &#123;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span> i = <span class="number">3</span>)</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">(<span class="type">int</span> i, <span class="type">int</span> j = <span class="number">99</span>)</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">C::f</span><span class="params">(<span class="type">int</span> i = <span class="number">3</span>)</span> </span>&#123; <span class="comment">// error: default argument already</span></span><br><span class="line">&#125; <span class="comment">// specified in class scope</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">C::g</span><span class="params">(<span class="type">int</span> i = <span class="number">88</span>, <span class="type">int</span> j)</span> </span>&#123; <span class="comment">// in this translation unit,</span></span><br><span class="line">&#125; <span class="comment">// C::g can be called with no argument</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>Local variables shall not be used in a default argument. Example:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="type">int</span> i;</span><br><span class="line">	<span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">g</span><span class="params">(<span class="type">int</span>=<span class="number">0</span>)</span></span>; <span class="comment">// yes</span></span><br><span class="line">	<span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">g</span><span class="params">(<span class="type">int</span>=i)</span></span>; <span class="comment">// error</span></span><br><span class="line">	<span class="built_in">g</span>();</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;g(void)&quot;</span>&lt;&lt;endl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">(<span class="type">int</span> x)</span></span>&#123;</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;g(int)\t&quot;</span>&lt;&lt;x&lt;&lt;endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The keyword this shall not be used in a default argument of a member function.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(A* p = <span class="keyword">this</span>)</span> </span>&#123; &#125; <span class="comment">// error</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+<p>更多内容请查看<strong>ISO/IEC 14882:2014(E) § 8.3.6</strong></p>
+<h2 id="对象的几种初始化方式"><a href="#对象的几种初始化方式" class="headerlink" title="对象的几种初始化方式"></a>对象的几种初始化方式</h2><h2 id="zero-initialize"><a href="#zero-initialize" class="headerlink" title="zero-initialize"></a>zero-initialize</h2><p>To zero-initialize an object or reference of type T means:</p>
+<ul>
+<li>if T is a scalar type (3.9), the object is initialized to the value obtained by converting the integer literal 0 (zero) to T;</li>
+<li>if T is a (possibly cv-qualified) non-union class type, each non-static data member and each base-class subobject is zero-initialized and padding is initialized to zero bits;</li>
+<li>if T is a (possibly cv-qualified) union type, the object’s first non-static named data member is zero-initialized and padding is initialized to zero bits;</li>
+<li>if T is an array type, each element is zero-initialized;</li>
+<li>if T is a reference type, no initialization is performed.</li>
+</ul>
+<h2 id="default-initialize"><a href="#default-initialize" class="headerlink" title="default-initialize"></a>default-initialize</h2><p>To default-initialize an object of type T means:</p>
+<ul>
+<li>if T is a (possibly cv-qualified) class type (Clause 9), the default constructor (12.1) for T is called (and the initialization is ill-formed if T has no default constructor or overload resolution (13.3) results in an ambiguity or in a function that is deleted or inaccessible from the context of the initialization);</li>
+<li>if T is an array type, each element is default-initialized;</li>
+<li>otherwise, no initialization is performed.</li>
+</ul>
+<p>If a program calls for the default initialization of an object of a const-qualified type T, T shall be a class type with a user-provided default constructor.</p>
+<h2 id="value-initialize"><a href="#value-initialize" class="headerlink" title="value-initialize"></a>value-initialize</h2><p>To value-initialize an object of type T means:</p>
+<ul>
+<li>if T is a (possibly cv-qualified) class type (Clause 9) with either no default constructor (12.1) or a default constructor that is user-provided or deleted, then the object is default-initialized;</li>
+<li>if T is a (possibly cv-qualified) class type without a user-provided or deleted default constructor, then the object is zero-initialized and the semantic constraints for default-initialization are checked, and if T has a non-trivial default constructor, the object is default-initialized;</li>
+<li>if T is an array type, then each element is value-initialized;</li>
+<li>otherwise, the object is zero-initialized.</li>
+</ul>
+<p>An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to “constructed” objects, objects “for which the constructor has completed,”etc., even if no constructor is invoked for the object’s initialization.</p>
+<h2 id="Initialization-of-non-local-variables"><a href="#Initialization-of-non-local-variables" class="headerlink" title="Initialization of non-local variables"></a>Initialization of non-local variables</h2><p>There are two broad classes of named non-local variables: those with static storage duration (3.7.1) and those with thread storage duration (3.7.2). Non-local variables with static storage duration are initialized as a consequence of program initiation. Non-local variables with thread storage duration are initialized as a consequence of thread execution. Within each of these phases of initiation, initialization occurs as follows.<br><code>Variables with static storage duration (3.7.1) or thread storage duration (3.7.2) shall be zero-initialized (8.5) before any other initialization takes place.</code> A constant initializer for an object o is an expression that is a constant expression, except that it may also invoke constexpr constructors for o and its subobjects even if those objects are of non-literal class types [ Note: such a class may have a non-trivial destructor - end note ]. Constant initialization is performed:</p>
+<ul>
+<li>if each full-expression (including implicit conversions) that appears in the initializer of a reference with static or thread storage duration is a constant expression (5.19) and the reference is bound to an lvalue designating an object with static storage duration, to a temporary (see 12.2), or to a function;</li>
+<li>if an object with static or thread storage duration is initialized by a constructor call, and if the initialization full-expression is a constant initializer for the object;</li>
+<li>if an object with static or thread storage duration is not initialized by a constructor call and if either the object is value-initialized or every full-expression that appears in its initializer is a constant expression.</li>
+</ul>
+<p>Together, zero-initialization and constant initialization are called static initialization; all other initial-ization is dynamic initialization. Static initialization shall be performed before any dynamic initialization takes place. Dynamic initialization of a non-local variable with static storage duration is either ordered or unordered. Definitions of explicitly specialized class template static data members have ordered initializa-tion. Other class template static data members (i.e., implicitly or explicitly instantiated specializations) have unordered initialization. Other non-local variables with static storage duration have ordered initialization.<br>Variables with ordered initialization defined within a single translation unit shall be initialized in the order of their definitions in the translation unit. If a program starts a thread (30.3), the subsequent initialization of a variable is unsequenced with respect to the initialization of a variable defined in a different translation unit. Otherwise, the initialization of a variable is indeterminately sequenced with respect to the initialization of a variable defined in a different translation unit. If a program starts a thread, the subsequent unordered initialization of a variable is unsequenced with respect to every other dynamic initialization. Otherwise,the unordered initialization of a variable is indeterminately sequenced with respect to every other dynamic initialization. [ Note: This definition permits initialization of a sequence of ordered variables concurrently with another sequence. - end note ] [ Note: The initialization of local static variables is described in 6.7.- end note ]</p>
+<h2 id="value-and-or-reference-semantics"><a href="#value-and-or-reference-semantics" class="headerlink" title="value and/or reference semantics"></a>value and/or reference semantics</h2><p><a target="_blank" rel="noopener" href="https://isocpp.org/wiki/faq/value-vs-ref-semantics">What is value and/or reference semantics, and which is best in C++?</a></p>
+<p>With reference semantics, assignment is a pointer-copy (i.e., a reference). Value (or “copy”) semantics mean assignment copies the value, not just the pointer. C++ gives you the choice: use the assignment operator to copy the value (copy/value semantics), or use a pointer-copy to copy a pointer (reference semantics). C++ allows you to override the assignment operator to do anything your heart desires, however the default (and most common) choice is to copy the value.</p>
+<p>Pros of reference semantics: flexibility and dynamic binding (you get dynamic binding in C++ only when you pass by pointer or pass by reference, not when you pass by value).</p>
+<p>Pros of value semantics: speed. “Speed” seems like an odd benefit for a feature that requires an object (vs. a pointer) to be copied, but the fact of the matter is that one usually accesses an object more than one copies the object, so the cost of the occasional copies is (usually) more than offset by the benefit of having an actual object rather than a pointer to an object.</p>
+<p>There are three cases when you have an actual object as opposed to a pointer to an object: local objects, global/static objects, and fully contained member objects in a class. The most important of these is the last (“composition”).</p>
+<p>More info about copy-vs-reference semantics is given in the next FAQs. Please read them all to get a balanced perspective. The first few have intentionally been slanted toward value semantics, so if you only read the first few of the following FAQs, you’ll get a warped perspective.</p>
+<p>Assignment has other issues (e.g., shallow vs. deep copy) which are not covered here.</p>
+<h2 id="Increment-and-decrement-prefix-and-postfix"><a href="#Increment-and-decrement-prefix-and-postfix" class="headerlink" title="Increment and decrement(prefix and postfix)"></a>Increment and decrement(prefix and postfix)</h2><p>1 The user-defined function called operator++ implements the prefix and postfix ++ operator. If this function is a member function with no parameters, or a non-member function with one parameter, it defines the prefix increment operator ++ for objects of that type. If the function is a member function with one parameter (which shall be of type int) or a non-member function with two parameters (the second of which shall be of type int), it defines the postfix increment operator ++ for objects of that type. When the postfix increment is called as a result of using the ++ operator, the int argument will have value zero.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">X</span> &#123;</span><br><span class="line">	X&amp; <span class="keyword">operator</span>++(); <span class="comment">// prefix ++a</span></span><br><span class="line">	X <span class="keyword">operator</span>++(<span class="type">int</span>); <span class="comment">// postfix a++</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Y</span> &#123; &#125;;</span><br><span class="line"></span><br><span class="line">Y&amp; <span class="keyword">operator</span>++(Y&amp;); <span class="comment">// prefix ++b</span></span><br><span class="line">Y <span class="keyword">operator</span>++(Y&amp;, <span class="type">int</span>); <span class="comment">// postfix b++</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(X a, Y b)</span> </span>&#123;</span><br><span class="line">	++a; <span class="comment">// a.operator++();</span></span><br><span class="line">	a++; <span class="comment">// a.operator++(0);</span></span><br><span class="line">	++b; <span class="comment">// operator++(b);</span></span><br><span class="line">	b++; <span class="comment">// operator++(b, 0);</span></span><br><span class="line">	a.<span class="keyword">operator</span>++(); <span class="comment">// explicit call: like ++a;</span></span><br><span class="line">	a.<span class="keyword">operator</span>++(<span class="number">0</span>); <span class="comment">// explicit call: like a++;</span></span><br><span class="line">	<span class="keyword">operator</span>++(b); <span class="comment">// explicit call: like ++b;</span></span><br><span class="line">	<span class="keyword">operator</span>++(b, <span class="number">0</span>); <span class="comment">// explicit call: like b++;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The prefix and postfix decrement operators – are handled analogously.</p>
+<h2 id="Argument-dependent-name-lookup-ADL"><a href="#Argument-dependent-name-lookup-ADL" class="headerlink" title="Argument-dependent name lookup(ADL)"></a>Argument-dependent name lookup(ADL)</h2><p>When the postfix-expression in a function call (5.2.2) is an unqualified-id, other namespaces not considered during the usual unqualified lookup (3.4.1) may be searched, and in those namespaces, namespace-scope<br>friend function or function template declarations (11.3) not otherwise visible may be found. These modifications to the search depend on the types of the arguments (and for template template arguments, the<br>namespace of the template argument).</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> N &#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">S</span> &#123; &#125;;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(S)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	N::S s;</span><br><span class="line">	<span class="built_in">f</span>(s); <span class="comment">// OK: calls N::f</span></span><br><span class="line">	(f)(s); <span class="comment">// error: N::f not considered; parentheses</span></span><br><span class="line">	<span class="comment">// prevent argument-dependent lookup</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>For each argument type T in the function call, there is a set of zero or more associated namespaces and a set of zero or more associated classes to be considered. The sets of namespaces and classes is determined entirely by the types of the function arguments (and the namespace of any template template argument).Typedef names and using-declarations used to specify the types do not contribute to this set. The sets of namespaces and classes are determined in the following way:</p>
+<ul>
+<li>If T is a fundamental type, its associated sets of namespaces and classes are both empty.</li>
+<li>If T is a class type (including unions), its associated classes are: the class itself; the class of which it is a member, if any; and its direct and indirect base classes. Its associated namespaces are the innermost enclosing namespaces of its associated classes. Furthermore, if T is a class template specialization,its associated namespaces and classes also include: the namespaces and classes associated with the types of the template arguments provided for template type parameters (excluding template template parameters); the namespaces of which any template template arguments are members; and the classes<br>of which any member templates used as template template arguments are members. [ Note: Non-type template arguments do not contribute to the set of associated namespaces. — end note ]</li>
+<li>If T is an enumeration type, its associated namespace is the innermost enclosing namespace of its declaration. If it is a class member, its associated class is the member’s class; else it has no associated<br>class.</li>
+<li>If T is a pointer to U or an array of U, its associated namespaces and classes are those associated with U.</li>
+<li>If T is a function type, its associated namespaces and classes are those associated with the function parameter types and those associated with the return type.</li>
+<li>If T is a pointer to a member function of a class X, its associated namespaces and classes are those associated with the function parameter types and return type, together with those associated with X.</li>
+</ul>
+<p>If an associated namespace is an inline namespace (7.3.1), its enclosing namespace is also included in the set. If an associated namespace directly contains inline namespaces, those inline namespaces are also included in the set. In addition, if the argument is the name or address of a set of overloaded functions and/or function templates, its associated classes and namespaces are the union of those associated with each of the members of the set, i.e., the classes and namespaces associated with its parameter types and return type. Additionally, if the aforementioned set of overloaded functions is named with a template-id,its associated classes and namespaces also include those of its type template-arguments and its template template-arguments.</p>
+<p>Let X be the lookup set produced by unqualified lookup (3.4.1) and let Y be the lookup set produced by<br>argument dependent lookup (defined as follows). If X contains:</p>
+<ul>
+<li>a declaration of a class member, or</li>
+<li>a block-scope function declaration that is not a using-declaration, or</li>
+<li>a declaration that is neither a function or a function template</li>
+</ul>
+<p>then Y is empty. Otherwise Y is the set of declarations found in the namespaces associated with the<br>argument types as described below. The set of declarations found by the lookup of the name is the union of X and Y . [ Note: The namespaces and classes associated with the argument types can include namespaces and classes already considered by the ordinary unqualified lookup.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> NS &#123;</span><br><span class="line">	<span class="keyword">class</span> <span class="title class_">T</span> &#123; &#125;;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(T)</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">(T, <span class="type">int</span>)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line">NS::T parm;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">(NS::T, <span class="type">float</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="built_in">f</span>(parm); <span class="comment">// OK: calls NS::f</span></span><br><span class="line">	<span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">g</span><span class="params">(NS::T, <span class="type">float</span>)</span></span>;</span><br><span class="line">	<span class="built_in">g</span>(parm, <span class="number">1</span>); <span class="comment">// OK: calls g(NS::T, float)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When considering an associated namespace, the lookup is the same as the lookup performed when the associated namespace is used as a qualifier (3.4.3.2) except that:</p>
+<ul>
+<li>Any using-directives in the associated namespace are ignored.</li>
+<li>Any namespace-scope friend functions or friend function templates declared in associated classes are visible within their respective namespaces even if they are not visible during an ordinary lookup (11.3).</li>
+<li>All names except those of (possibly overloaded) functions and function templates are ignored.</li>
+</ul>
+<h2 id="sizeof-non-member-class"><a href="#sizeof-non-member-class" class="headerlink" title="sizeof(non-member-class)"></a>sizeof(<em>non-member-class</em>)</h2><p>Complete objects and member subobjects of class type shall have nonzero size.(Base class subobjects are not so constrained.)</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span>&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">sizeof</span>(A);	<span class="comment">// return value is 1.</span></span><br></pre></td></tr></table></figure>
+<p>当我们使用C++的编译器编译上面的代码时，<code>sizeof(A)</code>的结果是1.</p>
+<h2 id="派生类数组转换为基类指针后的算数运算"><a href="#派生类数组转换为基类指针后的算数运算" class="headerlink" title="派生类数组转换为基类指针后的算数运算"></a>派生类数组转换为基类指针后的算数运算</h2><p>考虑下面的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">    cout&lt;&lt;<span class="string">&quot;A&quot;</span>&lt;&lt;endl;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span>:<span class="keyword">public</span> A&#123;</span><br><span class="line">  <span class="type">int</span> x&#123;<span class="number">12</span>&#125;;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span><span class="keyword">override</span></span>&#123;</span><br><span class="line">    cout&lt;&lt;<span class="string">&quot;B&quot;</span>&lt;&lt;endl;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">callDerviedFunc</span><span class="params">(A* x,<span class="type">int</span> index)</span></span>&#123;</span><br><span class="line">  <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;index;++i)&#123;</span><br><span class="line">    <span class="comment">// runtime error(Undefined behavior)</span></span><br><span class="line">    (x+i)-&gt;<span class="built_in">func</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">	B a[<span class="number">10</span>];</span><br><span class="line">  <span class="built_in">callDerviedFunc</span>(a, <span class="number">10</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码产生为定义行为(一般是运行时错误)。<br>因为B由A派生而来，而且添加了自己的成员，所以sizeof(B)&gt;sizeof(A)，假定sizeof(A)为8，sizeof(B)为16，当将B类型指针转换为A类型指针时，指针的数值运算是指针类型的偏移值，即A类型指针a+1相当于在a指向的地址往后偏移8个字节，而B类型指针b+1等于在b的地址上往后偏移16个字节。所以在callDerviedFunc中只有第一次<code>(x+0)-&gt;func()</code>会调用成功，当再一次循环时对<code>(x+1)-&gt;func()</code>时，因为在该指针期望的地方找不到虚函数指针所以会产生为定义行为。<br>标准中是这么规定的：</p>
+<blockquote>
+<p>In particular, a pointer to a base class cannot be used for pointer arithmetic when the array contains objects of a derived class type.——<a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=doc/standard/isocpp2014.pdf#136">ISO/IEC 14882:2014(E)§5.7 P120</a></p>
+</blockquote>
+<p>在可能使用一组派生类指针到基类指针转换的时候应该优先选用标准库容器，而不是原生数组，因为原生数组并不像容器那样能够提供类型安全。</p>
+<h2 id="copy-assignment-operator"><a href="#copy-assignment-operator" class="headerlink" title="copy assignment operator"></a>copy assignment operator</h2><blockquote>
+<p>A user-declared copy assignment operator X::operator= is a non-static non-template member function of class X with exactly one parameter of type X, X&amp;, const X&amp;, volatile X&amp; or const volatile X&amp;.——<a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=doc/standard/isocpp2014.pdf#292">ISO/IEC 14882:2014(E) §12.8 P276</a></p>
+</blockquote>
+<p>[ Note:An overloaded assignment operator must be declared to have only one parameter; see 13.5.3. — end note ]<br>[ Note: More than one form of copy assignment operator may be declared for a class. — end note ]<br>[ Note:If a class X only has a copy assignment operator with a parameter of type X&amp;, an expression of type const X cannot be assigned to an object of type X.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">X</span> &#123;</span><br><span class="line">	<span class="built_in">X</span>();</span><br><span class="line">	X&amp; <span class="keyword">operator</span>=(X&amp;);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="type">const</span> X cx;</span><br><span class="line">X x;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	x = cx; <span class="comment">// error: X::operator=(X&amp;) cannot assign cx into x</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="不要在基类构造函数中调用虚函数期待多态行为"><a href="#不要在基类构造函数中调用虚函数期待多态行为" class="headerlink" title="不要在基类构造函数中调用虚函数期待多态行为"></a>不要在基类构造函数中调用虚函数期待多态行为</h2><p>不能期望在基类的构造函数中实现函数的多态行为,因为基类的构造早于派生类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">A</span>()&#123;<span class="built_in">func</span>();&#125;</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;cout&lt;&lt;<span class="string">&quot;A::func&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span>:<span class="keyword">public</span> A</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">B</span>()&#123;<span class="built_in">func</span>();&#125;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span><span class="keyword">override</span></span>&#123;cout&lt;&lt;<span class="string">&quot;B::func&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc,<span class="type">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	A *obj=<span class="keyword">new</span> B;</span><br><span class="line">	<span class="keyword">delete</span> obj;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// output</span></span><br><span class="line">A::func</span><br><span class="line">B::func</span><br></pre></td></tr></table></figure>
+
+<h2 id="lifetimes-of-objects"><a href="#lifetimes-of-objects" class="headerlink" title="lifetimes of objects"></a>lifetimes of objects</h2><p>We can classify objects based on their lifetimes:</p>
+<ul>
+<li><code>Automatic</code>: Unless the programmer specifies otherwise (§12.1.8, §16.2.12), an object declared in a function is created when its definition is encountered and destroyed when its name goes out of scope. Such objects are sometimes called automatic objects. In a typical implementation, automatic objects are allocated on the stack; each call of the function gets its own <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Call_stack#STACK-FRAME">stack frame</a> to hold its automatic objects.</li>
+<li><code>Static</code>: Objects declared in global or namespace scope (§6.3.4) and statics declared in func- tions (§12.1.8) or classes (§16.2.12) are created and initialized once (only) and ‘‘live’’ until the program terminates (§15.4.3). Such objects are called static objects. A static object has the same address throughout the life of a program execution. Static objects can cause seri- ous problems in a multi-threaded program because they are shared among all threads and typically require locking to avoid data races (§5.3.1, §42.3).</li>
+<li><code>Free store</code>: Using the new and delete operators, we can create objects whose lifetimes are controlled directly (§11.2).</li>
+<li><code>Temporary objects</code> (e.g., intermediate results in a computation or an object used to hold a value for a reference to const argument): their lifetime is determined by their use. If they are bound to a reference, their lifetime is that of the reference; otherwise, they ‘‘live’’ until the end of the full expression of which they are part. A full expression is an expression that is not part of another expression. Typically, temporary objects are automatic.</li>
+<li><code>Thread-local objects</code>; that is, objects declared thread_local (§42.2.8): such objects are cre- ated when their thread is and destroyed when their thread is. Static and automatic are traditionally referred to as storage classes.</li>
+</ul>
+<p>Array elements and nonstatic class members have their lifetimes determined by the object of which they are part.</p>
+<h2 id="给临时对象续命之const-T-amp"><a href="#给临时对象续命之const-T-amp" class="headerlink" title="给临时对象续命之const T&amp;"></a>给临时对象续命之const T&amp;</h2><p>当我们声明一个<code>const T&amp;</code>来引用到一个临时对象时，将会给临时对象续命到该引用的生命周期：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> x=<span class="number">11</span>,y=<span class="number">12</span>;</span><br><span class="line">	<span class="type">const</span> <span class="type">int</span>&amp; z=x+y;</span><br><span class="line">	<span class="comment">// x+y产生的临时对象将在离开z的lifetime时被销毁。</span></span><br><span class="line">	<span class="type">int</span> e=<span class="number">13</span>;</span><br><span class="line">&#125;<span class="comment">// destroy x,y,z,e</span></span><br></pre></td></tr></table></figure>
+<p>销毁该<code>const T&amp;</code>的顺序按照普通的对象销毁顺序(倒序)。<br>如上面的代码的销毁顺序为e,z,y,x.</p>
+<p>标准定义如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">S</span> &#123;</span><br><span class="line">	<span class="built_in">S</span>();</span><br><span class="line">	<span class="built_in">S</span>(<span class="type">int</span>);</span><br><span class="line">	<span class="keyword">friend</span> S <span class="keyword">operator</span>+(<span class="type">const</span> S&amp;, <span class="type">const</span> S&amp;);</span><br><span class="line">	~<span class="built_in">S</span>();</span><br><span class="line">&#125;;</span><br><span class="line">S obj1;</span><br><span class="line"><span class="type">const</span> S&amp; cr = <span class="built_in">S</span>(<span class="number">16</span>)+<span class="built_in">S</span>(<span class="number">23</span>);</span><br><span class="line">S obj2;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>the expression S(16) + S(23) creates three temporaries: a first temporary T1 to hold the result of the expression S(16), a second temporary T2 to hold the result of the expression S(23), and a third temporary T3 to hold the result of the addition of these two expressions. The temporary T3 is then bound to the reference cr. It is unspecified whether T1 or T2 is created first. On an implementation where T1 is created before T2, T2 shall be destroyed before T1. The temporaries T1 and T2 are bound to the reference parameters of operator+; these temporaries are destroyed at the end of the full-expression containing the call to operator+. The temporary T3 bound to the reference cr is destroyed at the end of cr’s lifetime, that is, at the end of the program. In addition, the order in which T3 is destroyed takes into account the destruction order of other objects with static storage duration. That is, because obj1 is constructed before T3, and T3 is constructed before obj2, obj2 shall be destroyed before T3, and T3 shall be destroyed before obj1.</p>
+</blockquote>
+<h2 id="Point-of-dealaration"><a href="#Point-of-dealaration" class="headerlink" title="Point of dealaration"></a>Point of dealaration</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">void</span> * p = &amp;p;</span><br><span class="line">  std::cout &lt;&lt; <span class="built_in">bool</span>(p);</span><br><span class="line">&#125;</span><br><span class="line">resault is <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>The point of declaration for a name is immediately after its complete declarator (Clause 8) and before its initializer (if any)</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">char</span> x = <span class="number">12</span>;</span><br><span class="line"><span class="comment">// Here the second x is initialized with its own (indeterminate) value.</span></span><br><span class="line">&#123; <span class="type">unsigned</span> <span class="type">char</span> x = x; &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Note: a name from an outer scope remains visible up to the point of declaration of the name that hides it.</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> i = <span class="number">2</span>;</span><br><span class="line"><span class="comment">// declares a block-scope array of two integers.</span></span><br><span class="line">&#123; <span class="type">int</span> i[i]; &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>The point of declaration for an enumerator is immediately after its enumerator-definition.</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> x = <span class="number">12</span>;</span><br><span class="line"><span class="comment">// Here, the enumerator x is initialized with the value of the constant x, namely 12.</span></span><br><span class="line">&#123; <span class="keyword">enum</span> &#123; x = x &#125;; &#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>After the point of declaration of a class member, the member name can be looked up in the scope of its class. [ Note: this is true even if the class is an incomplete class.]</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">X</span> &#123;</span><br><span class="line"><span class="keyword">enum</span> <span class="title class_">E</span> &#123; z = <span class="number">16</span> &#125;;</span><br><span class="line">	<span class="type">int</span> b[X::z]; <span class="comment">// OK</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="declaration-and-define"><a href="#declaration-and-define" class="headerlink" title="declaration and define"></a>declaration and define</h2><blockquote>
+<p>A declaration is a definition unless it declares a function without specifying the function’s body (8.4), it contains the extern specifier (7.1.1) or a linkage-specification 25 (7.5) and neither an initializer nor a function-body, it declares a static data member in a class definition (9.2, 9.4), it is a class name declaration (9.1), it is an opaque-enum-declaration (7.2), it is a template-parameter (14.1), it is a parameter-declaration (8.3.5) in a function declarator that is not the declarator of a function-definition, or it is a typedef declaration (7.1.3), an alias-declaration (7.1.3), a using-declaration (7.3.3), a static_assert-declaration (Clause 7), an attribute- declaration (Clause 7), an empty-declaration (Clause 7), or a using-directive (7.3.4).</p>
+</blockquote>
+<h2 id="template-default-arguments"><a href="#template-default-arguments" class="headerlink" title="template default arguments"></a>template default arguments</h2><blockquote>
+<p>A template-parameter of a template template-parameter is permitted to have a default template-argument.When such default arguments are specified, they apply to the template template-parameter in the scope of the template template-parameter.</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span> = <span class="type">int</span>&gt; <span class="keyword">struct</span> A &#123;</span><br><span class="line">	<span class="type">static</span> <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt; <span class="keyword">struct</span> <span class="title class_">A</span>&lt;<span class="type">double</span>&gt; &#123; &#125;; <span class="comment">// specialize for T == double</span></span><br><span class="line"><span class="keyword">template</span>&lt;&gt; <span class="keyword">struct</span> <span class="title class_">A</span>&lt;&gt; &#123;<span class="type">static</span> <span class="type">const</span> <span class="type">int</span> X=<span class="number">111</span>;&#125;; <span class="comment">// specialize for T == int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// A&lt;&gt;::X == A&lt;int&gt;::X</span></span><br><span class="line"><span class="comment">// output: 111</span></span><br><span class="line">cout&lt;&lt;A&lt;&gt;::X&lt;&lt;endl;</span><br></pre></td></tr></table></figure>
+
+<h2 id="static-object-initialized-of-C"><a href="#static-object-initialized-of-C" class="headerlink" title="static object initialized of C"></a>static object initialized of C</h2><blockquote>
+<p>If an object that has automatic storage duration is not initialized explicitly, its value is indeterminate. If an object that has static storage duration is not initialized explicitly,then:</p>
+</blockquote>
+<ol>
+<li>if it has pointer type, it is initialized to a null pointer;</li>
+<li>if it has arithmetic type, it is initialized to (positive or unsigned) zero;</li>
+<li>if it is an aggregate, every member is initialized (recursively) according to these rules;</li>
+<li>if it is a union, the first named member is initialized (recursively) according to these rules.</li>
+</ol>
+<h2 id="compound-literal-of-C"><a href="#compound-literal-of-C" class="headerlink" title="compound literal of C"></a>compound literal of C</h2><blockquote>
+<p>ISO/IEC 9899:1999 (E)<br>A postfix expression that consists of a parenthesized type name followed by a brace-enclosed list of initializers is a compound literal. It provides an unnamed object whose value is given by the initializer list.</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> *p=(<span class="type">int</span>[])&#123;<span class="number">1</span>,<span class="number">2</span>&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="noreturn-attribute"><a href="#noreturn-attribute" class="headerlink" title="[[noreturn]] attribute"></a>[[noreturn]] attribute</h2><p><strong>The attribute-token <code>noreturn</code> specifies that a function does not return.</strong> It shall appear at most once in each attribute-list and no attribute-argument-clause shall be present. The attribute may be applied to the declarator-id in a function declaration.<br>The first declaration of a function shall specify the noreturn attribute if any declaration of that function specifies the noreturn attribute. If a function is declared with the noreturn attribute in one translation unit and the same function is declared without the noreturn attribute in another translation unit, the program is ill-formed; no diagnostic required.<br><strong>If a function f is called where f was previously declared with the noreturn attribute and f eventually returns, the behavior is undefined.</strong> [ Note: The function may terminate by throwing an exception. — end note ] [ Note: Implementations are encouraged to issue a warning if a function marked <code>[[noreturn]]</code> might return. — end note ]</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[[ noreturn ]] <span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">throw</span> <span class="string">&quot;error&quot;</span>; <span class="comment">// OK</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// behavior is undefined if called with an argument &lt;= 0</span></span><br><span class="line">[[ noreturn ]] <span class="function"><span class="type">void</span> <span class="title">q</span><span class="params">(<span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (i &gt; <span class="number">0</span>)</span><br><span class="line">		<span class="keyword">throw</span> <span class="string">&quot;positive&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="five-ways-of-exiting-a-function"><a href="#five-ways-of-exiting-a-function" class="headerlink" title="five ways of exiting a function"></a>five ways of exiting a function</h2><p>A <code>return</code>-statement is one of five ways of exiting a function:</p>
+<ol>
+<li>Executing a <code>return</code>-statement.</li>
+<li>“Falling off the end” of a function; that is, simply reaching the end of the function body.This is allowed only in functions that are not declared to return a value (i.e., <code>void</code> functions) and in <code>main()</code>, where falling off the end indicates successful completion.</li>
+<li>Throwing an exception that isn’t caught locally.</li>
+<li>Terminating because an exception was thrown and not caught locally in a <code>noexcept</code> function.</li>
+<li>Directly or indirectly invoking a system function that doesn’t return (e.g., <code>exit();</code>).</li>
+</ol>
+<p>A function that does not return normally (i.e., through a return or “falling off the end”) can be marked <code>[[noreturn]]</code></p>
+<h2 id="整型-浮点字面值的类型"><a href="#整型-浮点字面值的类型" class="headerlink" title="整型/浮点字面值的类型"></a>整型/浮点字面值的类型</h2><p>简单地说，在未指明后缀的情况下整型字面值(integer literal)可以为<code>int</code>/<code>long int</code>/<code>long long int</code>;</p>
+<table>
+<thead>
+<tr>
+<th align="center">Stuffix</th>
+<th align="center">Decimal literal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">none</td>
+<td align="center">int/long int/long long int</td>
+</tr>
+<tr>
+<td align="center">u or U</td>
+<td align="center">unsigned int/unsigned long int/unsigned long long int</td>
+</tr>
+<tr>
+<td align="center">l or L</td>
+<td align="center">long int/long long int</td>
+</tr>
+<tr>
+<td align="center">浮点型字面值为<code>double</code>:</td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>[C++11]The type of a ﬂoating literal is double unless explicitly specified by a suﬃx. The suffixes f and F specify float, the suffixes l and L specify long double.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th align="center">Stuffix</th>
+<th align="center">Decimal literal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">none</td>
+<td align="center">doubld</td>
+</tr>
+<tr>
+<td align="center">f or F</td>
+<td align="center">float</td>
+</tr>
+<tr>
+<td align="center">l or L</td>
+<td align="center">long double</td>
+</tr>
+<tr>
+<td align="center">C和C++中的要求一致。</td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<h2 id="C和C-中sizeof计算期的区别"><a href="#C和C-中sizeof计算期的区别" class="headerlink" title="C和C++中sizeof计算期的区别"></a>C和C++中sizeof计算期的区别</h2><p>一般情况下C语言的sizeof操作也是编译期行为，但是由于C语言具有VLA(variable length array)，所以在其操作对象为VLA数组时，会在运行时求值。</p>
+<blockquote>
+<p>[C99]If the type of the operand is a variable length array type, the operand is evaluated; otherwise, the operand is not evaluated and the result is an integer constant.</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">size_t</span> <span class="title">fsize3</span><span class="params">(<span class="type">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">char</span> b[n+<span class="number">3</span>]; <span class="comment">// variable length array</span></span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">sizeof</span> b; <span class="comment">// execution time sizeof</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而C++的<code>sizeof</code>和<code>sizeof...</code>完全是编译期的行为。</p>
+<blockquote>
+<p>[C++11]The result of sizeof and sizeof… is a constant of type std::size_t.</p>
+</blockquote>
+<h2 id="C和C-的关系-逻辑运算符结果的区别"><a href="#C和C-的关系-逻辑运算符结果的区别" class="headerlink" title="C和C++的关系/逻辑运算符结果的区别"></a>C和C++的关系/逻辑运算符结果的区别</h2><p>说白了就是C语言的关系/相等/逻辑以及三目运算符的first-expression的结果均是int(0/1)，而C++的均是bool类型。</p>
+<h2 id="Relational-operators"><a href="#Relational-operators" class="headerlink" title="Relational operators"></a>Relational operators</h2><blockquote>
+<p>[C++11]The operands shall have arithmetic, enumeration, or pointer type. The operators &lt; (less than), &gt; (greater than), &lt;= (less than or equal to), and &gt;= (greater than or equal to) all yield false or true. The type of the result is <code>bool</code>.<br>[C99]Each of the operators &lt; (less than), &gt; (greater than), &lt;= (less than or equal to), and &gt;=(greater than or equal to) shall yield 1 if the specified relation is true and 0 if it is false.)The result has type <code>int</code>.</p>
+</blockquote>
+<h2 id="Equality-operators"><a href="#Equality-operators" class="headerlink" title="Equality operators"></a>Equality operators</h2><blockquote>
+<p>[C++11]The == (equal to) and the != (not equal to) operators group left-to-right. The operands shall have arithmetic,enumeration, pointer, or pointer to member type, or type std::nullptr_t. The operators == and != both yield true or false, i.e., a result of type bool.<br>[C99]The == (equal  to) and != (not equal to) operators are analogous to the relational operators except for their lower precedence.)Each of the operators yields 1 if the specified relation is true and 0 if it is false.  The result has type int.</p>
+</blockquote>
+<h2 id="Conditional-expressions"><a href="#Conditional-expressions" class="headerlink" title="Conditional expressions"></a>Conditional expressions</h2><blockquote>
+<p>[C++11]Conditional expressions group right-to-left. The first expression is contextually converted to bool.It is evaluated and if it is true, the result of the conditional expression is the value of the second expression,otherwise that of the third expression. Only one of the second and third expressions is evaluated.<br>[C99]The first operand is evaluated; there is a sequence point after its evaluation. The second operand is evaluated only if the first compares unequal to 0; the third operand is evaluated only if the first compares equal to 0;</p>
+</blockquote>
+<h2 id="Logical-operator"><a href="#Logical-operator" class="headerlink" title="Logical operator"></a>Logical operator</h2><blockquote>
+<p>[C++11]The ||/&amp;&amp; operator groups left-to-right. The operands are both contextually converted to bool.The result is true if both operands are true and false otherwise.<br>[C99]The ||/&amp;&amp; operator shall yield 1 if both of its operands compare unequal to 0; otherwise, it yields 0. The result has type int.</p>
+</blockquote>
+<h2 id="delete一个非new-expressions创建的对象"><a href="#delete一个非new-expressions创建的对象" class="headerlink" title="delete一个非new-expressions创建的对象"></a>delete一个非new-expressions创建的对象</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">A</span>()&#123;cout&lt;&lt;<span class="string">&quot;A::counstructor&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">	~<span class="built_in">A</span>()&#123;cout&lt;&lt;<span class="string">&quot;A::destructor&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">	<span class="comment">// AObj conversion to A*</span></span><br><span class="line">	<span class="keyword">operator</span> A*()&#123;</span><br><span class="line">		cout&lt;&lt;<span class="string">&quot;A::convertionToA*&quot;</span>&lt;&lt;endl;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">A Aobj;</span><br><span class="line"><span class="comment">// implicitly converted to a pointer to object type.</span></span><br><span class="line"><span class="keyword">delete</span> Aobj;</span><br><span class="line"><span class="comment">// equivalent to</span></span><br><span class="line"><span class="keyword">delete</span> &amp;Aobj;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>If of class type, the operand is contextually implicitly converted (Clause 4) to a pointer to object type.</p>
+</blockquote>
+<p>delete一个非new-expressions创建的对象的行为是<strong>未定义的</strong>。</p>
+<blockquote>
+<p>In the first alternative (delete object), the value of the operand of delete may be a null pointer value, a pointer to a non-array object created by a previous new-expression, or a pointer to a subobject (1.8) representing a base class of such an object (Clause 10). If not, the behavior is undefined.</p>
+</blockquote>
+<h2 id="C-Library的内存管理函数不会调用new-delete"><a href="#C-Library的内存管理函数不会调用new-delete" class="headerlink" title="C Library的内存管理函数不会调用new/delete"></a>C Library的内存管理函数不会调用new/delete</h2><blockquote>
+<p>The functions <code>calloc()</code>, <code>malloc()</code>, and <code>realloc()</code> do not attempt to allocate storage by calling <code>::operator new()</code>.<br>The function <code>free()</code> does not attempt to deallocate storage by calling <code>::operator delete()</code>.</p>
+</blockquote>
+<p>如果非要用malloc来分配内存的话可以用<code>placement new</code>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">A</span>(<span class="type">int</span> z):<span class="built_in">x</span>(z)&#123;cout&lt;&lt;<span class="string">&quot;A::constructor&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">	~<span class="built_in">A</span>()&#123;cout&lt;&lt;<span class="string">&quot;A::destructor&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">	<span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	A *x=(A*)<span class="built_in">malloc</span>(<span class="built_in">sizeof</span>(A));</span><br><span class="line">	::<span class="keyword">new</span>(x) <span class="built_in">A</span>(<span class="number">11</span>);</span><br><span class="line">	cout&lt;&lt;x-&gt;x&lt;&lt;endl;</span><br><span class="line">	<span class="built_in">free</span>(x);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* output</span></span><br><span class="line"><span class="comment">A::constructor</span></span><br><span class="line"><span class="comment">11</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="数组名不是指针"><a href="#数组名不是指针" class="headerlink" title="数组名不是指针"></a>数组名不是指针</h2><p>在<a href="https://imzlp.com/posts/20449/">数组下标访问背后隐含的逻辑</a>中提到了数组名并不是指向数组中首个元素的地址。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x[<span class="number">3</span>][<span class="number">5</span>];</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Here x is a 3 × 5 array of integers. When x appears in an expression, it is converted to a pointer to (the first of three) five-membered arrays of integers. In the expression x[i] which is equivalent to *(x+i), x is first converted to a pointer as described;then x+i is converted to the type of x, which involves multiplying i by the length of the object to which the pointer points, namely five integer objects.</p>
+</blockquote>
+<h2 id="C-and-ISO-C"><a href="#C-and-ISO-C" class="headerlink" title="C++ and ISO C"></a>C++ and ISO C</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/19242/C++.and.ISO.C.pdf" data-height="700px"></div>
+
+<h2 id="C-11标准中的兼容特性"><a href="#C-11标准中的兼容特性" class="headerlink" title="C++11标准中的兼容特性"></a>C++11标准中的兼容特性</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/19242/ISOIEC.14882.2014.Annex.D.Compatibility.features.pdf" data-height="700px"></div>
+
+<h2 id="野指针-Wild-Pointer-和悬垂指针-Dangling-Pointer"><a href="#野指针-Wild-Pointer-和悬垂指针-Dangling-Pointer" class="headerlink" title="野指针(Wild Pointer)和悬垂指针(Dangling Pointer)"></a>野指针(Wild Pointer)和悬垂指针(Dangling Pointer)</h2><p>**野指针(Wild Pointer)**：是指未被初始化(no-initializer)的指针。</p>
+<blockquote>
+<p><em>ISO/IEC 14882:2014(E)</em><br>When storage for an object with automatic or dynamic storage duration is obtained, the object has an indeterminate value, and if no initialization is performed for the object, that object retains an indeterminate value until that value is replaced (5.17).<br>After the declaration of an uninitialized pointer x (as with int* x;), x must always be assumed to have a singular value of a pointer.</p>
+</blockquote>
+<p>可以看到，未对指针作初始化其值是未定义的。<br>**悬垂指针(Dangling Pointer)**：是指曾经指向有意义的地址，但此地址的内存已经被释放掉(被操作系统回收)。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> *ivalp=<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">11</span>);</span><br><span class="line"><span class="keyword">delete</span> ivalp;</span><br><span class="line"><span class="comment">// 对ivalp执行delete之后ivalp依旧指向原来的地址，此时ival就叫做悬垂指针。</span></span><br><span class="line"><span class="comment">// 对悬垂指针进行操作结果是未定义的，因为此块内存操作系统已经回收(虽然有时候对其操作仍旧是原来的值)。</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><em>ISO/IEC 9899:2011(E)</em><br>If an object is referred to outside of its lifetime, the behavior is undefined. The value of a pointer becomes indeterminate when the object it points to (or just past) reaches the end of its lifetime.</p>
+</blockquote>
+<h2 id="trivial-default-constructor"><a href="#trivial-default-constructor" class="headerlink" title="trivial default constructor"></a>trivial default constructor</h2><p>A default constructor is trivial if it is not user-provided and if:</p>
+<ol>
+<li>its class has no virtual functions (10.3) and no virtual base classes (10.1), and</li>
+<li>no non-static data member of its class has a brace-or-equal-initializer, and</li>
+<li>all the direct base classes of its class have trivial default constructors, and</li>
+<li>for all the non-static data members of its class that are of class type (or array thereof), each such class has a trivial default constructor.</li>
+</ol>
+<p>Otherwise, the default constructor is non-trivial.</p>
+<h2 id="原始字符串字面值常量-raw-string-literal"><a href="#原始字符串字面值常量-raw-string-literal" class="headerlink" title="原始字符串字面值常量(raw string literal)"></a>原始字符串字面值常量(raw string literal)</h2><p>以下两个表达式的结果一样。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">string s=<span class="string">&quot;\\w\\\\w&quot;</span>;</span><br><span class="line">string s1=<span class="string">R&quot;(\w\\w)&quot;</span>;</span><br></pre></td></tr></table></figure>
+<p>在原始字符串字面值常量中，反斜线就是反斜线，双引号就是双引号。不会被转义。<br>通常被使用在正则表达式中。<br>另外，<code>&quot;(</code>和<code>)&quot;</code>并不是唯一的分隔符，在<code>&quot;(...)&quot;</code>的框架中我们还可以在<code>(</code>之前和<code>)</code>之后加入其他分隔符。<br>规则要求：符号<code>)</code>之后的字符序列和<code>)</code>前面的序列完全一致。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">R&quot;***(&quot;THE STRING IS A TEST&quot;)***&quot;</span>;</span><br><span class="line"><span class="comment">// 等价于&quot;THE STRING IS A TEST&quot;</span></span><br></pre></td></tr></table></figure>
+<p>还有，在<code>原始字符串字面值常量</code>中允许出现换行，是真正的换行而不是换行符:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">string s=<span class="string">R&quot;(&quot;123</span></span><br><span class="line"><span class="string">	    456</span></span><br><span class="line"><span class="string">	    789&quot;)&quot;</span>;</span><br><span class="line"><span class="comment">// 等价于</span></span><br><span class="line">string s1=&#123;<span class="string">&quot;123\n456\n789\n&quot;</span>&#125;;</span><br></pre></td></tr></table></figure>
+<p>更多内容可以参照《C++程序设计语言》p5.5/p154</p>
+<h2 id="放置语法-placement"><a href="#放置语法-placement" class="headerlink" title="放置语法(placement)"></a>放置语法(placement)</h2><p>如果我们想把对象放置在别的地方，可以提供一个含有额外实参的分配函数。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">X</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">X</span>(<span class="type">int</span>);</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span>,<span class="type">void</span> *p)</span></span>&#123;<span class="keyword">return</span> p;&#125;</span><br><span class="line"><span class="comment">// 一个明确的地址</span></span><br><span class="line"><span class="type">void</span> buf=<span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="number">0xF00F</span>);</span><br><span class="line"><span class="comment">// 在buf处构建X，调用operator new(sizeof(X),buf)</span></span><br><span class="line"><span class="type">void</span>* p2=<span class="built_in">new</span>(buf) X;</span><br></pre></td></tr></table></figure>
+
+<p>更多内容参照：<br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/24091979/what-is-this-syntax-new-this-t">what is this syntax - new (this) T(); [duplicate]</a><br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2495485/using-new-this-to-reuse-constructors">Using new (this) to reuse constructors</a></p>
+<h2 id="override函数不会覆盖其原有默认参数"><a href="#override函数不会覆盖其原有默认参数" class="headerlink" title="override函数不会覆盖其原有默认参数"></a>override函数不会覆盖其原有默认参数</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">foo</span> <span class="params">(<span class="type">int</span> a = <span class="number">1</span>)</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;A&quot;</span> &lt;&lt; a;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span> : A &#123;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">foo</span> <span class="params">(<span class="type">int</span> a = <span class="number">2</span>)</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;B&quot;</span> &lt;&lt; a;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span> <span class="params">()</span> </span>&#123;</span><br><span class="line">    A *b = <span class="keyword">new</span> B;</span><br><span class="line">    b-&gt;<span class="built_in">foo</span>();</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// output</span></span><br><span class="line">B1</span><br></pre></td></tr></table></figure>
+<p>因为overrideing的函数不会覆盖其默认参数，所以在类B中定义的foo其默认参数仍然为1.</p>
+<blockquote>
+<p>A virtual function call (10.3) uses the default arguments in the declaration of the virtual function determined by the static type of the pointer or reference denoting the object. An overriding function in a derived class does not acquire default arguments from the function it overrides.</p>
+</blockquote>
+<h2 id="static是线程安全初始化的"><a href="#static是线程安全初始化的" class="headerlink" title="static是线程安全初始化的"></a>static是线程安全初始化的</h2><p><strong>[ISO/IEC 14882:2014(E) §6.8 P137]</strong></p>
+<blockquote>
+<p>If control enters the declaration concurrently while the variable is being initialized, the concurrent execution shall wait for completion of the initialization.<br>The implementation must not introduce any deadlock around execution of the initializer.</p>
+</blockquote>
+<p>static对象实际上是一个线程安全初始化的全局变量的糖。</p>
+<h2 id="non-local-static的初始化"><a href="#non-local-static的初始化" class="headerlink" title="non-local static的初始化"></a>non-local static的初始化</h2><blockquote>
+<p>[ISO/IEC 14882:2014 §3.6.2.4]It is implementation-defined whether the dynamic initialization of a non-local variable with static storage duration is done before the first statement of <code>main</code>.</p>
+</blockquote>
+<p>意思就是非局部static存储期变量的动态初始化在main函数的第一个语句执行之前完成(实现定义)。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line">  <span class="built_in">A</span>()&#123;cout&lt;&lt;<span class="string">&quot;A::constructor&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span>&#123;</span><br><span class="line">  <span class="built_in">B</span>()&#123;cout&lt;&lt;<span class="string">&quot;B::constructor&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="type">static</span> A a;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">  B b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// resault</span></span><br><span class="line">A::constructor</span><br><span class="line">B::constructor</span><br></pre></td></tr></table></figure>
+
+<h2 id="函数参数的求值顺序"><a href="#函数参数的求值顺序" class="headerlink" title="函数参数的求值顺序"></a>函数参数的求值顺序</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; x &lt;&lt; i;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    i = <span class="number">3</span>;</span><br><span class="line">    <span class="built_in">f</span>(i++);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>C++标准规定，函数实参的副作用求值在进入函数之前被排序。</p>
+<blockquote>
+<p>[ISO/IEC 14882:2014 §5.2.2.8] All side effects of argument evaluations are sequenced before the function is entered.</p>
+</blockquote>
+<p>所以上面代码的执行结果是34.<br>也可以从IR代码的角度来看一下编译器对这个特性的实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">define i32 @<span class="built_in">main</span>() #<span class="number">4</span> &#123;</span><br><span class="line">  store i32 <span class="number">3</span>, i32* @i, align <span class="number">4</span></span><br><span class="line">  %<span class="number">1</span> = load i32, i32* @i, align <span class="number">4</span></span><br><span class="line">  %<span class="number">2</span> = add nsw i32 %<span class="number">1</span>, <span class="number">1</span></span><br><span class="line">  store i32 %<span class="number">2</span>, i32* @i, align <span class="number">4</span></span><br><span class="line">  call <span class="type">void</span> @_Z1fi(i32 %<span class="number">1</span>)</span><br><span class="line">  ret i32 <span class="number">0</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，当我们在执行f(i++)的时候，编译器先将i自增，然后将未自增之前的值(%1)作为实参传递给f。而进入函数f后，因为static对象i的值已经在主函数中被修改(%2)，所以，在函数f中输出的值分别是3和4.</p>
+<h2 id="VLA不能具有初始化"><a href="#VLA不能具有初始化" class="headerlink" title="VLA不能具有初始化"></a>VLA不能具有初始化</h2><blockquote>
+<p>**[ISO/IEC 9899:1999]**The type of the entity to be initialized shall be an array of unknown size or an object type that is not a variable length array type.</p>
+</blockquote>
+<p>所以下面这样写是不对的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ivlan;</span><br><span class="line"><span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>,&amp;ivlan);</span><br><span class="line"><span class="type">int</span> ivla[ivlan]=&#123;<span class="number">0</span>&#125;;  <span class="comment">// Error</span></span><br></pre></td></tr></table></figure>
+<p>正确的做法是在运行时确定数组大小之后对其逐个成员赋值，可以使用<code>for循环</code>或者<code>memset</code>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> fuck;</span><br><span class="line"><span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>,&amp;fuck);</span><br><span class="line"><span class="type">int</span> ival[fuck];</span><br><span class="line"><span class="built_in">memset</span>((<span class="type">void</span>*)ival,<span class="number">0</span>,(<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span>)(fuck*<span class="built_in">sizeof</span>(<span class="type">int</span>)));</span><br></pre></td></tr></table></figure>
+
+<h2 id="template出现在-gt-以及-的右侧"><a href="#template出现在-gt-以及-的右侧" class="headerlink" title="template出现在./-&gt;以及::的右侧"></a>template出现在<code>.</code>/<code>-&gt;</code>以及<code>::</code>的右侧</h2><blockquote>
+<p>A name prefixed by the keyword template shall be a template-id or the name shall refer to a class template. [ Note: The keyword template may not be applied to non-template members of class templates. - end note ] [ Note: As is the case with the typename prefix, the template prefix is allowed in cases where it is not strictly necessary; i.e., when the nested-name-specifier or the expression on the left of the -&gt; or . is not dependent on a template-parameter, or the use does not appear in the scope of a template. - end note ]</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt; <span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">U</span>&gt; <span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(U)</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt; <span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">  A&lt;T&gt; a;</span><br><span class="line">  a.<span class="keyword">template</span> f&lt;&gt;(t); <span class="comment">// OK: calls template</span></span><br><span class="line">  a.<span class="function"><span class="keyword">template</span> <span class="title">f</span><span class="params">(t)</span></span>; <span class="comment">// error: not a template-id</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意要与typename区分，typename是出现时被限定的名字之前，而template则紧挨在模板名之前。</p>
+<h2 id="What-is-Object-in-C-Standard"><a href="#What-is-Object-in-C-Standard" class="headerlink" title="What is Object in C++ Standard?"></a>What is Object in C++ Standard?</h2><blockquote>
+<p><strong>[ISO/IEC 14882:2014]**An **object</strong> is a region of storage. [ Note: A function is not an object, regardless of whether or not it occupies storage in the way that objects do. - end note ] An object is created by a <strong>definition</strong> (3.1), by a <strong>new-expression</strong> (5.3.4) or by the implementation (12.2) when needed. The properties of an object are determined when the object is created.</p>
+</blockquote>
+<h2 id="多态在C-标准-C-14-中的描述"><a href="#多态在C-标准-C-14-中的描述" class="headerlink" title="多态在C++标准(C++14)中的描述"></a>多态在C++标准(C++14)中的描述</h2><p><strong>What is polymorphic?</strong></p>
+<blockquote>
+<p>Some objects are polymorphic (10.3); the implementation generates information associated with each such object that makes it possible to determine that object’s type during program execution.</p>
+</blockquote>
+<p><strong>What is polymorphic class?</strong></p>
+<blockquote>
+<p>Virtual functions support dynamic binding and object-oriented programming. A class that declares or inherits a virtual function is called a polymorphic class.</p>
+</blockquote>
+<p><strong>What is polymorphic behavior?</strong></p>
+<blockquote>
+<p>A base class subobject might have a polymorphic behavior (12.7) different from the polymorphic behavior of a most derived object of the same type.</p>
+</blockquote>
+<p>标准中并没有指定编译器应该用何种方式来实现多态，所以多态实现的方式还是依赖于编译器的实现。而大部分编译器都是通过维护一个<strong>虚函数表</strong>计算偏移实现的，如果代码中涉及直接对虚函数表的访问，那么代码几乎不具有可移植性(跨编译器)，所以你不能够假定所有的编译器对虚函数表的实现方式都相同(比如在多重继承中是否合并虚函数表)。</p>
+<h2 id="class-object-size"><a href="#class-object-size" class="headerlink" title="class object size"></a>class object size</h2><p>类类型的完整对象和成员子对象应具有非零大小。</p>
+<blockquote>
+<p>Complete objects and member subobjects of class type shall have nonzero size.(Base class subobjects are not so constrained.)</p>
+</blockquote>
+<p>类对象的基类子对象能够具有零大小。</p>
+<blockquote>
+<p>A base class subobject may be of zero size.</p>
+</blockquote>
+<p>以及对其sizeof的标准描述：</p>
+<blockquote>
+<p>The size of a most derived class shall be greater than zero (1.8).The result of applying sizeof to a base class subobject is the size of the base class type. When applied to an array, the result is the total number of bytes in the array. This implies that the size of an array of n elements is n times the size of an element.</p>
+</blockquote>
+<h2 id="引用不是指针"><a href="#引用不是指针" class="headerlink" title="引用不是指针"></a>引用不是指针</h2><p>之前在篇文章中看到作者分析了一下引用在编译器中实现的方式，然后信誓旦旦地说引用就是指针。这是不对的。<br>首先，看一下<code>g++/clang++</code>是怎么实现的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x=<span class="number">1234</span>;</span><br><span class="line"><span class="type">int</span> &amp;y=x;</span><br><span class="line"><span class="type">int</span> *z=&amp;x;</span><br></pre></td></tr></table></figure>
+<p>然后查看上面代码的LLVM-IR代码(已省略不相关的部分)：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">%6 = alloca i32, align 4</span><br><span class="line">%7 = alloca i32*, align 8</span><br><span class="line">%8 = alloca i32*, align 8</span><br><span class="line"></span><br><span class="line">store i32 1234, i32* %6, align 4</span><br><span class="line">store i32* %6, i32** %7, align 8</span><br><span class="line">store i32* %6, i32** %8, align 8</span><br></pre></td></tr></table></figure>
+<p>可以看到，引用在经过编译器之后和指针是一样的。但是这并不意味着引用就是指针。。</p>
+<blockquote>
+<p>**[ISO/IEC 14882:2014]**A reference can be thought of as a name of an object.</p>
+</blockquote>
+<p>还是那句话：C++中没有要求如何实现的特性都依赖于编译器实现，因此说引用就是指针有失偏颇。</p>
+<h2 id="this的类型"><a href="#this的类型" class="headerlink" title="this的类型"></a>this的类型</h2><blockquote>
+<p>*<em>[ISO/IEC 14882:2014]**The type of this in a member function of a class X is X</em>. If the member function is declared const, the type of this is const X*, if the member function is declared volatile, the type of this is volatile X*, and if the member function is declared const volatile, the type of this is const volatile X*.</p>
+</blockquote>
+<p>我翻阅了C++98/03/11/14的C++标准，发现这些版本的标准之间均没有什么区别。</p>
+<h2 id="typedef与using的区别"><a href="#typedef与using的区别" class="headerlink" title="typedef与using的区别"></a>typedef与using的区别</h2><p>使用<code>typedef</code>与<code>using</code>都能够定义一个类型别名，但是为什么会有功能如此相似的两个关键字呢？<br>对于using而言，它不仅仅可以引入别名，还可以引入一个名字空间到<code>name lookup</code>的范围。<br>从声明一个<code>alias</code>的角度来看，他们两者最重要的区别在于：能否定义模板别名。<code>typedef</code>能实现的<code>using</code>也都可以实现，反之则不行，我觉得C++中之所以保留<code>typedef</code>关键字的主要原因是要<strong>与C兼容</strong>。<br>来看C++标准中对于<code>typedef</code>的限制部分描述：</p>
+<blockquote>
+<p>**[ISO/IEC 14882:2014]**It has the same semantics as if it were introduced by the typedef specifier. In particular, it does not define a new type and it shall not appear in the type-id.</p>
+</blockquote>
+<p>想要使用模板别名(template alias)，只能用<code>using</code>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span>&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> VectorA=std::vector&lt;A&lt;T&gt;&gt;;</span><br><span class="line"></span><br><span class="line">VectorA&lt;<span class="type">int</span>&gt; x;</span><br><span class="line"><span class="comment">// 等价于</span></span><br><span class="line">std::vector&lt;A&lt;<span class="type">int</span>&gt;&gt; x;</span><br></pre></td></tr></table></figure>
+
+<h2 id="dynamic-cast转换失败"><a href="#dynamic-cast转换失败" class="headerlink" title="dynamic_cast转换失败"></a>dynamic_cast转换失败</h2><p>通过<code>dynamic_cast</code>转换指针和引用在转换失败时具有不同的行为，若使用指针转换失败时，会返回一个空指针，若使用引用转换失败时会抛出一个<code>std::bad_cast</code>异常，C++标准中的详细描述：</p>
+<blockquote>
+<p>**[ISO/IEC 14882:2014]**The value of a failed cast to pointer type is the null pointer value of the required result type. A failed cast to reference type throws an exception (15.1) of a type that would match a handler (15.3) of type <code>std::bad_cast</code> (18.7.2).</p>
+</blockquote>
+<h2 id="implementation-defined-behavior"><a href="#implementation-defined-behavior" class="headerlink" title="implementation-defined behavior"></a>implementation-defined behavior</h2><p>**[ISO/IEC 14882:2014]**中的Index of implementation-defined behavior:</p>
+<div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/19242/Cpp14-Index-of-implementation-define-bahavior.pdf" data-height="700px"></div>
+
+<h2 id="名字隐藏-name-hiding"><a href="#名字隐藏-name-hiding" class="headerlink" title="名字隐藏(name hiding)"></a>名字隐藏(name hiding)</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Astruct</span>&#123;</span><br><span class="line">  <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="type">int</span> Astruct=<span class="number">123</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  ::Astruct;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码有两个问题：</p>
+<ol>
+<li>在上面的代码中在global scope中使用标识符<code>Astruct</code>使用的标识符是类Astruct还是int对象Astruct？</li>
+<li>在main函数中使用global scope的<code>::Astruct</code>，那么使用的究竟标识符是类Astruct还是int对象Astruct呢？</li>
+</ol>
+<p>首先第一个问题的是，在global中使用标识符<code>Astruct</code>是类类型标识符：</p>
+<blockquote>
+<p>A class name (9.1) or enumeration name (7.2) can be hidden by the name of a variable, data member, function, or enumerator declared in the same scope. If a class or enumeration name and a variable, data member, function, or enumerator are declared in the same scope (in any order) with the same name, the class or enumeration name is hidden wherever the variable, data member, function, or enumerator name is visible.</p>
+</blockquote>
+<p>这表示在相同的scope中，类名字会隐藏所有的同名标识符。</p>
+<p>而第二个问题：在main函数中使用的<code>::Astruct</code>是int对象Astruct，如果想要使用类名字Astruct则需要显式指定：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> ::Astruct Aobj;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>A class declaration introduces the class name into the scope where it is declared and hides any class, variable, function, or other declaration of that name in an enclosing scope (3.3). If a class name is declared in a scope where a variable, function, or enumerator of the same name is also declared, then when both declarations are in scope, the class can be referred to only using an elaborated-type-specifier (3.4.4).</p>
+</blockquote>
+<h2 id="抽象基类的几种实现方式"><a href="#抽象基类的几种实现方式" class="headerlink" title="抽象基类的几种实现方式"></a>抽象基类的几种实现方式</h2><p>这里抽象基类的概念为<code>abstract classes</code>，C++标准里是这么描述的:</p>
+<blockquote>
+<p>An abstract class can also be used to define an interface for which derived classes provide a variety of implementations.<br>An abstract class is a class that can be used only as a base class of some other class; <strong>no objects of an abstract class can be created except as subobjects of a class derived from it. A class is abstract if it has at least one pure virtual function.</strong> [ Note: Such a function might be inherited: see below. — end note ]<br>A class is abstract if it contains or inherits at least one pure virtual function for which the final overrider is pure virtual.</p>
+</blockquote>
+<p>这里有两个概念：</p>
+<ol>
+<li>没有抽象类的对象能够创建，除非作为派生类的子对象</li>
+<li>带有最少一个纯虚函数</li>
+</ol>
+<p>纯虚函数并非是创建抽象类的唯一的方法，只要能够实现<strong>对象不能被创建</strong>，也可以算作抽象类。<br>可以通过将构造函数定义为<code>protected</code>来实现(因为派生类的构造函数会调用基类的构造函数，所以我们要确保派生类具有访问权限)：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line">  <span class="built_in">A</span>()&#123;&#125;</span><br><span class="line">  <span class="built_in">A</span>(<span class="type">const</span> A&amp;)&#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>当然这种方法太粗暴了。<br>同样用这种方法也可以实现以下两种操作(飞继承层次下可以定义为private)：</p>
+<ul>
+<li>只能在栈区分配对象，将<code>operator new</code>和<code>operator delete</code>成员函数定义为protected。</li>
+<li>只能在堆区分配对象，将<code>destructor</code>成员函数定义为protected。</li>
+</ul>
+<p>如果实在没有需要将成员函数定义为纯虚函数的理由，也可以把析构函数定义为纯虚函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span>&#123;</span><br><span class="line">  <span class="keyword">virtual</span> ~<span class="built_in">A</span>()=<span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line">A::~A&#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>其实这样并不是一个好主意，因为派生类的析构函数会隐式调用基类的析构函数，所以当我们将一个析构函数定义为纯虚函数时，就必须为它提供一个实现，否则就会产生一个链接错误，但是这就违背了纯虚函数的定义：</p>
+<blockquote>
+<p>A function declaration cannot provide both a pure-specifier and a definition.</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">C</span> &#123;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">f</span><span class="params">()</span> </span>= <span class="number">0</span> &#123; &#125;; <span class="comment">// ill-formed</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>所以，在C++中实现一个行为的方式有很多种，但是不是每一种都是最好的，为了适合自己的需求。</p>
+<h2 id="指针比较的行为"><a href="#指针比较的行为" class="headerlink" title="指针比较的行为"></a>指针比较的行为</h2><p>Comparing pointers to objects is defined as follows:</p>
+<ul>
+<li>If two pointers point to different elements of the same array, or to subobjects thereof, the pointer to the element with the higher subscript compares greater.</li>
+<li>If one pointer points to an element of an array, or to a subobject thereof, and another pointer points one past the last element of the array, the latter pointer compares greater.</li>
+<li>If two pointers point to different non-static data members of the same object, or to subobjects of such members, recursively, the pointer to the later declared member compares greater provided the two members have the same access control (Clause 11) and provided their class is not a union.</li>
+</ul>
+<h2 id="subobjects-in-C"><a href="#subobjects-in-C" class="headerlink" title="subobjects in C++"></a>subobjects in C++</h2><blockquote>
+<p><strong>[ISO/IEC 14882：2014]**Objects can contain other objects, called **subobjects</strong>. A subobject can be a <strong>member subobject</strong> (9.2), a <strong>base class subobject</strong> (Clause 10), or an <strong>array element</strong>.</p>
+</blockquote>
+<p>从这个角度来看如果想要在C中实现<strong>继承</strong>数据成员，只需要在<code>struct derived</code>中包含一个<code>struct base</code>成员即可。<br>使用C来尝试实现OO的特性，很有意思，这段时间分析一下写篇文章出来。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/19242/" target="_blank">C/C++标准的一些摘录</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2016年11月12日 01时19分<br/>
+             
+              <span>更新时间:</span>2017年04月05日 15时19分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有43k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/19242/" target="_blank" title="C/C++标准的一些摘录">https://imzlp.com/posts/19242/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/19242/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E6%A0%87%E5%87%86%E8%A7%A3%E8%AF%BB/" rel="tag"># 标准解读</a>
+              <a href="/tags/C-%E6%A0%87%E5%87%86/" rel="tag"># C++标准</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/409/" rel="prev" title="TC++PL4E中英版勘误">
+      <i class="fa fa-chevron-left"></i> TC++PL4E中英版勘误
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/10205/" rel="next" title="CppQuiz一些有趣的题和分析">
+      CppQuiz一些有趣的题和分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#exit-behavior"><span class="nav-number">1.</span> <span class="nav-text">exit() behavior</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#return-statement"><span class="nav-number">2.</span> <span class="nav-text">return statement</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#non-deduced-context"><span class="nav-number">3.</span> <span class="nav-text">non-deduced context</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E6%97%B6%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="nav-number">4.</span> <span class="nav-text">构造和析构时抛出异常</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E6%9E%90%E6%9E%84%E6%97%B6%E7%9A%84%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F"><span class="nav-number">5.</span> <span class="nav-text">对象析构时的执行顺序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%E6%97%B6%E7%9A%84%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F"><span class="nav-number">6.</span> <span class="nav-text">对象构造时的执行顺序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B1%BB%E7%9A%84%E5%86%85%E7%BD%AE%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E6%88%90%E5%91%98%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">7.</span> <span class="nav-text">类的内置类型数据成员初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Undefined-Behavior"><span class="nav-number">8.</span> <span class="nav-text">Undefined Behavior</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B1%82%E5%80%BC%E9%A1%BA%E5%BA%8F"><span class="nav-number">9.</span> <span class="nav-text">求值顺序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AD%E5%8C%85-closure"><span class="nav-number">10.</span> <span class="nav-text">闭包(closure)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lvalue-and-rvalue"><span class="nav-number">11.</span> <span class="nav-text">Lvalue and rvalue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E9%80%A0%E4%B8%8D%E5%85%81%E8%AE%B8int-gt-double%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="nav-number">12.</span> <span class="nav-text">{}构造不允许int-&gt;double的原因</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#char%E5%B8%A6%E4%B8%8D%E5%B8%A6%E7%AC%A6%E5%8F%B7%E7%94%B1%E5%AE%9E%E7%8E%B0%E5%AE%9A%E4%B9%89"><span class="nav-number">13.</span> <span class="nav-text">char带不带符号由实现定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0%E7%9A%84%E5%87%A0%E4%B8%AA%E5%8F%8D%E4%BE%8B"><span class="nav-number">14.</span> <span class="nav-text">默认参数的几个反例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%87%A0%E7%A7%8D%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="nav-number">15.</span> <span class="nav-text">对象的几种初始化方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#zero-initialize"><span class="nav-number">16.</span> <span class="nav-text">zero-initialize</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#default-initialize"><span class="nav-number">17.</span> <span class="nav-text">default-initialize</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#value-initialize"><span class="nav-number">18.</span> <span class="nav-text">value-initialize</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Initialization-of-non-local-variables"><span class="nav-number">19.</span> <span class="nav-text">Initialization of non-local variables</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#value-and-or-reference-semantics"><span class="nav-number">20.</span> <span class="nav-text">value and&#x2F;or reference semantics</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Increment-and-decrement-prefix-and-postfix"><span class="nav-number">21.</span> <span class="nav-text">Increment and decrement(prefix and postfix)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Argument-dependent-name-lookup-ADL"><span class="nav-number">22.</span> <span class="nav-text">Argument-dependent name lookup(ADL)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sizeof-non-member-class"><span class="nav-number">23.</span> <span class="nav-text">sizeof(non-member-class)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B4%BE%E7%94%9F%E7%B1%BB%E6%95%B0%E7%BB%84%E8%BD%AC%E6%8D%A2%E4%B8%BA%E5%9F%BA%E7%B1%BB%E6%8C%87%E9%92%88%E5%90%8E%E7%9A%84%E7%AE%97%E6%95%B0%E8%BF%90%E7%AE%97"><span class="nav-number">24.</span> <span class="nav-text">派生类数组转换为基类指针后的算数运算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#copy-assignment-operator"><span class="nav-number">25.</span> <span class="nav-text">copy assignment operator</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%A6%81%E5%9C%A8%E5%9F%BA%E7%B1%BB%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E4%B8%AD%E8%B0%83%E7%94%A8%E8%99%9A%E5%87%BD%E6%95%B0%E6%9C%9F%E5%BE%85%E5%A4%9A%E6%80%81%E8%A1%8C%E4%B8%BA"><span class="nav-number">26.</span> <span class="nav-text">不要在基类构造函数中调用虚函数期待多态行为</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lifetimes-of-objects"><span class="nav-number">27.</span> <span class="nav-text">lifetimes of objects</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%99%E4%B8%B4%E6%97%B6%E5%AF%B9%E8%B1%A1%E7%BB%AD%E5%91%BD%E4%B9%8Bconst-T-amp"><span class="nav-number">28.</span> <span class="nav-text">给临时对象续命之const T&amp;</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Point-of-dealaration"><span class="nav-number">29.</span> <span class="nav-text">Point of dealaration</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#declaration-and-define"><span class="nav-number">30.</span> <span class="nav-text">declaration and define</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#template-default-arguments"><span class="nav-number">31.</span> <span class="nav-text">template default arguments</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#static-object-initialized-of-C"><span class="nav-number">32.</span> <span class="nav-text">static object initialized of C</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#compound-literal-of-C"><span class="nav-number">33.</span> <span class="nav-text">compound literal of C</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#noreturn-attribute"><span class="nav-number">34.</span> <span class="nav-text">[[noreturn]] attribute</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#five-ways-of-exiting-a-function"><span class="nav-number">35.</span> <span class="nav-text">five ways of exiting a function</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E5%9E%8B-%E6%B5%AE%E7%82%B9%E5%AD%97%E9%9D%A2%E5%80%BC%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">36.</span> <span class="nav-text">整型&#x2F;浮点字面值的类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C%E5%92%8CC-%E4%B8%ADsizeof%E8%AE%A1%E7%AE%97%E6%9C%9F%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">37.</span> <span class="nav-text">C和C++中sizeof计算期的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C%E5%92%8CC-%E7%9A%84%E5%85%B3%E7%B3%BB-%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97%E7%AC%A6%E7%BB%93%E6%9E%9C%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">38.</span> <span class="nav-text">C和C++的关系&#x2F;逻辑运算符结果的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Relational-operators"><span class="nav-number">39.</span> <span class="nav-text">Relational operators</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Equality-operators"><span class="nav-number">40.</span> <span class="nav-text">Equality operators</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Conditional-expressions"><span class="nav-number">41.</span> <span class="nav-text">Conditional expressions</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Logical-operator"><span class="nav-number">42.</span> <span class="nav-text">Logical operator</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#delete%E4%B8%80%E4%B8%AA%E9%9D%9Enew-expressions%E5%88%9B%E5%BB%BA%E7%9A%84%E5%AF%B9%E8%B1%A1"><span class="nav-number">43.</span> <span class="nav-text">delete一个非new-expressions创建的对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C-Library%E7%9A%84%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E5%87%BD%E6%95%B0%E4%B8%8D%E4%BC%9A%E8%B0%83%E7%94%A8new-delete"><span class="nav-number">44.</span> <span class="nav-text">C Library的内存管理函数不会调用new&#x2F;delete</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E7%BB%84%E5%90%8D%E4%B8%8D%E6%98%AF%E6%8C%87%E9%92%88"><span class="nav-number">45.</span> <span class="nav-text">数组名不是指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C-and-ISO-C"><span class="nav-number">46.</span> <span class="nav-text">C++ and ISO C</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C-11%E6%A0%87%E5%87%86%E4%B8%AD%E7%9A%84%E5%85%BC%E5%AE%B9%E7%89%B9%E6%80%A7"><span class="nav-number">47.</span> <span class="nav-text">C++11标准中的兼容特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8E%E6%8C%87%E9%92%88-Wild-Pointer-%E5%92%8C%E6%82%AC%E5%9E%82%E6%8C%87%E9%92%88-Dangling-Pointer"><span class="nav-number">48.</span> <span class="nav-text">野指针(Wild Pointer)和悬垂指针(Dangling Pointer)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#trivial-default-constructor"><span class="nav-number">49.</span> <span class="nav-text">trivial default constructor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E5%A7%8B%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%AD%97%E9%9D%A2%E5%80%BC%E5%B8%B8%E9%87%8F-raw-string-literal"><span class="nav-number">50.</span> <span class="nav-text">原始字符串字面值常量(raw string literal)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%BE%E7%BD%AE%E8%AF%AD%E6%B3%95-placement"><span class="nav-number">51.</span> <span class="nav-text">放置语法(placement)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#override%E5%87%BD%E6%95%B0%E4%B8%8D%E4%BC%9A%E8%A6%86%E7%9B%96%E5%85%B6%E5%8E%9F%E6%9C%89%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="nav-number">52.</span> <span class="nav-text">override函数不会覆盖其原有默认参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#static%E6%98%AF%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E5%88%9D%E5%A7%8B%E5%8C%96%E7%9A%84"><span class="nav-number">53.</span> <span class="nav-text">static是线程安全初始化的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#non-local-static%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">54.</span> <span class="nav-text">non-local static的初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0%E7%9A%84%E6%B1%82%E5%80%BC%E9%A1%BA%E5%BA%8F"><span class="nav-number">55.</span> <span class="nav-text">函数参数的求值顺序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VLA%E4%B8%8D%E8%83%BD%E5%85%B7%E6%9C%89%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">56.</span> <span class="nav-text">VLA不能具有初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#template%E5%87%BA%E7%8E%B0%E5%9C%A8-gt-%E4%BB%A5%E5%8F%8A-%E7%9A%84%E5%8F%B3%E4%BE%A7"><span class="nav-number">57.</span> <span class="nav-text">template出现在.&#x2F;-&gt;以及::的右侧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#What-is-Object-in-C-Standard"><span class="nav-number">58.</span> <span class="nav-text">What is Object in C++ Standard?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E6%80%81%E5%9C%A8C-%E6%A0%87%E5%87%86-C-14-%E4%B8%AD%E7%9A%84%E6%8F%8F%E8%BF%B0"><span class="nav-number">59.</span> <span class="nav-text">多态在C++标准(C++14)中的描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#class-object-size"><span class="nav-number">60.</span> <span class="nav-text">class object size</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E7%94%A8%E4%B8%8D%E6%98%AF%E6%8C%87%E9%92%88"><span class="nav-number">61.</span> <span class="nav-text">引用不是指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#this%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">62.</span> <span class="nav-text">this的类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#typedef%E4%B8%8Eusing%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">63.</span> <span class="nav-text">typedef与using的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dynamic-cast%E8%BD%AC%E6%8D%A2%E5%A4%B1%E8%B4%A5"><span class="nav-number">64.</span> <span class="nav-text">dynamic_cast转换失败</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#implementation-defined-behavior"><span class="nav-number">65.</span> <span class="nav-text">implementation-defined behavior</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8D%E5%AD%97%E9%9A%90%E8%97%8F-name-hiding"><span class="nav-number">66.</span> <span class="nav-text">名字隐藏(name hiding)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%BD%E8%B1%A1%E5%9F%BA%E7%B1%BB%E7%9A%84%E5%87%A0%E7%A7%8D%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F"><span class="nav-number">67.</span> <span class="nav-text">抽象基类的几种实现方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%87%E9%92%88%E6%AF%94%E8%BE%83%E7%9A%84%E8%A1%8C%E4%B8%BA"><span class="nav-number">68.</span> <span class="nav-text">指针比较的行为</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#subobjects-in-C"><span class="nav-number">69.</span> <span class="nav-text">subobjects in C++</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/19242/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="C和C++均使用分离编译来支持多源文件模块化机制，但是为什么这么做以及如何做是个值得探讨的问题。本篇文章并非是讲述C和C++中如何才能产生不同链接的语法规则，而是分析下C&#x2F;C++编译器是如何实现编译和链接模型的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#x2F;C++编译和链接模型分析">
+<meta property="og:url" content="https://imzlp.com/posts/27118/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="C和C++均使用分离编译来支持多源文件模块化机制，但是为什么这么做以及如何做是个值得探讨的问题。本篇文章并非是讲述C和C++中如何才能产生不同链接的语法规则，而是分析下C&#x2F;C++编译器是如何实现编译和链接模型的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/gcc-compiler-linkage.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/linkage-draft.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/linkage-error.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineError.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineError-1.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineSymbol.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineJusyReferenceHeader.webp">
+<meta property="article:published_time" content="2017-04-10T23:05:44.000Z">
+<meta property="article:modified_time" content="2017-07-02T00:18:53.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="技术笔记">
+<meta property="article:tag" content="C语言">
+<meta property="article:tag" content="编程笔记">
+<meta property="article:tag" content="编译模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/27118/gcc-compiler-linkage.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/27118/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>C/C++编译和链接模型分析 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/27118/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C/C++编译和链接模型分析<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2017-04-10-27118.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-04-10 23:05 23:05:44:05" itemprop="dateCreated datePublished" datetime="2017-04-10T23:05:44+00:00">2017-04-10 23:05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2017-07-02 00:18 00:18:53:18" itemprop="dateModified" datetime="2017-07-02T00:18:53+00:00">2017-07-02 00:18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">技术笔记</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/" itemprop="url" rel="index"><span itemprop="name">编译和链接</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/27118/" class="post-meta-item leancloud_visitors" data-flag-title="C/C++编译和链接模型分析" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>20 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>C和C++均使用分离编译来支持多源文件模块化机制，但是为什么这么做以及如何做是个值得探讨的问题。本篇文章并非是讲述C和C++中如何才能产生不同链接的语法规则，而是分析下C/C++编译器是如何实现编译和链接模型的。</p>
+<span id="more"></span>
+<p>在介绍下面的内容之前先来了解一下<code>Translation environment</code>的概念：</p>
+<blockquote>
+<p><strong>[ISO/IEC 9899:1999]**A C program need not all be translated at the same time.The text of the program is kept in units called **source files</strong>, (or <strong>preprocessing files</strong>) in this International Standard.A source file together with all the headers and source files included via the preprocessing directive <code>#include</code> is known as a <strong>preprocessing translation unit</strong>. After preprocessing, a preprocessing translation unit is called a <strong>translation unit</strong>.<br>Previously translated translation units may be preserved individually or in libraries. The separate translation units of a program communicate by (for example) calls to functions whose identifiers have external linkage, manipulation of objects whose identifiers have external linkage, or manipulation of data files. Translation units may be separately translated and then later linked to produce an executable program.</p>
+</blockquote>
+<p>主要要明白<code>翻译单元(translation unit)</code>的概念，既是源文件通过预处理器之后产生的代码(所有的<code>#define</code>宏被替换，条件编译<code>#ifndef/#endif</code>以及<code>#include</code>的文件被包含进来)。<br>如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;helloworld!\n&quot;</span>);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过预处理器之后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 文章后面会讲到gcc的这些参数的含义</span></span><br><span class="line">$ gcc -E main.c -o main.i</span><br></pre></td></tr></table></figure>
+<p>输出的文件<code>main.i</code>即是<code>main.c</code>通过预处理器之后的翻译单元，它包含头文件<code>stdio.h</code>中的所有文本以及<code>main.c</code>中的所有文本。<br>碍于篇幅，不在本篇文章中贴出<code>main.i</code>的信息，我将其放在的Gist上:<a target="_blank" rel="noopener" href="https://gist.github.com/hxhb/90895562d662a1e575cd2c5e7e45aa86#file-main-i">hxhb/main.i</a>，可以在里面看到<code>main.c</code>经过预处理器之后的状态。<br>本文主要讨论的内容也即是在不同的翻译单元里如何引用相同符号(链接模型)。</p>
+<h3 id="分离编译"><a href="#分离编译" class="headerlink" title="分离编译"></a>分离编译</h3><p>C和C++中源代码不是直接一步被编译为操作系统可执行的<strong>可执行目标文件(executable object file)**的，而是通过几个步骤来实现的</strong>分离编译<strong>——多个源文件被分别编译成几个单独的模块(一个程序具有多个翻译单元)，最后在统一把这几个模块拼接(**链接linkage</strong>)起来，才组成了可执行的二进制。(后面会提到声明与定义分离的原因)</p>
+<p>C++中也使用了相同的编译模型，是从C中继承来的，原因在于C++要设计之初的目的之一就是<strong>与C兼容</strong>(还有<strong>零开销</strong>(如果不使用语言的某一部分特性不应该被带来额外的开销)以及<strong>值语义</strong>(对象拷贝之后就与源对象无关))，详情可看C++之父Bjarne的著作<a target="_blank" rel="noopener" href="https://book.douban.com/subject/1456860/">《The Design and Evolution of C++》</a>。</p>
+<blockquote>
+<p>“与C兼容”这个含义很丰富，不仅仅是兼容C的语法，更重要的是兼容C语言的编译模型与运行模型，也就是说能直接使用C语言的文件和库。——陈硕《Linux多线程服务端编程：使用muduo C++网络库》</p>
+</blockquote>
+<p>实际上C++的编译模型要比C的复杂得多，本文旨在提供一种分离编译的概念及实现方式，更具体地内容我会写在后续的文章中。</p>
+<p>早期的C语言编译器并不是一个单独的程序(现在的编译器也很多是由单独功能的程序模块组成的编译工具链)，<strong>Dennis Ritchie</strong>为<strong>PDP-11</strong>编写的C语言编译器是七个可执行文件组成的：<strong>cc</strong>/<strong>cpp</strong>/<strong>as</strong>/<strong>ld</strong>/<strong>c0</strong>/<strong>c1</strong>/<strong>c2</strong>。</p>
+<h3 id="为什么要这么做？"><a href="#为什么要这么做？" class="headerlink" title="为什么要这么做？"></a>为什么要这么做？</h3><p>其实主要原因是早期的计算机性能十分有限，而上面所提到的<strong>Dennis Ritchie</strong>最初所使用的<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PDP-11"><strong>PDP-11</strong></a>只有24KB内存，其中16KB运行操作系统，8KB运行用户代码，所以碍于性能限制编译器没办法在内存里完整地表示单个源文件的抽象语法树，更不可能把整个编译器运行在内存里。所以，由于内存限制，C语言使用分离式编译，可以分别地编译多个源文件，生成多个目标文件，然后再想办法将他们组合到一起(链接)，使之可以在有限地内存中完整编译出一个可执行文件。</p>
+<h3 id="GCC编译器"><a href="#GCC编译器" class="headerlink" title="GCC编译器"></a>GCC编译器</h3><p>现代编译器(GCC/Clang)则也通常由<strong>预处理器</strong>、<strong>编译器</strong>、<strong>汇编器</strong>、<strong>链接器</strong>四部分组成。<br>可以在GCC的<code>gcc --help</code>中看到相关编译参数及其含义：</p>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">-E</td>
+<td align="center">Preprocess only; do not compile, assemble or link.</td>
+</tr>
+<tr>
+<td align="center">-S</td>
+<td align="center">Compile only; do not assemble or link.</td>
+</tr>
+<tr>
+<td align="center">-c</td>
+<td align="center">Compile and assemble, but do not link.</td>
+</tr>
+<tr>
+<td align="center">-o &lt;file&gt;</td>
+<td align="center">Place the output into &lt;file&gt;.</td>
+</tr>
+<tr>
+<td align="center">-pie</td>
+<td align="center">Create a position independent executable.</td>
+</tr>
+<tr>
+<td align="center">-shared</td>
+<td align="center">Create a shared library.</td>
+</tr>
+<tr>
+<td align="center">-x &lt;language&gt;</td>
+<td align="center">Specify the language of the following input files.<br/>Permissible languages include: c c++ assembler none’none’ means revert to the default behavior ofguessing the language based on the file’s extension.</td>
+</tr>
+<tr>
+<td align="center">-Wl,&lt;options&gt;</td>
+<td align="center">Pass comma-separated &lt;options&gt; on to the linker.<br/> 在生成动态链接库的时候可以传递给链接器参数生成导入库</td>
+</tr>
+</tbody></table>
+<p><strong>ld</strong>(linker)的参数(<code>ld --help</code>)：</p>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">–out-implib &lt;file&gt;</td>
+<td align="center">Generate import library<br/>生成共享库的导入库</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>注：动态链接库一般需要生成一个导入库，方便静态程序编译时来载入动态链接库，否则就需要自己LoadLibrary来载入DLL文件，并使用GetProcAddress来获取对应的函数指针(DLL)。</p>
+<p>有了导入库，只需要在编译代码时链接进来导入库，就在包含动态链接库的头文件后直接在代码中使用动态链接库的函数了。</p>
+</blockquote>
+<p><strong>ldd</strong>：输出程序依赖的共享库，用法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">$ ldd main.exe</span><br><span class="line">  ntdll.dll =&gt; /c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffa14b80000)</span><br><span class="line">  KERNEL32.DLL =&gt; /c/WINDOWS/System32/KERNEL32.DLL (0x7ffa12b00000)</span><br><span class="line">  KERNELBASE.dll =&gt; /c/WINDOWS/System32/KERNELBASE.dll (0x7ffa11d90000)</span><br><span class="line">  msvcrt.dll =&gt; /c/WINDOWS/System32/msvcrt.dll (0x7ffa128a0000)</span><br><span class="line">  dynamicLib.dll =&gt; /c/Users/visionsmile/Desktop/a/dynamicLib.dll (0x64740000)</span><br><span class="line">  libstdc++-6.dll =&gt; /mingw64/bin/libstdc++-6.dll (0x6fc40000)</span><br><span class="line">  USER32.dll =&gt; /c/WINDOWS/System32/USER32.dll (0x7ffa14060000)</span><br><span class="line">  win32u.dll =&gt; /c/WINDOWS/System32/win32u.dll (0x7ffa11730000)</span><br><span class="line">  GDI32.dll =&gt; /c/WINDOWS/System32/GDI32.dll (0x7ffa12bc0000)</span><br><span class="line">  gdi32full.dll =&gt; /c/WINDOWS/System32/gdi32full.dll (0x7ffa117b0000)</span><br><span class="line">  msvcp_win.dll =&gt; /c/WINDOWS/System32/msvcp_win.dll (0x7ffa11950000)</span><br><span class="line">  libwinpthread-1.dll =&gt; /mingw64/bin/libwinpthread-1.dll (0x64940000)</span><br><span class="line">  ucrtbase.dll =&gt; /c/WINDOWS/System32/ucrtbase.dll (0x7ffa11c90000)</span><br><span class="line">  libgcc_s_seh-1.dll =&gt; /mingw64/bin/libgcc_s_seh-1.dll (0x61440000)</span><br></pre></td></tr></table></figure>
+
+<p><strong>简单地说</strong>，gcc中编译一个源文件需要四步：</p>
+<ol>
+<li>预处理(-E)</li>
+<li>编译器(-S)</li>
+<li>目标文件(-c)，</li>
+<li>链接(无参)</li>
+</ol>
+<p>看到上面的东西可能会有点绕，但是简单来说，允许分离编译的含义在于：多源文件模块化机制。即我可以在我当前的模块源文件中使用其他源文件中的代码，而不用把所有的代码都放到单一的源文件中。<br>就像书籍中的交叉引用一样，我告诉你另一本书的第几章第几小节讲述了一个什么东西，我在当前的文章中引用到了它所定义的概念，其相关的含义你需要去翻我所指定的那本书才能知道它所代表的是什么。</p>
+<p>TCPL中关于链接中内部链接和外部链接的介绍：</p>
+<blockquote>
+<p>Within a translation unit, all declarations of the same object or function identifier with internal linkage refer to the same thing, and the object or function is unique to that translation unit. All declarations for the same object or function identifier with external linkage refer to the same thing, and the object or function is shared by the entire program.</p>
+</blockquote>
+<p>注意：C语言中函数声明(没有指定链接)具有隐式的外部链接。</p>
+<blockquote>
+<p>**[ISO/IEC 9899:1999]**If no prior declaration is visible, or if the prior declaration specifies no linkage, then the identifier has external linkage.</p>
+</blockquote>
+<p>这意味着：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span> <span class="title">max</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">max</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>两者之间具有相同的含义。</p>
+<blockquote>
+<p>如果想要显式指定一个标识符为内部链接(internal linkage)，可以将其声明为<code>static</code>.<br>**[ISO/IEC 9899:1999]**A function declaration can contain the storage-class specifier static only if it is at file scope;</p>
+</blockquote>
+<h3 id="编译链接实例"><a href="#编译链接实例" class="headerlink" title="编译链接实例"></a>编译链接实例</h3><p>在C语言中使用<code>extern</code>关键字来指定一个名字具有外部链接：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.c</span></span><br><span class="line"><span class="keyword">extern</span> <span class="type">int</span> <span class="title function_">max</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span>&#123;</span><br><span class="line">  max(<span class="number">11</span>,<span class="number">12</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而函数<code>int max(int,int)</code>的实现(<strong>define</strong>)是在另一个文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// maxDefine.c</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">max</span><span class="params">(<span class="type">int</span> x,<span class="type">int</span> y)</span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x&gt;=y?x:y;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>利用上文中写到的编译四步，我们来尝试一下使用<strong>分离编译</strong>来手动编译和链接这两个源文件。</p>
+<p>首先，先对其中的一个源文件执行<strong>预处理</strong>(#include/条件编译/宏展开)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将预处理之后的文件放至main.i</span></span><br><span class="line">$ gcc -E main.c -o main.i</span><br></pre></td></tr></table></figure>
+
+<p>然后对预处理后的文件执行<strong>编译</strong>(从预处理文件生成汇编代码)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将编译后的结果放至main.s</span></span><br><span class="line">$ gcc -S main.i -o main.s</span><br></pre></td></tr></table></figure>
+
+<p>由上一步得到的汇编代码<code>main.s</code>使用<code>-c</code>来生成目标文件(从汇编代码生成目标文件)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将目标文件存储为main.o</span></span><br><span class="line">$ gcc -c main.s -o main.o</span><br></pre></td></tr></table></figure>
+<p>可以看到分别生成了main.i/main.s/main.o三个文件：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/gcc-compiler-linkage.webp" alt="gcc-compiler-linkage"></p>
+<p>然后对<code>maxDefine.c</code>也执行同样的操作，同样也会生成maxDefine.o，接下来我们来尝试链接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 无参gcc/g++为链接目标文件</span></span><br><span class="line">$ gcc main.o maxDefine.o</span><br></pre></td></tr></table></figure>
+
+<p>不出意外，会在当前目录下生成一个<code>a.exe</code>，这就是我们需要的可执行程序。</p>
+<h3 id="链接是什么行为？"><a href="#链接是什么行为？" class="headerlink" title="链接是什么行为？"></a>链接是什么行为？</h3><p>但是，中间发生了什么？为什么在<code>main.c</code>中没有定义<code>max</code>它就正确找到在<code>maxDefine.c</code>中找到<code>max</code>的定义呢？</p>
+<p>我画了一个简单的示意图：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/linkage-draft.webp"></p>
+<p>在<code>main.c</code>中使用<code>extern int max(int,int)</code>相当于在其的目标文件上挖了一个叫做<code>max</code>插槽，而<code>maxDefine.c</code>里对<code>max</code>的定义相当于创造了一个对应<code>max</code>槽的钥匙。<br>当我们只使用<code>main.o</code>进行链接时，会产生<code>undefine reference</code>错误(其实很多C/C++编程中的错误都不是编译错误，而是链接错误)。</p>
+<p>即如果我们链接<code>main.o</code>时不指定<code>maxDefine.o</code>，则会产生一个链接错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ gcc main.o</span><br><span class="line"><span class="comment"># main.o:main.c:(.text+0x1f): undefined reference to `max&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/linkage-error.webp" alt="linkage-error"></p>
+<p>这就相当于想要打开门却没有钥匙，当然会报错了。</p>
+<p>注意：函数原型和定义在<strong>不同的翻译单元</strong>不完全符合在C语言中也并不是一个错误。比如，我将<code>maxDefine.c</code>中的<code>max</code>定义改为<code>int max(int x,double y)</code>依然可以链接并执行成功(C语言具有整型提升和隐式转换，在<code>main</code>函数中对<code>max</code>的调用，第二个参数被隐式转换为<code>double</code>，返回类型规则相同)。因为C语言的函数符号在目标文件中不依赖任何参数类型，仅仅依赖于函数的标识符名称(函数<code>max</code>虽然在<code>main.c</code>和<code>maxDefine.c</code>源文件中的类型不同，但是在他们的目标文件中，函数<code>max</code>的符号信息均为<code>max</code>,所以符号匹配会成功)，C语言就是这么相信程序员，这也是通常所说的C语言比C++更自由更不安全的体现之一。<br>而上面的问题在C++中则是一个错误，因为在<code>main.c</code>中声明的<code>max</code>为<code>int max(int,int)</code>，因为上文已经提到的C++的目标文件中的符号信息依赖于函数名和依赖参数类型进行名称改编，所以<code>int max(int,int)</code>与<code>int max(int,double)</code>在目标文件中是两个不同的符号，所以会造成未定义符号错误。</p>
+<h3 id="GCC工具链编译和链接参数"><a href="#GCC工具链编译和链接参数" class="headerlink" title="GCC工具链编译和链接参数"></a>GCC工具链编译和链接参数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 预处理：#include和宏定义以及条件编译</span></span><br><span class="line">$ cpp main.cc main.i</span><br><span class="line">$ g++ -E main.cc -o main.i</span><br><span class="line"><span class="comment"># 编译成汇编代码</span></span><br><span class="line">$ g++ -S main.i -o main.s</span><br><span class="line"><span class="comment"># 从汇编代码生成目标文件</span></span><br><span class="line">$ g++ -c main.s -o main.o</span><br><span class="line"><span class="comment"># 直接从源文件生成目标文件</span></span><br><span class="line">$ g++ -c main.cc</span><br><span class="line"><span class="comment"># 查看.o中的符号</span></span><br><span class="line">$ nm main.o</span><br><span class="line"><span class="comment"># 将name mangling后的符号转换为原始符号</span></span><br><span class="line">$ c++filt _Z3maxii</span><br><span class="line"></span><br><span class="line"><span class="comment"># 从源文件生成静态链接库</span></span><br><span class="line"><span class="comment"># 首先要生成目标文件</span></span><br><span class="line">$ g++ -c slib.cc -o slib.o</span><br><span class="line"><span class="comment"># 然后使用ar来创建一个lib.a</span></span><br><span class="line">$ ar rcs libslib.a slib.o</span><br><span class="line"><span class="comment"># 本地生成的libslib.a就是我们源文件编译出来的静态链接库</span></span><br><span class="line"><span class="comment"># 使用方法</span></span><br><span class="line"><span class="comment"># -L是指定链接库所在的目录(.是当前目录)，-l是gcc的链接方式会自动匹配到libxxx.a这样的链接库</span></span><br><span class="line"><span class="comment"># 比如-L. -lslib 就是链接当前目录下的libslib.a文件</span></span><br><span class="line">$ g++ -o main.exe main.cc -L. -llib</span><br><span class="line"></span><br><span class="line"><span class="comment"># 从源文件编译动态链接库</span></span><br><span class="line"><span class="comment"># 生成目标文件时需要使用-fPIC/-fpic参数</span></span><br><span class="line"><span class="comment"># -fPIC参数声明链接库的代码段是可以共享的</span></span><br><span class="line">$ gcc -c -fpic dylib.c -o dylib.o</span><br><span class="line"><span class="comment"># 使用-shared参数来生成动态链接库so</span></span><br><span class="line">$ gcc -shared -fpic dylib.o -o dylib.so</span><br><span class="line"><span class="comment"># 生成DLL并生成导入库，链接时可以通过导入库lib来导入动态链接库中的符号</span></span><br><span class="line">$ g++ dylib.cpp -shared -o dylib.dll -Wl,--out-implib,impdylib.lib</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看二进制依赖的符号</span></span><br><span class="line">$ ldd main.exe</span><br><span class="line"></span><br><span class="line"><span class="comment"># 也可以通过nm来查看静态链接库和动态链接库以及可执行程序中的符号信息</span></span><br><span class="line">$ nm slib.a</span><br><span class="line">$ nm sylib.so</span><br><span class="line">$ nm main.exe</span><br><span class="line"></span><br><span class="line"><span class="comment"># ldd可以查看可执行程序具有的外部链接信息</span></span><br><span class="line">$ ldd main.exe</span><br><span class="line">ntdll.dll =&gt; /c/Windows/SYSTEM32/ntdll.dll (0x7ffb24f80000)</span><br><span class="line">KERNEL32.DLL =&gt; /c/Windows/System32/KERNEL32.DLL (0x7ffb22d40000)</span><br><span class="line">KERNELBASE.dll =&gt; /c/Windows/System32/KERNELBASE.dll (0x7ffb218a0000)</span><br><span class="line">msvcrt.dll =&gt; /c/Windows/System32/msvcrt.dll (0x7ffb22e50000)</span><br></pre></td></tr></table></figure>
+<p><strong>目标文件中常见的符号类型:</strong></p>
+<ul>
+<li>A 该符号的值在今后的链接中将不再改变；</li>
+<li>B 该符号放在BSS段中，通常是那些未初始化的全局变量；</li>
+<li>D 该符号放在普通的数据段中，通常是那些已经初始化的全局变量；</li>
+<li>T 该符号放在代码段中，通常是那些全局非静态函数；</li>
+<li>U 该符号未定义过，需要自其他对象文件中链接进来；</li>
+<li>W 未明确指定的弱链接符号；同链接的其他对象文件中有它的定义就用上，否则就用一个系统特别指定的默认值。</li>
+<li>R符号位于只读数据区。比如C语言中的<code>file scope</code>的<code>const int</code>(C语言和C++不同)。</li>
+</ul>
+<p>更多的关于目标文件的符号解释可以看这篇文章：<a target="_blank" rel="noopener" href="http://linuxtools-rst.readthedocs.io/zh_CN/latest/tool/nm.html">nm目标文件格式分析</a>。</p>
+<h3 id="为什么声明和定义要分离？"><a href="#为什么声明和定义要分离？" class="headerlink" title="为什么声明和定义要分离？"></a>为什么声明和定义要分离？</h3><p>前面已经提到过了“分离编译”的作用及实现，但是对于C/C++中经常用到的“定义与实现分离”的含义又是什么呢？<br>其实主要是为了防止多个源文件同时包含同一个源文件时的造成的多重定义(multiple define)：<br>假如现在有三个源文件<code>customMax.cpp</code>/<code>libMin.cpp</code>/<code>main.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// customMax.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __CUSTOM_MAX_H__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __CUSTOM_MAX_H__</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">customMax</span><span class="params">(<span class="type">int</span> x,<span class="type">int</span> y)</span></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x&gt;=y?x:y;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>而在另一个源文件<code>libMin.cpp</code>中<code>#include</code>了<code>customMax.cpp</code>这个源文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// libMin.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __LIB_MIN_H__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __LIB_MIN_H__</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;customMax.cpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span> <span class="title">customMax</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">libMin</span><span class="params">(<span class="type">int</span> x,<span class="type">int</span> y)</span></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">customMax</span>(x,y)==x?y:x; <span class="comment">// 只是为了举一个例子</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>而在第三个源文件<code>main.cpp</code>中引入<code>customMax.cpp</code>，但是通过外部链接<code>extern</code>来指定<code>libMin.cpp</code>中的符号<code>libMin</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;customMx.cpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span> <span class="title">libMin</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">  <span class="built_in">customMax</span>(<span class="number">11</span>,<span class="number">12</span>);</span><br><span class="line">  <span class="built_in">libMin</span>(<span class="number">11</span>,<span class="number">12</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对上面的<code>main.cpp</code>代码与<code>libMin.cpp</code>执行链接时会出现**多重定义(mulit define)**错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ g++ -o main main.cc libMin.cpp</span><br><span class="line">...multiple definition of `customMax(int, int)<span class="string">&#x27;</span></span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineError.webp"><br>这是由于<code>int customMax(int,int)</code>的定义和实现是放在一起的，但是在<code>libMin.cpp</code>中和<code>main.cpp</code>中都包含了<code>customMax.cpp</code>源文件，这里<code>main.cpp</code>和<code>libMin.cpp</code>是两个翻译单元。<br>其相当于：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ g++ -c main.cpp -o main.o</span><br><span class="line">$ g++ -c libMin.cpp -o libMin.o</span><br><span class="line">$ g++ main.o libMin.o</span><br><span class="line">...multiple definition of `customMax(int, int)<span class="string">&#x27;</span></span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineError-1.webp"><br>来查看一下两个目标文件<code>main.o</code>和<code>libMin.o</code>中的符号信息：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineSymbol.webp"><br>可以看到画红框的部分，回想一下上部分<strong>目标文件中常见的符号类型</strong>中T代表着什么，这意味着<code>customMax</code>的符号在两个目标文件中均有定义，所以链接时会出现重定义错误。</p>
+<p>解决这样问题的办法就是：保持只包含一次实现，在使用时仅包含声明。所以采用声明与实现分离机制。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// customMax.h</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __CUSTOM_MAX_H__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __CUSTOM_MAX_H__</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">customMax</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>将其定义在别处：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// customMax.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __CUSTOM_MAX_D__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __CUSTOM_MAX_D__</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;customMax.h&quot;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">customMax</span><span class="params">(<span class="type">int</span> x,<span class="type">int</span> y)</span></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x&gt;=y?x:y;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>然后在别的源文件中只包含<code>customMax.h</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;customMx.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span> <span class="title">libMin</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">  <span class="built_in">customMax</span>(<span class="number">11</span>,<span class="number">12</span>);</span><br><span class="line">  <span class="built_in">libMin</span>(<span class="number">11</span>,<span class="number">12</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以及在<code>libMin.cpp</code>中也只是包含<code>customMax.h</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __LIB_MIN_H__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __LIB_MIN_H__</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;customMax.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span> <span class="title">customMax</span><span class="params">(<span class="type">int</span>,<span class="type">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">libMin</span><span class="params">(<span class="type">int</span> x,<span class="type">int</span> y)</span></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">customMax</span>(x,y)==x?y:x; <span class="comment">// 只是为了举一个例子</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>对其两个编译单元分别生成中间文件并查看其符号：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27118/mulitDefineJusyReferenceHeader.webp"><br>可以看到，此时两个目标文件中均是未定义<code>customMax</code>的符号了。<br>这样我们就可以在编译时指定<code>customMax</code>的符号来供两个翻译单元使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 生成customMax的目标文件</span></span><br><span class="line">$ g++ -c customMax.cpp -o customMax.o</span><br></pre></td></tr></table></figure>
+<p>然后，将<code>main.o</code>与<code>libMin.o</code>还有<code>customMax.o</code>链接在一起：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ g++ main.o libMax.o customMin.o -o main.exe</span><br></pre></td></tr></table></figure>
+<p>当然上面分开操作十分繁琐(只是为了演示)，我们也可以一行把上面的操作执行完毕：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在多个翻译单元只包含声明，此时就不会提示链接错误了</span></span><br><span class="line">$ g++ main.cpp libMin.cpp customMax.cpp -o main.exe</span><br></pre></td></tr></table></figure>
+
+<p>小结：实现和定义分离是为了使多个翻译单元使用相同的符号信息而不会产生多重定义错误而引入的。</p>
+<blockquote>
+<p>注意：C++中模板的声明和定义必须放在一起，这是另一个坑，暂时先按下不表。</p>
+</blockquote>
+<h3 id="C-模板的链接"><a href="#C-模板的链接" class="headerlink" title="C++模板的链接"></a>C++模板的链接</h3><p>因为C++模板需要通过在编译时实例化出相应的对象，所以C++中模板的代码必须要是以源码的方式分发，即共享实现必须要把这部分代码公布。<br>从源代码角度来看，模板代码和内联代码没什么区别（尽管模板并不一定要声明为内联的）：模板的全部代码对于使用它的客户代码来说必须是完全可见的。这被称为包含模式，因为基本上我们必须在模板头文件中包含所有的模板定义代码。</p>
+<p>来看一个多个翻译单元包含同一个(符号)实现例子：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// max.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> MAX_HPP_</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MAX_HPP_</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">max</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp; a,<span class="type">const</span> <span class="type">int</span>&amp; b)</span></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> a&gt;b?a:b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;max.cpp&quot;</span></span></span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span> <span class="title">delegateMax</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp;,<span class="type">const</span> <span class="type">int</span>&amp;)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> imax=<span class="built_in">max</span>(<span class="number">123</span>,<span class="number">456</span>);</span><br><span class="line">	<span class="type">int</span> imaxCopy=<span class="built_in">delegateMax</span>(<span class="number">123</span>, <span class="number">456</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// delegateMax.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> DELEGATE_MAX_HPP_</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> DELEGATE_MAX_HPP_</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;max.cpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">delegateMax</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp; a,<span class="type">const</span> <span class="type">int</span>&amp; b)</span></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">max</span>(a,b);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>主要的问题是<code>main.cpp</code>与<code>delegateMax.hpp</code>这两个翻译单元。<br>我们来编译和链接一下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ clang++ -c main.cpp -o main.o</span><br><span class="line">$ clang++ -c delegateMax.cpp -o delegateMax.o</span><br><span class="line">$ llvm-nm main.o</span><br><span class="line">-------- U _Z11delegateMaxRKiS0_</span><br><span class="line">00000000 T _Z3maxRKiS0_</span><br><span class="line">-------- U __main</span><br><span class="line">00000050 T main</span><br><span class="line">$ llvm-nm delegateMax.o</span><br><span class="line">00000050 T _Z11delegateMaxRKiS0_</span><br><span class="line">00000000 T _Z3maxRKiS0_</span><br><span class="line">$ clang++ main.o delegateMax.o -o main.exe</span><br><span class="line">delegateMax.o:(.text+0x0): multiple definition of `max(int const&amp;, int const&amp;)<span class="string">&#x27; main.o:(.text+0x0): first defined here</span></span><br><span class="line"><span class="string">clang++.exe: error: linker command failed with exit code 1 (use -v to see invocation)</span></span><br></pre></td></tr></table></figure>
+<p>会产生符号<code>max(const int&amp;,const int&amp;)</code>的重定义错误。<br>但是如果把<code>max(const int&amp;,const int&amp;)</code>的实现修改为模板或者inline实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> MAX_HPP_</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MAX_HPP_</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function">T <span class="title">max</span><span class="params">(<span class="type">const</span> T&amp; a,<span class="type">const</span> T&amp; b)</span></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> a&gt;b?a:b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>再次编译且链接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ clang++ -c main.cpp -o main.o</span><br><span class="line">$ clang++ -c delegateMax.cpp -o delegateMax.o</span><br><span class="line">$ llvm-nm main.o</span><br><span class="line">-------- U _Z11delegateMaxRKiS0_</span><br><span class="line">00000000 T _Z3maxIiET_RKS0_S2_</span><br><span class="line">-------- U __main</span><br><span class="line">00000000 T main</span><br><span class="line">$ llvm-nm delegateMax.o</span><br><span class="line">00000000 T _Z11delegateMaxRKiS0_</span><br><span class="line">00000000 T _Z3maxIiET_RKS0_S2_</span><br><span class="line">$ clang++ main.o delegateMax.o -o main.exe</span><br></pre></td></tr></table></figure>
+<p>这次可以链接通过，并没有链接时的重定义错误。<br>但是对比前后两次<code>main.o</code>与<code>delegeteMax.o</code>中的符号信息没有差别，为什么会造成两次链接的结果不同呢？</p>
+<p>这是因为C++中<code>non-member function template</code>模板的代码是具有不同于普通的函数定义的：<br>C++标准里对于在global scope声明对象的链接描述：</p>
+<blockquote>
+<p>**[ISO/IEE 14882:2011]**A name declared in a namespace scope without a storage-class-specifier has external linkage unless it has internal linkage because of a previous declaration and provided it is not declared const. Objects declared const and not explicitly declared extern have internal linkage.</p>
+</blockquote>
+<p>所以第一次我们声明的<code>max(const int&amp;,const int&amp;)</code>是具有外部链接的符号，而<code>main.o</code>与<code>delegateMax.o</code>中引入了它的实现，所以也分别包含了<code>max(const int&amp;,const int&amp;)</code>具有外部链接的符号，故而才会在链接<code>main.o</code>与<code>delegateMax.o</code>时产生重定义错误。</p>
+<p>但是C++中非成员函数模板(non-member function template)的链接却不同于普通的函数：</p>
+<blockquote>
+<p>**[ISO/IEE 14882:2014]**A template name has linkage (3.5). A non-member function template can have internal linkage; any other template name shall have external linkage. Specializations (explicit or implicit) of a template that has internal linkage are distinct from all specializations in other translation units.</p>
+</blockquote>
+<p>即通过模板实现的<code>max(const T&amp;,const T&amp;)</code>是具有内部链接<code>internal linkage</code>的符号，所以在链接时<code>main.o</code>与<code>delegateMax.o</code>中对于<code>max</code>的调用查找只能够找到自己目标文件中的符号名(内部链接外部不可见)，所以就会链接成功。<br>而也正是如此，才能够避免通过源码分发方式的模板代码在不同的编译单元产生外部可见的相同符号而造成重定义的链接错误。</p>
+<h3 id="外部参考"><a href="#外部参考" class="headerlink" title="外部参考"></a>外部参考</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://book.douban.com/subject/1436811/">Linkers and Loaders</a></li>
+<li><a target="_blank" rel="noopener" href="http://doc.imzlp.com/viewer.html?file=docs/standard/isoc99.pdf">ISO/IEC 9899:1999</a></li>
+<li><a target="_blank" rel="noopener" href="https://book.douban.com/subject/26344642/">Computer System: A Programmer’s Perspective,2e</a></li>
+<li><a target="_blank" rel="noopener" href="https://book.douban.com/subject/20471211/">Linux多线程服务端编程：使用muduo C++网络库</a></li>
+</ul>
+<h3 id="更新日志"><a href="#更新日志" class="headerlink" title="更新日志"></a>更新日志</h3><p><strong>2017.04.11</strong></p>
+<ul>
+<li>优化部分措辞、修复标点错误</li>
+<li>增加更多示例</li>
+</ul>
+<p><strong>2017.04.14</strong></p>
+<ul>
+<li>增加<strong>GCC工具链编译和链接参数</strong></li>
+</ul>
+<p><strong>2017.04.16</strong></p>
+<ul>
+<li>优化部分措辞，增加更多示例介绍</li>
+<li>引用<strong>C99标准</strong>中<strong>Translation environment</strong>的概念</li>
+<li>增加“为什么声明要与定义分离？”</li>
+</ul>
+<p><strong>2017.04.17</strong></p>
+<ul>
+<li>增加更多<code>translation unit</code>以及预处理器的介绍</li>
+<li>修复部分可能会引起歧义的描述，举出更多示例使描述更精确</li>
+</ul>
+<p><strong>2017.07.01</strong></p>
+<ul>
+<li>增加<code>C++模板的链接</code>部分</li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/27118/" target="_blank">C/C++编译和链接模型分析</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2017年04月10日 23时05分<br/>
+             
+              <span>更新时间:</span>2017年07月02日 00时18分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有7.8k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/27118/" target="_blank" title="C/C++编译和链接模型分析">https://imzlp.com/posts/27118/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/27118/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" rel="tag"># 技术笔记</a>
+              <a href="/tags/C%E8%AF%AD%E8%A8%80/" rel="tag"># C语言</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"># 编程笔记</a>
+              <a href="/tags/%E7%BC%96%E8%AF%91%E6%A8%A1%E5%9E%8B/" rel="tag"># 编译模型</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/5392/" rel="prev" title="为什么需要extern "C"?">
+      <i class="fa fa-chevron-left"></i> 为什么需要extern "C"?
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/21095/" rel="next" title="Array of length zero">
+      Array of length zero <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%A6%BB%E7%BC%96%E8%AF%91"><span class="nav-number">1.</span> <span class="nav-text">分离编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E8%BF%99%E4%B9%88%E5%81%9A%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">为什么要这么做？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GCC%E7%BC%96%E8%AF%91%E5%99%A8"><span class="nav-number">3.</span> <span class="nav-text">GCC编译器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5%E5%AE%9E%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text">编译链接实例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E6%98%AF%E4%BB%80%E4%B9%88%E8%A1%8C%E4%B8%BA%EF%BC%9F"><span class="nav-number">5.</span> <span class="nav-text">链接是什么行为？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GCC%E5%B7%A5%E5%85%B7%E9%93%BE%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5%E5%8F%82%E6%95%B0"><span class="nav-number">6.</span> <span class="nav-text">GCC工具链编译和链接参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%A3%B0%E6%98%8E%E5%92%8C%E5%AE%9A%E4%B9%89%E8%A6%81%E5%88%86%E7%A6%BB%EF%BC%9F"><span class="nav-number">7.</span> <span class="nav-text">为什么声明和定义要分离？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C-%E6%A8%A1%E6%9D%BF%E7%9A%84%E9%93%BE%E6%8E%A5"><span class="nav-number">8.</span> <span class="nav-text">C++模板的链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%96%E9%83%A8%E5%8F%82%E8%80%83"><span class="nav-number">9.</span> <span class="nav-text">外部参考</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97"><span class="nav-number">10.</span> <span class="nav-text">更新日志</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/27118/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

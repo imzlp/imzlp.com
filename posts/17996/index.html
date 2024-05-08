@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在之前的一篇文章中，介绍了Mac&#x2F;IOS的开发笔记和一些工程实践：UE4 开发笔记：Mac&#x2F;iOS 篇。本篇文章作为姊妹篇，记录我在使用UE在开发Android时所用的标准化环境、调试工具、工程实践以及分析相关的引擎代码等内容，记录了一些在项目中遇到的坑，主要从我之前的笔记notes&#x2F;ue中整理而来，后续Android相关的内容也都会更新到这篇文章里。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE开发笔记：Android篇">
+<meta property="og:url" content="https://imzlp.com/posts/17996/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在之前的一篇文章中，介绍了Mac&#x2F;IOS的开发笔记和一些工程实践：UE4 开发笔记：Mac&#x2F;iOS 篇。本篇文章作为姊妹篇，记录我在使用UE在开发Android时所用的标准化环境、调试工具、工程实践以及分析相关的引擎代码等内容，记录了一些在项目中遇到的坑，主要从我之前的笔记notes&#x2F;ue中整理而来，后续Android相关的内容也都会更新到这篇文章里。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206152333.webp">
+<meta property="article:published_time" content="2021-04-15T19:54:12.000Z">
+<meta property="article:modified_time" content="2021-04-15T19:54:12.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="UPL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206152333.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/17996/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE开发笔记：Android篇 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/17996/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE开发笔记：Android篇<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-04-15-17996.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-15 19:54 19:54:12:54" itemprop="dateCreated datePublished" datetime="2021-04-15T19:54:12+00:00">2021-04-15 19:54</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/17996/" class="post-meta-item leancloud_visitors" data-flag-title="UE开发笔记：Android篇" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>10k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>25 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在之前的一篇文章中，介绍了Mac/IOS的开发笔记和一些工程实践：<a href="https://imzlp.com/posts/1948/">UE4 开发笔记：Mac/iOS 篇</a>。本篇文章作为姊妹篇，记录我在使用UE在开发Android时所用的标准化环境、调试工具、工程实践以及分析相关的引擎代码等内容，记录了一些在项目中遇到的坑，主要从我之前的笔记<a href="https://imzlp.com/notes/ue/">notes/ue</a>中整理而来，后续Android相关的内容也都会更新到这篇文章里。</p>
+<span id="more"></span>
+
+<h2 id="博客文章"><a href="#博客文章" class="headerlink" title="博客文章"></a>博客文章</h2><p>博客中与Android有关的文章：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/20367/">UE4源码分析：修改游戏默认的数据存储路径</a></li>
+<li><a href="https://imzlp.com/posts/27289/">UE4：UPL与JNI调用的最佳实践</a></li>
+</ul>
+<h2 id="编译环境"><a href="#编译环境" class="headerlink" title="编译环境"></a>编译环境</h2><p>Android的开发环境需要JDK/NDK/SDK/Ant/Gradle等组合而成，UE的文档中介绍需要安装NVDIA的CodeWorks，但是由于国内网络问题难以下载，并且有些组件并不需要，所以我打包了一份Android的开发环境，可以快速部署。</p>
+<p>组件版本：</p>
+<ul>
+<li>JDK 18077</li>
+<li>NDK r14b</li>
+<li>SDK android19-26</li>
+<li>Ant 1.8.2</li>
+<li>Gradle 4.1</li>
+</ul>
+<p>下载地址：<a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EUEwhi0h05JLvdogvD5qbz0Be96Q6s7n0PlrHng4cqtsiA?e=Lctclf">AndroidSDK_1R7u1_20190923.7z</a>，解压之后有<code>AddToPath.bat</code>脚本，一键添加所需的环境变量。</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@<span class="built_in">echo</span> off</span><br><span class="line"><span class="built_in">set</span> &quot;current_dir_name=%~dp0&quot;</span><br><span class="line">setx /M JAVA_HOME &quot;<span class="variable">%current_dir_name%</span>jdk18077&quot;</span><br><span class="line">setx /M ANDROID_HOME &quot;<span class="variable">%current_dir_name%</span>android-sdk-windows&quot;</span><br><span class="line">setx /M ANDROID_NDK_ROOT &quot;<span class="variable">%current_dir_name%</span>android-ndk-r14b&quot;</span><br><span class="line">setx /M ANT_HOME &quot;<span class="variable">%current_dir_name%</span>apache-ant-<span class="number">1</span>.<span class="number">8</span>.<span class="number">2</span>&quot;</span><br><span class="line">setx /M GRADLE_HOME &quot;<span class="variable">%current_dir_name%</span>gradle-<span class="number">4</span>.<span class="number">1</span>&quot;</span><br><span class="line">setx /M NDK_ROOT &quot;<span class="variable">%current_dir_name%</span>android-ndk-r14b&quot;</span><br><span class="line">setx /M NDKROOT &quot;<span class="variable">%current_dir_name%</span>android-ndk-r14b&quot;</span><br><span class="line">setx /M NVPACK_NDK_TOOL_VERSION &quot;<span class="number">4</span>.<span class="number">9</span>&quot;</span><br><span class="line">setx /M NVPACK_NDK_VERSION &quot;android-ndk-r14b&quot;</span><br><span class="line">setx /M NVPACK_ROOT &quot;<span class="variable">%current_dir_name%</span>&quot;</span><br></pre></td></tr></table></figure>
+
+<p>如果需要更新版本的NDK和SDK支持的版本有些老，可以自行在下载所需的版本：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://androidsdkmanager.azurewebsites.net/SDKPlatform">Online Android SDK Manager</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/ndk/downloads?hl=en">Android Developer NDK Downloads</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/ndk/downloads/older_releases?hl=en">Unsupported NDK Downloads</a></li>
+</ul>
+<p>下载之后放到对应的目录下即可，并且需要修改环境变量中的值。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17996/20210416124501.webp"></p>
+<p>添加完环境变量之后之后无需再从UE中设置SDK与NDK的路径，保持默认即可打包。</p>
+<h2 id="引擎依赖与支持"><a href="#引擎依赖与支持" class="headerlink" title="引擎依赖与支持"></a>引擎依赖与支持</h2><h3 id="引擎对Android版本的支持"><a href="#引擎对Android版本的支持" class="headerlink" title="引擎对Android版本的支持"></a>引擎对Android版本的支持</h3><p>在之前的笔记里：<a href="https://imzlp.com/notes/ue/#Android-SDK%E7%89%88%E6%9C%AC%E4%B8%8EAndroid%E7%9A%84%E7%89%88%E6%9C%AC">Android SDK版本与Android的版本</a>列出了Android系统版本和API Leve版本之间的对照表。</p>
+<p>但是UE不同的引擎版本对Android的系统支持也是不一样的，在<code>Project Setting</code>-<code>Android</code>中的<code>Minimum SDK Version</code>中可以设置最小的SDK版本，也就是UE打包Android所支持的最低系统版本。</p>
+<p>在UE4.25中，最低可以设置Level为19，即Android4.4，在4.25之前的引擎版本最低支持Level 9，也就是Android 2.3。</p>
+<p>这部分的代码可以在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/4.24/Engine/Source/Runtime/Android/AndroidRuntimeSettings/Classes/AndroidRuntimeSettings.h">Runtime/Android/AndroidRuntimeSettings/Classes/AndroidRuntimeSettings.h</a>中查看，并对比不同引擎版本的区别。</p>
+<h3 id="SDK版本与Android的版本对照表"><a href="#SDK版本与Android的版本对照表" class="headerlink" title="SDK版本与Android的版本对照表"></a>SDK版本与Android的版本对照表</h3><p>可以在Google的开发者站点看到：<a target="_blank" rel="noopener" href="https://developer.android.com/studio/releases/platforms">Android SDK Platform</a><br>Build.VERSION_CODES的含义：<a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/os/Build.VERSION_CODES">Build.VERSION_CODES</a></p>
+<table>
+<thead>
+<tr>
+<th align="center">AndroidVersion</th>
+<th align="center">SDK Version</th>
+<th align="center">Build.VERSION_CODES</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Android 11</td>
+<td align="center">(API level 30)</td>
+<td align="center">R</td>
+</tr>
+<tr>
+<td align="center">Android 10</td>
+<td align="center">(API level 29)</td>
+<td align="center">Q</td>
+</tr>
+<tr>
+<td align="center">Android 9</td>
+<td align="center">(API level 28)</td>
+<td align="center">P</td>
+</tr>
+<tr>
+<td align="center">Android 8.1</td>
+<td align="center">(API level27)</td>
+<td align="center">O_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 8.0</td>
+<td align="center">(API level 26)</td>
+<td align="center">O</td>
+</tr>
+<tr>
+<td align="center">Android 7.1</td>
+<td align="center">(API level 25)</td>
+<td align="center">N_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 7.0</td>
+<td align="center">(API level 24)</td>
+<td align="center">N</td>
+</tr>
+<tr>
+<td align="center">Android 6.0</td>
+<td align="center">(API level 23)</td>
+<td align="center">M</td>
+</tr>
+<tr>
+<td align="center">Android 5.1</td>
+<td align="center">(API level 22)</td>
+<td align="center">LOLLIPOP_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 5.0</td>
+<td align="center">(API level 21)</td>
+<td align="center">LOLLIPOP</td>
+</tr>
+<tr>
+<td align="center">Android 4.4W</td>
+<td align="center">(API level 20)</td>
+<td align="center">KITKAT_WATCH</td>
+</tr>
+<tr>
+<td align="center">Android 4.4</td>
+<td align="center">(API level 19)</td>
+<td align="center">KITKAT</td>
+</tr>
+<tr>
+<td align="center">Android 4.3</td>
+<td align="center">(API level 18)</td>
+<td align="center">JELLY_BEAN_MR2</td>
+</tr>
+<tr>
+<td align="center">Android 4.2</td>
+<td align="center">(API level 17)</td>
+<td align="center">JELLY_BEAN_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 4.1</td>
+<td align="center">(API level 16)</td>
+<td align="center">JELLY_BEAN</td>
+</tr>
+<tr>
+<td align="center">Android 4.0.3</td>
+<td align="center">(API level15)</td>
+<td align="center">ICE_CREAM_SANDWICH_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 4.0</td>
+<td align="center">(API level 14)</td>
+<td align="center">ICE_CREAM_SANDWICH</td>
+</tr>
+<tr>
+<td align="center">Android 3.2</td>
+<td align="center">(API level 13)</td>
+<td align="center">HONEYCOMB_MR2</td>
+</tr>
+<tr>
+<td align="center">Android 3.1</td>
+<td align="center">(API level 12)</td>
+<td align="center">HONEYCOMB_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 3.0</td>
+<td align="center">(API level 11)</td>
+<td align="center">HONEYCOMB</td>
+</tr>
+<tr>
+<td align="center">Android 2.3.3</td>
+<td align="center">(API level 10)</td>
+<td align="center">GINGERBREAD_MR1</td>
+</tr>
+<tr>
+<td align="center">Android 2.3</td>
+<td align="center">(API level 9)</td>
+<td align="center">GINGERBREAD</td>
+</tr>
+</tbody></table>
+<p>UE4对Android的最低支持是SDK9，也就是Android2.3。</p>
+<h3 id="引擎对AndroidNDK的要求"><a href="#引擎对AndroidNDK的要求" class="headerlink" title="引擎对AndroidNDK的要求"></a>引擎对AndroidNDK的要求</h3><p>UE在打包Android的时候会要求系统中具有NDK环境，但是不同的引擎版本对NDK的版本要求也不一样。</p>
+<p>当使用不支持的NDK版本时，打包会有如下错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: Packaging (Android (ETC2)):   ERROR: Android toolchain NDK r14b not supported; please use NDK r21 to NDK r23 (NDK r21b recommended)</span><br><span class="line">PackagingResults: Error: Android toolchain NDK r14b not supported; please use NDK r21 to NDK r23 (NDK r21b recommended)</span><br></pre></td></tr></table></figure>
+
+<p>提示当前系统中的NDK版本不支持，并会显示支持的版本。</p>
+<p>UE打包时对NDK版本的检测是在UBT中执行的，具体文件为<code>UnrealBuildTool/Platform/Android/AndroidToolChain.cs</code>。</p>
+<p>其中定义了当前引擎版本支持的NDK的最低和最高版本：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// in ue 4.25</span></span><br><span class="line"><span class="keyword">readonly</span> <span class="built_in">int</span> MinimumNDKToolchain = <span class="number">210100</span>;</span><br><span class="line"><span class="keyword">readonly</span> <span class="built_in">int</span> MaximumNDKToolchain = <span class="number">230100</span>;</span><br><span class="line"><span class="keyword">readonly</span> <span class="built_in">int</span> RecommendedNDKToolchain = <span class="number">210200</span>;</span><br></pre></td></tr></table></figure>
+
+<p>可以在Github上比较方便地查看不同引擎版本要求的NDK版本:<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/4.25/Engine/Source/Programs/UnrealBuildTool/Platform/Android/AndroidToolChain.cs">UE_425_AndroidToolChain.cs</a></p>
+<p>不同的引擎版本对NDK的要求UE文档中也有介绍：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/SharingAndReleasing/Mobile/Android/Setup/AndroidStudio/index.html">Setting Up Android SDK and NDK for Unreal</a></p>
+<table>
+<thead>
+<tr>
+<th>Unreal Engine</th>
+<th>NDK Version</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>4.25+</td>
+<td>NDK r21b, NDK r20b</td>
+</tr>
+<tr>
+<td>4.21 - 4.24</td>
+<td>NDK r14b</td>
+</tr>
+<tr>
+<td>4.19 - 4.20</td>
+<td>NDK r12b</td>
+</tr>
+</tbody></table>
+<h3 id="NDK的编译器版本"><a href="#NDK的编译器版本" class="headerlink" title="NDK的编译器版本"></a>NDK的编译器版本</h3><p>UE4支持<code>r14b</code>-<code>r18b</code>的Android NDK，但是我在UE4.22.3中设置<code>r18b</code>被引擎识别为<code>r18c</code>:</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: Packaging (Android (ETC2)):   Using &#x27;git status&#x27; to determine working set for adaptive non-unity build (C:\Users\imzlp\Documents\Unreal Projects\GWorldClient).</span><br><span class="line">UATHelper: Packaging (Android (ETC2)):   ERROR: Android toolchain NDK r18c not supported; please use NDK r14b to NDK r18b (NDK r14b recommended)</span><br><span class="line">PackagingResults: Error: Android toolchain NDK r18c not supported; please use NDK r14b to NDK r18b (NDK r14b recommended)</span><br><span class="line">UATHelper: Packaging (Android (ETC2)): Took 7.4575476s to run UnrealBuildTool.exe, ExitCode=5</span><br><span class="line">UATHelper: Packaging (Android (ETC2)): ERROR: UnrealBuildTool failed. See log for more details. (C:\Users\imzlp\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_4.22\UBT-GWorld-Android-Development.txt)</span><br><span class="line">UATHelper: Packaging (Android (ETC2)):        (see C:\Users\imzlp\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_4.22\Log.txt for full exception trace)</span><br><span class="line">PackagingResults: Error: UnrealBuildTool failed. See log for more details. (C:\Users\imzlp\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_4.22\UBT-GWorld-Android-Development.txt)</span><br><span class="line">UATHelper: Packaging (Android (ETC2)): AutomationTool exiting with ExitCode=5 (5)</span><br><span class="line">UATHelper: Packaging (Android (ETC2)): BUILD FAILED</span><br><span class="line">PackagingResults: Error: Unknown Error</span><br></pre></td></tr></table></figure>
+<p>之所以要换NDK的版本是因为不同的NDK版本所包含的编译器对C++11标准支持度不同。</p>
+<table>
+<thead>
+<tr>
+<th>NDK</th>
+<th>clang version</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>r14b</td>
+<td>clang 3.8.275480  (based on LLVM 3.8.275480)</td>
+</tr>
+<tr>
+<td>r17c</td>
+<td>clang version 6.0.2</td>
+</tr>
+<tr>
+<td>r18b</td>
+<td>clang version 7.0.2</td>
+</tr>
+<tr>
+<td>r20b</td>
+<td>clang version 8.0.7</td>
+</tr>
+</tbody></table>
+<h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><h3 id="Adb"><a href="#Adb" class="headerlink" title="Adb"></a>Adb</h3><p>adb是Android的调试工具，非常强大，熟悉一些adb的命令能够让效率加倍。首先先要下载<a href="index/Adb.7z">Adb</a>。</p>
+<h4 id="安装Apk"><a href="#安装Apk" class="headerlink" title="安装Apk"></a>安装Apk</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ adb install APK_FILE_NAME.apk</span><br></pre></td></tr></table></figure>
+
+<h4 id="启动App"><a href="#启动App" class="headerlink" title="启动App"></a>启动App</h4><p>安装的renderdoccmd是没有桌面图标的，想要自己启动的话只能使用下列adb命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell am start org.renderdoc.renderdoccmd.arm64/.Loader -e renderdoccmd <span class="string">&quot;remoteserver&quot;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:f:/g/personal/2017020625_stu_sdnu_edu_cn/EnnSRgeQZOZAmytO_Mm6nD0BQ9HOk42Ximo78ovuzOVEQg?e=xCoutx">renderdoc-cmd-apk</a></li>
+</ul>
+<p>adb启动App的shell命令模板:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell am start PACKAGE_NAME/.ActivityName</span><br></pre></td></tr></table></figure>
+
+<p>这个方法需要知道App的包名和Activity名，包名很容易知道，但是Activity如果不知道可以通过下列操作获取：</p>
+<p>首先使用一个反编译工具将apk解包(可以使用之前的<a href="https://imzlp.com/notes/tips/index.html#apk%E7%9A%84%E5%8F%8D%E7%BC%96%E8%AF%91%E4%B8%8E%E7%AD%BE%E5%90%8D">apktools</a>)：</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apktool.bat d -o ./renderdoccmd_arm64 org.renderdoc.renderdoccmd.arm64.apk</span><br></pre></td></tr></table></figure>
+
+<p>然后打开<code>org.renderdoc.renderdoccmd.arm64</code>目录下的<code>AndroidManifest.xml</code>文件，找到其中的<code>Application</code>项：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span> standalone=<span class="string">&quot;no&quot;</span>?&gt;</span><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">xmlns:android</span>=<span class="string">&quot;http://schemas.android.com/apk/res/android&quot;</span> <span class="attr">package</span>=<span class="string">&quot;org.renderdoc.renderdoccmd.arm64&quot;</span> <span class="attr">platformBuildVersionCode</span>=<span class="string">&quot;26&quot;</span> <span class="attr">platformBuildVersionName</span>=<span class="string">&quot;8.0.0&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-permission</span> <span class="attr">android:name</span>=<span class="string">&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-permission</span> <span class="attr">android:name</span>=<span class="string">&quot;android.permission.INTERNET&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-feature</span> <span class="attr">android:glEsVersion</span>=<span class="string">&quot;0x00030000&quot;</span> <span class="attr">android:required</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span> <span class="attr">android:debuggable</span>=<span class="string">&quot;true&quot;</span> <span class="attr">android:hasCode</span>=<span class="string">&quot;true&quot;</span> <span class="attr">android:icon</span>=<span class="string">&quot;@drawable/icon&quot;</span> <span class="attr">android:label</span>=<span class="string">&quot;RenderDocCmd&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:configChanges</span>=<span class="string">&quot;keyboardHidden|orientation&quot;</span> <span class="attr">android:exported</span>=<span class="string">&quot;true&quot;</span> <span class="attr">android:label</span>=<span class="string">&quot;RenderDoc&quot;</span> <span class="attr">android:name</span>=<span class="string">&quot;.Loader&quot;</span> <span class="attr">android:screenOrientation</span>=<span class="string">&quot;landscape&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">meta-data</span> <span class="attr">android:name</span>=<span class="string">&quot;android.app.lib_name&quot;</span> <span class="attr">android:value</span>=<span class="string">&quot;renderdoccmd&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>其中有所有注册的<code>Activity</code>，没有有界面的apk只有一个Activity，所以上面的renderdoccmd的主Activity就是<code>.Loader</code>。</p>
+<p>如果说有界面的app，则会有多个，则可以从<code>AndroidManifest.xml</code>查找<code>Category</code>或者根据命名(名字带<code>main</code>的Activity)来判断哪个是主Activity。一般都是从lanucher开始，到main，或者有的进登陆界面。</p>
+<blockquote>
+<p>PS：使用UE打包出游戏的主Activity是<code>com.epicgames.ue4.SplashActivity</code>，可以通过下列命令启动。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell am start com.imzlp.GWorld/com.epicgames.ue4.SplashActivity</span><br></pre></td></tr></table></figure>
+
+<h4 id="传输文件"><a href="#传输文件" class="headerlink" title="传输文件"></a>传输文件</h4><p>使用adb往手机传文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># adb push 1.0_Android_ETC2_P.pak /sdcard/Android/data/com.imzlp.TEST/files/UE4GameData/Mobile422/Mobile422/Saved/Paks</span></span><br><span class="line">$ adb push FILE_NAME REMOATE_PATH</span><br></pre></td></tr></table></figure>
+
+<p>从手机传递到电脑：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># adb pull /sdcard/Android/data/com.imzlp.TEST/files/UE4GameData/Mobile422/Mobile422/Saved/Paks/1.0_Android_ETC2_P.pak A.Pak</span></span><br><span class="line">$ adb pull REMOATE_FILE_PATH LOCAL_PATH</span><br></pre></td></tr></table></figure>
+
+<h4 id="Logcat"><a href="#Logcat" class="headerlink" title="Logcat"></a>Logcat</h4><p>使用<code>logcast</code>可以看到Android的设备Log信息。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">adb logcat</span></span><br></pre></td></tr></table></figure>
+
+<p>会打印出当前设备的所有信息，但是我们调试App时不需要看到这么多，可以使用<code>find</code>进行筛选(注意大小写严格区分)：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">adb logcat | find <span class="string">&quot;GWorld&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">adb logcat | find <span class="string">&quot;KEY_WORD&quot;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>查看UE打包的APP所有的log可以筛选：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">adb logcat | find <span class="string">&quot;UE4&quot;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>如果运行的次数过多积累了大量的Log，可以使用清理：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb logcat -c</span><br></pre></td></tr></table></figure>
+
+<h4 id="从设备中提取已安装的APK"><a href="#从设备中提取已安装的APK" class="headerlink" title="从设备中提取已安装的APK"></a>从设备中提取已安装的APK</h4><p>注意：执行下列命令时需要检查手机是否开放开发者权限，手机上提示的验证指纹信息要允许。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看链接设备</span></span><br><span class="line">$ adb devices</span><br><span class="line">List of devices attached</span><br><span class="line">b2fcxxxx        unauthorized</span><br><span class="line"><span class="comment"># 列出手机中安装的所有app</span></span><br><span class="line">$ adb shell pm list package</span><br><span class="line"><span class="comment"># 如果提示下问题，则需要执行adb kill-server</span></span><br><span class="line">error: device unauthorized.</span><br><span class="line">This adb servers <span class="variable">$ADB_VENDOR_KEYS</span> is not <span class="built_in">set</span></span><br><span class="line">Try <span class="string">&#x27;adb kill-server&#x27;</span> <span class="keyword">if</span> that seems wrong.</span><br><span class="line">Otherwise check <span class="keyword">for</span> a confirmation dialog on your device.</span><br><span class="line"><span class="comment"># 正常情况下会列出一堆这样的列表</span></span><br><span class="line">C:\Users\imzlp&gt;adb shell pm list package</span><br><span class="line">package:com.miui.screenrecorder</span><br><span class="line">package:com.amazon.mShop.android.shopping</span><br><span class="line">package:com.mobisystems.office</span><br><span class="line">package:com.weico.international</span><br><span class="line">package:com.github.shadowsocks</span><br><span class="line">package:com.android.cts.priv.ctsshim</span><br><span class="line">package:com.sorcerer.sorcery.iconpack</span><br><span class="line">package:com.google.android.youtube</span><br><span class="line"></span><br><span class="line"><span class="comment"># 找到指定app的的apk位置</span></span><br><span class="line">$ adb shell pm path com.github.shadowsocks</span><br><span class="line">package:/data/app/com.github.shadowsocks-iBtqbmLo8rYcq2BqFhJtsA==/base.apk</span><br><span class="line"><span class="comment"># 然后将该文件拉取到本地来即可</span></span><br><span class="line">$ adb pull /data/app/com.github.shadowsocks-iBtqbmLo8rYcq2BqFhJtsA==/base.apk</span><br><span class="line">/data/app/com.github.shadowsocks-iBtqbmLo8rYcq2BqFhJtsA==/...se.apk: 1 file pulled. 21.5 MB/s (4843324 bytes <span class="keyword">in</span> 0.215s)</span><br></pre></td></tr></table></figure>
+
+<h4 id="刷入Recovery"><a href="#刷入Recovery" class="headerlink" title="刷入Recovery"></a>刷入Recovery</h4><p>下载<a href="index/Adb.7z">Adb</a>，然后根据具体情况使用下列命令(如果当前已经在bootloader就不需要执行第一条了)。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">adb reboot bootloader</span><br><span class="line"><span class="comment"># 写入img到设备</span></span><br><span class="line">fastboot flash recovery recovery.img</span><br><span class="line">fastboot flash boot boot.img</span><br><span class="line"><span class="comment"># 引导img</span></span><br><span class="line">fastboot boot recovery.img</span><br></pre></td></tr></table></figure>
+
+<h4 id="端口转发"><a href="#端口转发" class="headerlink" title="端口转发"></a>端口转发</h4><p>可以通过adb命令来指定：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># PC to Device</span></span><br><span class="line">adb reverse tcp:1985 tcp:1985</span><br><span class="line"><span class="comment"># Device to PC</span></span><br><span class="line">adb forward tcp:1985 tcp:1985</span><br></pre></td></tr></table></figure>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://blog.xiaoyu.im/post_678.html">Android上超级好用的前端调试方法（adb reverse）</a></li>
+</ul>
+<h4 id="根据包名查看apk位置"><a href="#根据包名查看apk位置" class="headerlink" title="根据包名查看apk位置"></a>根据包名查看apk位置</h4><p>可以使用以下adb命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ adb shell pm list package -f com.tencent.tmgp.fm</span><br><span class="line">package:/data/app/com.tencent.tmgp.fm-a_cOsX8G3VClXwiI-RD9wQ==/base.apk=com.tencent.tmgp.fm</span><br></pre></td></tr></table></figure>
+<p>最后一个参数是包名,输出的则是apk的路径。</p>
+<h4 id="查看当前窗口的app的包名"><a href="#查看当前窗口的app的包名" class="headerlink" title="查看当前窗口的app的包名"></a>查看当前窗口的app的包名</h4><p>使用以下adb命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ adb shell dumpsys window w | findstr \/ | findstr name=</span><br><span class="line">      mSurface=Surface(name=SideSlideGestureBar-Bottom)/@0xa618588</span><br><span class="line">      mSurface=Surface(name=SideSlideGestureBar-Right)/@0x619b646</span><br><span class="line">      mSurface=Surface(name=SideSlideGestureBar-Left)/@0xea02007</span><br><span class="line">      mSurface=Surface(name=StatusBar)/@0x7e4962d</span><br><span class="line">       mAnimationIsEntrance=<span class="literal">true</span>      mSurface=Surface(name=com.tencent.tmgp.fm/com.epicgames.ue4.GameActivity)/@0x43b30a0</span><br><span class="line">      mSurface=Surface(name=com.tencent.tmgp.fm/com.epicgames.ue4.GameActivity)/@0xa3481e</span><br><span class="line">       mAnimationIsEntrance=<span class="literal">true</span>      mSurface=Surface(name=com.vivo.livewallpaper.monster.bmw.MonsterWallpaperService)/@0x53e44ae</span><br></pre></td></tr></table></figure>
+<p>其中的<code>mAnimationIsEntrance=true      mSurface=Surface(name=</code>之后，到<code>/</code>之前的字符串就是我们的app包名。</p>
+<h4 id="查看so中的符号"><a href="#查看so中的符号" class="headerlink" title="查看so中的符号"></a>查看so中的符号</h4><p>可以使用<code>objdump</code>工具，在NDK中有兼容多种平台的可执行程序：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">x86_64-linux-android-objdump.exe</span><br><span class="line">aarch64-linux-android-objdump.exe</span><br><span class="line">arm-linux-androideabi-objdump.exe</span><br></pre></td></tr></table></figure>
+<p>等等，选择需要的即可。</p>
+<p>使用命令<code>objdump -tT libUE4.so</code>即可输出so符号表中的内容。</p>
+<h3 id="SessionFrontEnd实时分析"><a href="#SessionFrontEnd实时分析" class="headerlink" title="SessionFrontEnd实时分析"></a>SessionFrontEnd实时分析</h3><p>有几个条件：  </p>
+<ol>
+<li>需要USB连接PC和手机 </li>
+<li>需要安装adb  </li>
+</ol>
+<p>首先需要映射端口，因为<code>SessionFrontEnd</code>是通过监听端口的方式来与游戏内通信的，手机和PC并不在同一个网段，所以需要以adb的形式把PC的监听端口转发给手机的端口。 </p>
+<p>SessionFrontEnd的监听端口可以通过对<code>UE4Editor.exe</code>的端口分析获取：  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\lipengzha&gt;netstat -ano | findstr <span class="string">&quot;231096&quot;</span>  </span><br><span class="line">  TCP    0.0.0.0:1985           0.0.0.0:0              LISTENING       231096 </span><br><span class="line">  TCP    0.0.0.0:3961           0.0.0.0:0              LISTENING       231096 </span><br><span class="line">  TCP    0.0.0.0:3963           0.0.0.0:0              LISTENING       231096 </span><br><span class="line">  TCP    127.0.0.1:4014         127.0.0.1:12639        ESTABLISHED     231096 </span><br><span class="line">  TCP    127.0.0.1:4199         127.0.0.1:12639        ESTABLISHED     231096 </span><br><span class="line">  UDP    0.0.0.0:6666           *:*                                    231096 </span><br><span class="line">  UDP    0.0.0.0:24024          *:*                                    231096 </span><br><span class="line">  UDP    0.0.0.0:58101          *:*                                    231096 </span><br></pre></td></tr></table></figure>
+<p>需要把PC的1985端口映射到Android的1985端口，这样手机上APP启动时，连接<code>0.0.0.0</code>的<code>1985</code>端口就可以连接到PC上的端口。 </p>
+<p>通过adb命令来执行： </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb reverse tcp:1985 tcp:1985 </span><br></pre></td></tr></table></figure>
+<p>然后需要给手机上App指定启动参数：  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../../../FGame/FGame.uproject -Messaging -SessionOwner=<span class="string">&quot;lipengzha&quot;</span> -SessionName=<span class="string">&quot;Launch On Android Device&quot;</span>  </span><br></pre></td></tr></table></figure>
+<p>把这些文本保存为<code>UE4Commandline.txt</code>文件，放到项目的数据目录下即可，具体路径为：  </p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/sdcard/UE4Game/PROJECT_NAME/ </span><br></pre></td></tr></table></figure>
+<p>之后直接启动App，在PC上的<code>SessionFrontEnd</code>中就可以看到设备的数据了。 </p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210521165056.webp"></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://medium.com/realities-io/oculus-quest-performance-tools-in-unreal-engine-2210f2581c8f">Oculus Quest Performance Tools in Unreal Engine</a> </li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/TestingAndOptimization/PerformanceAndProfiling/UnrealInsights/Overview/index.html">Unreal Insights Overview</a> </li>
+</ul>
+<h3 id="Unreal-Insights实时分析"><a href="#Unreal-Insights实时分析" class="headerlink" title="Unreal Insights实时分析"></a>Unreal Insights实时分析</h3><p>上一节提到了使用<code>SessionFrontEnd</code>实时分析Android的方法，在实际的测试当中发现不太稳定，会造成游戏的Crash，UE在新的引擎版本中也提供了新的性能分析工具Unreal Insights，可以更方便和直观地进行Profile。<br>文档：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/TestingAndOptimization/PerformanceAndProfiling/UnrealInsights/index.html">Unreal Insights</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/TestingAndOptimization/PerformanceAndProfiling/UnrealInsights/Reference/index.html">Unreal Insights Reference</a></li>
+</ul>
+<p>同样也需要端口映射，需要把PC的1980端口映射到设备上： </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb reverse tcp:1980 tcp:1980 </span><br></pre></td></tr></table></figure>
+<p>然后需要给Android设备添加启动命令： </p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../../../FGame/FGame.uproject -Messaging -SessionOwner=&quot;lipengzha&quot; -SessionName=&quot;Launch On Android Device&quot; -iterative -tracehost=127.0.0.1 -Trace=CPU </span><br></pre></td></tr></table></figure>
+
+<p>在PC上开启Unreal Insights，在手机上启动游戏，即可实时捕获：  </p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/2020/20210112171826.webp">  </p>
+<p>Unreal Insights也可以实时捕获PIE的数据，需要在Editor启动时添加<code>-trace</code>参数：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe PROJECT_NAME.uproject -trace=counters,cpu,frame,bookmark,gpu</span><br></pre></td></tr></table></figure>
+<p>在启动游戏后在Unreal Insights里通过<code>New Connection</code>监听127.0.0.1即可。</p>
+<h2 id="工程实践"><a href="#工程实践" class="headerlink" title="工程实践"></a>工程实践</h2><h3 id="同时支持armv7和arm64的链接库"><a href="#同时支持armv7和arm64的链接库" class="headerlink" title="同时支持armv7和arm64的链接库"></a>同时支持armv7和arm64的链接库</h3><p>在开发Android的时候，有需求需要同时支持arm64和armv7，需要在Build.cs中同时把armv7和arm64的链接库都添加到<code>PublicAdditionalLibraries</code>中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PublicAdditionalLibraries.<span class="built_in">AddRange</span>(<span class="keyword">new</span> string[]</span><br><span class="line">&#123;</span><br><span class="line">  Path.<span class="built_in">Combine</span>(ThirdPartyFolder, <span class="string">&quot;Android_armeabi-v7a&quot;</span>, AkConfigurationDir),</span><br><span class="line">  Path.<span class="built_in">Combine</span>(ThirdPartyFolder, <span class="string">&quot;Android_arm64-v8a&quot;</span>, AkConfigurationDir),</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>但是，在UE的ModuleRules里没有能判断当前编译的架构的方法（ModuleRules的构造在编译时只会执行一次），导致编译arm64的时候找到了armv7的链接库，导致链接错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">14&gt;ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkSoundEngine.a(AkAudioLib.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkSoundEngine.a(AkLEngine.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkSoundEngine.a(AkAudioLib.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkSoundEngine.a(AkLEngine.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMemoryMgr.a(AkMemoryMgr.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMemoryMgr.a(AkMemoryMgrBase.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMemoryMgr.a(AkMemoryMgr.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMemoryMgr.a(AkMemoryMgrBase.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkStreamMgr.a(AkStreamMgr.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkStreamMgr.a(AkStreamMgr.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMusicEngine.a(AkMusicRenderer.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMusicEngine.a(AkMusicRenderer.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkSpatialAudio.a(AkSpatialAudio.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkSpatialAudio.a(AkSpatialAudio.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkAudioInputSource.a(AkFXSrcAudioInput.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkAudioInputSource.a(AkFXSrcAudioInput.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkVorbisDecoder.a(AkVorbisLib.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkVorbisDecoder.a(AkVorbisLib.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMeterFX.a(InitAkMeterFX.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: D:/Client/Plugins/WWise/ThirdParty/Android_armeabi-v7a/Profile/lib\libAkMeterFX.a(InitAkMeterFX.o) is incompatible with aarch64linux</span><br><span class="line">ld.lld: error: too many errors emitted, stopping now (use -error-limit=0 to see all errors)</span><br><span class="line">clang++: error: linker command failed with exit code 1 (use -v to see invocation)</span><br><span class="line">14&gt;Execution failed. Error: 1 (0x01) Target: &#x27;C:\BuildAgent\workspace\FGameClientBuild\Client\Binaries\Android\FGame-arm64.so&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>所以，需要找到一种方法，能够在使用<code>PublicAdditionalLibraries</code>同时添加了arm64和armv7链接库的情况下让编译器能够自动地匹配到应该去什么路径来执行链接。</p>
+<p>翻了一下UBT的代码，发现UE中对在Android上对链接库的路径做了模式匹配：</p>
+<figure class="highlight csharp"><figcaption><span>Engine\Source\Programs\UnrealBuildTool\Platform\Android\AndroidToolChain.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">private</span> Dictionary&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt; AllArchNames = <span class="keyword">new</span> Dictionary&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt; &#123;</span><br><span class="line">  &#123; <span class="string">&quot;-armv7&quot;</span>, <span class="keyword">new</span> <span class="built_in">string</span>[] &#123; <span class="string">&quot;armv7&quot;</span>, <span class="string">&quot;armeabi-v7a&quot;</span>, &#125; &#125;,</span><br><span class="line">  &#123; <span class="string">&quot;-arm64&quot;</span>, <span class="keyword">new</span> <span class="built_in">string</span>[] &#123; <span class="string">&quot;arm64&quot;</span>, <span class="string">&quot;arm64-v8a&quot;</span>, &#125; &#125;,</span><br><span class="line">  &#123; <span class="string">&quot;-x86&quot;</span>,   <span class="keyword">new</span> <span class="built_in">string</span>[] &#123; <span class="string">&quot;x86&quot;</span>, &#125; &#125;,</span><br><span class="line">  &#123; <span class="string">&quot;-x64&quot;</span>,   <span class="keyword">new</span> <span class="built_in">string</span>[] &#123; <span class="string">&quot;x64&quot;</span>, <span class="string">&quot;x86_64&quot;</span>, &#125; &#125;,</span><br><span class="line">&#125;;</span><br><span class="line">    </span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="built_in">bool</span> <span class="title">IsDirectoryForArch</span>(<span class="params"><span class="built_in">string</span> Dir, <span class="built_in">string</span> Arch</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// make sure paths use one particular slash</span></span><br><span class="line">  Dir = Dir.Replace(<span class="string">&quot;\\&quot;</span>, <span class="string">&quot;/&quot;</span>).ToLowerInvariant();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// look for other architectures in the Dir path, and fail if it finds it</span></span><br><span class="line">  <span class="keyword">foreach</span> (KeyValuePair&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt; Pair <span class="keyword">in</span> AllArchNames)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (Pair.Key != Arch)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">foreach</span> (<span class="built_in">string</span> ArchName <span class="keyword">in</span> Pair.Value)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="comment">// if there&#x27;s a directory in the path with a bad architecture name, reject it</span></span><br><span class="line">        <span class="keyword">if</span> (Regex.IsMatch(Dir, <span class="string">&quot;/&quot;</span> + ArchName + <span class="string">&quot;$&quot;</span>) || Regex.IsMatch(Dir, <span class="string">&quot;/&quot;</span> + ArchName + <span class="string">&quot;/&quot;</span>) || Regex.IsMatch(Dir, <span class="string">&quot;/&quot;</span> + ArchName + <span class="string">&quot;_API[0-9]+_NDK[0-9]+&quot;</span>, RegexOptions.IgnoreCase))</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// if nothing was found, we are okay</span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> FileItem[] <span class="title">LinkAllFiles</span>(<span class="params">LinkEnvironment LinkEnvironment, <span class="built_in">bool</span> bBuildImportLibraryOnly, IActionGraphBuilder Graph</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  <span class="comment">// Add the library paths to the additional path list</span></span><br><span class="line">  <span class="keyword">foreach</span> (DirectoryReference LibraryPath <span class="keyword">in</span> LinkEnvironment.LibraryPaths)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// LinkerPaths could be relative or absolute</span></span><br><span class="line">    <span class="built_in">string</span> AbsoluteLibraryPath = Utils.ExpandVariables(LibraryPath.FullName);</span><br><span class="line">    <span class="keyword">if</span> (IsDirectoryForArch(AbsoluteLibraryPath, Arch))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="comment">// environment variables aren&#x27;t expanded when using the $( style</span></span><br><span class="line">      <span class="keyword">if</span> (Path.IsPathRooted(AbsoluteLibraryPath) == <span class="literal">false</span>)</span><br><span class="line">      &#123;</span><br><span class="line">        AbsoluteLibraryPath = Path.Combine(LinkerPath.FullName, AbsoluteLibraryPath);</span><br><span class="line">      &#125;</span><br><span class="line">      AbsoluteLibraryPath = Utils.CollapseRelativeDirectories(AbsoluteLibraryPath);</span><br><span class="line">      <span class="keyword">if</span> (!AdditionalLibraryPaths.Contains(AbsoluteLibraryPath))</span><br><span class="line">      &#123;</span><br><span class="line">        AdditionalLibraryPaths.Add(AbsoluteLibraryPath);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最关键的就是这这一行：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (Regex.IsMatch(Dir, <span class="string">&quot;/&quot;</span> + ArchName + <span class="string">&quot;$&quot;</span>) || Regex.IsMatch(Dir, <span class="string">&quot;/&quot;</span> + ArchName + <span class="string">&quot;/&quot;</span>) || Regex.IsMatch(Dir, <span class="string">&quot;/&quot;</span> + ArchName + <span class="string">&quot;_API[0-9]+_NDK[0-9]+&quot;</span>, RegexOptions.IgnoreCase))</span><br></pre></td></tr></table></figure>
+<p>根据上面正则的规则，可以把链接库的路径改为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">XXXX/armeabi-v7a/</span><br><span class="line">XXXX/armeabi-v8a/</span><br></pre></td></tr></table></figure>
+<p>只要我们为Android添加的链接库路径匹配这个规则，使用UE编译时就会自动使用对应架构的链接库（.a和.so都是可以使用这个规则的）。</p>
+<p>UE这也太坑了，这个要求文档没写，完全是一个潜规则。</p>
+<h3 id="Android运行时请求权限"><a href="#Android运行时请求权限" class="headerlink" title="Android运行时请求权限"></a>Android运行时请求权限</h3><p>ActivityCompact 里面有个 requestPermission方法，可以用来处理这种情况。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/training/permissions/requesting#java">请求应用权限</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c1c03825d7a5">Android 运行时请求权限</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/permissions/overview">Android 中的权限</a></li>
+</ul>
+<h3 id="Android获取包名"><a href="#Android获取包名" class="headerlink" title="Android获取包名"></a>Android获取包名</h3><p>通过UPL在Java里添加以下代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> String <span class="title function_">AndroidThunkJava_GetPackageName</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">Context</span> <span class="variable">context</span> <span class="operator">=</span> getApplicationContext();</span><br><span class="line">  <span class="keyword">return</span> context.getPackageName();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在C++里通过JNI调用即可：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FString <span class="title">UFlibAppHelper::GetAppPackageName</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    FString result;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_ANDROID</span></span><br><span class="line">    <span class="keyword">if</span> (JNIEnv* Env = FAndroidApplication::<span class="built_in">GetJavaEnv</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        jmethodID GetInstalledPakPathMethodID = FJavaWrapper::<span class="built_in">FindMethod</span>(Env, FJavaWrapper::GameActivityClassID, <span class="string">&quot;AndroidThunkJava_GetPackageName&quot;</span>, <span class="string">&quot;()Ljava/lang/String;&quot;</span>, <span class="literal">false</span>);</span><br><span class="line">        result = FJavaHelper::<span class="built_in">FStringFromLocalRef</span>(Env, (jstring)FJavaWrapper::<span class="built_in">CallObjectMethod</span>(Env, FJavaWrapper::GameActivityThis,GetInstalledPakPathMethodID));</span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">return</span> result; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Android获取外部存储路径"><a href="#Android获取外部存储路径" class="headerlink" title="Android获取外部存储路径"></a>Android获取外部存储路径</h3><p>获取App的沙盒路径：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// /storage/emulated/0/Android/data/com.xxxx.yyyy.zzzz/files</span></span><br><span class="line"><span class="function">FString <span class="title">FAndroidGCloudPlatformMisc::getExternalStorageDirectory</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    FString result;</span><br><span class="line">    <span class="keyword">if</span> (JNIEnv* Env = FAndroidApplication::<span class="built_in">GetJavaEnv</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// get context</span></span><br><span class="line">        jobject JniEnvContext;</span><br><span class="line">        &#123;</span><br><span class="line">            jclass activityThreadClass = Env-&gt;<span class="built_in">FindClass</span>(<span class="string">&quot;android/app/ActivityThread&quot;</span>);</span><br><span class="line">            jmethodID currentActivityThread = FJavaWrapper::<span class="built_in">FindStaticMethod</span>(Env, activityThreadClass, <span class="string">&quot;currentActivityThread&quot;</span>, <span class="string">&quot;()Landroid/app/ActivityThread;&quot;</span>, <span class="literal">false</span>);</span><br><span class="line">            jobject at = Env-&gt;<span class="built_in">CallStaticObjectMethod</span>(activityThreadClass, currentActivityThread);</span><br><span class="line">            jmethodID getApplication = FJavaWrapper::<span class="built_in">FindMethod</span>(Env, activityThreadClass, <span class="string">&quot;getApplication&quot;</span>, <span class="string">&quot;()Landroid/app/Application;&quot;</span>, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">            JniEnvContext = FJavaWrapper::<span class="built_in">CallObjectMethod</span>(Env, at, getApplication);</span><br><span class="line">        &#125;</span><br><span class="line">        jmethodID getExternalFilesDir = Env-&gt;<span class="built_in">GetMethodID</span>(Env-&gt;<span class="built_in">GetObjectClass</span>(JniEnvContext), <span class="string">&quot;getExternalFilesDir&quot;</span>, <span class="string">&quot;(Ljava/lang/String;)Ljava/io/File;&quot;</span>);</span><br><span class="line">        <span class="comment">// get File</span></span><br><span class="line">        jobject ExternalFileDir = Env-&gt;<span class="built_in">CallObjectMethod</span>(JniEnvContext, getExternalFilesDir,<span class="literal">nullptr</span>);</span><br><span class="line">        <span class="comment">// getPath method in File class</span></span><br><span class="line">        jmethodID getFilePath = Env-&gt;<span class="built_in">GetMethodID</span>(Env-&gt;<span class="built_in">FindClass</span>(<span class="string">&quot;java/io/File&quot;</span>), <span class="string">&quot;getPath&quot;</span>, <span class="string">&quot;()Ljava/lang/String;&quot;</span>);</span><br><span class="line">        jstring pathString = (jstring)Env-&gt;<span class="built_in">CallObjectMethod</span>(ExternalFileDir, getFilePath, <span class="literal">nullptr</span>);</span><br><span class="line">        <span class="type">const</span> <span class="type">char</span> *nativePathString = Env-&gt;<span class="built_in">GetStringUTFChars</span>(pathString, <span class="number">0</span>);</span><br><span class="line">        result = <span class="built_in">ANSI_TO_TCHAR</span>(nativePathString);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Android获取已安装App的Apk路径"><a href="#Android获取已安装App的Apk路径" class="headerlink" title="Android获取已安装App的Apk路径"></a>Android获取已安装App的Apk路径</h3><p>有个需求，需要在运行时获取到，App的Apk路径，查了一下UE里没有现成的接口，只能用JNI调用从Java那边想办法了。<br>通过在Android Developer上查找，发现<a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/content/pm/ApplicationInfo#sourceDir">ApplicationInfo</a>中具有<code>sourceDir</code>属性，记录着APK的路径。<br>而可以通过<code>PackageManager</code>调用<a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/content/pm/PackageManager#getApplicationInfo(java.lang.String,%20int)">getApplicationInfo</a>可以获取指定包名的ApplicationInfo。</p>
+<p>那么就好说了，UPL里java代码走起：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> String <span class="title function_">AndroidThunkJava_GetInstalledApkPath</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">Context</span> <span class="variable">context</span> <span class="operator">=</span> getApplicationContext();</span><br><span class="line">    <span class="type">PackageManager</span> <span class="variable">packageManager</span> <span class="operator">=</span> context.getPackageManager();</span><br><span class="line">    ApplicationInfo appInfo;</span><br><span class="line">    <span class="keyword">try</span>&#123;</span><br><span class="line">        appInfo = packageManager.getApplicationInfo(context.getPackageName(),PackageManager.GET_META_DATA);</span><br><span class="line">        <span class="keyword">return</span> appInfo.sourceDir;</span><br><span class="line">    &#125;<span class="keyword">catch</span> (PackageManager.NameNotFoundException e)&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;invalid&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在UE里使用JNI调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (JNIEnv* Env = FAndroidApplication::<span class="built_in">GetJavaEnv</span>())</span><br><span class="line">&#123;</span><br><span class="line">	jmethodID GetInstalledPakPathMethodID = FJavaWrapper::<span class="built_in">FindMethod</span>(Env, FJavaWrapper::GameActivityClassID, <span class="string">&quot;AndroidThunkJava_GetInstalledApkPath&quot;</span>, <span class="string">&quot;()Ljava/lang/String;&quot;</span>, <span class="literal">false</span>);</span><br><span class="line">	FString ResultApkPath = FJavaHelperEx::<span class="built_in">FStringFromLocalRef</span>(Env, (jstring)FJavaWrapper::<span class="built_in">CallObjectMethod</span>(Env, FJavaWrapper::GameActivityThis,GetInstalledPakPathMethodID));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>FJavaHelperEx::FStringFromLocalRef</code>是我封装的从jstring到FString的转换函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> FJavaHelperEx</span><br><span class="line">&#123;</span><br><span class="line">	<span class="function">FString <span class="title">FStringFromParam</span><span class="params">(JNIEnv* Env, jstring JavaString)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (!Env || !JavaString || Env-&gt;<span class="built_in">IsSameObject</span>(JavaString, <span class="literal">NULL</span>))</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">return</span> &#123;&#125;;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="type">const</span> <span class="keyword">auto</span> chars = Env-&gt;<span class="built_in">GetStringUTFChars</span>(JavaString, <span class="number">0</span>);</span><br><span class="line">		<span class="function">FString <span class="title">ReturnString</span><span class="params">(UTF8_TO_TCHAR(chars))</span></span>;</span><br><span class="line">		Env-&gt;<span class="built_in">ReleaseStringUTFChars</span>(JavaString, chars);</span><br><span class="line">		<span class="keyword">return</span> ReturnString;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function">FString <span class="title">FStringFromLocalRef</span><span class="params">(JNIEnv* Env, jstring JavaString)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		FString ReturnString = <span class="built_in">FStringFromParam</span>(Env, JavaString);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (Env &amp;&amp; JavaString)</span><br><span class="line">		&#123;</span><br><span class="line">			Env-&gt;<span class="built_in">DeleteLocalRef</span>(JavaString);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> ReturnString;</span><br><span class="line">    </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取的结果：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/2020/20201016112348.webp"></p>
+<h3 id="升级至AndroidX"><a href="#升级至AndroidX" class="headerlink" title="升级至AndroidX"></a>升级至AndroidX</h3><p>使用UPL来介入打包过程：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">gradleProperties</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">insert</span>&gt;</span></span><br><span class="line">		android.useAndroidX=true</span><br><span class="line">		android.enableJetifier=true</span><br><span class="line">	<span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">gradleProperties</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">baseBuildGradleAdditions</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">insert</span>&gt;</span></span><br><span class="line">		<span class="comment">&lt;!-- Here goes the gradle code --&gt;</span></span><br><span class="line">		allprojects &#123;</span><br><span class="line">			def mappings = [</span><br><span class="line">				&#x27;android.support.annotation&#x27;: &#x27;androidx.annotation&#x27;,</span><br><span class="line">				&#x27;android.arch.lifecycle&#x27;: &#x27;androidx.lifecycle&#x27;,</span><br><span class="line">				&#x27;android.support.v4.app.NotificationCompat&#x27;: &#x27;androidx.core.app.NotificationCompat&#x27;,</span><br><span class="line">				&#x27;android.support.v4.app.ActivityCompat&#x27;: &#x27;androidx.core.app.ActivityCompat&#x27;,</span><br><span class="line">				&#x27;android.support.v4.content.ContextCompat&#x27;: &#x27;androidx.core.content.ContextCompat&#x27;,</span><br><span class="line">				&#x27;android.support.v13.app.FragmentCompat&#x27;: &#x27;androidx.legacy.app.FragmentCompat&#x27;,</span><br><span class="line">				&#x27;android.arch.lifecycle.Lifecycle&#x27;: &#x27;androidx.lifecycle.Lifecycle&#x27;,</span><br><span class="line">				&#x27;android.arch.lifecycle.LifecycleObserver&#x27;: &#x27;androidx.lifecycle.LifecycleObserver&#x27;,</span><br><span class="line">				&#x27;android.arch.lifecycle.OnLifecycleEvent&#x27;: &#x27;androidx.lifecycle.OnLifecycleEvent&#x27;,</span><br><span class="line">				&#x27;android.arch.lifecycle.ProcessLifecycleOwner&#x27;: &#x27;androidx.lifecycle.ProcessLifecycleOwner&#x27;,</span><br><span class="line">			]</span><br><span class="line"></span><br><span class="line">			beforeEvaluate &#123; project -&gt;</span><br><span class="line">				project.rootProject.projectDir.traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*\.java$/) &#123; f -&gt;</span><br><span class="line">					mappings.each &#123; entry -&gt;</span><br><span class="line">						if (f.getText(&#x27;UTF-8&#x27;).contains(entry.key)) &#123;</span><br><span class="line">							println &quot;Updating $&#123;entry.key&#125; to $&#123;entry.value&#125; in file $&#123;f&#125;&quot;</span><br><span class="line">							ant.replace(file: f, token: entry.key, value: entry.value)</span><br><span class="line">						&#125;</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">baseBuildGradleAdditions</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>在UE4.27上不支持AndroidX会打包失败。</p>
+</blockquote>
+<p>在<code>SplashActivity.java</code>的这两行代码中具有错误：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> android.support.v4.app.ActivityCompat;</span><br><span class="line"><span class="keyword">import</span> android.support.v4.content.ContextCompat;</span><br></pre></td></tr></table></figure>
+
+<p>错误日志：<code>Task :app:compileDebugJavaWithJavac FAILED</code>，使用文中方法支持AndroidX后打包成功。</p>
+<p>资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/961161/androidx-support.html">AndroidX support</a></li>
+<li><a target="_blank" rel="noopener" href="https://medium.com/nineva/how-to-force-the-unreal-engine-android-project-to-use-androidx-f7060abd56ac">How to force the Unreal Engine Android project to use AndroidX?</a></li>
+</ul>
+<h3 id="为APK添加外部存储读写权限"><a href="#为APK添加外部存储读写权限" class="headerlink" title="为APK添加外部存储读写权限"></a>为APK添加外部存储读写权限</h3><p>在<code>Project Settings</code>-<code>Platform</code>-<code>Android</code>-<code>Advanced APK Packaging</code>-<code>Extra Permissions</code>下添加：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">android.permission.WRITE EXTERNAL STORAGE</span><br><span class="line">android.permission.READ_EXTERNAL_STORAGE</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/UE4/ue4-android-add-extra-permissions.webp"></p>
+<h3 id="AndroidP-HTTP请求错误"><a href="#AndroidP-HTTP请求错误" class="headerlink" title="AndroidP HTTP请求错误"></a>AndroidP HTTP请求错误</h3><p>在Android P上使用HTTP请求上传数据会有以下错误提示：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">2018-10-10 16:39:21.312 31611-31646/com.xfhy.tinkerfirmdemo W/CrashReport: java.io.IOException: Cleartext HTTP traffic to android.bugly.qq.com not permitted</span><br><span class="line">        at com.android.okhttp.HttpHandler$CleartextURLFilter.checkURLPermitted(HttpHandler.java:115)</span><br><span class="line">        at com.android.okhttp.internal.huc.HttpURLConnectionImpl.execute(HttpURLConnectionImpl.java:458)</span><br><span class="line">        at com.android.okhttp.internal.huc.HttpURLConnectionImpl.connect(HttpURLConnectionImpl.java:127)</span><br><span class="line">        at com.android.okhttp.internal.huc.HttpURLConnectionImpl.getOutputStream(HttpURLConnectionImpl.java:258)</span><br><span class="line">        at com.tencent.bugly.proguard.ai.a(BUGLY:265)</span><br><span class="line">        at com.tencent.bugly.proguard.ai.a(BUGLY:114)</span><br><span class="line">        at com.tencent.bugly.proguard.al.run(BUGLY:355)</span><br><span class="line">        at com.tencent.bugly.proguard.ak$1.run(BUGLY:723)</span><br><span class="line">        at java.lang.Thread.run(Thread.java:764)</span><br><span class="line">2018-10-10 16:39:21.312 31611-31646/com.xfhy.tinkerfirmdemo E/CrashReport: Failed to upload, please check your network.</span><br><span class="line">2018-10-10 16:39:21.312 31611-31646/com.xfhy.tinkerfirmdemo D/CrashReport: Failed to execute post.</span><br><span class="line">2018-10-10 16:39:21.312 31611-31646/com.xfhy.tinkerfirmdemo E/CrashReport: [Upload] Failed to upload(1): Failed to upload for no response!</span><br><span class="line">2018-10-10 16:39:21.313 31611-31646/com.xfhy.tinkerfirmdemo E/CrashReport: [Upload] Failed to upload(1) userinfo: failed after many attempts</span><br></pre></td></tr></table></figure>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.douevencode.com/articles/2018-07/cleartext-communication-not-permitted/">Android P - CLEARTEXT communication not permitted by network security policy</a></li>
+</ul>
+<p>这需要我们在打包时把指定的域名给配置成白名单。</p>
+<p>方法如下:</p>
+<p>在<code>res/xml</code>下创建<code>network_security_config.xml</code>文件</p>
+<p>填入以下内容（网址自行修改）：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">network-security-config</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">domain-config</span> <span class="attr">cleartextTrafficPermitted</span>=<span class="string">&quot;true&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">domain</span> <span class="attr">includeSubdomains</span>=<span class="string">&quot;true&quot;</span>&gt;</span>android.bugly.qq.com<span class="tag">&lt;/<span class="name">domain</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">domain-config</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">network-security-config</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>然后在AndroifManifest.xml中引用该文件：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">application</span> <span class="attr">android:networkSecurityConfig</span>=<span class="string">&quot;@xml/network_security_config&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<p>重新打包即可，在运行时会有以下Log：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">02-25 21:09:15.831 27760 27791 D NetworkSecurityConfig: Using Network Security Config from resource network_security_config debugBuild: true</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3600483f9c9f">Android P新特性</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/cbd4ffc26501">适配Bugly不支持Android P</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/training/articles/security-config?hl=zh-cn">Android Developer 网络安全配置</a></li>
+</ul>
+<h3 id="Android写入文件"><a href="#Android写入文件" class="headerlink" title="Android写入文件"></a>Android写入文件</h3><p>当调用<code>FFileHelper::SaveArrayToFile</code>时：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FFileHelper::<span class="built_in">SaveArrayToFile</span>(<span class="built_in">TArrayView</span>&lt;<span class="type">const</span> uint8&gt;(data, delta), *path, &amp;IFileManager::<span class="built_in">Get</span>(), EFileWrite::FILEWRITE_Append));</span><br></pre></td></tr></table></figure>
+
+<p>在该函数内部会创建一个<code>FArchive</code>的对象来管理当前文件，其内部具有一个<code>IFileHandle</code>的对象<code>Handle</code>，在Android平台上是<code>FFileHandleAndroid</code>。</p>
+<p>在<code>FArchive</code>中写入文件调用的是<code>Serialize</code>，它又会调用<code>Handle</code>的<code>Write</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FArchiveFileWriterGeneric::WriteLowLevel</span><span class="params">( <span class="type">const</span> uint8* Src, int64 CountToWrite )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> Handle-&gt;<span class="built_in">Write</span>( Src, CountToWrite );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Android的Write的实现为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/Core/Private/Android/AndroidFile.h</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">Write</span><span class="params">(<span class="type">const</span> uint8* Source, int64 BytesToWrite)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">CheckValid</span>();</span><br><span class="line">	<span class="keyword">if</span> (<span class="literal">nullptr</span> != File-&gt;Asset)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// Can&#x27;t write to assets.</span></span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="type">bool</span> bSuccess = <span class="literal">true</span>;</span><br><span class="line">	<span class="keyword">while</span> (BytesToWrite)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">check</span>(BytesToWrite &gt;= <span class="number">0</span>);</span><br><span class="line">		int64 ThisSize = FMath::<span class="built_in">Min</span>&lt;int64&gt;(READWRITE_SIZE, BytesToWrite);</span><br><span class="line">		<span class="built_in">check</span>(Source);</span><br><span class="line">		<span class="keyword">if</span> (__pwrite(File-&gt;Handle, Source, ThisSize, CurrentOffset) != ThisSize)</span><br><span class="line">		&#123;</span><br><span class="line">			bSuccess = <span class="literal">false</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		CurrentOffset += ThisSize;</span><br><span class="line">		Source += ThisSize;</span><br><span class="line">		BytesToWrite -= ThisSize;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Update the cached file length</span></span><br><span class="line">	Length = FMath::<span class="built_in">Max</span>(Length, CurrentOffset);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> bSuccess;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到是每次1M往文件里存的。</p>
+<h3 id="Android写入文件错误码对照"><a href="#Android写入文件错误码对照" class="headerlink" title="Android写入文件错误码对照"></a>Android写入文件错误码对照</h3><ul>
+<li><a target="_blank" rel="noopener" href="http://androidxref.com/8.0.0_r4/xref/bionic/libc/bionic/strerror.cpp#35">http://androidxref.com/8.0.0_r4/xref/bionic/libc/bionic/strerror.cpp#35</a></li>
+</ul>
+<p>根据 error code number 查找 error string.</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://androidxref.com/8.0.0_r4/xref/bionic/libc/bionic/strerror_r.cpp#_sys_error_strings">http://androidxref.com/8.0.0_r4/xref/bionic/libc/bionic/strerror_r.cpp#_sys_error_strings</a></li>
+<li><a target="_blank" rel="noopener" href="http://androidxref.com/8.0.0_r4/xref/bionic/libc/private/bionic_errdefs.h">http://androidxref.com/8.0.0_r4/xref/bionic/libc/private/bionic_errdefs.h</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// bionic_errdefs.h</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __BIONIC_ERRDEF</span></span><br><span class="line"><span class="meta">#<span class="keyword">error</span> <span class="string">&quot;__BIONIC_ERRDEF must be defined before including this file&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">__BIONIC_ERRDEF( <span class="number">0</span>              ,   <span class="number">0</span>, <span class="string">&quot;Success&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EPERM          ,   <span class="number">1</span>, <span class="string">&quot;Operation not permitted&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOENT         ,   <span class="number">2</span>, <span class="string">&quot;No such file or directory&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESRCH          ,   <span class="number">3</span>, <span class="string">&quot;No such process&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EINTR          ,   <span class="number">4</span>, <span class="string">&quot;Interrupted system call&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EIO            ,   <span class="number">5</span>, <span class="string">&quot;I/O error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENXIO          ,   <span class="number">6</span>, <span class="string">&quot;No such device or address&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( E2BIG          ,   <span class="number">7</span>, <span class="string">&quot;Argument list too long&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOEXEC        ,   <span class="number">8</span>, <span class="string">&quot;Exec format error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADF          ,   <span class="number">9</span>, <span class="string">&quot;Bad file descriptor&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECHILD         ,  <span class="number">10</span>, <span class="string">&quot;No child processes&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EAGAIN         ,  <span class="number">11</span>, <span class="string">&quot;Try again&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOMEM         ,  <span class="number">12</span>, <span class="string">&quot;Out of memory&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EACCES         ,  <span class="number">13</span>, <span class="string">&quot;Permission denied&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EFAULT         ,  <span class="number">14</span>, <span class="string">&quot;Bad address&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTBLK        ,  <span class="number">15</span>, <span class="string">&quot;Block device required&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBUSY          ,  <span class="number">16</span>, <span class="string">&quot;Device or resource busy&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EEXIST         ,  <span class="number">17</span>, <span class="string">&quot;File exists&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EXDEV          ,  <span class="number">18</span>, <span class="string">&quot;Cross-device link&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENODEV         ,  <span class="number">19</span>, <span class="string">&quot;No such device&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTDIR        ,  <span class="number">20</span>, <span class="string">&quot;Not a directory&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EISDIR         ,  <span class="number">21</span>, <span class="string">&quot;Is a directory&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EINVAL         ,  <span class="number">22</span>, <span class="string">&quot;Invalid argument&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENFILE         ,  <span class="number">23</span>, <span class="string">&quot;File table overflow&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EMFILE         ,  <span class="number">24</span>, <span class="string">&quot;Too many open files&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTTY         ,  <span class="number">25</span>, <span class="string">&quot;Not a typewriter&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ETXTBSY        ,  <span class="number">26</span>, <span class="string">&quot;Text file busy&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EFBIG          ,  <span class="number">27</span>, <span class="string">&quot;File too large&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOSPC         ,  <span class="number">28</span>, <span class="string">&quot;No space left on device&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESPIPE         ,  <span class="number">29</span>, <span class="string">&quot;Illegal seek&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EROFS          ,  <span class="number">30</span>, <span class="string">&quot;Read-only file system&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EMLINK         ,  <span class="number">31</span>, <span class="string">&quot;Too many links&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EPIPE          ,  <span class="number">32</span>, <span class="string">&quot;Broken pipe&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EDOM           ,  <span class="number">33</span>, <span class="string">&quot;Math argument out of domain of func&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ERANGE         ,  <span class="number">34</span>, <span class="string">&quot;Math result not representable&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EDEADLK        ,  <span class="number">35</span>, <span class="string">&quot;Resource deadlock would occur&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENAMETOOLONG   ,  <span class="number">36</span>, <span class="string">&quot;File name too long&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOLCK         ,  <span class="number">37</span>, <span class="string">&quot;No record locks available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOSYS         ,  <span class="number">38</span>, <span class="string">&quot;Function not implemented&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTEMPTY      ,  <span class="number">39</span>, <span class="string">&quot;Directory not empty&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELOOP          ,  <span class="number">40</span>, <span class="string">&quot;Too many symbolic links encountered&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOMSG         ,  <span class="number">42</span>, <span class="string">&quot;No message of desired type&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EIDRM          ,  <span class="number">43</span>, <span class="string">&quot;Identifier removed&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECHRNG         ,  <span class="number">44</span>, <span class="string">&quot;Channel number out of range&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EL2NSYNC       ,  <span class="number">45</span>, <span class="string">&quot;Level 2 not synchronized&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EL3HLT         ,  <span class="number">46</span>, <span class="string">&quot;Level 3 halted&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EL3RST         ,  <span class="number">47</span>, <span class="string">&quot;Level 3 reset&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELNRNG         ,  <span class="number">48</span>, <span class="string">&quot;Link number out of range&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EUNATCH        ,  <span class="number">49</span>, <span class="string">&quot;Protocol driver not attached&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOCSI         ,  <span class="number">50</span>, <span class="string">&quot;No CSI structure available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EL2HLT         ,  <span class="number">51</span>, <span class="string">&quot;Level 2 halted&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADE          ,  <span class="number">52</span>, <span class="string">&quot;Invalid exchange&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADR          ,  <span class="number">53</span>, <span class="string">&quot;Invalid request descriptor&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EXFULL         ,  <span class="number">54</span>, <span class="string">&quot;Exchange full&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOANO         ,  <span class="number">55</span>, <span class="string">&quot;No anode&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADRQC        ,  <span class="number">56</span>, <span class="string">&quot;Invalid request code&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADSLT        ,  <span class="number">57</span>, <span class="string">&quot;Invalid slot&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBFONT         ,  <span class="number">59</span>, <span class="string">&quot;Bad font file format&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOSTR         ,  <span class="number">60</span>, <span class="string">&quot;Device not a stream&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENODATA        ,  <span class="number">61</span>, <span class="string">&quot;No data available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ETIME          ,  <span class="number">62</span>, <span class="string">&quot;Timer expired&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOSR          ,  <span class="number">63</span>, <span class="string">&quot;Out of streams resources&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENONET         ,  <span class="number">64</span>, <span class="string">&quot;Machine is not on the network&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOPKG         ,  <span class="number">65</span>, <span class="string">&quot;Package not installed&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EREMOTE        ,  <span class="number">66</span>, <span class="string">&quot;Object is remote&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOLINK        ,  <span class="number">67</span>, <span class="string">&quot;Link has been severed&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EADV           ,  <span class="number">68</span>, <span class="string">&quot;Advertise error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESRMNT         ,  <span class="number">69</span>, <span class="string">&quot;Srmount error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECOMM          ,  <span class="number">70</span>, <span class="string">&quot;Communication error on send&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EPROTO         ,  <span class="number">71</span>, <span class="string">&quot;Protocol error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EMULTIHOP      ,  <span class="number">72</span>, <span class="string">&quot;Multihop attempted&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EDOTDOT        ,  <span class="number">73</span>, <span class="string">&quot;RFS specific error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADMSG        ,  <span class="number">74</span>, <span class="string">&quot;Not a data message&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EOVERFLOW      ,  <span class="number">75</span>, <span class="string">&quot;Value too large for defined data type&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTUNIQ       ,  <span class="number">76</span>, <span class="string">&quot;Name not unique on network&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EBADFD         ,  <span class="number">77</span>, <span class="string">&quot;File descriptor in bad state&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EREMCHG        ,  <span class="number">78</span>, <span class="string">&quot;Remote address changed&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELIBACC        ,  <span class="number">79</span>, <span class="string">&quot;Can not access a needed shared library&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELIBBAD        ,  <span class="number">80</span>, <span class="string">&quot;Accessing a corrupted shared library&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELIBSCN        ,  <span class="number">81</span>, <span class="string">&quot;.lib section in a.out corrupted&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELIBMAX        ,  <span class="number">82</span>, <span class="string">&quot;Attempting to link in too many shared libraries&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ELIBEXEC       ,  <span class="number">83</span>, <span class="string">&quot;Cannot exec a shared library directly&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EILSEQ         ,  <span class="number">84</span>, <span class="string">&quot;Illegal byte sequence&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ERESTART       ,  <span class="number">85</span>, <span class="string">&quot;Interrupted system call should be restarted&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESTRPIPE       ,  <span class="number">86</span>, <span class="string">&quot;Streams pipe error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EUSERS         ,  <span class="number">87</span>, <span class="string">&quot;Too many users&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTSOCK       ,  <span class="number">88</span>, <span class="string">&quot;Socket operation on non-socket&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EDESTADDRREQ   ,  <span class="number">89</span>, <span class="string">&quot;Destination address required&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EMSGSIZE       ,  <span class="number">90</span>, <span class="string">&quot;Message too long&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EPROTOTYPE     ,  <span class="number">91</span>, <span class="string">&quot;Protocol wrong type for socket&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOPROTOOPT    ,  <span class="number">92</span>, <span class="string">&quot;Protocol not available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EPROTONOSUPPORT,  <span class="number">93</span>, <span class="string">&quot;Protocol not supported&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESOCKTNOSUPPORT,  <span class="number">94</span>, <span class="string">&quot;Socket type not supported&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EOPNOTSUPP     ,  <span class="number">95</span>, <span class="string">&quot;Operation not supported on transport endpoint&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EPFNOSUPPORT   ,  <span class="number">96</span>, <span class="string">&quot;Protocol family not supported&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EAFNOSUPPORT   ,  <span class="number">97</span>, <span class="string">&quot;Address family not supported by protocol&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EADDRINUSE     ,  <span class="number">98</span>, <span class="string">&quot;Address already in use&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EADDRNOTAVAIL  ,  <span class="number">99</span>, <span class="string">&quot;Cannot assign requested address&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENETDOWN       , <span class="number">100</span>, <span class="string">&quot;Network is down&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENETUNREACH    , <span class="number">101</span>, <span class="string">&quot;Network is unreachable&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENETRESET      , <span class="number">102</span>, <span class="string">&quot;Network dropped connection because of reset&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECONNABORTED   , <span class="number">103</span>, <span class="string">&quot;Software caused connection abort&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECONNRESET     , <span class="number">104</span>, <span class="string">&quot;Connection reset by peer&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOBUFS        , <span class="number">105</span>, <span class="string">&quot;No buffer space available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EISCONN        , <span class="number">106</span>, <span class="string">&quot;Transport endpoint is already connected&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTCONN       , <span class="number">107</span>, <span class="string">&quot;Transport endpoint is not connected&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESHUTDOWN      , <span class="number">108</span>, <span class="string">&quot;Cannot send after transport endpoint shutdown&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ETOOMANYREFS   , <span class="number">109</span>, <span class="string">&quot;Too many references: cannot splice&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ETIMEDOUT      , <span class="number">110</span>, <span class="string">&quot;Connection timed out&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECONNREFUSED   , <span class="number">111</span>, <span class="string">&quot;Connection refused&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EHOSTDOWN      , <span class="number">112</span>, <span class="string">&quot;Host is down&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EHOSTUNREACH   , <span class="number">113</span>, <span class="string">&quot;No route to host&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EALREADY       , <span class="number">114</span>, <span class="string">&quot;Operation already in progress&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EINPROGRESS    , <span class="number">115</span>, <span class="string">&quot;Operation now in progress&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ESTALE         , <span class="number">116</span>, <span class="string">&quot;Stale NFS file handle&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EUCLEAN        , <span class="number">117</span>, <span class="string">&quot;Structure needs cleaning&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTNAM        , <span class="number">118</span>, <span class="string">&quot;Not a XENIX named type file&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENAVAIL        , <span class="number">119</span>, <span class="string">&quot;No XENIX semaphores available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EISNAM         , <span class="number">120</span>, <span class="string">&quot;Is a named type file&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EREMOTEIO      , <span class="number">121</span>, <span class="string">&quot;Remote I/O error&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EDQUOT         , <span class="number">122</span>, <span class="string">&quot;Quota exceeded&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOMEDIUM      , <span class="number">123</span>, <span class="string">&quot;No medium found&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EMEDIUMTYPE    , <span class="number">124</span>, <span class="string">&quot;Wrong medium type&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ECANCELED      , <span class="number">125</span>, <span class="string">&quot;Operation Canceled&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOKEY         , <span class="number">126</span>, <span class="string">&quot;Required key not available&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EKEYEXPIRED    , <span class="number">127</span>, <span class="string">&quot;Key has expired&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EKEYREVOKED    , <span class="number">128</span>, <span class="string">&quot;Key has been revoked&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EKEYREJECTED   , <span class="number">129</span>, <span class="string">&quot;Key was rejected by service&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( EOWNERDEAD     , <span class="number">130</span>, <span class="string">&quot;Owner died&quot;</span> )</span><br><span class="line">__BIONIC_ERRDEF( ENOTRECOVERABLE, <span class="number">131</span>, <span class="string">&quot;State not recoverable&quot;</span> )</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">undef</span> __BIONIC_ERRDEF</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取GPU和OpenGL-ES版本信息"><a href="#获取GPU和OpenGL-ES版本信息" class="headerlink" title="获取GPU和OpenGL ES版本信息"></a>获取GPU和OpenGL ES版本信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ adb shell dumpsys | grep GLES</span><br><span class="line">GLES: Qualcomm, Adreno (TM) 650, OpenGL ES 3.2 V@0502.0 (GIT@191610ae03, Ic907de5ed0, 1600323700) (Date:09/17/20)</span><br></pre></td></tr></table></figure>
+
+<h3 id="UE项目启动参数"><a href="#UE项目启动参数" class="headerlink" title="UE项目启动参数"></a>UE项目启动参数</h3><p>看了一下引擎里的代码，在<code>Launch</code>模块下<code>Launch\Private\Android\LaunchAndroid.cpp</code>中有<code>InitCommandLine</code>函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Launch\Private\Android\LaunchAndroid.cpp</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">InitCommandLine</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">const</span> uint32 CMD_LINE_MAX = <span class="number">16384u</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// initialize the command line to an empty string</span></span><br><span class="line">  FCommandLine::<span class="built_in">Set</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>));</span><br><span class="line"></span><br><span class="line">  AAssetManager* AssetMgr = <span class="built_in">AndroidThunkCpp_GetAssetManager</span>();</span><br><span class="line">  AAsset* asset = <span class="built_in">AAssetManager_open</span>(AssetMgr, <span class="built_in">TCHAR_TO_UTF8</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;UE4CommandLine.txt&quot;</span>)), AASSET_MODE_BUFFER);</span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">nullptr</span> != asset)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">void</span>* FileContents = <span class="built_in">AAsset_getBuffer</span>(asset);</span><br><span class="line">    int32 FileLength = <span class="built_in">AAsset_getLength</span>(asset);</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> CommandLine[CMD_LINE_MAX];</span><br><span class="line">    FileLength = (FileLength &lt; CMD_LINE_MAX - <span class="number">1</span>) ? FileLength : CMD_LINE_MAX - <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">memcpy</span>(CommandLine, FileContents, FileLength);</span><br><span class="line">    CommandLine[FileLength] = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">AAsset_close</span>(asset);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// chop off trailing spaces</span></span><br><span class="line">    <span class="keyword">while</span> (*CommandLine &amp;&amp; <span class="built_in">isspace</span>(CommandLine[<span class="built_in">strlen</span>(CommandLine) - <span class="number">1</span>]))</span><br><span class="line">    &#123;</span><br><span class="line">      CommandLine[<span class="built_in">strlen</span>(CommandLine) - <span class="number">1</span>] = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    FCommandLine::<span class="built_in">Append</span>(<span class="built_in">UTF8_TO_TCHAR</span>(CommandLine));</span><br><span class="line">    FPlatformMisc::<span class="built_in">LowLevelOutputDebugStringf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;APK Commandline: %s&quot;</span>), FCommandLine::<span class="built_in">Get</span>());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// read in the command line text file from the sdcard if it exists</span></span><br><span class="line">  FString CommandLineFilePath = GFilePathBase + <span class="built_in">FString</span>(<span class="string">&quot;/UE4Game/&quot;</span>) + (!FApp::<span class="built_in">IsProjectNameEmpty</span>() ? FApp::<span class="built_in">GetProjectName</span>() : FPlatformProcess::<span class="built_in">ExecutableName</span>()) + <span class="built_in">FString</span>(<span class="string">&quot;/UE4CommandLine.txt&quot;</span>);</span><br><span class="line">  FILE* CommandLineFile = <span class="built_in">fopen</span>(<span class="built_in">TCHAR_TO_UTF8</span>(*CommandLineFilePath), <span class="string">&quot;r&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span>(CommandLineFile == <span class="literal">NULL</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// if that failed, try the lowercase version</span></span><br><span class="line">    CommandLineFilePath = CommandLineFilePath.<span class="built_in">Replace</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;UE4CommandLine.txt&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;ue4commandline.txt&quot;</span>));</span><br><span class="line">    CommandLineFile = <span class="built_in">fopen</span>(<span class="built_in">TCHAR_TO_UTF8</span>(*CommandLineFilePath), <span class="string">&quot;r&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(CommandLineFile)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="type">char</span> CommandLine[CMD_LINE_MAX];</span><br><span class="line">    <span class="built_in">fgets</span>(CommandLine, <span class="built_in">ARRAY_COUNT</span>(CommandLine) - <span class="number">1</span>, CommandLineFile);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">fclose</span>(CommandLineFile);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// chop off trailing spaces</span></span><br><span class="line">    <span class="keyword">while</span> (*CommandLine &amp;&amp; <span class="built_in">isspace</span>(CommandLine[<span class="built_in">strlen</span>(CommandLine) - <span class="number">1</span>]))</span><br><span class="line">    &#123;</span><br><span class="line">      CommandLine[<span class="built_in">strlen</span>(CommandLine) - <span class="number">1</span>] = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// initialize the command line to an empty string</span></span><br><span class="line">    FCommandLine::<span class="built_in">Set</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>));</span><br><span class="line"></span><br><span class="line">    FCommandLine::<span class="built_in">Append</span>(<span class="built_in">UTF8_TO_TCHAR</span>(CommandLine));</span><br><span class="line">    FPlatformMisc::<span class="built_in">LowLevelOutputDebugStringf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Override Commandline: %s&quot;</span>), FCommandLine::<span class="built_in">Get</span>());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !UE_BUILD_SHIPPING</span></span><br><span class="line">  <span class="keyword">if</span> (FString* ConfigRulesCmdLineAppend = FAndroidMisc::<span class="built_in">GetConfigRulesVariable</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;cmdline&quot;</span>)))</span><br><span class="line">  &#123;</span><br><span class="line">    FCommandLine::<span class="built_in">Append</span>(**ConfigRulesCmdLineAppend);</span><br><span class="line">    FPlatformMisc::<span class="built_in">LowLevelOutputDebugStringf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ConfigRules appended: %s&quot;</span>), **ConfigRulesCmdLineAppend);</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>简单来说就是在<code>UE4Game/ProjectName/ue4commandline.txt</code>中把启动参数写到里面，引擎启动的时候会从这个文件去读，然后添加到FCommandLine中。</p>
+<h3 id="Android设置宽高比"><a href="#Android设置宽高比" class="headerlink" title="Android设置宽高比"></a>Android设置宽高比</h3><p>在<code>Project Settings</code>-<code>Platforms</code>-<code>Android</code>-<code>Maximum support aspect ratio</code>的值，默认是2.1，但是在全面屏的情况下会有黑边。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/UE4/ue4-project-settings-android-maximum-support-aspect-ratio.webp"></p>
+<p>它控制的值是<code>AndroidManifest.xml</code>中的值：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">meta-data</span> <span class="attr">android:name</span>=<span class="string">&quot;android.max_aspect&quot;</span> <span class="attr">android:value</span>=<span class="string">&quot;2.1&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我目前设置的值是2.5.</p>
+<blockquote>
+<p>注：<code>Enable FullScreen Immersive on KitKat and above devices</code>控制的是进入游戏时是否隐藏虚拟按键。</p>
+</blockquote>
+<h2 id="UPL-for-Android"><a href="#UPL-for-Android" class="headerlink" title="UPL for Android"></a>UPL for Android</h2><p>在UE中为移动端添加第三方模块或者修改配置文件时经常会用到<code>AdditionalPropertiesForReceipt</code>，里面创建<code>ReceiptProperty</code>传入的<code>xml</code>文件就是UE的<code>Unreal Plugin Language</code>脚本。</p>
+<p><code>ReceiptProperty</code>的平台名称在IOS和Android上是固定的，分别是<code>IOSPlugin</code>和<code>AndroidPlugin</code>，不可以指定其他的名字（详见代码<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/283e412aa843210f2d6e9ed0236861cf749b3429/Engine/Source/Programs/UnrealBuildTool/Platform/IOS/UEDeployIOS.cs#L1153">UEDeployIOS.cs#L1153</a>和<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/1eb5d965b994b4bd59f31ec4158d42f13137ab1f/Engine/Source/Programs/UnrealBuildTool/Platform/Android/UEDeployAndroid.cs#L4303">UEDeployAndroid.cs#L4303</a>）。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AdditionalPropertiesForReceipt.Add(<span class="keyword">new</span> ReceiptProperty(<span class="string">&quot;AndroidPlugin&quot;</span>, Path.Combine(ThirdPartyPath, <span class="string">&quot;Android/PlatformUtils_UPL_Android.xml&quot;</span>)));</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Platforms/Mobile/UnrealPluginLanguage/index.html">Unreal Plugin Language</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/34374244">虚幻插件语言参考(Android版)</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/f8f4b403eb682ffc055613c7caf9d2ba5df7f319/Engine/Source/Programs/UnrealBuildTool/System/UnrealPluginLanguage.cs">Engine/Source/Programs/UnrealBuildTool/System/UnrealPluginLanguage.cs</a></li>
+</ul>
+<h3 id="Android项目中所有的UPL"><a href="#Android项目中所有的UPL" class="headerlink" title="Android项目中所有的UPL"></a>Android项目中所有的UPL</h3><p>可以在项目路径下<code>Intermediate/Android/ActiveUPL.xml</code>，里面列出了当前项目中所有的UPL文件路径：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Plugins\Online\Android\OnlineSubsystemGooglePlay\Source\OnlineSubsystemGooglePlay_UPL.xml</span><br><span class="line">Plugins\Runtime\AndroidPermission\Source\AndroidPermission\AndroidPermission_APL.xml</span><br><span class="line">Plugins\Runtime\GoogleCloudMessaging\Source\GoogleCloudMessaging\GoogleCloudMessaging_UPL.xml</span><br><span class="line">Plugins\Runtime\GooglePAD\Source\GooglePAD\GooglePAD_APL.xml</span><br><span class="line">Plugins\Runtime\Oculus\OculusVR\Source\OculusHMD\OculusMobile_APL.xml</span><br><span class="line">Source\Runtime\Online\Voice\AndroidVoiceImpl_UPL.xml</span><br><span class="line">Source\ThirdParty\GoogleGameSDK\GoogleGameSDK_APL.xml</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除AndroidManifest-xml中的项"><a href="#删除AndroidManifest-xml中的项" class="headerlink" title="删除AndroidManifest.xml中的项"></a>删除AndroidManifest.xml中的项</h3><p>因为UE默认会给<code>AndroidManifest.xml</code>添加项，如果其中的项我们想要手动控制，直接添加的话会产生错误，提示已经存在：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   &gt; Task :app:processDebugManifest FAILED</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   Z:\app\src\main\AndroidManifest.xml:<span class="number">47</span>:<span class="number">5</span><span class="number">-106</span> Error:</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):     Element meta-data<span class="meta">#com.epicgames.ue4.GameActivity.bUseExternalFilesDir at AndroidManifest.xml:47:5-106 duplicated with element declared at AndroidManifest.xml:27:5-107</span></span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   Z:\app\src\main\AndroidManifest.xml Error:</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):     Validation failed, exiting</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   FAILURE: Build failed with an exception.</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   * What went wrong:</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   Execution failed <span class="keyword">for</span> task <span class="string">&#x27;:app:processDebugManifest&#x27;</span>.</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   &gt; Manifest merger failed with multiple errors, see logs</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   See http:<span class="comment">//g.co/androidstudio/manifest-merger for more information about the manifest merger.</span></span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   * Try:</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   Run with --stacktrace option to get the stack trace. Run with --info <span class="keyword">or</span> --debug option to get more log output. Run with --scan to get full insights.</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   * Get more help at https:<span class="comment">//help.gradle.org</span></span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   </span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   BUILD FAILED in <span class="number">10</span>s</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   <span class="number">189</span> actionable tasks: <span class="number">1</span> executed, <span class="number">188</span> up-to-date</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)):   ERROR: cmd.exe failed with args /c <span class="string">&quot;C:\Users\lipengzha\Documents\Unreal Projects\GCloudExample\Intermediate\Android\armv7\gradle\rungradle.bat&quot;</span> :app:assembleDebug</span><br><span class="line">PackagingResults: Error: cmd.exe failed with args /c <span class="string">&quot;C:\Users\lipengzha\Documents\Unreal Projects\GCloudExample\Intermediate\Android\armv7\gradle\rungradle.bat&quot;</span> :app:assembleDebug</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)): Took <span class="number">13.3060694</span>s to run UnrealBuildTool.exe, ExitCode=<span class="number">6</span></span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)): UnrealBuildTool failed. See log <span class="keyword">for</span> more details. (C:\Users\lipengzha\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_4<span class="number">.25</span>\UBT-.txt)</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)): AutomationTool exiting with ExitCode=<span class="number">6</span> (<span class="number">6</span>)</span><br><span class="line">UATHelper: <span class="built_in">Packaging</span> (<span class="built_in">Android</span> (ASTC)): BUILD FAILED</span><br><span class="line">PackagingResults: Error: Unknown Error</span><br></pre></td></tr></table></figure>
+
+<p>如果想要修改或者删除UE默认生成的<code>AndroidManifest.xml</code>中的项，可以通过先删除再添加的方式。</p>
+<p>以删除以下项为例:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta-data android:name=<span class="string">&quot;com.epicgames.ue4.GameActivity.bUseExternalFilesDir&quot;</span> android:value=<span class="string">&quot;false&quot;</span> /&gt;</span><br></pre></td></tr></table></figure>
+<p>在UPL的<code>androidManifestUpdates</code>中编写以下代码：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">androidManifestUpdates</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">loopElements</span> <span class="attr">tag</span>=<span class="string">&quot;meta-data&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">setStringFromAttribute</span> <span class="attr">result</span>=<span class="string">&quot;ApplicationSectionName&quot;</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span> <span class="attr">name</span>=<span class="string">&quot;android:name&quot;</span>/&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">setBoolIsEqual</span> <span class="attr">result</span>=<span class="string">&quot;bUseExternalFilesDir&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$S(ApplicationSectionName)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;com.epicgames.ue4.GameActivity.bUseExternalFilesDir&quot;</span>/&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">if</span> <span class="attr">condition</span>=<span class="string">&quot;bUseExternalFilesDir&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">true</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">removeElement</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">true</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">loopElements</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">androidManifestUpdates</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>就是去遍历<code>AndroidManfest.xml</code>中已经存在<code>meta-data</code>中，<code>android:name</code>为<code>com.epicgames.ue4.GameActivity.bUseExternalFilesDir</code>的项给删除。</p>
+<h3 id="JNI调用接收ActivityResult"><a href="#JNI调用接收ActivityResult" class="headerlink" title="JNI调用接收ActivityResult"></a>JNI调用接收ActivityResult</h3><p>有时需要通过<code>startActivityForResult</code>来创建<code>Intent</code>来执行一些操作，如打开摄像头、打开相册选择图片等。</p>
+<p>但是Android做这些操作的时候不是阻塞在当前的函数中的，所以不能直接在调用的函数里接收这些数据。而通过<code>startActivityForResult</code>执行的Action的结果都会调用到Activity的<code>onActivityResult</code>中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// GameActivity.java</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">onActivityResult</span><span class="params">(<span class="type">int</span> requestCode, <span class="type">int</span> resultCode, Intent data)</span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>UE在UPL中提供了往OnActivityResult追加Java代码的用法：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- optional additions to GameActivity onActivityResult in GameActivity.java --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">gameActivityOnActivityResultAdditions</span>&gt;</span>	<span class="tag">&lt;/<span class="name">gameActivityOnActivityResultAdditions</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>使用这种方式添加的Java代码会追加到<code>OnActivityResult</code>函数的末尾，但是这种方式有一个问题，那就是执行了自己追加到<code>OnActivityResult</code>的代码之后，还要处理接收到的结果，并且传递到UE端来，有点麻烦。</p>
+<p>经过翻阅代码，发现UE提供了Java端的<code>OnActivityResult</code>的多播代理事件，这样就可以直接在UE里用C++来监听<code>OnActivityResult</code>的事件，自己做处理。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Launch/Puclic/Android/AndroidJNI.h</span></span><br><span class="line"><span class="built_in">DECLARE_MULTICAST_DELEGATE_SixParams</span>(FOnActivityResult, JNIEnv *, jobject, jobject, jint, jint, jobject);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 该代理是定义在`FJavaWrapper`里的</span></span><br><span class="line"><span class="comment">// Delegate that can be registered to that is called when an activity is finished</span></span><br><span class="line"><span class="type">static</span> FOnActivityResult OnActivityResultDelegate;</span><br></pre></td></tr></table></figure>
+<p>在UE侧就可以通过绑定这个多播代理来监听Java端的<code>OnActivityResult</code>调用，可以在其中做分别的处理。</p>
+<p>它由<code>AndroidJNI.cpp</code>中的<code>Java_com_epicgames_ue4_GameActivity_nativeOnActivityResult</code>函数从Java那边调用过来，调用机制在上个笔记中有记录。</p>
+<h3 id="Java调C"><a href="#Java调C" class="headerlink" title="Java调C++"></a>Java调C++</h3><p>有些需求和实现需要从Java调到C++这边，可以通过下面这种方式：<br>首先，在GameActivity中新建一个<code>native</code>的java函数声明（不需要定义）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeOnActivityResult</span><span class="params">(GameActivity activity, <span class="type">int</span> requestCode, <span class="type">int</span> resultCode, Intent data)</span>;</span><br></pre></td></tr></table></figure>
+<p>然后在C++端按照下面的规则定义一个C++函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">JNI_METHOD <span class="type">void</span> <span class="title">Java_com_epicgames_ue4_GameActivity_nativeOnActivityResult</span><span class="params">(JNIEnv* jenv, jobject thiz, jobject activity, jint requestCode, jint resultCode, jobject data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	FJavaWrapper::OnActivityResultDelegate.<span class="built_in">Broadcast</span>(jenv, thiz, activity, requestCode, resultCode, data);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到函数名字的规则为：</p>
+<ol>
+<li>函数前需要加<code>JNI_METHOD</code>修饰，它是一个宏<code>__attribute__ ((visibility (&quot;default&quot;))) extern &quot;C&quot;</code></li>
+<li>函数名需要以<code>Java_</code>开头，并且后面跟上<code>com_epicgames_ue4_GameActivity_</code>，标识是定义在<code>GameActivity</code>中的</li>
+<li>然后再跟上java中的函数名</li>
+</ol>
+<p>接受参数的规则：</p>
+<ol>
+<li>第一个参数是Java的Env</li>
+<li>第二个是java里的this</li>
+<li>后面的参数以此是从java里传递参数</li>
+</ol>
+<h3 id="AndroidP的全面屏适配"><a href="#AndroidP的全面屏适配" class="headerlink" title="AndroidP的全面屏适配"></a>AndroidP的全面屏适配</h3><p>在UE4打包的时候，会给项目生成GameActivity.java文件，里面的OnCreate具有适配全面屏的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onCreate</span><span class="params">(Bundle savedInstanceState)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="keyword">if</span> (UseDisplayCutout)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// will not be true if not Android Pie or later</span></span><br><span class="line">	    WindowManager.<span class="type">LayoutParams</span> <span class="variable">params</span> <span class="operator">=</span> getWindow().getAttributes();</span><br><span class="line">		params.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;</span><br><span class="line">	    getWindow().setAttributes(params);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Android P和之后的系统不支持，所以就要自己写Jni调用来强制让P和之后系统版本支持。<br>在UE4.23+以后的引擎版本，支持了通过UPL往OnCreate函数添加代码，就可以直接把代码插入到GameActivity.java了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;gameActivityOnCreateFinalAdditions&gt;</span><br><span class="line">&lt;insert&gt;</span><br><span class="line">    <span class="comment">// P版本允许使用刘海</span></span><br><span class="line">    <span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.P) &#123;</span><br><span class="line">    WindowManager.<span class="type">LayoutParams</span> <span class="variable">lp</span> <span class="operator">=</span> <span class="built_in">this</span>.getWindow().getAttributes();</span><br><span class="line">    lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;</span><br><span class="line">    <span class="built_in">this</span>.getWindow().setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line">&lt;/insert&gt;</span><br><span class="line">&lt;/gameActivityOnCreateFinalAdditions&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在UE4.23之前不可以给<code>OnCreate</code>添加代码，只能自己写个JNI调用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">AndroidThunkJava_SetFullScreenDisplayForP</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">final</span> <span class="type">GameActivity</span> <span class="variable">Activity</span> <span class="operator">=</span> <span class="built_in">this</span>;</span><br><span class="line">	runOnUiThread(<span class="keyword">new</span> <span class="title class_">Runnable</span>() </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">GameActivity</span> <span class="variable">InActivity</span> <span class="operator">=</span> Activity;</span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">WindowManager</span> <span class="variable">windowManager</span> <span class="operator">=</span>  InActivity.getWindowManager();</span><br><span class="line">            <span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.P) </span><br><span class="line">            &#123;</span><br><span class="line">        </span><br><span class="line">                WindowManager.<span class="type">LayoutParams</span> <span class="variable">lp</span> <span class="operator">=</span> InActivity.getWindow().getAttributes();</span><br><span class="line">                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;</span><br><span class="line">                InActivity.getWindow().setAttributes(lp);</span><br><span class="line">                Log.debug( <span class="string">&quot;call AndroidThunkJava_SetFullScreenDisplayForP&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将其在UPL中通过<code>&lt;gameActivityClassAdditions&gt;</code>添加到GameActivity.java中，在游戏启动时通过JNI调用即可。</p>
+<p>注：</p>
+<p><code>layoutInDisplayCutoutMode</code>的可选项为：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/view/WindowManager.LayoutParams#LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS">LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS</a>(Added in <a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels">API level 30</a>)：始终允许窗口扩展到<code>DisplayCutout</code>屏幕所有边缘上的区域。</li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/view/WindowManager.LayoutParams#LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT">LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT</a>(Added in <a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels">API level 28</a>)：仅当窗口完全包含在系统栏中时<code>DisplayCutout</code>，才允许该窗口扩展到该区域 <code>DisplayCutout</code>。</li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/view/WindowManager.LayoutParams#LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER">LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER</a>(Added in <a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels">API level 28</a>)：永远不要让窗口与DisplayCutout区域重叠。</li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/view/WindowManager.LayoutParams#LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES">LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES</a>(Added in <a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels">API level 28</a>)：始终允许窗口扩展到<code>DisplayCutout</code>屏幕短边的区域。</li>
+</ul>
+<h4 id="外部资料"><a href="#外部资料" class="headerlink" title="外部资料"></a>外部资料</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/zh-CN/Support/Builds/ReleaseNotes/4_23/index.html">UE4.23的更新日志</a></li>
+</ul>
+<h3 id="Android重启App"><a href="#Android重启App" class="headerlink" title="Android重启App"></a>Android重启App</h3><p>当游戏更新完毕之后有时候需要重启App才可以生效，在UE中可以使用UPL写入以下java代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">AndroidThunkJava_AndroidAPI_RestartApplication</span><span class="params">( )</span> &#123;</span><br><span class="line">	<span class="type">Context</span> <span class="variable">context</span> <span class="operator">=</span> getApplicationContext();</span><br><span class="line">    <span class="type">PackageManager</span> <span class="variable">pm</span> <span class="operator">=</span> context.getPackageManager();</span><br><span class="line">    <span class="type">Intent</span> <span class="variable">intent</span> <span class="operator">=</span> pm.getLaunchIntentForPackage(context.getPackageName());</span><br><span class="line">    <span class="type">int</span> <span class="variable">delayTime</span> <span class="operator">=</span> <span class="number">500</span>;</span><br><span class="line">    <span class="type">AlarmManager</span> <span class="variable">alarmManager</span> <span class="operator">=</span> (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);</span><br><span class="line">    <span class="type">PendingIntent</span> <span class="variable">restartIntent</span> <span class="operator">=</span> PendingIntent.getActivity(context, <span class="number">0</span>, intent, PendingIntent.FLAG_CANCEL_CURRENT);</span><br><span class="line">    alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + delayTime, restartIntent);</span><br><span class="line">    System.exit(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在需要重启的时候通过jni调用来触发：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">RestartApplication</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_ANDROID</span></span><br><span class="line">	<span class="keyword">if</span> (JNIEnv* Env = FAndroidApplication::<span class="built_in">GetJavaEnv</span>(<span class="literal">true</span>))</span><br><span class="line">	&#123;</span><br><span class="line">		FJavaWrapper::<span class="built_in">CallVoidMethod</span>(Env, FJavaWrapper::GameActivityThis, AndroidThunkJava_AndroidAPI_RestartApplication);</span><br><span class="line">	&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><h3 id="app-assembleDebug报错"><a href="#app-assembleDebug报错" class="headerlink" title="app:assembleDebug报错"></a>app:assembleDebug报错</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: Packaging (Android…) ERROR: cmd.exe failed with args /c “[ProjectPath]\Intermediate/Android/APK/gradle/rungradle.bat” :app:assembleDebug</span><br></pre></td></tr></table></figure>
+<p>将下面选项取消勾选即可：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/UE4/ue4-package-android-error-assdebug.webp"></p>
+<p>在4.24+中没有了<code>Enable Gradle instead of Ant</code>选项，仔细看了下log发现是因为UE要从网络上下载<code>Grade</code>下载失败导致的，可以在打包时开启全局代理。或者使用我打包的gradle版本：<a target="_blank" rel="noopener" href="https://stusdnueducn-my.sharepoint.com/:u:/g/personal/2017020625_stu_sdnu_edu_cn/EchGqZT81YdGi_nAncZPrMkBW3DkeGySMHkhWWYA6SaWMg?e=qReHkS">gradle-5.4.1.7z</a>，将其解压到以下路径即可：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\lipengzha\.gradle\wrapper\dists\gradle-5.4.1-all\3221gyojl5jsh0helicew7rwx\gradle-5.4.1</span><br></pre></td></tr></table></figure>
+
+<p>然后创建一个环境变量<code>GRADLE_HOME</code>指向该路径即可。</p>
+<blockquote>
+<p>在一些情况下，清理掉项目的Intermediate目录也可以解决问题，可以作为一个尝试方法。</p>
+</blockquote>
+<p>还有一些相关的文章，可以更新Android Tools，操作方法为：</p>
+<ol>
+<li>run NVPACK/android-sdk-windows/tools/android.bat</li>
+<li>click on “Deselect All”</li>
+<li>update Extras/Android Support Repository</li>
+</ol>
+<p>文章：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/720605/android-packaging-build-fail-ue-418.html">Android packaging build fail - UE 4.18</a></li>
+</ul>
+<h3 id="app-packagedebug报错"><a href="#app-packagedebug报错" class="headerlink" title="app:packagedebug报错"></a>app:packagedebug报错</h3><p>打包时有如下错误Log:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">execution failed for task &#x27;:app:packagedebug&#x27;.  </span><br><span class="line"> &gt; a failure occurred while executing com.android.build.gradle.internal.tasks.workers$actionfacade   </span><br><span class="line">&gt; out of range: 3185947123</span><br></pre></td></tr></table></figure>
+<p>解决方案：删除工程中的<code>Intermediate/Android</code>和<code>Intermediate/Build/Android</code>即可。</p>
+<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/SharingAndReleasing/Mobile/Android/Setup/index.html">Android Project Setup</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/">Android Developer</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/17996/" target="_blank">UE开发笔记：Android篇</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年04月15日 19时54分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有10k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/17996/" target="_blank" title="UE开发笔记：Android篇">https://imzlp.com/posts/17996/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/17996/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/UPL/" rel="tag"># UPL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/24336/" rel="prev" title="UE项目优化：PSO Cache">
+      <i class="fa fa-chevron-left"></i> UE项目优化：PSO Cache
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/19135/" rel="next" title="UE性能分析：内存优化">
+      UE性能分析：内存优化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%9A%E5%AE%A2%E6%96%87%E7%AB%A0"><span class="nav-number">1.</span> <span class="nav-text">博客文章</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">编译环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E6%93%8E%E4%BE%9D%E8%B5%96%E4%B8%8E%E6%94%AF%E6%8C%81"><span class="nav-number">3.</span> <span class="nav-text">引擎依赖与支持</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E6%93%8E%E5%AF%B9Android%E7%89%88%E6%9C%AC%E7%9A%84%E6%94%AF%E6%8C%81"><span class="nav-number">3.1.</span> <span class="nav-text">引擎对Android版本的支持</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SDK%E7%89%88%E6%9C%AC%E4%B8%8EAndroid%E7%9A%84%E7%89%88%E6%9C%AC%E5%AF%B9%E7%85%A7%E8%A1%A8"><span class="nav-number">3.2.</span> <span class="nav-text">SDK版本与Android的版本对照表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E6%93%8E%E5%AF%B9AndroidNDK%E7%9A%84%E8%A6%81%E6%B1%82"><span class="nav-number">3.3.</span> <span class="nav-text">引擎对AndroidNDK的要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NDK%E7%9A%84%E7%BC%96%E8%AF%91%E5%99%A8%E7%89%88%E6%9C%AC"><span class="nav-number">3.4.</span> <span class="nav-text">NDK的编译器版本</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7"><span class="nav-number">4.</span> <span class="nav-text">工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Adb"><span class="nav-number">4.1.</span> <span class="nav-text">Adb</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Apk"><span class="nav-number">4.1.1.</span> <span class="nav-text">安装Apk</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8App"><span class="nav-number">4.1.2.</span> <span class="nav-text">启动App</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E8%BE%93%E6%96%87%E4%BB%B6"><span class="nav-number">4.1.3.</span> <span class="nav-text">传输文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Logcat"><span class="nav-number">4.1.4.</span> <span class="nav-text">Logcat</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8E%E8%AE%BE%E5%A4%87%E4%B8%AD%E6%8F%90%E5%8F%96%E5%B7%B2%E5%AE%89%E8%A3%85%E7%9A%84APK"><span class="nav-number">4.1.5.</span> <span class="nav-text">从设备中提取已安装的APK</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%B7%E5%85%A5Recovery"><span class="nav-number">4.1.6.</span> <span class="nav-text">刷入Recovery</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91"><span class="nav-number">4.1.7.</span> <span class="nav-text">端口转发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%B9%E6%8D%AE%E5%8C%85%E5%90%8D%E6%9F%A5%E7%9C%8Bapk%E4%BD%8D%E7%BD%AE"><span class="nav-number">4.1.8.</span> <span class="nav-text">根据包名查看apk位置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%BD%93%E5%89%8D%E7%AA%97%E5%8F%A3%E7%9A%84app%E7%9A%84%E5%8C%85%E5%90%8D"><span class="nav-number">4.1.9.</span> <span class="nav-text">查看当前窗口的app的包名</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8Bso%E4%B8%AD%E7%9A%84%E7%AC%A6%E5%8F%B7"><span class="nav-number">4.1.10.</span> <span class="nav-text">查看so中的符号</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SessionFrontEnd%E5%AE%9E%E6%97%B6%E5%88%86%E6%9E%90"><span class="nav-number">4.2.</span> <span class="nav-text">SessionFrontEnd实时分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unreal-Insights%E5%AE%9E%E6%97%B6%E5%88%86%E6%9E%90"><span class="nav-number">4.3.</span> <span class="nav-text">Unreal Insights实时分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.</span> <span class="nav-text">工程实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8C%E6%97%B6%E6%94%AF%E6%8C%81armv7%E5%92%8Carm64%E7%9A%84%E9%93%BE%E6%8E%A5%E5%BA%93"><span class="nav-number">5.1.</span> <span class="nav-text">同时支持armv7和arm64的链接库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E8%BF%90%E8%A1%8C%E6%97%B6%E8%AF%B7%E6%B1%82%E6%9D%83%E9%99%90"><span class="nav-number">5.2.</span> <span class="nav-text">Android运行时请求权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E8%8E%B7%E5%8F%96%E5%8C%85%E5%90%8D"><span class="nav-number">5.3.</span> <span class="nav-text">Android获取包名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E8%8E%B7%E5%8F%96%E5%A4%96%E9%83%A8%E5%AD%98%E5%82%A8%E8%B7%AF%E5%BE%84"><span class="nav-number">5.4.</span> <span class="nav-text">Android获取外部存储路径</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E8%8E%B7%E5%8F%96%E5%B7%B2%E5%AE%89%E8%A3%85App%E7%9A%84Apk%E8%B7%AF%E5%BE%84"><span class="nav-number">5.5.</span> <span class="nav-text">Android获取已安装App的Apk路径</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%87%E7%BA%A7%E8%87%B3AndroidX"><span class="nav-number">5.6.</span> <span class="nav-text">升级至AndroidX</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BAAPK%E6%B7%BB%E5%8A%A0%E5%A4%96%E9%83%A8%E5%AD%98%E5%82%A8%E8%AF%BB%E5%86%99%E6%9D%83%E9%99%90"><span class="nav-number">5.7.</span> <span class="nav-text">为APK添加外部存储读写权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AndroidP-HTTP%E8%AF%B7%E6%B1%82%E9%94%99%E8%AF%AF"><span class="nav-number">5.8.</span> <span class="nav-text">AndroidP HTTP请求错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E5%86%99%E5%85%A5%E6%96%87%E4%BB%B6"><span class="nav-number">5.9.</span> <span class="nav-text">Android写入文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E5%86%99%E5%85%A5%E6%96%87%E4%BB%B6%E9%94%99%E8%AF%AF%E7%A0%81%E5%AF%B9%E7%85%A7"><span class="nav-number">5.10.</span> <span class="nav-text">Android写入文件错误码对照</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96GPU%E5%92%8COpenGL-ES%E7%89%88%E6%9C%AC%E4%BF%A1%E6%81%AF"><span class="nav-number">5.11.</span> <span class="nav-text">获取GPU和OpenGL ES版本信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UE%E9%A1%B9%E7%9B%AE%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0"><span class="nav-number">5.12.</span> <span class="nav-text">UE项目启动参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E8%AE%BE%E7%BD%AE%E5%AE%BD%E9%AB%98%E6%AF%94"><span class="nav-number">5.13.</span> <span class="nav-text">Android设置宽高比</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UPL-for-Android"><span class="nav-number">6.</span> <span class="nav-text">UPL for Android</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%80%E6%9C%89%E7%9A%84UPL"><span class="nav-number">6.1.</span> <span class="nav-text">Android项目中所有的UPL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4AndroidManifest-xml%E4%B8%AD%E7%9A%84%E9%A1%B9"><span class="nav-number">6.2.</span> <span class="nav-text">删除AndroidManifest.xml中的项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JNI%E8%B0%83%E7%94%A8%E6%8E%A5%E6%94%B6ActivityResult"><span class="nav-number">6.3.</span> <span class="nav-text">JNI调用接收ActivityResult</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java%E8%B0%83C"><span class="nav-number">6.4.</span> <span class="nav-text">Java调C++</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AndroidP%E7%9A%84%E5%85%A8%E9%9D%A2%E5%B1%8F%E9%80%82%E9%85%8D"><span class="nav-number">6.5.</span> <span class="nav-text">AndroidP的全面屏适配</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%96%E9%83%A8%E8%B5%84%E6%96%99"><span class="nav-number">6.5.1.</span> <span class="nav-text">外部资料</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android%E9%87%8D%E5%90%AFApp"><span class="nav-number">6.6.</span> <span class="nav-text">Android重启App</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="nav-number">7.</span> <span class="nav-text">常见问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#app-assembleDebug%E6%8A%A5%E9%94%99"><span class="nav-number">7.1.</span> <span class="nav-text">app:assembleDebug报错</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#app-packagedebug%E6%8A%A5%E9%94%99"><span class="nav-number">7.2.</span> <span class="nav-text">app:packagedebug报错</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="nav-number">8.</span> <span class="nav-text">相关链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/17996/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在*UNIX中可以通过fork&#x2F;vfork来实现多进程编程，整理总结一下相关的知识。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fork&#x2F;vfork浅谈">
+<meta property="og:url" content="https://imzlp.com/posts/2658/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在*UNIX中可以通过fork&#x2F;vfork来实现多进程编程，整理总结一下相关的知识。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/2658/fork-fd-shared.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/2658/orphanProcess.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/2658/zombie-process.webp">
+<meta property="article:published_time" content="2017-03-06T13:40:08.000Z">
+<meta property="article:modified_time" content="2017-03-06T13:40:08.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="UNIX">
+<meta property="article:tag" content="POSIX">
+<meta property="article:tag" content="多进程">
+<meta property="article:tag" content="multi-process">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/2658/fork-fd-shared.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/2658/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>fork/vfork浅谈 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/2658/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          fork/vfork浅谈<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2017-03-06-2658.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-03-06 13:40 13:40:08:40" itemprop="dateCreated datePublished" datetime="2017-03-06T13:40:08+00:00">2017-03-06 13:40</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UNIX/" itemprop="url" rel="index"><span itemprop="name">UNIX</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UNIX/POSIX/" itemprop="url" rel="index"><span itemprop="name">POSIX</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/2658/" class="post-meta-item leancloud_visitors" data-flag-title="fork/vfork浅谈" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在*UNIX中可以通过fork/vfork来实现多进程编程，整理总结一下相关的知识。</p>
+<span id="more"></span>
+<h3 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h3><p>一个现有的进程可以通过调用fork来创建一个新的进程。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">fork</span><span class="params">(<span class="type">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>通过fork创建的进程被称为<code>子进程(child process)</code>。<br>fork函数的调用会有两次返回——<strong>子进程中返回0，父进程中返回子进程ID</strong>。子进程和父进程继续执行fork调用之后的命令。子进程是父进程的副本，子进程获取父进程的数据空间、堆、栈的<strong>副本</strong>。注意：父进程和子进程并不共享这些存储空间父进程和子进程共享<strong>正文段</strong>(CPU执行的机器指令部分)。</p>
+<p>在子进程中访问父进程的数据是通过<code>COW(copy on write)</code>技术实现的，这些区域由父进程和子进程共享，而内核将他们的访问权限改为只读。如果父进程和子进程中的任何一个试图修改这些区域，内核只为修改区域的那块内存制作一个副本，通常是虚拟存储中的一页。</p>
+<p><strong>注意：</strong>有可能对fork之后的修改的对象的地址取地址(子进程和父进程)可能会得到同样的地址。但是他们实际上并不指向相同的物理地址。这与COW没有关系，因为&amp;取得的是虚拟地址，不同进程的虚拟地址被MMU映射到不同的物理地址。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x=<span class="number">12</span>;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;fork before: x = %d it&#x27;s address is 0x%x\n&quot;</span>,x,&amp;x);</span><br><span class="line"><span class="built_in">fflush</span>(stdout);</span><br><span class="line"><span class="type">pid_t</span> child;</span><br><span class="line"><span class="keyword">if</span>((child=fork())&lt;<span class="number">0</span>)&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;error!\n&quot;</span>);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(child&gt;<span class="number">0</span>)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;parent! The process ID is %d\n&quot;</span>,<span class="built_in">getpid</span>());</span><br><span class="line">	x=<span class="number">1</span>;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;x on parent scope is %d address is 0x%x\n\n&quot;</span>,x,&amp;x);</span><br><span class="line">	<span class="built_in">fflush</span>(stdout);</span><br><span class="line">	<span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;child! The process ID is %d\n&quot;</span>,<span class="built_in">getpid</span>());</span><br><span class="line">	x=<span class="number">2</span>;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;x on child scope is %d address is 0x%x\n\n&quot;</span>,x,&amp;x);</span><br><span class="line">	<span class="built_in">fflush</span>(stdout);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意：</strong>C语言的<code>printf</code>是带缓冲的。在进程结束时需要自己手动<code>fflush</code>缓冲区。或者可以替换为不带缓冲的<code>write(STDOUT_FILENO,buffer,n);</code></p>
+<h3 id="getpid-getppid"><a href="#getpid-getppid" class="headerlink" title="getpid/getppid"></a>getpid/getppid</h3><p>可以通过<code>getpid()</code>来获取当前的进程ID，可以通过<code>getppid()</code>来获取当前进程的父进程ID。</p>
+<p>其的POSIX标准为：</p>
+<div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/2658/getpid-ppid-dunc.pdf" data-height="700px"></div>
+<h3 id="文件共享"><a href="#文件共享" class="headerlink" title="文件共享"></a>文件共享</h3><p>在fork之后，是子进程先执行还是父进程先执行是不确定的，这取决于内核所使用的调度算法。如果要求父进程与子进程之间相互同步，则要求某种形式的进程间通信。</p>
+<p><strong>注意：</strong>父进程的所有打开的文件描述符都会被拷贝到子进程中(等同于对每个文件描述符执行dup函数)。父进程和子进程每个相同的打开文件描述符<strong>共享同一个文件表项</strong>(这意味着共享同一个偏移量)。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/2658/fork-fd-shared.webp" alt="fork fd shared"></p>
+<p>所以，如果父进程和子进程同时访问一个文件描述符且没有任何同步措施，它们的输出就会相互混合。</p>
+<h3 id="父进程与子进程的区别"><a href="#父进程与子进程的区别" class="headerlink" title="父进程与子进程的区别"></a>父进程与子进程的区别</h3><ol>
+<li>fork的返回值不同</li>
+<li>进程ID不同</li>
+<li>这两个进程的父进程ID不同</li>
+<li>子进程不继承父进程设置的文件锁</li>
+<li>子进程未处理闹钟被清除</li>
+<li>子进程未处理的信号集设置为空集</li>
+<li>子进程的tms_utime、tms_stime、tms_cutime和tms_ustims的值设置为0</li>
+</ol>
+<h3 id="fork失败"><a href="#fork失败" class="headerlink" title="fork失败"></a>fork失败</h3><p>通常fork失败的原因有两个</p>
+<ul>
+<li>系统中有太多的进程</li>
+<li>该实际用户ID的进程总数超过系统限制(CHILD_MAX)</li>
+</ul>
+<h3 id="fork的两种用途"><a href="#fork的两种用途" class="headerlink" title="fork的两种用途"></a>fork的两种用途</h3><ul>
+<li>复制父进程本身。使父进程和子进程同时执行不同的代码段。</li>
+<li>一个进程执行另一个进程(fork后立即调用exec)。</li>
+</ul>
+<h3 id="fork的POSIX标准"><a href="#fork的POSIX标准" class="headerlink" title="fork的POSIX标准"></a>fork的POSIX标准</h3><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/2658/fork.in.POSIX.pdf" data-height="700px"></div>
+
+<h3 id="vfork"><a href="#vfork" class="headerlink" title="vfork"></a>vfork</h3><p>vfork的调用序列和返回值与fork相同，但二者语义不同。<br>vfork函数用于创建一个新进程，而该进程的目的是exec一个新程序。<br>vfork与fork一样都创建一个子进程，但是它并不将父进程的地址空间完全复制到子进程中，因为子进程会立即调用exec(或exit)，于是也就不会引用该地址空间。不过在子进程执行exec之前，它在父进程的空间中运行，如果此时子进程中修改了数据(除了存放vfork返回值的变量)、进行函数调用、或者没有调用exec/exit就返回可能会带来未知的结果。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">pid_t</span> childID;</span><br><span class="line"><span class="type">int</span> ival=<span class="number">123</span>;</span><br><span class="line"><span class="keyword">if</span>((childID=<span class="built_in">vfork</span>())&lt;<span class="number">0</span>)&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;error\n&quot;</span>);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(childID==<span class="number">0</span>)&#123;</span><br><span class="line">    ival=<span class="number">111</span>;</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>,ival);</span><br><span class="line"><span class="comment">// output</span></span><br><span class="line"><span class="number">111</span></span><br></pre></td></tr></table></figure>
+
+<p>fork与vfork的另一个重要区别是：<strong>vfork保证子进程先运行，在它调用exec或者exit之后父进程才可能被调度运行，当子进程调用这两个函数的任意一个时，父进程会恢复运行(如果调用这两个函数之前依赖于父进程执行某项动作，则会导致死锁)。</strong></p>
+<h3 id="wait和waitpid"><a href="#wait和waitpid" class="headerlink" title="wait和waitpid"></a>wait和waitpid</h3><p>当一个进程正常或异常终止时，内核就向其父进程发送SIGCHLD信号。因为子进程终止是一个异步事件(可以在父进程运行的任何时候发生)，所以这种信号也是内核向父进程发的异步事件。父进程可以忽略该信号，或者提供一个该信号发生时即被调用执行的函数(信号处理程序)。</p>
+<p>调用wait或waitpid的进程会发生什么：</p>
+<ul>
+<li>如果有其所有子进程都还在运行，则阻塞。</li>
+<li>如果一个进程已经终止，正等待父进程获取其终止状态，则取得该子进程的终止状态立即返回。</li>
+<li>如果它没有任何子进程，则立即出错返回。</li>
+</ul>
+<p>如果进程由于收到SIGCHLD信号而调用wait，我们期望wait会立即返回。但是如果在随机时间调用wait则进程可能会阻塞。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#incldue <span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="comment">// 若成功返回进程ID，若出错返回0</span></span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">wait</span><span class="params">(<span class="type">int</span> *statloc)</span></span>;</span><br><span class="line"><span class="comment">// pid参数,状态缓冲区(可以为NULL),额外选项</span></span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">waitpid</span><span class="params">(<span class="type">pid_t</span> pid,<span class="type">int</span> *statloc,<span class="type">int</span> options)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>pid的参数的作用如下：</p>
+<table>
+<thead>
+<tr>
+<th align="center">pid参数</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><em>pid</em>==-1</td>
+<td align="center">等待任一子进程，在此种情况下waitpid与wait等效</td>
+</tr>
+<tr>
+<td align="center"><em>pid</em>&gt;0</td>
+<td align="center">等待进程ID与pid相等的子进程</td>
+</tr>
+<tr>
+<td align="center"><em>pid</em>==0</td>
+<td align="center">等待组ID等于调用进程组ID的任一进程</td>
+</tr>
+<tr>
+<td align="center"><em>pid</em>&lt;-1</td>
+<td align="center">等待组ID等于pid绝对值的任一子进程</td>
+</tr>
+</tbody></table>
+<p>opetions参数的作用如下：<br>options参数使我们能够进一步控制waitpid的操作，此参数或是0，或是如下表格中常量按位运算的结果：</p>
+<table>
+<thead>
+<tr>
+<th align="center">常量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">WCONTINUED</td>
+<td>若支持作业控制，那么由pid指定的任一子进程在停止后已经继续，但其状态尚未报告，则返回其状态(POSIX.1的XSI扩展)</td>
+</tr>
+<tr>
+<td align="center">WNOHANG</td>
+<td>若由pid指定的子进程并不是立即可用的，则waitpid不阻塞，此时其返回值为0</td>
+</tr>
+<tr>
+<td align="center">WUNTRACED</td>
+<td>若某实现支持作业控制，而由pid指定的任一子进程已经处于停止状态，并且其状态自停止以来还未报告过，则返回其状态。WIFSTOPPED宏确定返回值是否对应一个停止的子进程。</td>
+</tr>
+</tbody></table>
+<p>若执行成功，wait/waitpid函数均返回终止子进程的进程ID，若出错则返回0或-1.<br>waitpid还会将该子进程的终止状态存放在由<em>statloc</em>指向的存储单元中。</p>
+<p>这两个函数区别是：</p>
+<ul>
+<li>在一个子进程终止之前，wait使其调用者阻塞，而waitpid有一个选项，可以不阻塞调用者。</li>
+<li>waitpid并不等待在其调用之后的第一个终止子进程，他有若干个选项，可以控制所有等待的进程。</li>
+</ul>
+<p>如果进程已经终止，并且是一个僵死进程，则wait则立即取得该子进程的状态，否则wait使其调用者阻塞，直到一个子进程终止。如果调用者阻塞而且它具有多个子进程，则在某一个子进程终止时，wait就立即返回。因为wait返回终止子进程的进程ID，所以它总是了解是哪一个进程终止了。</p>
+<p>这两个函数返回的整型状态(<em>statloc</em>)是由实现定义的。</p>
+<p>waitpid提供了wait没有提供的三个功能：</p>
+<ul>
+<li>waitpid可以等待一个特定的进程，而qait则返回任一终止子进程的状态</li>
+<li>waitpid提供一个wait的非阻塞版本。有时希望获取一个子进程的状态而不想阻塞</li>
+<li>waitpid通过WUNTRACED和WCONTINUED选项支持作业控制</li>
+</ul>
+<h3 id="wait-waitid-waidpid的POSIX标准"><a href="#wait-waitid-waidpid的POSIX标准" class="headerlink" title="wait/waitid/waidpid的POSIX标准"></a>wait/waitid/waidpid的POSIX标准</h3><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/2658/wait-func.pdf" data-height="700px"></div>
+
+<h3 id="孤儿进程"><a href="#孤儿进程" class="headerlink" title="孤儿进程"></a>孤儿进程</h3><p>如果父进程在子进程之前终止，会怎么样呢？<br>对于父进程已经终止的所有进程，他们的父进程都变为init进程。则称这些进程被init收养。<br>大致过称为：在一个进程终止时，内核逐个检查所有活动进程，以判断它时候是正要终止进程的子进程，如果是，则该父进程ID就更改为1(init的进程ID)，这种方法保证每一个进程都有一个父进程。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">pid_t</span> child;</span><br><span class="line"><span class="keyword">if</span>((child=fork())&lt;<span class="number">0</span>)&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;error\n&quot;</span>);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(child==<span class="number">0</span>)&#123;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;current Process id: %d\tparent ID: %d\n&quot;</span>,<span class="built_in">getpid</span>(),<span class="built_in">getppid</span>());</span><br><span class="line">	<span class="built_in">sleep</span>(<span class="number">2</span>);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;current Process id: %d\tparent ID: %d\n&quot;</span>,<span class="built_in">getpid</span>(),<span class="built_in">getppid</span>());</span><br><span class="line">	<span class="built_in">fflush</span>(stdout);</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">	<span class="built_in">sleep</span>(<span class="number">1</span>);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;parent end.\n&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行上面的代码可以看到，父进程先于子进程结束，会使子进程的父进程变更为init(1)(被init收养);<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/2658/orphanProcess.webp"></p>
+<h3 id="僵死进程"><a href="#僵死进程" class="headerlink" title="僵死进程"></a>僵死进程</h3><p>如果子进程在父进程之前终止，那么父进程又如何能够在做相应检查时得到子进程的状态？<br>如果子进程完全消失了，父进程在最终准备好检查子进程是否终止时是无法获取到它的终止状态的。内核为每个终止子进程保存了一定量的信息，所以当终止进程的父进程调用wait/waitpid时，可以得到这些信息。这些信息至少包括进程ID、该进程的终止状态以及该进程使用的CPU时间总量。内核可以释放终止进程所使用的所有存储区，关闭其所有打开的文件。</p>
+<p>在UNIX术语中，一个已经终止、但是其父进程尚未对其进行善后处理(获取终止子进程的有关信息、释放它仍占用的资源)的进程叫做**僵死进程(zombie)**。ps(1)命令将僵死进程的状态打印为Z.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">pid_t</span> child;</span><br><span class="line"><span class="keyword">if</span>((child=fork())&lt;<span class="number">0</span>)&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;error\n&quot;</span>);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(child==<span class="number">0</span>)&#123;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;child Process ID: %d\tparent ID: %d\n&quot;</span>,<span class="built_in">getpid</span>(),<span class="built_in">getppid</span>());</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;child Process end.\n&quot;</span>);</span><br><span class="line">	<span class="built_in">fflush</span>(stdout);</span><br><span class="line">	<span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">	<span class="built_in">sleep</span>(<span class="number">5</span>);</span><br><span class="line">	<span class="built_in">system</span>(<span class="string">&quot;ps -o pid,ppid,state,tty,command&quot;</span>);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;parent end.\n&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行上面的程序可以看到：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/2658/zombie-process.webp" alt="zombie process"></p>
+<h3 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h3><p>前面提到子程序在fork之后可以调用一种exec函数来执行一个新的程序。<br>当进程调用一种exec函数时，该进程执行的程序完全替换为新程序，而新程序则从其main函数开始执行。<br>因为调用exec并不创建新的进程，所以前后的进程ID并未改变，exec只是用磁盘上的一个新程序替换了当前程序的正文段、数据段、堆段和段栈。<br><strong>exec的POSIX标准</strong></p>
+<div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/2658/exec.posix.pdf" data-height="700px"></div>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/2658/" target="_blank">fork/vfork浅谈</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2017年03月06日 13时40分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/2658/" target="_blank" title="fork/vfork浅谈">https://imzlp.com/posts/2658/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/2658/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/UNIX/" rel="tag"># UNIX</a>
+              <a href="/tags/POSIX/" rel="tag"># POSIX</a>
+              <a href="/tags/%E5%A4%9A%E8%BF%9B%E7%A8%8B/" rel="tag"># 多进程</a>
+              <a href="/tags/multi-process/" rel="tag"># multi-process</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/20479/" rel="prev" title="通过IR代码来分析C++代码语义">
+      <i class="fa fa-chevron-left"></i> 通过IR代码来分析C++代码语义
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/1756/" rel="next" title="C/C++中的编程技巧及其概念">
+      C/C++中的编程技巧及其概念 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#fork"><span class="nav-number">1.</span> <span class="nav-text">fork</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#getpid-getppid"><span class="nav-number">2.</span> <span class="nav-text">getpid&#x2F;getppid</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB"><span class="nav-number">3.</span> <span class="nav-text">文件共享</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%88%B6%E8%BF%9B%E7%A8%8B%E4%B8%8E%E5%AD%90%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">4.</span> <span class="nav-text">父进程与子进程的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fork%E5%A4%B1%E8%B4%A5"><span class="nav-number">5.</span> <span class="nav-text">fork失败</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fork%E7%9A%84%E4%B8%A4%E7%A7%8D%E7%94%A8%E9%80%94"><span class="nav-number">6.</span> <span class="nav-text">fork的两种用途</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fork%E7%9A%84POSIX%E6%A0%87%E5%87%86"><span class="nav-number">7.</span> <span class="nav-text">fork的POSIX标准</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#vfork"><span class="nav-number">8.</span> <span class="nav-text">vfork</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wait%E5%92%8Cwaitpid"><span class="nav-number">9.</span> <span class="nav-text">wait和waitpid</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wait-waitid-waidpid%E7%9A%84POSIX%E6%A0%87%E5%87%86"><span class="nav-number">10.</span> <span class="nav-text">wait&#x2F;waitid&#x2F;waidpid的POSIX标准</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A4%E5%84%BF%E8%BF%9B%E7%A8%8B"><span class="nav-number">11.</span> <span class="nav-text">孤儿进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%83%B5%E6%AD%BB%E8%BF%9B%E7%A8%8B"><span class="nav-number">12.</span> <span class="nav-text">僵死进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#exec"><span class="nav-number">13.</span> <span class="nav-text">exec</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/2658/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

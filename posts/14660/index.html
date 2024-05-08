@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理的一份C&#x2F;C++的速查表，平时整理下放到这里来，供方便查询。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#x2F;C++速查表">
+<meta property="og:url" content="https://imzlp.com/posts/14660/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="整理的一份C&#x2F;C++的速查表，平时整理下放到这里来，供方便查询。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-01-15T23:56:13.000Z">
+<meta property="article:modified_time" content="2015-01-15T23:56:13.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="语言">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://imzlp.com/posts/14660/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>C/C++速查表 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/14660/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C/C++速查表<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2015-01-15-14660.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-01-15 23:56 23:56:13:56" itemprop="dateCreated datePublished" datetime="2015-01-15T23:56:13+00:00">2015-01-15 23:56</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">技术笔记</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/14660/" class="post-meta-item leancloud_visitors" data-flag-title="C/C++速查表" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>整理的一份C/C++的速查表，平时整理下放到这里来，供方便查询。</p>
+<span id="more"></span>
+<h3 id="C-Operator-Precedence"><a href="#C-Operator-Precedence" class="headerlink" title="C++ Operator Precedence"></a>C++ Operator Precedence</h3><table>
+<thead>
+<tr>
+<th align="center">结合律</th>
+<th align="center">运算符</th>
+<th align="center">功能</th>
+<th align="center">用法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">左</td>
+<td align="center">::</td>
+<td align="center">全局作用域</td>
+<td align="center">::name</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">::</td>
+<td align="center">类作用域</td>
+<td align="center">class::name</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">::</td>
+<td align="center">命名空间作用域</td>
+<td align="center">namespace::name</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">.</td>
+<td align="center">成员选择</td>
+<td align="center">object.member</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">-&gt;</td>
+<td align="center">成员选择</td>
+<td align="center">pointer-&gt;member</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">[]</td>
+<td align="center">下标</td>
+<td align="center">expr[expr]</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">()</td>
+<td align="center">函数调用</td>
+<td align="center">name(expr_list)</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">()</td>
+<td align="center">类型构造</td>
+<td align="center">type(expr_list)</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">++</td>
+<td align="center">后置递增运算</td>
+<td align="center">lvalue++</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">–</td>
+<td align="center">后置递减运算</td>
+<td align="center">lvalue–</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">typeid</td>
+<td align="center">类型ID</td>
+<td align="center">typeid(type)</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">typeid</td>
+<td align="center">运行时类型ID</td>
+<td align="center">typeid(expr)</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">explicit cast</td>
+<td align="center">类型转换</td>
+<td align="center">cast_name<type>(expr)</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">++</td>
+<td align="center">前置递增运算</td>
+<td align="center">++lvalue</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">–</td>
+<td align="center">前置递减运算</td>
+<td align="center">–lvalue</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">~</td>
+<td align="center">位求反</td>
+<td align="center">~expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">!</td>
+<td align="center">逻辑非</td>
+<td align="center">!expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">-</td>
+<td align="center">一元负号</td>
+<td align="center">-expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">+</td>
+<td align="center">一元正号</td>
+<td align="center">+expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">*</td>
+<td align="center">解引用</td>
+<td align="center">*expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">&amp;</td>
+<td align="center">取地址</td>
+<td align="center">&amp;lvalue</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">()</td>
+<td align="center">类型转换</td>
+<td align="center">(type)expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">sizeof</td>
+<td align="center">对象的大小</td>
+<td align="center">sizeof expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">sizeof</td>
+<td align="center">类型的大小</td>
+<td align="center">sizeof(expr)</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">sizeof</td>
+<td align="center">参数包的大小</td>
+<td align="center">sizeof…(name)</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">new</td>
+<td align="center">创建对象</td>
+<td align="center">new type</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">new[]</td>
+<td align="center">创建数组</td>
+<td align="center">new type[size]</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">delete</td>
+<td align="center">释放对象</td>
+<td align="center">delete expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">delete[]</td>
+<td align="center">释放数组</td>
+<td align="center">delete[] expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">noexcept</td>
+<td align="center">能否抛出异常</td>
+<td align="center">noexcept(expr)</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">-&gt;*</td>
+<td align="center">指向成员选择的指针</td>
+<td align="center">ptr-&gt;*ptr_to_member</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">.*</td>
+<td align="center">指向成员选择的指针</td>
+<td align="center">obj.*ptr_to_member</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">*</td>
+<td align="center">乘法</td>
+<td align="center">expr*expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">/</td>
+<td align="center">除法</td>
+<td align="center">expr/expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">%</td>
+<td align="center">取模(取余)</td>
+<td align="center">expr%expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">+</td>
+<td align="center">加法</td>
+<td align="center">expr+expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">-</td>
+<td align="center">减法</td>
+<td align="center">expr-expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&lt;&lt;</td>
+<td align="center">向左移位</td>
+<td align="center">expr&lt;&lt;expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&gt;&gt;</td>
+<td align="center">向右移位</td>
+<td align="center">expr&gt;&gt;expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&lt;</td>
+<td align="center">小于</td>
+<td align="center">expr&lt;expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&lt;=</td>
+<td align="center">小于等于</td>
+<td align="center">expr&lt;=expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&gt;</td>
+<td align="center">大于</td>
+<td align="center">expr&gt;expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&gt;=</td>
+<td align="center">大于等于</td>
+<td align="center">expr==expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">==</td>
+<td align="center">相等</td>
+<td align="center">expr&gt;=expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">!=</td>
+<td align="center">不相等</td>
+<td align="center">expr!=expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&amp;</td>
+<td align="center">位与</td>
+<td align="center">expr&amp;expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">^</td>
+<td align="center">位异或</td>
+<td align="center">expr^expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&brvbar;</td>
+<td align="center">位或</td>
+<td align="center">expr &brvbar; expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&amp;&amp;</td>
+<td align="center">逻辑与</td>
+<td align="center">expr &amp;&amp; expr</td>
+</tr>
+<tr>
+<td align="center">左</td>
+<td align="center">&brvbar;&brvbar;</td>
+<td align="center">逻辑或</td>
+<td align="center">expr &brvbar;&brvbar; expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">?:</td>
+<td align="center">条件(三目运算符)</td>
+<td align="center">expr?exper:expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">=</td>
+<td align="center">赋值</td>
+<td align="center">lvalue=expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">*/,/=,%=,+=,-=,&lt;&lt;=,&gt;&gt;=,&amp;=, &brvbar;=,^=</td>
+<td align="center">复合赋值</td>
+<td align="center">lvalue+=expr等</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">throw</td>
+<td align="center">抛出异常</td>
+<td align="center">throw expr</td>
+</tr>
+<tr>
+<td align="center">右</td>
+<td align="center">,</td>
+<td align="center">逗号运算符</td>
+<td align="center">expr,expr</td>
+</tr>
+</tbody></table>
+<h3 id="C-Keywords"><a href="#C-Keywords" class="headerlink" title="C++ Keywords"></a>C++ Keywords</h3><table>
+<thead>
+<tr>
+<th align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/alignas.html"><code>alignas</code></a> (since C++11)</th>
+<th align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/else.html"><code>else</code></a></th>
+<th align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/requires.html"><code>requires</code></a> (concepts TS)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/alignof.html"><code>alignof</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/enum.html"><code>enum</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/return.html"><code>return</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/and.html"><code>and</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/explicit.html"><code>explicit</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/short.html"><code>short</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/and_eq.html"><code>and_eq</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/export.html"><code>export</code></a>(1)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/signed.html"><code>signed</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/asm.html"><code>asm</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/extern.html"><code>extern</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/sizeof.html"><code>sizeof</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/auto.html"><code>auto</code></a>(1)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/false.html"><code>false</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/static.html"><code>static</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/bitand.html"><code>bitand</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/float.html"><code>float</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/static_assert.html"><code>static_assert</code></a> (since C++11)</td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/bitor.html"><code>bitor</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/for.html"><code>for</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/static_cast.html"><code>static_cast</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/bool.html"><code>bool</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/friend.html"><code>friend</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/struct.html"><code>struct</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/break.html"><code>break</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/goto.html"><code>goto</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/switch.html"><code>switch</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/case.html"><code>case</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keywords/if.html"><code>if</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/template.html"><code>template</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/catch.html"><code>catch</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/inline.html"><code>inline</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/this.html"><code>this</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/char.html"><code>char</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/int.html"><code>int</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/thread_local.html"><code>thread_local</code></a> (since C++11)</td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/char16_t.html"><code>char16_t</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/long.html"><code>long</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/throw.html"><code>throw</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/char32_t.html"><code>char32_t</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/mutable.html"><code>mutable</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/true.html"><code>true</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/class.html"><code>class</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/namespace.html"><code>namespace</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/try.html"><code>try</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/compl.html"><code>compl</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/new.html"><code>new</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/typedef.html"><code>typedef</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/concept.html"><code>concept</code></a> (concepts TS)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/noexcept.html"><code>noexcept</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/typeid.html"><code>typeid</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/const.html"><code>const</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/not.html"><code>not</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/typename.html"><code>typename</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/constexpr.html"><code>constexpr</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/not_eq.html"><code>not_eq</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/union.html"><code>union</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/const_cast.html"><code>const_cast</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/nullptr.html"><code>nullptr</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/unsigned.html"><code>unsigned</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/continue.html"><code>continue</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/operator.html"><code>operator</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/using.html"><code>using</code></a>(1)</td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/decltype.html"><code>decltype</code></a> (since C++11)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/or.html"><code>or</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/virtual.html"><code>virtual</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/default.html"><code>default</code></a>(1)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/or_eq.html"><code>or_eq</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/void.html"><code>void</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/delete.html"><code>delete</code></a>(1)</td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/private.html"><code>private</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/volatile.html"><code>volatile</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/do.html"><code>do</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/protected.html"><code>protected</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/wchar_t.html"><code>wchar_t</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/double.html"><code>double</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/public.html"><code>public</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/while.html"><code>while</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/dynamic_cast.html"><code>dynamic_cast</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/register.html"><code>register</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/xor.html"><code>xor</code></a></td>
+</tr>
+<tr>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/reinterpret_cast.html"><code>reinterpret_cast</code></a></td>
+<td align="center"><a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/keyword/xor_eq.html"><code>xor_eq</code></a></td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<h3 id="Conversion-Specifiers-in-C"><a href="#Conversion-Specifiers-in-C" class="headerlink" title="Conversion Specifiers in C"></a>Conversion Specifiers in C</h3><table>
+<thead>
+<tr>
+<th align="center">Conversion</th>
+<th align="left">Output Specification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">%a</td>
+<td align="left">Floating-point number, hexadecimal digits and p-notation (C99/C11).</td>
+</tr>
+<tr>
+<td align="center">%A</td>
+<td align="left">Floating-point number, hexadecimal digits and P-notation (C99/C11). Exploring and Exploiting printf() and scanf()</td>
+</tr>
+<tr>
+<td align="center">%c</td>
+<td align="left">Single character.</td>
+</tr>
+<tr>
+<td align="center">%d</td>
+<td align="left">Signed decimal integer.</td>
+</tr>
+<tr>
+<td align="center">%e</td>
+<td align="left">Floating-point number, e-notation.</td>
+</tr>
+<tr>
+<td align="center">%E</td>
+<td align="left">Floating-point number, e-notation.</td>
+</tr>
+<tr>
+<td align="center">%f</td>
+<td align="left">Floating-point number, decimal notation.</td>
+</tr>
+<tr>
+<td align="center">%g</td>
+<td align="left">Use %f or %e , depending on the value. The %e style is used if the exponent is less than −4 or greater than or equal to the precision.</td>
+</tr>
+<tr>
+<td align="center">%G</td>
+<td align="left">Use %f or %E , depending on the value. The %E style is used if the exponent is less than −4 or greater than or equal to the precision.</td>
+</tr>
+<tr>
+<td align="center">%i</td>
+<td align="left">Signed decimal integer (same as</td>
+</tr>
+<tr>
+<td align="center">%o</td>
+<td align="left">Unsigned octal integer.</td>
+</tr>
+<tr>
+<td align="center">%p</td>
+<td align="left">A pointer.</td>
+</tr>
+<tr>
+<td align="center">%s</td>
+<td align="left">Character string.</td>
+</tr>
+<tr>
+<td align="center">%u</td>
+<td align="left">Unsigned decimal integer.</td>
+</tr>
+<tr>
+<td align="center">%x</td>
+<td align="left">Unsigned hexadecimal integer, using hex digits 0f .</td>
+</tr>
+<tr>
+<td align="center">%X</td>
+<td align="left">Unsigned hexadecimal integer, using hex digits 0F .</td>
+</tr>
+<tr>
+<td align="center">%%</td>
+<td align="left">Prints a percent sign.</td>
+</tr>
+</tbody></table>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/14660/" target="_blank">C/C++速查表</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2015年01月15日 23时56分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有2.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/14660/" target="_blank" title="C/C++速查表">https://imzlp.com/posts/14660/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/14660/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E8%AF%AD%E8%A8%80/" rel="tag"># 语言</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/42362/" rel="prev" title="C++的基础语法整理">
+      <i class="fa fa-chevron-left"></i> C++的基础语法整理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/44216/" rel="next" title="写点自己的感悟，我的软件专业">
+      写点自己的感悟，我的软件专业 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#C-Operator-Precedence"><span class="nav-number">1.</span> <span class="nav-text">C++ Operator Precedence</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C-Keywords"><span class="nav-number">2.</span> <span class="nav-text">C++ Keywords</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Conversion-Specifiers-in-C"><span class="nav-number">3.</span> <span class="nav-text">Conversion Specifiers in C</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/14660/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

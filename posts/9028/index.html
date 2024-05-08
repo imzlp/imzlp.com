@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在UE引擎中有大量的配置使用ini来进行设置与控制。对于项目而言，了解其中哪些是能够更新的，能够对制定项目的更新内容规则有帮助。并且，UE很多功能都是通过CVars等方式实现的配置化和动态开关以及对指定平台或设备的Device Profiles设置，同样可以在热更中实现运行中配置的动态下发及应用。本篇文章从引擎机制分析ini config的加载流程、以及不同的配置模块在热更之后重载、在项目中如何应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE热更新：Config的重载与应用">
+<meta property="og:url" content="https://imzlp.com/posts/9028/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在UE引擎中有大量的配置使用ini来进行设置与控制。对于项目而言，了解其中哪些是能够更新的，能够对制定项目的更新内容规则有帮助。并且，UE很多功能都是通过CVars等方式实现的配置化和动态开关以及对指定平台或设备的Device Profiles设置，同样可以在热更中实现运行中配置的动态下发及应用。本篇文章从引擎机制分析ini config的加载流程、以及不同的配置模块在热更之后重载、在项目中如何应">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051824733.webp">
+<meta property="article:published_time" content="2021-10-18T14:57:38.000Z">
+<meta property="article:modified_time" content="2021-10-18T14:57:38.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051824733.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/9028/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE热更新：Config的重载与应用 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/9028/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE热更新：Config的重载与应用<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-10-18-9028.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">UE Hot Update: Config Overloading and Apply</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-18 14:57 14:57:38:57" itemprop="dateCreated datePublished" datetime="2021-10-18T14:57:38+00:00">2021-10-18 14:57</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E7%83%AD%E6%9B%B4%E6%96%B0/" itemprop="url" rel="index"><span itemprop="name">热更新</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/9028/" class="post-meta-item leancloud_visitors" data-flag-title="UE热更新：Config的重载与应用" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在UE引擎中有大量的配置使用ini来进行设置与控制。对于项目而言，了解其中哪些是能够更新的，能够对制定项目的更新内容规则有帮助。并且，UE很多功能都是通过CVars等方式实现的配置化和动态开关以及对指定平台或设备的Device Profiles设置，同样可以在热更中实现运行中配置的动态下发及应用。<br>本篇文章从引擎机制分析ini config的加载流程、以及不同的配置模块在热更之后重载、在项目中如何应用等内容，基于Ini配置文件的热更实现运行时引擎或项目中参数的修改、reapply，增强游戏的更新能力。</p>
+<span id="more"></span>
+
+<p>在研究怎么更新Ini之前，首先要分析引擎的Ini是怎么加载和被应用到游戏中的。之前我写过一篇文章分析了GConfig的加载机制：<a href="https://imzlp.com/posts/2386/">UE代码分析：GConfig的加载</a>。<br>默认情况下，在引擎启动时就加载了Ini文件，它是第一批被加载的文件之一，后续引擎模块的启动都依赖于这些配置，官方的文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/ConfigurationFiles/">Configuration Files</a>。</p>
+<p>引擎对于Module的加载顺序也有加载Config完毕的阶段<code>PostConfigInit</code>用于保证在配置文件加载之后才启动，避免配置文件读取不到的情况：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Phase at which this module should be loaded during startup.</span></span><br><span class="line"><span class="keyword">namespace</span> ELoadingPhase</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">enum</span> <span class="title class_">Type</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">/** As soon as possible - in other words, uplugin files are loadable from a pak file (as well as right after PlatformFile is set up in case pak files aren&#x27;t used) Used for plugins needed to read files (compression formats, etc) */</span></span><br><span class="line">    EarliestPossible,</span><br><span class="line">    <span class="comment">/** Loaded before the engine is fully initialized, immediately after the config system has been initialized.  Necessary only for very low-level hooks */</span></span><br><span class="line">    PostConfigInit,</span><br><span class="line">    <span class="comment">/** The first screen to be rendered after system splash screen */</span></span><br><span class="line">    PostSplashScreen,</span><br><span class="line">    <span class="comment">/** Loaded before coreUObject for setting up manual loading screens, used for our chunk patching system */</span></span><br><span class="line">    PreEarlyLoadingScreen,</span><br><span class="line">    <span class="comment">/** Loaded before the engine is fully initialized for modules that need to hook into the loading screen before it triggers */</span></span><br><span class="line">    PreLoadingScreen,</span><br><span class="line">    <span class="comment">/** Right before the default phase */</span></span><br><span class="line">    PreDefault,</span><br><span class="line">    <span class="comment">/** Loaded at the default loading point during startup (during engine init, after game modules are loaded.) */</span></span><br><span class="line">    Default,</span><br><span class="line">    <span class="comment">/** Right after the default phase */</span></span><br><span class="line">    PostDefault,</span><br><span class="line">    <span class="comment">/** After the engine has been initialized */</span></span><br><span class="line">    PostEngineInit,</span><br><span class="line">    <span class="comment">/** Do not automatically load this module */</span></span><br><span class="line">    None,</span><br><span class="line">    <span class="comment">// <span class="doctag">NOTE:</span> If you add a new value, make sure to update the ToString() method below!</span></span><br><span class="line">    Max</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>引擎中启动的代码：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\Launch\Private\LaunchEngineLoop.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FEngineLoop::AppInit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">SCOPED_BOOT_TIMING</span>(<span class="string">&quot;FConfigCacheIni::InitializeConfigSystem&quot;</span>);</span><br><span class="line">    <span class="built_in">LLM_SCOPE</span>(ELLMTag::ConfigSystem);</span><br><span class="line">    <span class="comment">// init config system</span></span><br><span class="line">    FConfigCacheIni::<span class="built_in">InitializeConfigSystem</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  FDelayedAutoRegisterHelper::<span class="built_in">RunAndClearDelayedAutoRegisterDelegates</span>(EDelayedRegisterRunPhase::IniSystemReady);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load &quot;asap&quot; plugin modules</span></span><br><span class="line">  IPluginManager&amp;  PluginManager = IPluginManager::<span class="built_in">Get</span>();</span><br><span class="line">  IProjectManager&amp; ProjectManager = IProjectManager::<span class="built_in">Get</span>();</span><br><span class="line">  <span class="keyword">if</span> (!ProjectManager.<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::EarliestPossible) || !PluginManager.<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::EarliestPossible))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在<code>FEngineLoop::AppInit</code>函数的末尾，执行了<code>FCoreDelegates::OnInit.Broadcast();</code>这个Delegate在<code>FCoreUObjectModule</code>的StartupModule中，被<code>InitUObject()</code>绑定，用来初始化引擎中的UObject。在这个阶段Config也都已经加载完毕，创建UObject也可以正确地从Config中读取数据。</p>
+<p><a href="https://imzlp.com/posts/2386/">UE代码分析：GConfig的加载</a>文章中介绍了<code>FConfigCacheIni::InitializeConfigSystem</code>加载ini文件的过程，此处不再赘述，可以理解为执行完毕之后Config就处于可用状态了。</p>
+<h3 id="Ini的文件层次与优先级"><a href="#Ini的文件层次与优先级" class="headerlink" title="Ini的文件层次与优先级"></a>Ini的文件层次与优先级</h3><p>更新UE的Ini需要注意的以下几个方面：</p>
+<ol>
+<li>UE中同一类别的配置，是由多个Ini文件层次结构共同组成的</li>
+<li>不同文件层次的Ini具有不同的优先级，高优先级的会覆盖低优先级的值。</li>
+</ol>
+<p>以Engine配置为例，引擎中可以进行配置的文件有28个，其他的类别配置如Game/Input/DeviceProfiles等也相同（UE4.25）：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211011112250.webp" alt="Engine"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211012153156.webp" alt="DeviceProfiles"></p>
+<p>这些文件（如果存在）都是能被加载的，并且按照优先级升序排列。其效果就是，在<code>PROJECT_DIR/Config/DeaultEngine.ini</code>中就能替换<code>ENGINE_DIR/Config/BaseEngine.ini</code>中的选项。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211012191346.webp"></p>
+<p>在一般项目开发中，默认情况下工程内的属性配置一般在<code>DefaultEngine.ini</code>，对某个平台的配置则是在<code>Config/Windows/WindowsEngine.ini</code>中，很少会存在这么多配置文件的情况，也会造成一定程度的混乱。</p>
+<p>所以，在更新时，可以直接使用<code>Config/Default*.ini</code>和<code>Config/PLATFORM/PLATFORM*.ini</code>这种方式更新。也可以使用原先不存在的文件进行更新，如原本项目中不存在<code>Config/UserEngine.ini</code>，在更新时可以将需要修改的配置写入这个文件，在运行时读取<strong>追加到引擎</strong>中，在自动挂载的方式中也支持，因为<code>Config/User*.ini</code>的优先级是最高的。</p>
+<p>所以，为了实现Ini的更新，需要实现：</p>
+<ol>
+<li>在更新时打包指定的ini文件</li>
+<li>能够根据更新信息获取到引擎中已加载的FConfigFile实例，将新的配置追加其中。</li>
+<li>更新使用新配置的UObject对象中的数据</li>
+</ol>
+<h3 id="UObject加载Config"><a href="#UObject加载Config" class="headerlink" title="UObject加载Config"></a>UObject加载Config</h3><p>在处理更新之前，需要先了解UObject加载Config的过程（只有标记了<code>Config</code>的类的CDO才会执行加载），其栈如下：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210918155129906.webp" alt="UObject从Ini加载数据"></p>
+<p>大致流程为：</p>
+<ol>
+<li>检查UClass是否具有<code>CLASS_Config</code>的Flag</li>
+<li>检查Property是否具有<code>CPF_Config</code>的Flag</li>
+<li>从字符串序列化CDO的属性</li>
+</ol>
+<p>如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>(config=GameUserSettings)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> UGameConfig : <span class="keyword">public</span> UObject</span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">GENERATED_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">UPROPERTY</span>(Config)</span><br><span class="line">  FString GCloudGameID;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210918170331.webp"></p>
+<p>这个类的UCLASS中加了<code>Config</code>，会通过UHT给它的UClass生成<code>CLASS_Config</code>的Flag，并且这个类的<code>ival</code>这个数据成员，也在<code>UPROPERTY</code>中添加了<code>Config</code>，会给当前属性的<code>FProperty</code>增加<code>CPF_Config</code>的Flag，这样实现代码与加载时的统一。</p>
+<p>具体的加载实现详见<code>CoreUObject\Private\UObject\Obj.cpp</code>中的<code>LoadConfig</code>函数。</p>
+<p>在创建非CDO的对象时，会从CDO中拷贝所有的属性（在构造函数执行之后）：</p>
+<figure class="highlight cpp"><figcaption><span>UObjectGlobals.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Binary initialize object properties to zero or defaults.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FObjectInitializer::InitProperties</span><span class="params">(UObject* Obj, UClass* DefaultsClass, UObject* DefaultData, <span class="type">bool</span> bCopyTransientsFromClassDefaults)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210918171756.webp"></p>
+<p>所以，UObject的对象使用的Config标记对游戏使用的影响分了两个步骤：</p>
+<ol>
+<li>引擎启动时加载ini，创建出CDO并从ini中读取配置</li>
+<li>在创建Non-CDO对象时，从CDO拷贝数据</li>
+</ol>
+<p>如果想要覆盖ini中的配置值，不能直接写到构造函数里，因为LoadConfig的时机晚于构造函数。但可以重载<code>PostInitProperties</code>函数，它会在LoadConfig之后调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PostInitProperties</span><span class="params">()</span><span class="keyword">override</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="更新UObject中的配置值"><a href="#更新UObject中的配置值" class="headerlink" title="更新UObject中的配置值"></a>更新UObject中的配置值</h3><p>对于热更新的需求而言，对于UObject使用的Config，我们可以在创建对象之前介入这个过程，修改CDO，在CDO创建之后也可以对Object的对象调用ReloadConfig实现从文件重新加载。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibUGConfigReloadHelper::ReloadIniFile</span><span class="params">(<span class="type">const</span> FString&amp; StrippedName,<span class="type">const</span> FString&amp; File)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  FConfigFile* ConfigFile = <span class="built_in">GetConfigFile</span>(StrippedName);</span><br><span class="line">  <span class="keyword">if</span>(!ConfigFile)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!ConfigFile-&gt;<span class="built_in">Combine</span>(File))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  TArray&lt;UObject*&gt; Classes;</span><br><span class="line">  <span class="built_in">GetObjectsOfClass</span>(UClass::<span class="built_in">StaticClass</span>(), Classes, <span class="literal">true</span>, RF_NoFlags);</span><br><span class="line">  <span class="keyword">for</span> (UObject* ClassObject : Classes)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (UClass* <span class="type">const</span> Class = <span class="built_in">Cast</span>&lt;UClass&gt;(ClassObject))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> (Class-&gt;<span class="built_in">HasAnyClassFlags</span>(CLASS_Config) &amp;&amp;</span><br><span class="line">      Class-&gt;ClassConfigName.<span class="built_in">IsEqual</span>(*StrippedName))</span><br><span class="line">      &#123;</span><br><span class="line">        TArray&lt;UObject*&gt; Objects;</span><br><span class="line">        <span class="built_in">GetObjectsOfClass</span>(Class, Objects, <span class="literal">true</span>, RF_NoFlags);</span><br><span class="line">        <span class="keyword">for</span> (UObject* Object : Objects)</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="keyword">if</span> (!Object-&gt;<span class="built_in">IsPendingKill</span>())</span><br><span class="line">          &#123;</span><br><span class="line">            <span class="comment">// Force a reload of the config vars</span></span><br><span class="line">            Object-&gt;<span class="built_in">ReloadConfig</span>();</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如代码所示，首先获取引擎中所有具有Config标记的UClass，并且需要Class所绑定的ini名字与需要重新加载的ini匹配，再遍历它们每个UClass的UObject实例，对其调用ReloadConfig。</p>
+<blockquote>
+<p>注意，上述代码中先修改了对应的<code>FConfigFile</code>实例，因为在引擎启动时已经加载了旧的ini文件，存储在<code>FConfigFile</code>中，在调用ReloadConfig前，需要先对他们进行更新，这样在ReloadConfig中就能从GConfig读取新的数据。</p>
+</blockquote>
+<h3 id="ConsoleVariables"><a href="#ConsoleVariables" class="headerlink" title="ConsoleVariables"></a>ConsoleVariables</h3><p>在UE中可以通过使用<code>ConsoleVariables</code>作为模块间的数据传递方式，我之前的笔记中有在运行时获取和修改Console Variables的方式：<a href="https://imzlp.com/notes/ue/#%E8%AE%BE%E7%BD%AEConsoleVariables%E5%80%BC%E7%9A%84%E5%87%A0%E7%A7%8D%E6%96%B9%E5%BC%8F">设置 ConsoleVariables 值的几种方式</a>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211015123511.webp"></p>
+<p>Console Variables在引擎启动时的自动应用的值有以下两种应用方法：</p>
+<ol>
+<li>可以在<code>Engine/Config/ConsoleVariables.ini</code>中的<code>[Startup]</code>中设置：</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[Startup]</span><br><span class="line">r.ShaderPipelineCache.Enabled=0</span><br><span class="line">r.ShaderPipelineCache.LogPSO=0</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在Engine类别Ini层次中指定（如<code>DefaultEngine.ini</code>），<code>[ConsoleVariables]</code>:</li>
+</ol>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleVariables]</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.Enabled</span>=<span class="number">0</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.LogPSO</span>=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<p>当我们对Engine类别的FConfigCache更新之后，调用以下函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">::<span class="built_in">ApplyCVarSettingsFromIni</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ConsoleVariables&quot;</span>), *GEngineIni, ECVF_SetBySystemSettingsIni);</span><br></pre></td></tr></table></figure>
+<p>应用<code>[ConsoleVariables]</code>中最新的CVars值。如果想要同时更新<code>ConsoleVariable.ini</code>中的<code>[Startup]</code>和<code>[ConsoleVariables]</code>中的设置，可以调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FConfigCacheIni::<span class="built_in">LoadConsoleVariablesFromINI</span>()</span><br></pre></td></tr></table></figure>
+<p>它会先Apply<code>[Startup]</code>中的，再Apply<code>[ConsoleVariables]</code>中的。</p>
+<p>更新的流程步骤：</p>
+<ol>
+<li>重新加载Engine类别的Ini文件</li>
+<li>调用ApplyCVarSettingsFromIni函数。</li>
+</ol>
+<h3 id="Device-Profiles"><a href="#Device-Profiles" class="headerlink" title="Device Profiles"></a>Device Profiles</h3><p>Device Profiles是UE为特定平台或设备设定参数的一种方法，官方文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/DeviceProfiles/">Setting Device Profiles</a>。可以通过它来实现不同平台、设备间的性能、参数适配等需求。</p>
+<p>引擎中的默认提供的平台、设备名与Ini平台名的配置：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Config/BaseDeviceProfiles.ini#L6">BaseDeviceProfiles.ini#L6</a>，存储在<code>*DeviceProfiles.ini</code>的<code>[DeviceProfiles]</code>下<code>DeviceProfileNameAndTypes</code>的值。在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Config/BaseDeviceProfiles.ini">BaseDeviceProfiles.ini</a>中具Profile的依赖配置、设备指定、IOS设备映射、指定设备的配置等等，自己项目中的设置可以参考。</p>
+<p>并且，UE的Device Profiles是支持继承的，如iPhoneX-&gt;IOS_High-&gt;IOS-&gt;Mobile，能够方便地复用配置。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210610101046.webp"></p>
+<p><code>UDeviceProfile</code>类也是标记为<code>Config</code>的，并且是<code>perObjectConfig</code>，每个对象的配置都会单独保存和加载。简而言之，Deviece Profiles的加载，其实也就是创建了很多个的对象，每个对象会保存自己平台或设备的配置信息，<code>NewObject&lt;UDeviceProfile&gt;</code>传递的Name就是平台名。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211012162513.webp"></p>
+<p>在创建UDeviceProfile时会自动从Ini中加载（<code>NewObject&lt;UDeviceProfile&gt;</code>的栈）：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211012164511.webp"></p>
+<p>既然Device Profiles的配置加载也是走的默认的LoadConfig流程，那么我们对UDeviceProfile的更新就可以按照<strong>更新UObject中所使用的配置值</strong>该节的步骤，获取所有的UDeviceProfile实例，对其调用ReloadConfig，并且需要对其的Parent Profile也调用（Parent Profile也是UDeviceProfile对象）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UFlibUGConfigReloadHelper::RecursiveReloadDeviceProfile</span><span class="params">(UDeviceProfile* Profile)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(!Profile-&gt;<span class="built_in">IsPendingKill</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    Profile-&gt;<span class="built_in">LoadConfig</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span>(Profile-&gt;Parent &amp;&amp; !Profile-&gt;<span class="built_in">IsPendingKill</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">RecursiveReloadDeviceProfile</span>(<span class="built_in">Cast</span>&lt;UDeviceProfile&gt;(Profile-&gt;Parent));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UFlibUGConfigReloadHelper::ReloadDeviceProfiles</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (UObject* Profile : UDeviceProfileManager::<span class="built_in">Get</span>().Profiles)</span><br><span class="line">  &#123;</span><br><span class="line">    UDeviceProfile* <span class="type">const</span> DeviceProfile = <span class="built_in">Cast</span>&lt;UDeviceProfile&gt;(Profile);</span><br><span class="line">    <span class="keyword">if</span>(!DeviceProfile-&gt;<span class="built_in">IsPendingKill</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">RecursiveReloadDeviceProfile</span>(DeviceProfile);</span><br><span class="line">      DeviceProfile-&gt;<span class="built_in">ValidateProfile</span>();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// UDeviceProfileManager::Get().OnManagerUpdated().Broadcast();</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之后可以调用<code>UDeviceProfileManager</code>的<code>ReapplyDeviceProfile</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UDeviceProfileManager::<span class="built_in">Get</span>().<span class="built_in">ReapplyDeviceProfile</span>();</span><br></pre></td></tr></table></figure>
+
+<h3 id="GameUserSettings"><a href="#GameUserSettings" class="headerlink" title="GameUserSettings"></a>GameUserSettings</h3><p>在重载<code>GameUserSettings</code>的配置之后，可以调用<code>ApplySettings</code>进行应用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UFlibUGConfigReloadHelper::ReapplyGameUserSettings</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  GEngine-&gt;<span class="built_in">GetGameUserSettings</span>()-&gt;<span class="built_in">LoadSettings</span>(<span class="literal">true</span>);</span><br><span class="line">  GEngine-&gt;<span class="built_in">GetGameUserSettings</span>()-&gt;<span class="built_in">ApplySettings</span>(<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ApplySettings</code>的代码为：</p>
+<figure class="highlight cpp"><figcaption><span>GameUserSettings.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGameUserSettings::ApplySettings</span><span class="params">(<span class="type">bool</span> bCheckForCommandLineOverrides)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">ApplyResolutionSettings</span>(bCheckForCommandLineOverrides);</span><br><span class="line">  <span class="built_in">ApplyNonResolutionSettings</span>();</span><br><span class="line">  <span class="built_in">RequestUIUpdate</span>();</span><br><span class="line"></span><br><span class="line">  <span class="built_in">SaveSettings</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h3><p>UE中对于各种配置文件的加载其实都是基于UE的Ini层次的更新，首先需要更新GConfig中的值，再将其应用到不同的模块，文章中列举了数种不同配置的重载和应用，其他未列举的情况也可参照相同的方式进行处理。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/9028/" target="_blank">UE热更新：Config的重载与应用</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年10月18日 14时57分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/9028/" target="_blank" title="UE热更新：Config的重载与应用">https://imzlp.com/posts/9028/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/9028/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/26919/" rel="prev" title="虚幻引擎中的属性面板定制化">
+      <i class="fa fa-chevron-left"></i> 虚幻引擎中的属性面板定制化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/11750/" rel="next" title="UE资源合规检查工具ResScannerUE">
+      UE资源合规检查工具ResScannerUE <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ini%E7%9A%84%E6%96%87%E4%BB%B6%E5%B1%82%E6%AC%A1%E4%B8%8E%E4%BC%98%E5%85%88%E7%BA%A7"><span class="nav-number">1.</span> <span class="nav-text">Ini的文件层次与优先级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UObject%E5%8A%A0%E8%BD%BDConfig"><span class="nav-number">2.</span> <span class="nav-text">UObject加载Config</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0UObject%E4%B8%AD%E7%9A%84%E9%85%8D%E7%BD%AE%E5%80%BC"><span class="nav-number">3.</span> <span class="nav-text">更新UObject中的配置值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ConsoleVariables"><span class="nav-number">4.</span> <span class="nav-text">ConsoleVariables</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Device-Profiles"><span class="nav-number">5.</span> <span class="nav-text">Device Profiles</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GameUserSettings"><span class="nav-number">6.</span> <span class="nav-text">GameUserSettings</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">7.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/9028/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

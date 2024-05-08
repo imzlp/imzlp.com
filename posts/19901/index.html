@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在先前的文章中，我曾介绍了在UE中利用ResScannerUE进行资源的多阶段与自动化检查的实现和执行效率优化。  UE中多阶段的自动化资源检查方案 基于ResScannerUE的资源检查自动化实践 UE资源合规检查工具ResScannerUE  已经能够实现非常灵活地配置资源检查和及时提醒，具有非常强大的规则表达能力。但它们还都仅限于发现问题予以提醒的阶段，虽然有强制约束不能提交，但仍需人工地去">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE中资源自修正的设计与实现方案">
+<meta property="og:url" content="https://imzlp.com/posts/19901/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在先前的文章中，我曾介绍了在UE中利用ResScannerUE进行资源的多阶段与自动化检查的实现和执行效率优化。  UE中多阶段的自动化资源检查方案 基于ResScannerUE的资源检查自动化实践 UE资源合规检查工具ResScannerUE  已经能够实现非常灵活地配置资源检查和及时提醒，具有非常强大的规则表达能力。但它们还都仅限于发现问题予以提醒的阶段，虽然有强制约束不能提交，但仍需人工地去">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181358828.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131604358.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131614438.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131611885.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131643927.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310172021159.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181105240.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181110004.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181114178.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181140843.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181142251.gif">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181223290.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181236053.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310171909600.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181251194.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181252851.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181253320.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181300392.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181306262.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181313058.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181315679.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181316482.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181105240.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181318001.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181327153.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181332973.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131115896.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310172001193.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310151211521.gif">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181327153.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181142251.gif">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310171657527.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310171642115.gif">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181341821.png">
+<meta property="article:published_time" content="2023-10-18T14:45:12.000Z">
+<meta property="article:modified_time" content="2023-10-18T14:45:12.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="资源管理">
+<meta property="article:tag" content="ResScannerUE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181358828.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/19901/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE中资源自修正的设计与实现方案 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/19901/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE中资源自修正的设计与实现方案<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2023-10-18-19901.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Implementation scheme of resource self-correction in UE</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-18 14:45 14:45:12:45" itemprop="dateCreated datePublished" datetime="2023-10-18T14:45:12+00:00">2023-10-18 14:45</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">资源管理</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/19901/" class="post-meta-item leancloud_visitors" data-flag-title="UE中资源自修正的设计与实现方案" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在先前的文章中，我曾介绍了在UE中利用ResScannerUE进行资源的<strong>多阶段</strong>与<strong>自动化</strong>检查的实现和执行效率优化。</p>
+<ul>
+<li><a href="https://imzlp.com/posts/22655">UE中多阶段的自动化资源检查方案</a></li>
+<li><a href="https://imzlp.com/posts/20376/">基于ResScannerUE的资源检查自动化实践</a></li>
+<li><a href="https://imzlp.com/posts/11750">UE资源合规检查工具ResScannerUE</a></li>
+</ul>
+<p>已经能够实现非常灵活地配置资源检查和及时提醒，具有非常强大的规则表达能力。但它们还都仅限于<strong>发现问题</strong>予以提醒的阶段，虽然有强制约束不能提交，但仍需人工地去处理。尤其是具有大量存量资源的情况下，手动处理的人力耗时非常大。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181358828.png"></p>
+<p>基于这种情况下，我设计了一种自动化修正资源的机制，能够在规范制定之后自动修复资源，确保被扫描出来资源的都被设置为正确的状态。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131604358.png"></p>
+<p>补齐了我这套资源检查方案中的最后一块拼图，并且可以应用在各个阶段的扫描过程，按需执行。本篇文章会介绍它的设计思路与实现机制，以及一些在项目中实际的应用场景。</p>
+<span id="more"></span>
+
+<h2 id="具体要做什么？"><a href="#具体要做什么？" class="headerlink" title="具体要做什么？"></a>具体要做什么？</h2><p>我希望，ResScanner支持我的下列需求：</p>
+<ol>
+<li>当资源的规则足够确定时，能够让不合规的资源自动化地修复，降低人工参与</li>
+<li>尽可能地使功能通用化，大多数情况下不需要针对资源单独编写特殊逻辑</li>
+<li>配置简单，无需代码</li>
+<li>对于复杂的资源处理需求，支持自定义扩展</li>
+<li>自动化批量处理</li>
+<li>能够在编辑器中实时修正，建立强制约束</li>
+</ol>
+<p>而资源扫描本身，能够作为筛选器使用。在之前的文章里已经充分介绍了ResScanner对复杂规则的表达能力，所以，当规则确定时，就能够清楚地知道一个资源是否需要自动处理。</p>
+<p>以一个根据命名规则检查贴图SRGB的规则为例：</p>
+<blockquote>
+<p>规则的语言描述：如果命名不为<code>*_DA</code>或<code>*_D</code>的贴图其sRGB属性为<code>True</code>，可自动将其修改为<code>False</code>。</p>
+</blockquote>
+<p>本文中的后续内容会以该规则作为例子，介绍资源修正的设计思路与实现逻辑。</p>
+<h2 id="为什么不用Property-Maxtrix？"><a href="#为什么不用Property-Maxtrix？" class="headerlink" title="为什么不用Property Maxtrix？"></a>为什么不用Property Maxtrix？</h2><p>UE中其实有一套批量修改资源属性的方法。需要在ContentBrowser里多选资源，右键找到<code>Asset Actions</code>-<code>Bulk Edit via Property Matirx</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131614438.png"><br>即可批量编辑所选中资源的属性：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131611885.png"></p>
+<p>它对于属性的修改也不够直观，以AnimSequence类型资源的BoneCompression配置为例，在<code>Bulk Edit via Property Matrix</code>里就是以字符串的形式展示，而不是资源，不够直观。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131643927.png"></p>
+<p>它的设计初衷应该是为了方便在引擎内的<strong>当前目录下的资源</strong>进行批量修改，无法选择多个目录下的资源，而且也只能在ContentBrowser里手动选去资源，无法按照一定的规则进行精确控制和自动化。</p>
+<p>如以下规则：检查命名以<code>_WRD</code>结尾的贴图，<code>LOD Group</code>是否设置为<code>World</code>，若不为<code>World</code>则自动处理。就无法通过Property Matrix实现，它只能<strong>编辑</strong>，不能<strong>按照条件编辑</strong>。</p>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>筛选流程和处理逻辑如下：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310172021159.png"></p>
+<h3 id="资源筛选"><a href="#资源筛选" class="headerlink" title="资源筛选"></a>资源筛选</h3><p>从资源扫描的检查流程中筛选出匹配的资源，然后传递给后处理器。</p>
+<p>以<a href="#%E5%85%B7%E4%BD%93%E8%A6%81%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F">前面的规则</a>为例，首先需要筛选出当前资源是否为Texture，以及它的名字是否符合下列逻辑表达式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bIsTexture2D &amp;&amp; !(<span class="built_in">endwith</span>(_DA) || <span class="built_in">endwith</span>(_D))</span><br></pre></td></tr></table></figure>
+
+<p>使用ResScanner的规则实现该筛选逻辑：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181105240.png"></p>
+<p>然后就能够正确地检查到资源是否匹配：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181110004.png"></p>
+<h3 id="资源后处理"><a href="#资源后处理" class="headerlink" title="资源后处理"></a>资源后处理</h3><p>当检查到资源匹配后，就能够进入自动修正的逻辑。在我的实现中，每条规则的后处理配置是一个能够指定多个Class的数组：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181114178.png"></p>
+<p>需要指定继承于<code>UScannerPostProcesser</code>的子类，它有一个<code>Processer</code>的接口，可以用来获取规则信息、以及触发规则的资源。可以获取资源进行修改，而且还可以自己写自定义的逻辑，用于处理复杂的需求。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">Processor</span><span class="params">(FScannerPostProcesserContext&amp; Context)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>以最简单的方法，针对Texture2D单独写一个修改贴图SRGB属性的后处理规则：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UPP_TextureSRGB::Processor_Implementation</span><span class="params">(FScannerPostProcesserContext&amp; Context)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">bool</span> bRetStatus = <span class="literal">true</span>;</span><br><span class="line">	<span class="type">bool</span> bIsTexture2D = Context.ScanResult.AssetData.<span class="built_in">GetClass</span>()-&gt;<span class="built_in">IsChildOf</span>(UTexture2D::<span class="built_in">StaticClass</span>());</span><br><span class="line">	<span class="keyword">if</span>(bIsTexture2D)</span><br><span class="line">	&#123;</span><br><span class="line">		UPackage* Package = Context.ScanResult.AssetData.<span class="built_in">GetPackage</span>();</span><br><span class="line">		UObject* Asset = Context.ScanResult.AssetData.<span class="built_in">GetAsset</span>();</span><br><span class="line">		UTexture2D* Tex = <span class="built_in">Cast</span>&lt;UTexture2D&gt;(Asset);</span><br><span class="line">		<span class="keyword">if</span>(Tex)</span><br><span class="line">		&#123;</span><br><span class="line">			Tex-&gt;SRGB = <span class="literal">false</span>;</span><br><span class="line">			Package-&gt;<span class="built_in">SetDirtyFlag</span>(<span class="literal">true</span>);</span><br><span class="line">			bRetStatus = UEditorLoadingAndSavingUtils::<span class="built_in">SavePackages</span>(&#123;Package&#125;, <span class="literal">true</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> bRetStatus;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后将其配置到规则的后处理数组中执行即可：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181140843.png"></p>
+<p>测试一下运行效果：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181142251.gif"></p>
+<p>可以看到在保存时能够检查到资源匹配了规则，并且自动把SRGB属性改成False了。</p>
+<h3 id="通用的属性替换实现"><a href="#通用的属性替换实现" class="headerlink" title="通用的属性替换实现"></a>通用的属性替换实现</h3><p>基于前面的介绍，现在我们可以筛选出需要处理的资源了。但仍需要针对每种资源单独处理，但我厌恶一切需要特殊处理的流程。</p>
+<p>所以，能否实现一种方法，把“修改资源的某些属性”这个需求抽象起来，作为一个通用的方式呢？</p>
+<p>当然有！在不考虑某些极端实现的情况下（如<code>TypeCustomization</code>），编辑器中能够编辑的属性都是标记了反射的，<strong>能够编辑的属性</strong>就属于<strong>所有反射属性</strong>的<strong>子集</strong>。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181223290.png"></p>
+<p>所以，我们只要建立起一种基于通用类型的，反射属性替换机制就能够实现。</p>
+<h4 id="获取类型的反射属性"><a href="#获取类型的反射属性" class="headerlink" title="获取类型的反射属性"></a>获取类型的反射属性</h4><p>在文章<a href="https://imzlp.com/posts/12624/">UE反射实现分析：基础概念</a>曾介绍过，可以通过 <code>TFieldIterator</code> 来遍历 UClass 中的反射属性：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(TFieldIterator&lt;FProperty&gt; <span class="built_in">PropertyIter</span>(<span class="built_in">GetClass</span>());PropertyIter;++PropertyIter)  </span><br><span class="line">&#123;  </span><br><span class="line">    FProperty* PropertyIns = *PropertyIter;  </span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogTemp,Log,<span class="built_in">TEXT</span>(<span class="string">&quot;Property Name: %s&quot;</span>),*PropertyIns-&gt;<span class="built_in">GetName</span>());  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>只需要目标类型的UClass即可。这在我们的需求中很简单，因为在配置扫描规则时，就会指定要检查的资源类型，可以直接获取UClass。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181236053.png"></p>
+<p>然后可以写一个TypeCustomization的实现，自动从该UClass中获取所有反射属性，并创建出一个<code>ComboBox</code>的控件用于选择属性。</p>
+<p>设计流程如下：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310171909600.png"></p>
+<p>对于每个属性而言，存储方式是一个Name-Value的结构：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FSCNPostPropertyFixer</span>  </span><br><span class="line">&#123;</span><br><span class="line">    FString Name; </span><br><span class="line">    FString Value;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>用于存储当前UClass中属性的名字，以及要设置该属性的值。<br>之所以Name-Value都使用FString，因为它是一种通用的描述属性信息的方法，把值信息都转换为字符串，再从字符串转换为实际的值。</p>
+<p>UE的<code>FProperty</code>中具有<code>ExportTextItem</code>的函数，可以把反射属性的值导出为字符串形式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Property-&gt;<span class="built_in">ExportTextItem</span>(Result,Property-&gt;<span class="built_in">ContainerPtrToValuePtr</span>&lt;<span class="type">void</span>*&gt;(Obj),<span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>),<span class="literal">NULL</span>,<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(Name=&quot;SRGB&quot;,Value=&quot;True&quot;)</span><br><span class="line">(Name=&quot;LODGroup&quot;,Value=&quot;TEXTUREGROUP_World&quot;)</span><br><span class="line">(Name=&quot;PowerOfTwoMode&quot;,Value=&quot;PadToPowerOfTwo&quot;)</span><br><span class="line">(Name=&quot;CompressionSettings&quot;,Value=&quot;TC_Default&quot;)</span><br></pre></td></tr></table></figure>
+<p>这样就实现了通用类型值存储的问题。</p>
+<p>而且基于TypeCustomization，也可以实现在编辑器内创建出实际类型的控件进行编辑，并能够从字符串中导入。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181251194.png" alt="CompressionSettings的控件是枚举类型"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181252851.png" alt="SRGB的控件是布尔类型"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181253320.png" alt="Bone压缩配置是资源类型"></p>
+<p>关于它的实现方式在文章<a href="https://imzlp.com/posts/26919/">虚幻引擎中的属性面板定制化</a>中有详细介绍，本篇文章不再赘述。</p>
+<h4 id="导入覆写属性"><a href="#导入覆写属性" class="headerlink" title="导入覆写属性"></a>导入覆写属性</h4><p>基于前一节的内容，我们可以实现指定某个UClass类型中的属性，以及该属性的值。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181300392.png"></p>
+<p>那么如何把<code>Name-Value</code>形式的属性描述，替换到实际的资源中呢？如<code>Texture2D</code>的<code>(Name=&quot;SRGB&quot;,Value=&quot;True&quot;)</code>。</p>
+<p>同样地，UE中的<code>FProperty</code>也有一个从字符串中导入值的函数，与<code>ExportTextItem</code>相对应：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Property-&gt;<span class="built_in">ImportText</span>(*Text,Property-&gt;<span class="built_in">ContainerPtrToValuePtr</span>&lt;uint8&gt;(Object),<span class="number">0</span>,Object);</span><br></pre></td></tr></table></figure>
+
+<p>在编辑器Details里对属性进行<code>Copy</code>/<code>Paste</code>，实际上也是把属性值导出为字符串，并且<code>Paste</code>时也会走到该函数，实现属性值导入。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181306262.png"></p>
+<p>只需要在导入时，获取要修改资源的属性值地址，就能完成值的修改。</p>
+<h3 id="最终实现"><a href="#最终实现" class="headerlink" title="最终实现"></a>最终实现</h3><p>前面实现原理已经写的差不多了，可以看一看实际的效果了。</p>
+<p>对于需要执行资源检查后处理的规则，可以启用<code>资源扫描后处理</code>。如果是要修改资源的属性值，可以在后处理数组中配置一个<code>PP_GeneralPropertyFixer</code>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181313058.png"></p>
+<p>然后可以创建规则参数，会有一个<code>Properties</code>，继续添加一个<code>Properties</code>的元素，会自动列出当前规则所指定类型的属性：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181315679.png"></p>
+<p>选择对应的属性，在下方就会自动创建出来对应属性值的控件，能够进行方便地修改：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181316482.png"></p>
+<p>就像真的在编辑该属性一样。</p>
+<p>同样地，以<a href="#%E5%85%B7%E4%BD%93%E8%A6%81%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F">前面的规则</a>为例，修改贴图的SRGB值。在规则配置中就如下：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181105240.png" alt="筛选条件"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181318001.png" alt="替换属性值"></p>
+<p>执行效果与前面自己用C++代码写的一样，而它是一种通用的方法。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181327153.png"></p>
+<p>而且，在触发提示中，还会展示出修改前后的值，提醒修改人该属性的变化：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181332973.png"></p>
+<p>这样，对于任何类型资源属性的检查和自动修正，就能够以纯配置的方式实现，而无需写任何代码。</p>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><h3 id="约束AnimSeq压缩配置"><a href="#约束AnimSeq压缩配置" class="headerlink" title="约束AnimSeq压缩配置"></a>约束AnimSeq压缩配置</h3><p>以动画序列的压缩配置为例，通常工程中会集成ACL等库来用于Bone或Curve的压缩，能够提升压缩率降低包体大小。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310131115896.png"></p>
+<p>虽然引擎中有修改<strong>默认动画压缩配置</strong>的功能，可以在<code>DefaultEngine.ini</code>中添加下列配置，并修改为自己想要使用的资源路径。如修改为ACL：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Animation.DefaultObjectSettings]</span></span><br><span class="line"><span class="attr">BoneCompressionSettings</span>=<span class="string">&quot;/ACLPlugin/ACLAnimBoneCompressionSettings&quot;</span></span><br><span class="line"><span class="attr">CurveCompressionSettings</span>=<span class="string">&quot;/ACLPlugin/ACLAnimCurveCompressionSettings&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>但是，这个配置对于已经存在且修改过的资源，不会使<strong>默认动画压缩配置</strong>生效，如：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310172001193.png"></p>
+<p>所以也需要修正存量资源，并建立编辑时的强制约束。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310151211521.gif"></p>
+<h3 id="命名约束sRGB值"><a href="#命名约束sRGB值" class="headerlink" title="命名约束sRGB值"></a>命名约束sRGB值</h3><p>这也是本篇文章贯穿始终的规则了，基于命名的规则，约束贴图sRGB的值，这里做个总结展示。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181327153.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181142251.gif"></p>
+<h3 id="命名约束TextureGroup类型"><a href="#命名约束TextureGroup类型" class="headerlink" title="命名约束TextureGroup类型"></a>命名约束TextureGroup类型</h3><p>通过Texture资源的命名，约束其TextureGroup的类型：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310171657527.png"><br>执行效果：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310171642115.gif"></p>
+<h2 id="自动化"><a href="#自动化" class="headerlink" title="自动化"></a>自动化</h2><p>因为整个资源修正的方案，都是基于ResScanner的资源扫描，所以直接能够复用ResScanner在Cmdlet中的支持。<br>这一点与<a href="https://imzlp.com/posts/22655">UE 中多阶段的自动化资源检查方案</a>中的描述相同，区别就是需要在执行扫描配置时打开<strong>允许后处理</strong>即可。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310181341821.png"></p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本篇文章介绍了基于ResScanner检查规则自动修复资源的设计思路与实现方案，并介绍了一种通用地方式配置、修改资源内属性的实现原理。</p>
+<p>对于多数情况下而言，对资源属性的自动化修改就能解决很多需求了，复杂的资源处理也可以自己写扩展逻辑。这样能最大限度地<strong>降低</strong>人工参与的耗时，但<strong>无法完全避免</strong>。因为也有类似于引用关系异常等需要人为参与判断，才能正确处理的情况，因为规则可能没法细化到那么详细的地步，但从工具的实现架构上也能够做到。</p>
+<p>只要规则足够明确，就能基于该方案实现自动化修复任何资源！</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/19901/" target="_blank">UE中资源自修正的设计与实现方案</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2023年10月18日 14时45分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.6k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/19901/" target="_blank" title="UE中资源自修正的设计与实现方案">https://imzlp.com/posts/19901/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/19901/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" rel="tag"># 资源管理</a>
+              <a href="/tags/ResScannerUE/" rel="tag"># ResScannerUE</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/71162/" rel="prev" title="UE中利用反射为资产建立属性缓存">
+      <i class="fa fa-chevron-left"></i> UE中利用反射为资产建立属性缓存
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/86105/" rel="next" title="UE插件与工具开发：j2的设计思路与实现">
+      UE插件与工具开发：j2的设计思路与实现 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E8%A6%81%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">具体要做什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%94%A8Property-Maxtrix%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">为什么不用Property Maxtrix？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E7%AD%9B%E9%80%89"><span class="nav-number">3.1.</span> <span class="nav-text">资源筛选</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E5%90%8E%E5%A4%84%E7%90%86"><span class="nav-number">3.2.</span> <span class="nav-text">资源后处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%94%A8%E7%9A%84%E5%B1%9E%E6%80%A7%E6%9B%BF%E6%8D%A2%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.3.</span> <span class="nav-text">通用的属性替换实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%8D%E5%B0%84%E5%B1%9E%E6%80%A7"><span class="nav-number">3.3.1.</span> <span class="nav-text">获取类型的反射属性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5%E8%A6%86%E5%86%99%E5%B1%9E%E6%80%A7"><span class="nav-number">3.3.2.</span> <span class="nav-text">导入覆写属性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.4.</span> <span class="nav-text">最终实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text">案例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%A6%E6%9D%9FAnimSeq%E5%8E%8B%E7%BC%A9%E9%85%8D%E7%BD%AE"><span class="nav-number">4.1.</span> <span class="nav-text">约束AnimSeq压缩配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E5%90%8D%E7%BA%A6%E6%9D%9FsRGB%E5%80%BC"><span class="nav-number">4.2.</span> <span class="nav-text">命名约束sRGB值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E5%90%8D%E7%BA%A6%E6%9D%9FTextureGroup%E7%B1%BB%E5%9E%8B"><span class="nav-number">4.3.</span> <span class="nav-text">命名约束TextureGroup类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">自动化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">6.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/19901/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在使用UE4开发Android时，有时需要获取平台相关的信息、或者执行平台相关的操作，在这种情况下，需要在代码中添加Java的代码以及在C++中调用它们。有些需求也需要在游戏中从Java侧接收一些事件，需要处理Java调用C++的流程。 本篇文章主要涉及以下几部分内容：  UE工程中添加Java代码 Java函数的签名规则 Java调用C++的函数 C++调用Java的函数  如何利用UE的UPL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE：UPL与JNI调用的最佳实践">
+<meta property="og:url" content="https://imzlp.com/posts/27289/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在使用UE4开发Android时，有时需要获取平台相关的信息、或者执行平台相关的操作，在这种情况下，需要在代码中添加Java的代码以及在C++中调用它们。有些需求也需要在游戏中从Java侧接收一些事件，需要处理Java调用C++的流程。 本篇文章主要涉及以下几部分内容：  UE工程中添加Java代码 Java函数的签名规则 Java调用C++的函数 C++调用Java的函数  如何利用UE的UPL">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323172657.webp">
+<meta property="article:published_time" content="2020-11-15T10:45:27.000Z">
+<meta property="article:modified_time" content="2020-11-15T10:45:27.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="JNI">
+<meta property="article:tag" content="UPL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323172657.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/27289/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE：UPL与JNI调用的最佳实践 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/27289/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE：UPL与JNI调用的最佳实践<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-11-15-27289.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-11-15 10:45 10:45:27:45" itemprop="dateCreated datePublished" datetime="2020-11-15T10:45:27+00:00">2020-11-15 10:45</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/27289/" class="post-meta-item leancloud_visitors" data-flag-title="UE：UPL与JNI调用的最佳实践" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在使用UE4开发Android时，有时需要获取平台相关的信息、或者执行平台相关的操作，在这种情况下，需要在代码中添加Java的代码以及在C++中调用它们。有些需求也需要在游戏中从Java侧接收一些事件，需要处理Java调用C++的流程。</p>
+<p>本篇文章主要涉及以下几部分内容：</p>
+<ul>
+<li>UE工程中添加Java代码</li>
+<li>Java函数的签名规则</li>
+<li>Java调用C++的函数</li>
+<li>C++调用Java的函数</li>
+</ul>
+<p>如何利用UE的UPL特性、Java的签名规则，以及在UE中进行JNI调用实现方法，会在文章中做详细的介绍。</p>
+<span id="more"></span>
+
+<h2 id="UPL"><a href="#UPL" class="headerlink" title="UPL"></a>UPL</h2><p>UPL全称<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Platforms/Mobile/UnrealPluginLanguage/index.html">Unreal Plugin Language</a>，是一个XML-Based的结构化语言，用于介入UE的打包过程（如拷贝so/编辑AndroidManifest.xml，添加IOS的framework/操作plist等），本篇文章主要介绍UPL在Android中的使用，UPL在IOS上的使用，在我之前的文章<a href="https://imzlp.com/posts/1948/#UPL%E5%9C%A8iOS%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8">UE4 开发笔记：Mac/iOS 篇#UPL 在 iOS 中的应用</a>中有介绍。</p>
+<p>往UE项目里添加Java代码，需要通过UPL在打包时往GameActivity.java插入代码来实现。</p>
+<p>UPL的语法使用XML，文件也需要保存为<code>.xml</code>格式：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="comment">&lt;!--Unreal Plugin Example--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">root</span> <span class="attr">xmlns:android</span>=<span class="string">&quot;http://schemas.android.com/apk/res/android&quot;</span>&gt;</span></span><br><span class="line">    </span><br><span class="line"><span class="tag">&lt;/<span class="name">root</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>在<code>&lt;root&gt;&lt;/root&gt;</code>中可以使用UPL提供的节点来编写逻辑（但是因为它的语法都是XML的形式来实现编程逻辑的，所以写起来循环等控制流程十分麻烦），以添加<code>AndroidManifest.xml</code>中权限请求为例（以下代码均位于<code>&lt;root&gt;&lt;/root&gt;</code>中）：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">androidManifestUpdates</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!--权限请求--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">addPermission</span> <span class="attr">android:name</span>=<span class="string">&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">addPermission</span> <span class="attr">android:name</span>=<span class="string">&quot;android.permission.READ_EXTERNAL_STORAGE&quot;</span>/&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!--Android的全面屏支持--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">addElements</span> <span class="attr">tag</span>=<span class="string">&quot;application&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta-data</span> <span class="attr">android:name</span>=<span class="string">&quot;notch.config&quot;</span> <span class="attr">android:value</span>=<span class="string">&quot;portrait|landscape&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta-data</span> <span class="attr">android:name</span>=<span class="string">&quot;android.notch_support&quot;</span> <span class="attr">android:value</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">addElements</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">androidManifestUpdates</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>使用<code>androidManifestUpdates</code>节点，可以在其中更新<code>AndroidManifest.xml</code>，UPL为IOS和Android都提供了很多平台相关的节点，在使用时需要注意，不能混用。</p>
+<p>UPL还提供了往GameActivity类中添加Java方法的节点：<code>gameActivityClassAdditions</code>，通过这个节点，可以直接在UPL里编写Java代码，在构建Android包时，会自动把这些代码插入到<code>GameActivity.java</code>中的<code>GameActivity</code>类中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">gameActivityClassAdditions</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">insert</span>&gt;</span></span><br><span class="line">        public String AndroidThunkJava_GetPackageName()</span><br><span class="line">        &#123;</span><br><span class="line">            Context context = getApplicationContext();</span><br><span class="line">            return context.getPackageName();</span><br><span class="line">        &#125;</span><br><span class="line">        public String AndroidThunkJava_GetInstalledApkPath()</span><br><span class="line">        &#123;</span><br><span class="line">            Context context = getApplicationContext();</span><br><span class="line">            PackageManager packageManager = context.getPackageManager();</span><br><span class="line">            ApplicationInfo appInfo;</span><br><span class="line">            try&#123;</span><br><span class="line">                appInfo = packageManager.getApplicationInfo(context.getPackageName(),PackageManager.GET_META_DATA);</span><br><span class="line">                return appInfo.sourceDir;</span><br><span class="line">            &#125;catch (PackageManager.NameNotFoundException e)&#123;</span><br><span class="line">                return &quot;invalid&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">gameActivityClassAdditions</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>插入之后生成的文件：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/27289/ue4-package-android-gameactivity.webp"></p>
+<p>这两个函数就在<code>GameActivity.java</code>中了，UPL有很多增加GameActivity内容的节点，这部分内容在UE的文档中是不全的，具体还是要去看UBT的代码：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/f8f4b403eb682ffc055613c7caf9d2ba5df7f319/Engine/Source/Programs/UnrealBuildTool/System/UnrealPluginLanguage.cs#L378">UnrealBuildTool/System/UnrealPluginLanguage.cs#L378</a>。</p>
+<p>UPL支持对GameActivity的扩展，不仅仅只是添加函数，还可以给<code>OnCreate</code>/<code>OnDestory</code>等函数添加额外的代码，方便根据需求介入到不同的时机。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Engine/Source/Programs/UnrealBuildTool/System/UnrealPluginLanguage.cs#L378 </span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to the GameActivity imports in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityImportAdditions&gt; &lt;/gameActivityImportAdditions&gt;</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to the GameActivity after imports in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">*  &lt;gameActivityPostImportAdditions&gt; &lt;/gameActivityPostImportAdditions&gt;</span></span><br><span class="line"><span class="comment">*  </span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to the GameActivity class implements in GameActivity.java (end each line with a comma) --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityImplementsAdditions&gt; &lt;/gameActivityImplementsAdditions&gt;</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to the GameActivity class body in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityClassAdditions&gt; &lt;/gameActivityOnClassAdditions&gt;</span></span><br><span class="line"><span class="comment">* 	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onCreate metadata reading in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityReadMetadata&gt; &lt;/gameActivityReadMetadata&gt;</span></span><br><span class="line"><span class="comment">* </span></span><br><span class="line"><span class="comment">*	&lt;!-- optional additions to GameActivity onCreate in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">*	&lt;gameActivityOnCreateAdditions&gt; &lt;/gameActivityOnCreateAdditions&gt;</span></span><br><span class="line"><span class="comment">* 	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onDestroy in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityOnDestroyAdditions&gt; &lt;/gameActivityOnDestroyAdditions&gt;</span></span><br><span class="line"><span class="comment">* 	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onStart in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityOnStartAdditions&gt; &lt;/gameActivityOnStartAdditions&gt;</span></span><br><span class="line"><span class="comment">* 	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onStop in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityOnStopAdditions&gt; &lt;/gameActivityOnStopAdditions&gt;</span></span><br><span class="line"><span class="comment">* 	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onPause in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityOnPauseAdditions&gt; &lt;/gameActivityOnPauseAdditions&gt;</span></span><br><span class="line"><span class="comment">* 	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onResume in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">*	&lt;gameActivityOnResumeAdditions&gt;	&lt;/gameActivityOnResumeAdditions&gt;</span></span><br><span class="line"><span class="comment">*	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onNewIntent in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">*	&lt;gameActivityOnNewIntentAdditions&gt; &lt;/gameActivityOnNewIntentAdditions&gt;</span></span><br><span class="line"><span class="comment">*	</span></span><br><span class="line"><span class="comment">* 	&lt;!-- optional additions to GameActivity onActivityResult in GameActivity.java --&gt;</span></span><br><span class="line"><span class="comment">* 	&lt;gameActivityOnActivityResultAdditions&gt;	&lt;/gameActivityOnActivityResultAdditions&gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<p>那么，写完了UPL的脚本之后，如何来使用它呢？</p>
+<p>需要在需要添加该UPL的Module的<code>build.cs</code>中添加以下代码：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// for Android</span></span><br><span class="line"><span class="keyword">if</span> (Target.Platform == UnrealTargetPlatform.Android)</span><br><span class="line">&#123;</span><br><span class="line">	PrivateDependencyModuleNames.Add(<span class="string">&quot;Launch&quot;</span>);</span><br><span class="line">	AdditionalPropertiesForReceipt.Add(<span class="string">&quot;AndroidPlugin&quot;</span>, Path.Combine(ModuleDirectory, <span class="string">&quot;UPL/Android/FGame_Android_UPL.xml&quot;</span>));		</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// for IOS</span></span><br><span class="line"><span class="keyword">if</span> (Target.Platform == UnrealTargetPlatform.IOS)</span><br><span class="line">&#123;</span><br><span class="line">	AdditionalPropertiesForReceipt.Add(<span class="string">&quot;IOSPlugin&quot;</span>,Path.Combine(ModuleDirectory,<span class="string">&quot;UPL/IOS/FGame_IOS_UPL.xml&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>AdditionalPropertiesForReceipt</code>来指定我们的UPL脚本，注意<code>AndroidPlugin</code>和<code>IOSPlugin</code>不可修改，文件路径可以根据UPL文件在项目中的位置指定。</p>
+<p>使用这种方式就把UPL添加到了UE的构建系统中，当构建Android/IOS平台时，就会自动执行我们在脚本中的逻辑了。</p>
+<h2 id="Java函数签名"><a href="#Java函数签名" class="headerlink" title="Java函数签名"></a>Java函数签名</h2><p>JNI是什么？JNI全称Java Native Interface，即Java原生接口。主要用来从Java调用其他语言代码、其他语言来调用Java的代码。</p>
+<p>在上一节中，我们通过UPL往GameActivity中添加了Java的代码，在UE中如何通过C++去调用这些Java的函数，需要使用JNI调用来实现。</p>
+<p>通过C++去调用Java，首先需要知道，所要调用的Java函数的签名。<strong>签名</strong>是描述一个函数的参数和返回值类型的信息。<br>以该函数为例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> String <span class="title function_">AndroidThunkJava_GetPackageName</span><span class="params">()</span>&#123; <span class="keyword">return</span> <span class="string">&quot;&quot;</span>; &#125;</span><br></pre></td></tr></table></figure>
+
+<p>以这个函数为例，它不接受参数，返回一个Java的String值，那么它的签名是什么呢？</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">()Ljava/lang/String;</span><br></pre></td></tr></table></figure>
+
+<p>签名的计算是有一个规则的，暂时先按下不表，后面会详细介绍。</p>
+<p>JDK提供的<code>javac</code>具有一个参数可以给Java代码生成C++的头文件，用来方便JNI调用，其中就包含了签名。</p>
+<p>写一个测试的Java代码，用来生成JNI调用的.h：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">GameActivity</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">native</span> String <span class="title function_">SingnatureTester</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>生成命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">javac -h . GameActivity.java</span><br></pre></td></tr></table></figure>
+
+<p>会在当前目录下生成<code>.class</code>和<code>.h</code>文件，<code>.h</code>中的内容如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* DO NOT EDIT THIS FILE - it is machine generated */</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;jni.h&gt;</span></span></span><br><span class="line"><span class="comment">/* Header for class GameActivity */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> _Included_GameActivity</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> _Included_GameActivity</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Class:     GameActivity</span></span><br><span class="line"><span class="comment"> * Method:    SingnatureTester</span></span><br><span class="line"><span class="comment"> * Signature: ()Ljava/lang/String;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">JNIEXPORT jstring JNICALL <span class="title">Java_GameActivity_SingnatureTester</span></span></span><br><span class="line"><span class="function">  <span class="params">(JNIEnv *, jclass)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>里面导出了<code>GameActivity</code>类成员<code>SingnatureTester</code>JNI调用的符号信息，在注释中包含了它的签名<code>()Ljava/lang/String;</code>。</p>
+<p><code>Java_ue4game_GameActivity_SingnatureTester</code>是当前函数可以在C/C++中实现的函数名，当我们在C++中实现了这个名字的函数，在Java中调用到<code>GameActivity</code>的<code>SingnatureTester</code>时，就会调用到我们C++中的实现。</p>
+<p>把函数声明改为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">GameActivity</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">native</span> String <span class="title function_">SingnatureTester</span><span class="params">(<span class="type">int</span> ival,<span class="type">double</span> dval,String str)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>它的签名则是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Class:     GameActivity</span></span><br><span class="line"><span class="comment"> * Method:    SingnatureTester</span></span><br><span class="line"><span class="comment"> * Signature: (IDLjava/lang/String;)Ljava/lang/String;</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+
+<p>经过上面的两个例子，其实就可以看出来Java函数的签名规则：签名包含两部分——参数、返回值。</p>
+<p>其中，<code>()</code>中的是参数的类型签名，按照参数顺序排列，<code>()</code>后面的是返回值的类型签名。</p>
+<p>那么Java中的类型签名规则是怎么样的呢？可以依据下面的Java签名对照表：<a href="https://imzlp.com/notes/computerscience/#JNI%E8%B0%83%E7%94%A8%E7%AD%BE%E5%90%8D%E5%AF%B9%E7%85%A7%E8%A1%A8">JNI 调用签名对照表</a>。</p>
+<p>Java中的<strong>基础类型和签名对照表</strong>：</p>
+<table>
+<thead>
+<tr>
+<th align="center">Java</th>
+<th align="center">Native</th>
+<th align="center">Signature</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">byte</td>
+<td align="center">jbyte</td>
+<td align="center">B</td>
+</tr>
+<tr>
+<td align="center">char</td>
+<td align="center">jchar</td>
+<td align="center">C</td>
+</tr>
+<tr>
+<td align="center">double</td>
+<td align="center">jdouble</td>
+<td align="center">D</td>
+</tr>
+<tr>
+<td align="center">float</td>
+<td align="center">jfloat</td>
+<td align="center">F</td>
+</tr>
+<tr>
+<td align="center">int</td>
+<td align="center">jint</td>
+<td align="center">I</td>
+</tr>
+<tr>
+<td align="center">short</td>
+<td align="center">jshort</td>
+<td align="center">S</td>
+</tr>
+<tr>
+<td align="center">long</td>
+<td align="center">jlong</td>
+<td align="center">J</td>
+</tr>
+<tr>
+<td align="center">boolean</td>
+<td align="center">jboolean</td>
+<td align="center">Z</td>
+</tr>
+<tr>
+<td align="center">void</td>
+<td align="center">void</td>
+<td align="center">V</td>
+</tr>
+</tbody></table>
+<p>根据上面的规则，<code>void EmptyFunc(int)</code>的签名为<code>(I)V</code>。</p>
+<p><strong>非内置基础类型的签名规则</strong>为：</p>
+<ol>
+<li>以<code>L</code>开头</li>
+<li>以<code>;</code>结尾</li>
+<li>中间用<code>/</code>隔开包和类名</li>
+</ol>
+<p>如Java中类类型：</p>
+<ul>
+<li>String：<code>Ljava/lang/String;</code></li>
+<li>Object：<code>Ljava/lang/Object;</code></li>
+</ul>
+<p>给上面的例子加上package时候再测试下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> ue4game;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">GameActivity</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">native</span> String <span class="title function_">SingnatureTester</span><span class="params">(GameActivity activity)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>则得到的签名为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Class:     ue4game_GameActivity</span></span><br><span class="line"><span class="comment"> * Method:    SingnatureTester</span></span><br><span class="line"><span class="comment"> * Signature: (Lue4game/GameActivity;)Ljava/lang/String;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">JNIEXPORT jstring JNICALL <span class="title">Java_ue4game_GameActivity_SingnatureTester</span></span></span><br><span class="line"><span class="function">  <span class="params">(JNIEnv *, jclass, jobject)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="JNI-Java-to-C"><a href="#JNI-Java-to-C" class="headerlink" title="JNI:Java to C++"></a>JNI:Java to C++</h2><p>UE给我们的游戏生成的<code>GameActivity</code>中也声明了很多的<code>native</code>函数，这些函数是在C++实现的，在Java中执行到这些函数会自动调用到引擎的C++代码中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">nativeGetCPUFamily</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="type">boolean</span> <span class="title function_">nativeSupportsNEON</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetAffinityInfo</span><span class="params">(<span class="type">boolean</span> bEnableAffinity, <span class="type">int</span> bigCoreMask, <span class="type">int</span> littleCoreMask)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetConfigRulesVariables</span><span class="params">(String[] KeyValuePairs)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="type">boolean</span> <span class="title function_">nativeIsShippingBuild</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetAndroidStartupState</span><span class="params">(<span class="type">boolean</span> bDebuggerAttached)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetGlobalActivity</span><span class="params">(<span class="type">boolean</span> bUseExternalFilesDir, <span class="type">boolean</span> bPublicLogFiles, String internalFilePath, String externalFilePath, <span class="type">boolean</span> bOBBInAPK, String APKPath)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetObbFilePaths</span><span class="params">(String OBBMainFilePath, String OBBPatchFilePath)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetWindowInfo</span><span class="params">(<span class="type">boolean</span> bIsPortrait, <span class="type">int</span> DepthBufferPreference)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetObbInfo</span><span class="params">(String ProjectName, String PackageName, <span class="type">int</span> Version, <span class="type">int</span> PatchVersion, String AppType)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetAndroidVersionInformation</span><span class="params">( String AndroidVersion, String PhoneMake, String PhoneModel, String PhoneBuildNumber, String OSLanguage )</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetSurfaceViewInfo</span><span class="params">(<span class="type">int</span> width, <span class="type">int</span> height)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeSetSafezoneInfo</span><span class="params">(<span class="type">boolean</span> bIsPortrait, <span class="type">float</span> left, <span class="type">float</span> top, <span class="type">float</span> right, <span class="type">float</span> bottom)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeConsoleCommand</span><span class="params">(String commandString)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardChanged</span><span class="params">(String contents)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardResult</span><span class="params">(<span class="type">boolean</span> update, String contents)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardSendKey</span><span class="params">(<span class="type">int</span> keyCode)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardSendTextSelection</span><span class="params">(String contents, <span class="type">int</span> selStart, <span class="type">int</span> selEnd)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardSendSelection</span><span class="params">(<span class="type">int</span> selStart, <span class="type">int</span> selEnd)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeInitHMDs</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeResumeMainInit</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeOnActivityResult</span><span class="params">(GameActivity activity, <span class="type">int</span> requestCode, <span class="type">int</span> resultCode, Intent data)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeGoogleClientConnectCompleted</span><span class="params">(<span class="type">boolean</span> bSuccess, String accessToken)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardShown</span><span class="params">(<span class="type">int</span> left, <span class="type">int</span> top, <span class="type">int</span> right, <span class="type">int</span> bottom)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeVirtualKeyboardVisible</span><span class="params">(<span class="type">boolean</span> bShown)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeOnConfigurationChanged</span><span class="params">(<span class="type">boolean</span> bPortrait)</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeOnInitialDownloadStarted</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeOnInitialDownloadCompleted</span><span class="params">()</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title function_">nativeHandleSensorEvents</span><span class="params">(<span class="type">float</span>[] tilt, <span class="type">float</span>[] rotation_rate, <span class="type">float</span>[] gravity, <span class="type">float</span>[] acceleration)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在上一节Java签名中已经提到过，<code>native</code>的方法是Java调用其他语言实现，上面这些函数在UE中均有实现，用于在引擎中接收Android设备的不同逻辑，定义分布在下列文件中：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Runtime\Android\AndroidLocalNotification\Private\AndroidLocalNotification.cpp</span><br><span class="line">Runtime\ApplicationCore\Private\Android\AndroidWindow.cpp</span><br><span class="line">Runtime\Core\Private\Android\AndroidPlatformFile.cpp</span><br><span class="line">Runtime\Core\Private\Android\AndroidPlatformMisc.cpp</span><br><span class="line">Runtime\Core\Private\Android\AndroidPlatformProcess.cpp</span><br><span class="line">Runtime\Launch\Private\Android\AndroidEventManager.cpp</span><br><span class="line">Runtime\Launch\Private\Android\AndroidJNI.cpp</span><br><span class="line">Runtime\Launch\Private\Android\LaunchAndroid.cpp</span><br></pre></td></tr></table></figure>
+
+<p>我们也可以自己在GameActivity添加<code>native</code>的函数，如果有一些SDK中提供了<code>native</code>这样的函数，也可以用以下方式来实现，我这里写一个简单的例子，使用UPL往GameActivity添加一个<code>native</code>函数，并在C++端实现。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;gameActivityClassAdditions&gt;</span><br><span class="line">  &lt;insert&gt;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> native <span class="type">void</span> <span class="title">nativeDoTester</span><span class="params">(String Msg)</span></span>;</span><br><span class="line">  &lt;/insert&gt;</span><br><span class="line">&lt;/gameActivityClassAdditions&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在C++中实现一个这样的函数即可：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_ANDROID</span></span><br><span class="line"><span class="function">JNI_METHOD <span class="type">void</span> <span class="title">Java_com_epicgames_ue4_GameActivity_nativeDoTester</span></span></span><br><span class="line"><span class="function">  <span class="params">(JNIEnv jenv*, jobject thiz, jstring msg)</span></span>;</span><br><span class="line">&#123;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p><code>com.epicgames.ue4</code>是UE生成的<code>GameActivity.java</code>的包名(<code>package com.epicgames.ue4;</code>)。</p>
+<p>可以看到，在C++中实现JNIMETHOD的函数名是以下规则：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">RType <span class="title">Java_PACKAGENAME_CLASSNAME_FUNCNAME</span><span class="params">(JNIEnv*,jobject thiz,Oher...)</span></span></span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：这个函数必须是个C函数，不能参与C++的name mangling，不然签名就不对了。</p>
+<p>在UE中可以使用<code>JNI_METHOD</code>宏，它定义在<code>AndroidPlatform.h</code>中。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/Core/Public/Android/AndroidPlatform.h</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> JNI_METHOD			__attribute__ ((visibility (<span class="string">&quot;default&quot;</span>))) extern <span class="string">&quot;C&quot;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>也可以使用<code>extern &quot;C&quot;</code>。在C++中定义之后，如果Java端调用了该函数，就可以执行到我们在C++里写的逻辑了。</p>
+<h2 id="JNI-C-to-Java"><a href="#JNI-C-to-Java" class="headerlink" title="JNI:C++ to Java"></a>JNI:C++ to Java</h2><p>通过上一节的内容，可以知道了Java中函数的签名信息，如何在UE中通过函数名和签名信息来在C++中调用到游戏中的Java代码呢。</p>
+<p>UE在C++端封装了大量的JNI的辅助函数，可以很方便地进行JNI操作。这些函数大多定义在下面三个头文件中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime/Launch/Public/Android</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;Android/AndroidJNI.h&quot;</span></span></span><br><span class="line"><span class="comment">// Runtime/Core/Public/Android</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;Android/AndroidJavaEnv.h&quot;</span></span></span><br><span class="line"><span class="comment">// Runtime/Core/Public/Android</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;Android/AndroidJava.h&quot;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>因为<code>AndroidJNI.h</code>位于<code>Launch</code>模块中，所以在需要在Build.cs中为<code>Android</code>平台添加该模块。</p>
+<p>以第一节我们使用UPL往<strong>GameActivity</strong>类中添加的下面这个函数为例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> String <span class="title function_">AndroidThunkJava_GetPackageName</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">Context</span> <span class="variable">context</span> <span class="operator">=</span> getApplicationContext();</span><br><span class="line">	<span class="keyword">return</span> context.getPackageName();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>想要在UE中调用到它，首先要获取它的<code>jmethodID</code>，需要通过<strong>函数所属的类</strong>、<strong>函数名字</strong>，<strong>签名</strong>三种信息来获取：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (JNIEnv* Env = FAndroidApplication::<span class="built_in">GetJavaEnv</span>())</span><br><span class="line">&#123;</span><br><span class="line">	jmethodID GetPackageNameMethodID = FJavaWrapper::<span class="built_in">FindMethod</span>(Env, FJavaWrapper::GameActivityClassID, <span class="string">&quot;AndroidThunkJava_GetPackageName&quot;</span>, <span class="string">&quot;()Ljava/lang/String;&quot;</span>, <span class="literal">false</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为我们的代码是插入到<code>GameActivity</code>类中的，而UE对<code>GameActivity</code>做了封装，所以可以通过<code>FJavaWrapper</code>来获取，<code>FJavaWrapper</code>定义位于<code>Runtime/Launch/Public/Android</code>。</p>
+<p>得到的这个<code>methodID</code>，有点类似于C++的成员函数指针，想要调用到它，需要通过某个对象来执行调用，UE也做了封装：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstring JstringResult = (jstring)FJavaWrapper::<span class="built_in">CallObjectMethod</span>(Env, FJavaWrapper::GameActivityThis,GetPackageNameMethodID);</span><br></pre></td></tr></table></figure>
+<p>通过<code>CallObjectMethod</code>来在<code>GameActivity</code>的实例上调用<code>GetPackageNameMethodID</code>，得到的值是java中的对象，这个值还不能直接转换为UE中的字符串使用，需要进行转换的流程：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> FJavaHelperEx</span><br><span class="line">&#123;</span><br><span class="line">	<span class="function">FString <span class="title">FStringFromParam</span><span class="params">(JNIEnv* Env, jstring JavaString)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (!Env || !JavaString || Env-&gt;<span class="built_in">IsSameObject</span>(JavaString, <span class="literal">NULL</span>))</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">return</span> &#123;&#125;;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="type">const</span> <span class="keyword">auto</span> chars = Env-&gt;<span class="built_in">GetStringUTFChars</span>(JavaString, <span class="number">0</span>);</span><br><span class="line">		<span class="function">FString <span class="title">ReturnString</span><span class="params">(UTF8_TO_TCHAR(chars))</span></span>;</span><br><span class="line">		Env-&gt;<span class="built_in">ReleaseStringUTFChars</span>(JavaString, chars);</span><br><span class="line">		<span class="keyword">return</span> ReturnString;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function">FString <span class="title">FStringFromLocalRef</span><span class="params">(JNIEnv* Env, jstring JavaString)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		FString ReturnString = <span class="built_in">FStringFromParam</span>(Env, JavaString);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (Env &amp;&amp; JavaString)</span><br><span class="line">		&#123;</span><br><span class="line">			Env-&gt;<span class="built_in">DeleteLocalRef</span>(JavaString);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> ReturnString;</span><br><span class="line">    </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过上面定义的<code>FJavaHelperEx::FStringFromLocalRef</code>可以把<code>jstring</code>转换为UE的FString：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FString FinalResult = FJavaHelperEx::<span class="built_in">FStringFromLocalRef</span>(Env,JstringResult);</span><br></pre></td></tr></table></figure>
+<p>到这里，整个JNI调用的流程就结束了，能够通过C++去调用Java并获取返回值了。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Platforms/Mobile/UnrealPluginLanguage/index.html">Unreal Plugin Language</a></li>
+<li><a target="_blank" rel="noopener" href="https://imzy.vip/posts/55704/">Jni符号对照</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html#wp9502">JNI Types and Data Structures</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/27289/" target="_blank">UE：UPL与JNI调用的最佳实践</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年11月15日 10时45分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/27289/" target="_blank" title="UE：UPL与JNI调用的最佳实践">https://imzlp.com/posts/27289/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/27289/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/JNI/" rel="tag"># JNI</a>
+              <a href="/tags/UPL/" rel="tag"># UPL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/11043/" rel="prev" title="2020 Unreal Open Day">
+      <i class="fa fa-chevron-left"></i> 2020 Unreal Open Day
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/15049/" rel="next" title="UE：Hook UObject">
+      UE：Hook UObject <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#UPL"><span class="nav-number">1.</span> <span class="nav-text">UPL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java%E5%87%BD%E6%95%B0%E7%AD%BE%E5%90%8D"><span class="nav-number">2.</span> <span class="nav-text">Java函数签名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JNI-Java-to-C"><span class="nav-number">3.</span> <span class="nav-text">JNI:Java to C++</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JNI-C-to-Java"><span class="nav-number">4.</span> <span class="nav-text">JNI:C++ to Java</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">5.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/27289/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

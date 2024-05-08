@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="UE中具有PSO Cache机制，全称Pipeline State Object Caching，用于预先记录和构建出运行时所使用的材质依赖的Shader信息，当项目首次使用这些Shader时，该列表可以加速Shader的加载&#x2F;编译过程。PSO Cache会把渲染状态、顶点声明、Primitive类型、RenderTarget像素格式等数据保存到文件中，提升Shader的加载效率。本篇文章主要介绍">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE项目优化：PSO Cache">
+<meta property="og:url" content="https://imzlp.com/posts/24336/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="UE中具有PSO Cache机制，全称Pipeline State Object Caching，用于预先记录和构建出运行时所使用的材质依赖的Shader信息，当项目首次使用这些Shader时，该列表可以加速Shader的加载&#x2F;编译过程。PSO Cache会把渲染状态、顶点声明、Primitive类型、RenderTarget像素格式等数据保存到文件中，提升Shader的加载效率。本篇文章主要介绍">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051843926.webp">
+<meta property="article:published_time" content="2021-04-22T19:40:55.000Z">
+<meta property="article:modified_time" content="2021-04-22T19:40:55.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="PSOCache">
+<meta property="article:tag" content="PSO">
+<meta property="article:tag" content="优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051843926.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/24336/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE项目优化：PSO Cache | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/24336/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE项目优化：PSO Cache<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-04-22-24336.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-22 19:40 19:40:55:40" itemprop="dateCreated datePublished" datetime="2021-04-22T19:40:55+00:00">2021-04-22 19:40</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/PSOCache/" itemprop="url" rel="index"><span itemprop="name">PSOCache</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/24336/" class="post-meta-item leancloud_visitors" data-flag-title="UE项目优化：PSO Cache" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>16 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>UE中具有PSO Cache机制，全称Pipeline State Object Caching，用于预先记录和构建出运行时所使用的材质依赖的Shader信息，当项目首次使用这些Shader时，该列表可以加速Shader的加载/编译过程。PSO Cache会把渲染状态、顶点声明、Primitive类型、RenderTarget像素格式等数据保存到文件中，提升Shader的加载效率。<br>本篇文章主要介绍PSO Cache的启用及构建流程，并会分析PSO Cache在引擎中的加载流程以及实现热更PSO方式、错误处理等，PSO Cache的原理有时间再进行详细分析。</p>
+<span id="more"></span>
+
+<p>PSO Cache的官方文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/SharingAndReleasing/PSOCaching/index.html">PSO Cache</a>。</p>
+<p>PSO Cache构建流程概览：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/24336/PSO_Caching_Digramh.webp"></p>
+<p>PSO Cache的部署和使用大致分为以下几个步骤：</p>
+<ol>
+<li>为项目开启PSO Cahche和ShaderStableKeys，打包后可以从<code>Metadata/PipelineCaches</code>目录下获得<code>ShaderStableInfo*.scl.csv</code></li>
+<li>添加<code>logPSO</code>参数启动游戏，用于在运行时记录PSO数据（<code>*.rec.upipelinecache</code>）</li>
+<li>通过<code>ShaderStableInfo*.scl.csv</code>和<code>*.rec.upipelinecache</code>生成<code>*.stablepc.csv</code></li>
+<li>再次执行Cook，通过<code>*.stablepc.csv</code>生成<code>upipelinecache</code>文件，打至包内；</li>
+<li>启动游戏，引擎自动加载<code>*.stable.upipelinecache</code>，编译Shader时使用PSO Cache</li>
+</ol>
+<p>本篇文章的内容顺序也遵循着几个步骤。</p>
+<h3 id="启用ShaderStableKeys"><a href="#启用ShaderStableKeys" class="headerlink" title="启用ShaderStableKeys"></a>启用ShaderStableKeys</h3><p>首先需要为项目开启<code>ShaderStableKeys</code>，在执行Cook时生成稳定的ShaderKey，作为记录Shader的凭据。</p>
+<p>在<code>DefaultEngine.ini</code>（或平台相关如AndroidEngine.ini）中添加以下值：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[DevOptions.Shaders]</span></span><br><span class="line"><span class="attr">NeedsShaderStableKeys</span>=<span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>添加之后再执行打包（Cook），会创建以下目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Saved/Cooked/PLATFORM_NAME/PROJECT_NAME/Metadata/PipelineCaches</span><br></pre></td></tr></table></figure>
+<p>并且会在该目录下生成两个文件（分别对应项目、引擎）：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ShaderStableInfo-PROJECT_NAME-GLSL_ES3_1_ANDROID.scl.csv</span><br><span class="line">ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv</span><br></pre></td></tr></table></figure>
+<p>Cook过程中会有以下log，表明生成了这两个文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LogCook: Display: Saved scl.csv D:/PSOExample/Saved/Cooked/Android_ASTC/PSOExample/Metadata/PipelineCaches/ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv for platform Android_ASTC</span><br><span class="line">LogCook: Display: Saved scl.csv D:/PSOExample/Saved/Cooked/Android_ASTC/PSOExample/Metadata/PipelineCaches/ShaderStableInfo-PSOExample-GLSL_ES3_1_ANDROID.scl.csv for platform Android_ASTC</span><br></pre></td></tr></table></figure>
+
+<p>可以使用它们通过<code>-run=ShaderPipelineCacheTools</code>这个Commandlet来生成<code>*.stablepc.csv</code>。</p>
+<p><code>*.scl.csv</code>文件的内容：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/24336/20210422200532.webp"></p>
+<h3 id="运行时捕获PSO数据"><a href="#运行时捕获PSO数据" class="headerlink" title="运行时捕获PSO数据"></a>运行时捕获PSO数据</h3><p>启动游戏时加入<code>-logPSO</code>参数或者在<code>DefaultEngine.ini</code>中加入以下配置：</p>
+<figure class="highlight ini"><figcaption><span>Config/DefaultEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleVariables]</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.Enabled</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.LogPSO</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.SaveBoundPSOLog</span>=<span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>也可以在<code>Devices Profile</code>中设置：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/24336/20210420172045.webp"></p>
+<p>这两个参数在以下代码中使用：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime/RHI/Private/PipelineFileCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FPipelineFileCache::IsPipelineFileCacheEnabled</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">bool</span> bOnce = <span class="literal">false</span>;</span><br><span class="line">  <span class="type">static</span> <span class="type">bool</span> bCmdLineForce = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">if</span> (!bOnce)</span><br><span class="line">  &#123;</span><br><span class="line">    bOnce = <span class="literal">true</span>;</span><br><span class="line">    bCmdLineForce = FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;psocache&quot;</span>));</span><br><span class="line">    <span class="built_in">UE_CLOG</span>(bCmdLineForce, LogRHI, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;****************************** Forcing PSO cache from command line&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> FileCacheEnabled &amp;&amp; (bCmdLineForce || CVarPSOFileCacheEnabled.<span class="built_in">GetValueOnAnyThread</span>() == <span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FPipelineFileCache::LogPSOtoFileCache</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">bool</span> bOnce = <span class="literal">false</span>;</span><br><span class="line">  <span class="type">static</span> <span class="type">bool</span> bCmdLineForce = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">if</span> (!bOnce)</span><br><span class="line">  &#123;</span><br><span class="line">    bOnce = <span class="literal">true</span>;</span><br><span class="line">    bCmdLineForce = FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;logpso&quot;</span>));</span><br><span class="line">    <span class="built_in">UE_CLOG</span>(bCmdLineForce, LogRHI, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;****************************** Forcing logging of PSOs from command line&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> (bCmdLineForce || CVarPSOFileCacheLogPSO.<span class="built_in">GetValueOnAnyThread</span>() == <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行游戏时会有log:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">LogConfig: Applying CVar settings from Section [ConsoleVariables] File [../../../FGame/Saved/Config/Android/Engine.ini]</span><br><span class="line">LogConfig: Setting CVar [[r.ShaderPipelineCache.Enabled:1]]</span><br><span class="line">LogConfig: Setting CVar [[r.ShaderPipelineCache.LogPSO:1]]</span><br><span class="line">LogConfig: Setting CVar [[r.ShaderPipelineCache.SaveBoundPSOLog:1]]</span><br><span class="line">...</span><br><span class="line">LogRHI: Base name for record PSOs is ../../../FGame/Saved/CollectedPSOs/++UE4+Release-4.25-CL-0-FGame_GLSL_ES3_1_ANDROID_00084A4308D90436AC0F652223AA8D4F.rec.upipelinecache</span><br><span class="line">LogRHI: Could not open FPipelineCacheFile: ../../../FGame/Content/PipelineCaches/Android/FGame_GLSL_ES3_1_ANDROID.upipelinecache</span><br><span class="line">...</span><br><span class="line">LogRHI: Display: Encountered a new graphics PSO: 3478445130</span><br><span class="line">LogRHI: Display: New Graphics PSO (3478445130) Description: 416F798F22743F626513A16205A15ECB135C3791,0000000000000000000000000000000000000000,0000000000000000000000000000000000000000,0000000000000000000000000000000000000000,0000000000000000000000000000000000000000,&lt;0 1 0 0 1 0 0 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0&gt;,&lt;0.000000 0.000000 2 1 0 0&gt;,&lt;0 3 0 7 0 0 0 0 7 0 0 0 255 255&gt;,1,11,1051148,2,2,0,0,0,4,10,1114633,0,0,18,2569,0,0,37,1051145,0,0,37,2585,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15360,15391,1055,1027,1025,0,0,0,0,1,&lt;0 0 3 0 12 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;</span><br><span class="line">LogRHI: Display: Encountered a new graphics PSO: 898510125</span><br><span class="line">LogRHI: Display: New Graphics PSO (898510125) Description: 432A3E5557E9ED8328AC7E6CDA5AA6FC2F0B2439,0FED48EC019CFDD251488DE33D563DCFFD7E69DA,0000000000000000000000000000000000000000,0000000000000000000000000000000000000000,0000000000000000000000000000000000000000,&lt;0 1 0 0 1 0 7 0 1 0 0 1 0 0 0 1 0 0 1 0 0 0 1 0 0 1 0 0 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0 1 0 0 1 0 15 0&gt;,&lt;0.000000 0.000000 2 0 0 0&gt;,&lt;0 7 0 7 0 0 0 0 7 0 0 0 255 255&gt;,1,11,1051148,2,2,0,0,0,4,10,1114633,0,0,18,2569,0,0,37,1051145,0,0,37,2585,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15360,15391,1055,1027,1025,0,0,0,2,2,&lt;0 0 4 0 32 0&gt;,&lt;0 16 2 1 32 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;,&lt;0 0 0 0 0 0&gt;</span><br></pre></td></tr></table></figure>
+<p>并会在<code>Saved/CoolectedPSOs</code>中创建以下文件：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/24336/20210420185534.webp"></p>
+<blockquote>
+<p>注意，默认只会采集当前的MaterialQualityLevel，如果想要采集其他质量的，需要切换后重新跑。</p>
+</blockquote>
+<h3 id="生成-stablepc-csv"><a href="#生成-stablepc-csv" class="headerlink" title="生成*.stablepc.csv"></a>生成*.stablepc.csv</h3><p>使用以下commandlet：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Engine/Binaries/Win64/UE4Editor-Cmd.exe</span><br><span class="line">D:/Client/Client.uproject</span><br><span class="line">-run=ShaderPipelineCacheTools <span class="built_in">expand</span></span><br><span class="line">D:/PSOCache/*.rec.upipelinecache</span><br><span class="line">D:/PSOCache/*.scl.csv</span><br><span class="line">D:/PSOCache/Client_GLSL_ES3_1_ANDROID.stablepc.csv</span><br></pre></td></tr></table></figure>
+<p>以上命令会在引擎的Binaries/Win64下生成<code>Client_GLSL_ES3_1_ANDROID.stablepc.csv</code>文件，注意一定要匹配<code>&#123;PROJECTNAME&#125;_&#123;SHADER_FORMART_NAME&#125;.stablepc.csv</code>这个命名规则。</p>
+<p>Android的命名为：Client_GLSL_ES3_1_ANDROID.stablepc.csv<br>IOS的命名为：Client_SF_METAL.stablepc.csv</p>
+<p>生成时具有以下Log：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">D:\PSOCache&gt;&quot;C:\Program Files\Epic Games\UE_4.25\Engine\Binaries\Win64\UE4Editor-Cmd.exe&quot; &quot;D:\PSOExample\PSOExample.uproject&quot; -run=ShaderPipelineCacheTools expand D:/PSOCache/*.rec.upipelinecache D:/PSOCache/*.scl.csv D:/PSOCache/PSOExample_GLSL_ES3_1_ANDROID.stablepc.csv</span><br><span class="line">[2021.04.22-08.57.39:623][  0]LogTargetPlatformManager: Display: Building Assets For Windows</span><br><span class="line">[2021.04.22-08.57.39:648][  0]LogAudioDebug: Display: Lib vorbis DLL was dynamically loaded.</span><br><span class="line">[2021.04.22-08.57.39:841][  0]LogShaderCompilers: Display: Using Local Shader Compiler.</span><br><span class="line">[2021.04.22-08.57.40:492][  0]LogDerivedDataCache: Display: Max Cache Size: 512 MB</span><br><span class="line">[2021.04.22-08.57.40:523][  0]LogDerivedDataCache: Display: Loaded Boot cache: C:/Users/lipengzha/AppData/Local/UnrealEngine/4.25/DerivedDataCache/Boot.ddc</span><br><span class="line">[2021.04.22-08.57.40:533][  0]LogDerivedDataCache: Display: Pak cache opened for reading ../../../Engine/DerivedDataCache/Compressed.ddp.</span><br><span class="line">[2021.04.22-08.57.44:616][  0]LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.</span><br><span class="line">[2021.04.22-08.57.44:616][  0]LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.</span><br><span class="line">[2021.04.22-08.57.45:274][  0]LogShaderPipelineCacheTools: Display: Loading D:/PSOCache/ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv...</span><br><span class="line">[2021.04.22-08.57.45:275][  0]LogShaderPipelineCacheTools: Display: Loading D:/PSOCache/ShaderStableInfo-PSOExample-GLSL_ES3_1_ANDROID.scl.csv...</span><br><span class="line">[2021.04.22-08.57.45:280][  0]LogShaderPipelineCacheTools: Display: Loaded 548 shader info lines from D:/PSOCache/ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv.</span><br><span class="line">[2021.04.22-08.57.45:287][  0]LogShaderPipelineCacheTools: Display: Loaded 5707 shader info lines from D:/PSOCache/ShaderStableInfo-PSOExample-GLSL_ES3_1_ANDROID.scl.csv.</span><br><span class="line">[2021.04.22-08.57.45:287][  0]LogShaderPipelineCacheTools: Display: Loaded 6255 unique shader info lines total.</span><br><span class="line">[2021.04.22-08.57.45:289][  0]LogShaderPipelineCacheTools: Display: Loading D:/PSOCache/++UE4+Release-4.25-CL-13942748-PSOExample_GLSL_ES3_1_ANDROID_000843BC08D905AF09E24614C6A6086F.rec.upipelinecache....</span><br><span class="line">[2021.04.22-08.57.45:293][  0]LogShaderPipelineCacheTools: Display: Loaded 105 PSOs</span><br><span class="line">[2021.04.22-08.57.45:297][  0]LogShaderPipelineCacheTools: Display: Loaded 105 PSOs total [Usage Mask Merged = 0].</span><br><span class="line">[2021.04.22-08.57.45:325][  0]LogShaderPipelineCacheTools: Display: Generated 478 stable PSOs total</span><br><span class="line">[2021.04.22-08.57.45:344][  0]LogShaderPipelineCacheTools: Display: Wrote stable PSOs, 479 lines (541.8 KB) to D:/PSOCache/PSOExample_GLSL_ES3_1_ANDROID.stablepc.csv</span><br><span class="line">[2021.04.22-08.57.45:346][  0]LogInit: Display:</span><br><span class="line">[2021.04.22-08.57.45:349][  0]LogInit: Display: Success - 0 error(s), 0 warning(s)</span><br><span class="line">[2021.04.22-08.57.45:353][  0]LogInit: Display:</span><br><span class="line">Execution of commandlet took:  0.08 seconds</span><br><span class="line">[2021.04.22-08.57.45:408][  0]LogShaderCompilers: Display: Shaders left to compile 0</span><br><span class="line">[2021.04.22-08.57.45:621][  0]LogContentStreaming: Display: There are 1 unreleased StreamingManagers</span><br></pre></td></tr></table></figure>
+
+<p>最终PSO所需要的所有文件：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">D:\PSOCache&gt;tree /a /f</span><br><span class="line">卷 Data 的文件夹 PATH 列表</span><br><span class="line">卷序列号为 004B-E876</span><br><span class="line">D:.</span><br><span class="line">    ++UE4+Release-4.25-CL-13942748-PSOExample_GLSL_ES3_1_ANDROID_000843BC08D905AF09E24614C6A6086F.rec.upipelinecache</span><br><span class="line">    PSOExample_GLSL_ES3_1_ANDROID.stablepc.csv</span><br><span class="line">    ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv</span><br><span class="line">    ShaderStableInfo-PSOExample-GLSL_ES3_1_ANDROID.scl.csv</span><br></pre></td></tr></table></figure>
+<p>我把测试工程生成的文件备份了一份：<a href="PSOCache.7z">PSOCache.7z</a>，可以查看每个文件中的内容。</p>
+<h3 id="生成-stable-upipelinecache"><a href="#生成-stable-upipelinecache" class="headerlink" title="生成*.stable.upipelinecache"></a>生成*.stable.upipelinecache</h3><p>把生成的<code>*stablepc.csv</code>放到<code>Build/Android/PipelineCaches</code>目录下，注意<code>Build/PLATFORM</code>这个Platform是编译平台，不是Cook的资源平台，Android的包就是<code>Android</code>而不是<code>Android_ASTC</code>等。<br>之后重新打包即可。</p>
+<p>引擎在Cook时通过<code>stavlepc.csv</code>创建PipelineCache的代码：</p>
+<figure class="highlight cpp"><figcaption><span>Editor\UnrealEd\Private\CookOnTheFlyServer.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCookOnTheFlyServer::CreatePipelineCache</span><span class="params">(<span class="type">const</span> ITargetPlatform* TargetPlatform, <span class="type">const</span> FString&amp; LibraryName)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// make sure we have a registry generated for all the platforms </span></span><br><span class="line">  <span class="type">const</span> FString TargetPlatformName = TargetPlatform-&gt;<span class="built_in">PlatformName</span>();</span><br><span class="line">  TArray&lt;FString&gt;* SCLCSVPaths = OutSCLCSVPaths.<span class="built_in">Find</span>(<span class="built_in">FName</span>(TargetPlatformName));</span><br><span class="line">  <span class="keyword">if</span> (SCLCSVPaths &amp;&amp; SCLCSVPaths-&gt;<span class="built_in">Num</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    TArray&lt;FName&gt; ShaderFormats;</span><br><span class="line">    TargetPlatform-&gt;<span class="built_in">GetAllTargetedShaderFormats</span>(ShaderFormats);</span><br><span class="line">    <span class="keyword">for</span> (FName ShaderFormat : ShaderFormats)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="comment">// *stablepc.csv or *stablepc.csv.compressed</span></span><br><span class="line">      <span class="type">const</span> FString Filename = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;*%s_%s.stablepc.csv&quot;</span>), *LibraryName, *ShaderFormat.<span class="built_in">ToString</span>());</span><br><span class="line">      <span class="type">const</span> FString StablePCPath = FPaths::<span class="built_in">ProjectDir</span>() / <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>) / TargetPlatform-&gt;<span class="built_in">IniPlatformName</span>() / <span class="built_in">TEXT</span>(<span class="string">&quot;PipelineCaches&quot;</span>) / Filename;</span><br><span class="line">      <span class="type">const</span> FString StablePCPathCompressed = StablePCPath + <span class="built_in">TEXT</span>(<span class="string">&quot;.compressed&quot;</span>);</span><br><span class="line"></span><br><span class="line">      TArray&lt;FString&gt; ExpandedFiles;</span><br><span class="line">      IFileManager::<span class="built_in">Get</span>().<span class="built_in">FindFilesRecursive</span>(ExpandedFiles, *FPaths::<span class="built_in">GetPath</span>(StablePCPath), *FPaths::<span class="built_in">GetCleanFilename</span>(StablePCPath), <span class="literal">true</span>, <span class="literal">false</span>, <span class="literal">false</span>);</span><br><span class="line">      IFileManager::<span class="built_in">Get</span>().<span class="built_in">FindFilesRecursive</span>(ExpandedFiles, *FPaths::<span class="built_in">GetPath</span>(StablePCPathCompressed), *FPaths::<span class="built_in">GetCleanFilename</span>(StablePCPathCompressed), <span class="literal">true</span>, <span class="literal">false</span>, <span class="literal">false</span>);</span><br><span class="line">      <span class="keyword">if</span> (!ExpandedFiles.<span class="built_in">Num</span>())</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogCook, Display, <span class="built_in">TEXT</span>(<span class="string">&quot;---- NOT Running UShaderPipelineCacheToolsCommandlet for platform %s  shader format %s, no files found at %s&quot;</span>), *TargetPlatformName, *ShaderFormat.<span class="built_in">ToString</span>(), *StablePCPath);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span></span><br><span class="line">      &#123;</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogCook, Display, <span class="built_in">TEXT</span>(<span class="string">&quot;---- Running UShaderPipelineCacheToolsCommandlet for platform %s  shader format %s&quot;</span>), *TargetPlatformName, *ShaderFormat.<span class="built_in">ToString</span>());</span><br><span class="line"></span><br><span class="line">        <span class="type">const</span> FString OutFilename = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%s_%s.stable.upipelinecache&quot;</span>), *LibraryName, *ShaderFormat.<span class="built_in">ToString</span>());</span><br><span class="line">        <span class="type">const</span> FString PCUncookedPath = FPaths::<span class="built_in">ProjectDir</span>() / <span class="built_in">TEXT</span>(<span class="string">&quot;Content&quot;</span>) / <span class="built_in">TEXT</span>(<span class="string">&quot;PipelineCaches&quot;</span>) / TargetPlatform-&gt;<span class="built_in">IniPlatformName</span>() / OutFilename;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (IFileManager::<span class="built_in">Get</span>().<span class="built_in">FileExists</span>(*PCUncookedPath))</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">UE_LOG</span>(LogCook, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;Deleting %s, cooked data doesn&#x27;t belong here.&quot;</span>), *PCUncookedPath);</span><br><span class="line">          IFileManager::<span class="built_in">Get</span>().<span class="built_in">Delete</span>(*PCUncookedPath, <span class="literal">false</span>, <span class="literal">true</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">const</span> FString PCCookedPath = <span class="built_in">ConvertToFullSandboxPath</span>(*PCUncookedPath, <span class="literal">true</span>);</span><br><span class="line">        <span class="type">const</span> FString PCPath = PCCookedPath.<span class="built_in">Replace</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;[Platform]&quot;</span>), *TargetPlatformName);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="function">FString <span class="title">Args</span><span class="params">(TEXT(<span class="string">&quot;build &quot;</span>))</span></span>;</span><br><span class="line">        Args += <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot;&quot;</span>);</span><br><span class="line">        Args += StablePCPath;</span><br><span class="line">        Args += <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot;&quot;</span>);</span><br><span class="line"></span><br><span class="line">        int32 NumMatched = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (int32 Index = <span class="number">0</span>; Index &lt; SCLCSVPaths-&gt;<span class="built_in">Num</span>(); Index++)</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="keyword">if</span> (!(*SCLCSVPaths)[Index].<span class="built_in">Contains</span>(ShaderFormat.<span class="built_in">ToString</span>()))</span><br><span class="line">          &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          NumMatched++;</span><br><span class="line">          Args += <span class="built_in">TEXT</span>(<span class="string">&quot; &quot;</span>);</span><br><span class="line">          Args += <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot;&quot;</span>);</span><br><span class="line">          Args += (*SCLCSVPaths)[Index];</span><br><span class="line">          Args += <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot;&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (!NumMatched)</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">UE_LOG</span>(LogCook, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;Shader format %s for platform %s had this file %s, but no .scl.csv files.&quot;</span>), *ShaderFormat.<span class="built_in">ToString</span>(), *TargetPlatformName, *StablePCPath);</span><br><span class="line">          <span class="keyword">for</span> (int32 Index = <span class="number">0</span>; Index &lt; SCLCSVPaths-&gt;<span class="built_in">Num</span>(); Index++)</span><br><span class="line">          &#123;</span><br><span class="line">            <span class="built_in">UE_LOG</span>(LogCook, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;    .scl.csv file: %s&quot;</span>), *((*SCLCSVPaths)[Index]));</span><br><span class="line">          &#125;              </span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Args += <span class="built_in">TEXT</span>(<span class="string">&quot; &quot;</span>);</span><br><span class="line">        Args += <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot;&quot;</span>);</span><br><span class="line">        Args += PCPath;</span><br><span class="line">        Args += <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot;&quot;</span>);</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogCook, Display, <span class="built_in">TEXT</span>(<span class="string">&quot;  With Args: %s&quot;</span>), *Args);</span><br><span class="line"></span><br><span class="line">        int32 Result = UShaderPipelineCacheToolsCommandlet::<span class="built_in">StaticMain</span>(Args);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (Result)</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">LogCookerMessage</span>(FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;UShaderPipelineCacheToolsCommandlet failed %d&quot;</span>), Result), EMessageSeverity::Error);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">UE_LOG</span>(LogCook, Display, <span class="built_in">TEXT</span>(<span class="string">&quot;---- Done running UShaderPipelineCacheToolsCommandlet for platform %s&quot;</span>), *TargetPlatformName);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>实际使用<code>stablepc.csv</code>的地方就是用它来执行<code>ShaderPipelineCacheTools</code>这个commandlet生成upipelinecache文件并打至包内。</p>
+<p>ShaderPipelineCacheToolsCommandlet的执行命令为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Engine\Binaries\Win64\UE4Editor-Cmd.exe</span><br><span class="line">D:\PSOExample\PSOExample.uproject</span><br><span class="line">-run=ShaderPipelineCacheTools build</span><br><span class="line">&quot;D:\PSOExample/Build/Android/PipelineCaches/*PSOExample_GLSL_ES3_1_ANDROID.stablepc.csv&quot;</span><br><span class="line">&quot;D:\PSOExample/Saved/Cooked/Android_ASTC/PSOExample/Metadata/PipelineCaches/ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv&quot;</span><br><span class="line">&quot;D:\PSOExample/Saved/Cooked/Android_ASTC/PSOExample/Metadata/PipelineCaches/ShaderStableInfo-PSOExample-GLSL_ES3_1_ANDROID.scl.csv&quot;</span><br><span class="line">&quot;D:\PSOExample/Saved/Cooked/Android_ASTC/PSOExample/Content/PipelineCaches/Android/PSOExample_GLSL_ES3_1_ANDROID.stable.upipelinecache&quot;</span><br></pre></td></tr></table></figure>
+
+<p>生成<code>*.stable.upipelinecache</code>文件的包内路径为<code>Content\PipelineCaches\Android</code>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">D:\PSOExample\Saved\Cooked\Android_ASTC\PSOExample\Content\PipelineCaches&gt;tree /a /f</span><br><span class="line">卷 Windows 的文件夹 PATH 列表</span><br><span class="line">卷序列号为 0C49-9EA3</span><br><span class="line">C:.</span><br><span class="line">\---Android</span><br><span class="line">        PSOExample_GLSL_ES3_1_ANDROID.stable.upipelinecache</span><br></pre></td></tr></table></figure>
+<p>因为它是位于Content下并会打包进pak的文件，我们也可以对其进行热更。</p>
+<p>当安装了包含<code>upipelinecache</code>的包，在运行时就会有以下log：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">LogShaderLibrary: Display: Using ../../../PSOExample/Content/ShaderArchive-PSOExample-GLSL_ES3_1_ANDROID.ushaderbytecode for material shader code. Total 3053 unique shaders.</span><br><span class="line">LogShaderLibrary: Display: Cooked Context: Using Shared Shader Library PSOExample</span><br><span class="line">LogRHI: Display: Opened pipeline cache after state change and enqueued 0 of 0 tasks for precompile.</span><br><span class="line">LogRHI: Base name for record PSOs is ../../../PSOExample/Saved/CollectedPSOs/++UE4+Release-4.25-CL-13942748-PSOExample_GLSL_ES3_1_ANDROID_00087B4B08D905BBC5A827F40CA03A0C.rec.upipelinecache</span><br><span class="line">LogRHI: FPipelineCacheFile Header Game Version: 13942748</span><br><span class="line">LogRHI: FPipelineCacheFile Header Engine Data Version: 17</span><br><span class="line">LogRHI: FPipelineCacheFile Header TOC Offset: 38155</span><br><span class="line">LogRHI: FPipelineCacheFile File Size: 51011 Bytes</span><br><span class="line">LogRHI: Opened FPipelineCacheFile: ../../../PSOExample/Content/PipelineCaches/Android/PSOExample_GLSL_ES3_1_ANDROID.stable.upipelinecache (GUID: 00000000000000000000000000000000) with 102 entries.</span><br><span class="line">LogRHI: Scanning Binary program cache, using Shader Pipeline Cache version 6988202F47BA858F3F0DE483D7DB0606</span><br><span class="line">LogRHI: AndroidEGL:SwapBuffers eglGetCompositorTimingANDROID EGL_COMPOSITE_DEADLINE_ANDROID=2718926192606265, EGL_COMPOSITE_INTERVAL_ANDROID=16559027, EGL_COMPOSITE_TO_PRESENT_LATENCY_ANDROID=14559027</span><br></pre></td></tr></table></figure>
+<h3 id="PSO-Cache的加载与热更"><a href="#PSO-Cache的加载与热更" class="headerlink" title="PSO Cache的加载与热更"></a>PSO Cache的加载与热更</h3><p>与<code>ShaderCode</code>类似，引擎在启动时也是会自动加载PSO Cache的，在<code>FEngineLoop</code>中通过调用<code>FPipelineCacheFile::OpenPipelineFileCache</code>读取<code>*.stable.upipelinecache</code>的。</p>
+<p>在<code>PreInitPreStartupScreen</code>中加载PSO的代码：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime/Launch/Private/LaunchEngineLoop.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">int32 <span class="title">FEngineLoop::PreInitPreStartupScreen</span><span class="params">(<span class="type">const</span> TCHAR* CmdLine)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="type">bool</span> bUseCodeLibrary = FPlatformProperties::<span class="built_in">RequiresCookedData</span>() || GAllowCookedDataInEditorBuilds;</span><br><span class="line">    <span class="keyword">if</span> (bUseCodeLibrary)</span><br><span class="line">    &#123;</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="built_in">SCOPED_BOOT_TIMING</span>(<span class="string">&quot;FShaderCodeLibrary::InitForRuntime&quot;</span>);</span><br><span class="line">        <span class="comment">// Will open material shader code storage if project was packaged with it</span></span><br><span class="line">        <span class="comment">// This only opens the Global shader library, which is always in the content dir.</span></span><br><span class="line">        FShaderCodeLibrary::<span class="built_in">InitForRuntime</span>(GMaxRHIShaderPlatform);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">#<span class="keyword">if</span> !UE_EDITOR</span></span><br><span class="line">      <span class="comment">// Cooked data only - but also requires the code library - game only</span></span><br><span class="line">      <span class="keyword">if</span> (FPlatformProperties::<span class="built_in">RequiresCookedData</span>())</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="built_in">SCOPED_BOOT_TIMING</span>(<span class="string">&quot;FShaderPipelineCache::Initialize&quot;</span>);</span><br><span class="line">        <span class="comment">// Initialize the pipeline cache system. Opening is deferred until the manual call to</span></span><br><span class="line">        <span class="comment">// OpenPipelineFileCache below, after content pak&#x27;s ShaderCodeLibraries are loaded.</span></span><br><span class="line">        FShaderPipelineCache::<span class="built_in">Initialize</span>(GMaxRHIShaderPlatform);</span><br><span class="line">      &#125;</span><br><span class="line">  <span class="meta">#<span class="keyword">endif</span> <span class="comment">//!UE_EDITOR</span></span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  <span class="comment">//Handle opening shader library after our EarlyLoadScreen</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">LLM_SCOPE</span>(ELLMTag::Shaders);</span><br><span class="line">    <span class="built_in">SCOPED_BOOT_TIMING</span>(<span class="string">&quot;FShaderCodeLibrary::OpenLibrary&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Open the game library which contains the material shaders.</span></span><br><span class="line">    FShaderCodeLibrary::<span class="built_in">OpenLibrary</span>(FApp::<span class="built_in">GetProjectName</span>(), FPaths::<span class="built_in">ProjectContentDir</span>());</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> FString&amp; RootDir : FPlatformMisc::<span class="built_in">GetAdditionalRootDirectories</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      FShaderCodeLibrary::<span class="built_in">OpenLibrary</span>(FApp::<span class="built_in">GetProjectName</span>(), FPaths::<span class="built_in">Combine</span>(RootDir, FApp::<span class="built_in">GetProjectName</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Content&quot;</span>)));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Now our shader code main library is opened, kick off the precompile, if already initialized</span></span><br><span class="line">    FShaderPipelineCache::<span class="built_in">OpenPipelineFileCache</span>(GMaxRHIShaderPlatform);</span><br><span class="line">  &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>FShaderPipelineCache::OpenPipelineFileCache</code>有两个重载版本：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RenderCore\Private\ShaderPipelineCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FShaderPipelineCache::OpenPipelineFileCache</span><span class="params">(EShaderPlatform Platform)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">bool</span> bFileOpen = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">if</span> (GConfig)</span><br><span class="line">  &#123;</span><br><span class="line">    FString LastOpenedName;</span><br><span class="line">    <span class="keyword">if</span> ((GConfig-&gt;<span class="built_in">GetString</span>(FShaderPipelineCacheConstants::SectionHeading, FShaderPipelineCacheConstants::LastOpenedKey, LastOpenedName, *GGameUserSettingsIni) || GConfig-&gt;<span class="built_in">GetString</span>(FShaderPipelineCacheConstants::SectionHeading, FShaderPipelineCacheConstants::LastOpenedKey, LastOpenedName, *GGameIni)) &amp;&amp; LastOpenedName.<span class="built_in">Len</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      bFileOpen = <span class="built_in">OpenPipelineFileCache</span>(LastOpenedName, Platform);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!bFileOpen)</span><br><span class="line">  &#123;</span><br><span class="line">    bFileOpen = <span class="built_in">OpenPipelineFileCache</span>(FApp::<span class="built_in">GetProjectName</span>(), Platform);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bFileOpen;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FShaderPipelineCache::OpenPipelineFileCache</span><span class="params">(FString <span class="type">const</span>&amp; Name, EShaderPlatform Platform)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (ShaderPipelineCache)</span><br><span class="line">    <span class="keyword">return</span> ShaderPipelineCache-&gt;<span class="built_in">Open</span>(Name, Platform);</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>引擎启动的时候默认读取的就是<code>OpenPipelineFileCache(FApp::GetProjectName(), Platform)</code>，也就是<code>PSOExample_GLSL_ES3_1_ANDROID.stable.upipelinecache</code>，Platform参数可以通过传递全局对象<code>GMaxRHIShaderPlatform</code>来获取当前运行的平台。</p>
+<p>UE也提供了一个<code>console</code>命令可以指定加载<code>stable.upipelinecache</code>：<code>r.ShaderPipelineCache.Open</code>，还有几个其他控制PSO的console命令：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime/RenderCore/Private/ShaderPipelineCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> FAutoConsoleCommand <span class="title">LoadPipelineCacheCmd</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;r.ShaderPipelineCache.Open&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;Takes the desired filename to open and then loads the pipeline file cache.&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  FConsoleCommandWithArgsDelegate::CreateStatic(ConsoleCommandLoadPipelineFileCache)</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> FAutoConsoleCommand <span class="title">SavePipelineCacheCmd</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;r.ShaderPipelineCache.Save&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;Save the current pipeline file cache.&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  FConsoleCommandDelegate::CreateStatic(ConsoleCommandSavePipelineFileCache)</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> FAutoConsoleCommand <span class="title">ClosePipelineCacheCmd</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;r.ShaderPipelineCache.Close&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;Close the current pipeline file cache.&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  FConsoleCommandDelegate::CreateStatic(ConsoleCommandClosePipelineFileCache)</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> FAutoConsoleCommand <span class="title">SwitchModePipelineCacheCmd</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;r.ShaderPipelineCache.SetBatchMode&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;Sets the compilation batch mode, which should be one of:\n\tPause: Suspend precompilation.\n\tBackground: Low priority precompilation.\n\tFast: High priority precompilation.&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  FConsoleCommandWithArgsDelegate::CreateStatic(ConsoleCommandSwitchModePipelineCacheCmd)</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>这样只需要在热更包中包含最新的<code>*.stable.upipelinecache</code>，之后调用<code>OpenPipelineFileCache</code>加载最新的PSO Cache即可，可以与ShaderCode的热更流程保持一致。</p>
+<p>生成新的PSO Cache需要关键的两种数据：</p>
+<ol>
+<li>运行时捕获的PSO数据（upipelinecache）</li>
+<li>ShaderStableInfo（位于Metadata目录下）</li>
+</ol>
+<p>因为ShaderCode是可以热更的，而<code>ShaderStableInfo</code>可以通过Cook最新的工程获得，所以PSO Cache也是可以通过热更Shader并不断地捕获最新的PSO数据进行迭代更新的。<br>准备有时间给<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPacther</a>中增加PSO Cache的热更功能，这样也可以把PSO Cache的部署和打包集成至自动化地热更流程，先挖个坑。</p>
+<p>因为当开启了<code>r.ShaderPipelineCache.Enabled=1</code>，在引擎启动时就会自动加载项目的PSO Cache，而引擎中做了限制，只能够加载一次，后续调用<code>OpenPipelineFileCache</code>的都不会被加载：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RHI\Private\PipelineFileCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FPipelineFileCache::OpenPipelineFileCache</span><span class="params">(FString <span class="type">const</span>&amp; Name, EShaderPlatform Platform, FGuid&amp; OutGameFileGuid)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">bool</span> bOk = <span class="literal">false</span>;</span><br><span class="line">  OutGameFileGuid = <span class="built_in">FGuid</span>();</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">if</span>(<span class="built_in">IsPipelineFileCacheEnabled</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="function">FRWScopeLock <span class="title">Lock</span><span class="params">(FileCacheLock, SLT_Write)</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(FileCache == <span class="literal">nullptr</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      FileCache = <span class="keyword">new</span> <span class="built_in">FPipelineCacheFile</span>();</span><br><span class="line">      </span><br><span class="line">      bOk = FileCache-&gt;<span class="built_in">OpenPipelineFileCache</span>(Name, Platform, OutGameFileGuid);</span><br><span class="line">      </span><br><span class="line">      <span class="comment">// File Cache now exists - these caches should be empty for this file otherwise will have false positives from any previous file caching - if not something has been caching when it should not be</span></span><br><span class="line">      <span class="built_in">check</span>(NewPSOs.<span class="built_in">Num</span>() == <span class="number">0</span>);</span><br><span class="line">      <span class="built_in">check</span>(NewPSOHashes.<span class="built_in">Num</span>() == <span class="number">0</span>);</span><br><span class="line">      <span class="built_in">check</span>(RunTimeToPSOUsage.<span class="built_in">Num</span>() == <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> bOk;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当引擎默认加载执行之后<code>FileCache</code>就不为<code>nullptr</code>了，后续所有的加载调用都会直接返回<code>false</code>，解决办法就是，让引擎启动时不自动加载PSO Cache，等到运行时热更之后由我们手动加载，翻了下代码，可以从这个<code>IsPipelineFileCacheEnabled</code>检测中做：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RHI\Private\PipelineFileCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FPipelineFileCache::IsPipelineFileCacheEnabled</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">bool</span> bOnce = <span class="literal">false</span>;</span><br><span class="line">  <span class="type">static</span> <span class="type">bool</span> bCmdLineForce = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">if</span> (!bOnce)</span><br><span class="line">  &#123;</span><br><span class="line">    bOnce = <span class="literal">true</span>;</span><br><span class="line">    bCmdLineForce = FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;psocache&quot;</span>));</span><br><span class="line">    <span class="built_in">UE_CLOG</span>(bCmdLineForce, LogRHI, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;****************************** Forcing PSO cache from command line&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> FileCacheEnabled &amp;&amp; (bCmdLineForce || CVarPSOFileCacheEnabled.<span class="built_in">GetValueOnAnyThread</span>() == <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它的返回值依赖了两个值：<code>FileCacheEnabled</code>以及<code>CVarPSOFileCacheEnabled</code>。</p>
+<p><code>FileCacheEnabled</code>在<code>FPipelineFileCache::Initialize</code>中被赋值，IOS之外的平台总是<code>true</code>，IOS则依赖于<code>FPipelineFileCache::ShouldEnableFileCache</code>的结果。</p>
+<p><code>CVarPSOFileCacheEnabled</code>是一个控制台变量，用来控制<code>r.ShaderPipelineCache.Enabled</code>的值：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RHI\Private\PipelineFileCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> TAutoConsoleVariable&lt;int32&gt; <span class="title">CVarPSOFileCacheEnabled</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">                               TEXT(<span class="string">&quot;r.ShaderPipelineCache.Enabled&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">                               PIPELINE_CACHE_DEFAULT_ENABLED,</span></span></span><br><span class="line"><span class="params"><span class="function">                               TEXT(<span class="string">&quot;1 Enables the PipelineFileCache, 0 disables it.&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">                               ECVF_Default | ECVF_RenderThreadSafe</span></span></span><br><span class="line"><span class="params"><span class="function">                               )</span></span>;</span><br></pre></td></tr></table></figure>
+<p>我们需要做的有三步：</p>
+<ol>
+<li>引擎默认启动时<code>CVarPSOFileCacheEnabled</code>的值为false</li>
+<li>运行时手动修改<code>CVarPSOFileCacheEnabled</code>值，开启PSO Cache</li>
+<li>加载PSO Cache</li>
+</ol>
+<p>具体实现流程：</p>
+<ol>
+<li>在<code>DefaultEngine.ini</code>中将<code>r.ShaderPipelineCache.Enabled=0</code>并打包</li>
+</ol>
+<figure class="highlight ini"><figcaption><span>DefaultEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleVariables]</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.Enabled</span>=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>然后写两个函数在运行时开启和加载PSO：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ShaderPipelineCache.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;RHIShaderFormatDefinitions.inl&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;HAL/IConsoleManager.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibShaderPipelineCacheHelper::EnableShaderPipelineCache</span><span class="params">(<span class="type">bool</span> bEnable)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">UE_LOG</span>(LogHotPatcher,Display,<span class="built_in">TEXT</span>(<span class="string">&quot;EnableShaderPipelineCache %s&quot;</span>),bEnable?<span class="built_in">TEXT</span>(<span class="string">&quot;true&quot;</span>):<span class="built_in">TEXT</span>(<span class="string">&quot;false&quot;</span>));</span><br><span class="line">  <span class="keyword">auto</span> Var =  IConsoleManager::<span class="built_in">Get</span>().<span class="built_in">FindConsoleVariable</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;r.ShaderPipelineCache.Enabled&quot;</span>));</span><br><span class="line">  <span class="keyword">if</span>(Var)</span><br><span class="line">  &#123;</span><br><span class="line">    Var-&gt;<span class="built_in">Set</span>( bEnable ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> !!Var;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibShaderPipelineCacheHelper::LoadShaderPipelineCache</span><span class="params">(<span class="type">const</span> FString&amp; Name)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">UE_LOG</span>(LogHotPatcher,Display,<span class="built_in">TEXT</span>(<span class="string">&quot;Load Shader pipeline cache %s for platform %d&quot;</span>),*Name,*<span class="built_in">ShaderPlatformToShaderFormatName</span>(GMaxRHIShaderPlatform).<span class="built_in">ToString</span>());</span><br><span class="line">  <span class="keyword">return</span> FShaderPipelineCache::<span class="built_in">OpenPipelineFileCache</span>(Name,GMaxRHIShaderPlatform);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样即可实现PSO Cache的延迟加载，手动加载时机在热更之后加载即可。</p>
+<h3 id="延迟采集和存储"><a href="#延迟采集和存储" class="headerlink" title="延迟采集和存储"></a>延迟采集和存储</h3><p>因为采集和存储PSO Cache具有额外的性能消耗，所以可以把采集和存储PSO数据关闭，根据需求在运行时再开启。<br>在<code>DefaultEngine.ini</code>中关闭<code>LogPSO</code>和<code>SaveBoundPSOLog</code>，打基础包时就不会自动采集和自动存储了：</p>
+<figure class="highlight ini"><figcaption><span>DefaultEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleVariables]</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.LogPSO</span>=<span class="number">0</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.SaveBoundPSOLog</span>=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>然后在运行时开启：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UENUM</span>(BlueprintType)</span><br><span class="line"><span class="keyword">enum class</span> <span class="title class_">EPSOSaveMode</span> : uint8</span><br><span class="line">&#123;</span><br><span class="line">	Incremental = <span class="number">0</span>, <span class="comment">// Fast(er) approach which saves new entries incrementally at the end of the file, replacing the table-of-contents, but leaves everything else alone.</span></span><br><span class="line">	BoundPSOsOnly = <span class="number">1</span>, <span class="comment">// Slower approach which consolidates and saves all PSOs used in this run of the program, removing any entry that wasn&#x27;t seen, and sorted by the desired sort-mode.</span></span><br><span class="line">	SortedBoundPSOs = <span class="number">2</span> <span class="comment">// Slow save consolidates all PSOs used on this device that were never part of a cache file delivered in game-content, sorts entries into the desired order and will thus read-back from disk.</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibShaderPipelineCacheHelper::SavePipelineFileCache</span><span class="params">(EPSOSaveMode Mode)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> FShaderPipelineCache::<span class="built_in">SavePipelineFileCache</span>((FPipelineFileCache::SaveMode)Mode);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibShaderPipelineCacheHelper::EnableLogPSO</span><span class="params">(<span class="type">bool</span> bEnable)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">UE_LOG</span>(LogHotPatcher,Display,<span class="built_in">TEXT</span>(<span class="string">&quot;EnableLogPSO %s&quot;</span>),bEnable?<span class="built_in">TEXT</span>(<span class="string">&quot;true&quot;</span>):<span class="built_in">TEXT</span>(<span class="string">&quot;false&quot;</span>));</span><br><span class="line">	<span class="keyword">auto</span> Var =  IConsoleManager::<span class="built_in">Get</span>().<span class="built_in">FindConsoleVariable</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;r.ShaderPipelineCache.LogPSO&quot;</span>));</span><br><span class="line">	<span class="keyword">if</span>(Var)</span><br><span class="line">	&#123;</span><br><span class="line">		Var-&gt;<span class="built_in">Set</span>( bEnable ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> !!Var;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibShaderPipelineCacheHelper::EnableSaveBoundPSOLog</span><span class="params">(<span class="type">bool</span> bEnable)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">UE_LOG</span>(LogHotPatcher,Display,<span class="built_in">TEXT</span>(<span class="string">&quot;EnableSaveBoundPSOLog %s&quot;</span>),bEnable?<span class="built_in">TEXT</span>(<span class="string">&quot;true&quot;</span>):<span class="built_in">TEXT</span>(<span class="string">&quot;false&quot;</span>));</span><br><span class="line">	<span class="keyword">auto</span> Var =  IConsoleManager::<span class="built_in">Get</span>().<span class="built_in">FindConsoleVariable</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;r.ShaderPipelineCache.SaveBoundPSOLog&quot;</span>));</span><br><span class="line">	<span class="keyword">if</span>(Var)</span><br><span class="line">	&#123;</span><br><span class="line">		Var-&gt;<span class="built_in">Set</span>( bEnable ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> !!Var;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>开启<code>SaveBoundPSOLog</code>后会自动存储采集的PSO数据，可以不开启自动存储，在运行时通过调用<code>FShaderPipelineCache::SavePipelineFileCache</code>手动存储。</p>
+<h3 id="错误处理"><a href="#错误处理" class="headerlink" title="错误处理"></a>错误处理</h3><h4 id="Cook没有生成-scl-csv"><a href="#Cook没有生成-scl-csv" class="headerlink" title="Cook没有生成.scl.csv"></a>Cook没有生成.scl.csv</h4><p>注意，一定要为项目开启<code>ShaderStableKeys</code>，不然不会生成.scl.csv文件。</p>
+<h4 id="运行时没有生成upipelinecache文件"><a href="#运行时没有生成upipelinecache文件" class="headerlink" title="运行时没有生成upipelinecache文件"></a>运行时没有生成upipelinecache文件</h4><p>请严格按照<a href="https://imzlp.com/posts/24336/#%E8%BF%90%E8%A1%8C%E6%97%B6%E6%8D%95%E8%8E%B7PSO%E6%95%B0%E6%8D%AE">运行时捕获PSO数据</a>中的步骤执行。</p>
+<ol>
+<li>确认是否开启<code>r.ShaderPipelineCache.Enabled</code>（DefaultEngine.ini或DeviceProfile）。</li>
+<li>在ue4commandline.txt中添加<code>-logPSO</code>参数。</li>
+</ol>
+<h4 id="Bad-PSO"><a href="#Bad-PSO" class="headerlink" title="Bad PSO"></a>Bad PSO</h4><p>如果使用公版引擎，上述流程就是完整的流程，但是有时项目需要修改引擎支持一些渲染特性，如添加Multi-subpasshint支持：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RHI\Public\PipelineFileCache.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">RHI_API</span> FPipelineCacheFileFormatPSO</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">RHI_API</span> GraphicsDescriptor</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// uint8 SubpassHint; to SubpassHint[8];</span></span><br><span class="line">    uint8 SubpassHint[<span class="number">8</span>];  </span><br><span class="line">    uint8 SubpassIndex;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这处变动需要同时修改<code>GraphicsDescriptor::StateToString()</code>与<code>GraphicsDescriptor::StateFromString()</code>两个函数，加入multi-subpasshint的序列化支持。</p>
+<p>但是，修改之后使用<code>-run=ShaderPipelineCacheTools</code>生成<code>*.stablepc.csv</code>时有以下报错的Log：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">LogShaderPipelineCacheTools: Expanding matched    1 files: D:\PipelineCaches\*.rec.upipelinecache</span><br><span class="line">LogShaderPipelineCacheTools:                              : D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache</span><br><span class="line">LogShaderPipelineCacheTools: Expanding matched    2 files: D:\PipelineCaches\*.scl.csv</span><br><span class="line">LogShaderPipelineCacheTools:                              : D:\PipelineCaches\ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv</span><br><span class="line">LogShaderPipelineCacheTools:                              : D:\PipelineCaches\ShaderStableInfo-PSOCaching-GLSL_ES3_1_ANDROID.scl.csv</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loading D:\PipelineCaches\ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv...</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loading D:\PipelineCaches\ShaderStableInfo-PSOCaching-GLSL_ES3_1_ANDROID.scl.csv...</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loaded 926 shader info lines from D:\PipelineCaches\ShaderStableInfo-Global-GLSL_ES3_1_ANDROID.scl.csv.</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loaded 9266 shader info lines from D:\PipelineCaches\ShaderStableInfo-PSOCaching-GLSL_ES3_1_ANDROID.scl.csv.</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loaded 10192 unique shader info lines total.</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loading D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache....</span><br><span class="line">LogShaderPipelineCacheTools: Display: Loaded 115 PSOs</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br><span class="line">LogShaderPipelineCacheTools: Warning: Bad PSO found discarding [Invertibility=FAIL Verify=PASS in: D:\PipelineCaches\++UE4+Release-4.25-CL-0-PSOCaching_GLSL_ES3_1_ANDROID_0008BF4D08D9069169A7B6820601243D.rec.upipelinecache]</span><br></pre></td></tr></table></figure>
+
+<p>这是因为PSO数据从String的可逆性验证失败了：</p>
+<figure class="highlight cpp"><figcaption><span>Editor\UnrealEd\Private\Commandlets\ShaderPipelineCacheToolsCommandlet.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">CheckPSOStringInveribility</span><span class="params">(<span class="type">const</span> FPipelineCacheFileFormatPSO&amp; Item)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function">FPipelineCacheFileFormatPSO <span class="title">TempItem</span><span class="params">(Item)</span></span>;</span><br><span class="line">  TempItem.Hash = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  FString StringRep;</span><br><span class="line">  <span class="keyword">if</span> (Item.Type == FPipelineCacheFileFormatPSO::DescriptorType::Compute)</span><br><span class="line">  &#123;</span><br><span class="line">    StringRep = TempItem.ComputeDesc.<span class="built_in">ToString</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    StringRep = TempItem.GraphicsDesc.<span class="built_in">ToString</span>();</span><br><span class="line">  &#125;</span><br><span class="line">  FPipelineCacheFileFormatPSO DupItem;</span><br><span class="line">  FMemory::<span class="built_in">Memzero</span>(DupItem.GraphicsDesc);</span><br><span class="line">  DupItem.Type = Item.Type;</span><br><span class="line">  DupItem.UsageMask = Item.UsageMask;</span><br><span class="line">  <span class="keyword">if</span> (Item.Type == FPipelineCacheFileFormatPSO::DescriptorType::Compute)</span><br><span class="line">  &#123;</span><br><span class="line">    DupItem.ComputeDesc.<span class="built_in">FromString</span>(StringRep);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    DupItem.GraphicsDesc.<span class="built_in">FromString</span>(StringRep);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">UE_LOG</span>(LogShaderPipelineCacheTools, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;CheckPSOStringInveribility: %s&quot;</span>), *StringRep);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (DupItem == TempItem) &amp;&amp; (<span class="built_in">GetTypeHash</span>(DupItem) == <span class="built_in">GetTypeHash</span>(TempItem));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>关键部分在于<code>DupItem.GraphicsDesc.FromString(StringRep);</code>这行代码中<code>GraphicsDesc</code>的数据没有恢复成功。</p>
+<p>经过调试发现，引擎中具有记录PipelineCacheGraphicsDesc的字符串中可被解析元素的数量，也就是生成的<code>*.stablepc.csv</code>中第二列中数据的数量，公版引擎中默认是63个，使用<code>FPipelineCacheGraphicsDescPartsNum</code>记录：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RHI\Private\PipelineFileCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> int32  FPipelineCacheGraphicsDescPartsNum = <span class="number">63</span>; <span class="comment">// parser will expect this number of parts in a description string</span></span><br></pre></td></tr></table></figure>
+<p>生成的<code>*.stablepc.csv</code>中各项状态和数据如下：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/24336/20210424_114130.webp"></p>
+<p>刚好是63个。需要注意的是，在<code>GraphicsDescriptor::StateFromString</code>对数据的数量做了检测，FromString的数据数量要与<code>FPipelineCacheGraphicsDescPartsNum</code>的值一致：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RHI\Private\PipelineFileCache.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> FPipelineCacheFileFormatPSO::GraphicsDescriptor::<span class="built_in">StateFromString</span>(<span class="type">const</span> FStringView&amp; Src)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">constexpr</span> int32 PartCount = FPipelineCacheGraphicsDescPartsNum;</span><br><span class="line"></span><br><span class="line">  TArray&lt;FStringView, TInlineAllocator&lt;PartCount&gt;&gt; Parts;</span><br><span class="line">  UE::String::<span class="built_in">ParseTokens</span>(Src.<span class="built_in">TrimStartAndEnd</span>(), <span class="built_in">TEXT</span>(<span class="string">&#x27;,&#x27;</span>), [&amp;Parts](FStringView Part) &#123; Parts.<span class="built_in">Add</span>(Part); &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// check if we have expected number of parts</span></span><br><span class="line">  <span class="keyword">if</span> (Parts.<span class="built_in">Num</span>() != PartCount)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// instead of crashing let caller handle this case</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/24336/20210424115803.webp"></p>
+<p>因为我们增加了multi-subpasshint支持，把<code>SubpassHint</code>从<code>uint8</code>改成了<code>uint8[8]</code>，增加了7个数据，所以与之对应的<code>FPipelineCacheGraphicsDescPartsNum</code>也要加7，改为70，上面<code>StateFromString</code>验证才能够通过。</p>
+<p>修改之后再通过<code>-run=ShaderPipelineCacheTools</code>生成<code>*.stablepc.csv</code>就没有<code>Bas PSO</code>的错误了。</p>
+<h3 id="使用与配置"><a href="#使用与配置" class="headerlink" title="使用与配置"></a>使用与配置</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/SharingAndReleasing/PSOCaching/CompilingUsingPSOCachingData/index.html">Compiling &amp; Using PSO Cache Data</a></li>
+</ul>
+<p>可以通过<code>FShaderPipelineCache</code>的函数在运行时控制构建PSO数据：</p>
+<figure class="highlight cpp"><figcaption><span>Runtime\RenderCore\Public\ShaderPipelineCache.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Pauses precompilation. */</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">PauseBatching</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">/** Resumes precompilation batching. */</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">ResumeBatching</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">/** Returns the number of pipelines waiting for precompilation. */</span></span><br><span class="line"><span class="function"><span class="type">static</span> uint32 <span class="title">NumPrecompilesRemaining</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">/** Returns the number of pipelines actively being precompiled this frame. */</span></span><br><span class="line"><span class="function"><span class="type">static</span> uint32 <span class="title">NumPrecompilesActive</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">/** Sets the precompilation batching mode. */</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">SetBatchMode</span><span class="params">(BatchMode Mode)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>官方建议的做法是在加载屏幕时等待PSO构建完毕，再把LoadingScreen隐藏：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(FShaderPipelineCache::<span class="built_in">NumPrecompilesRemaining</span>() &gt; <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (OutDebugReason != <span class="literal">nullptr</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        *OutDebugReason = <span class="built_in">FString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;PC: PSO cache still compiling&quot;</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>也可以在打开UI、过场动画、暂停菜单时构建，通过以下三个函数组合处理：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 暂停PSO缓存编译</span></span><br><span class="line">FShaderPipelineCache::<span class="built_in">PauseBatching</span>();</span><br><span class="line"><span class="comment">// 设置PSO的处理模式</span></span><br><span class="line"><span class="comment">// enum class BatchMode</span></span><br><span class="line"><span class="comment">// &#123; </span></span><br><span class="line"><span class="comment">//   Background, // The maximum batch size is defined by r.ShaderPipelineCache.BackgroundBatchSize</span></span><br><span class="line"><span class="comment">//   Fast, // The maximum batch size is defined by r.ShaderPipelineCache.BatchSize</span></span><br><span class="line"><span class="comment">//   Precompile // The maximum batch size is defined by r.ShaderPipelineCache.PrecompileBatchSize</span></span><br><span class="line"><span class="comment">// &#125;;</span></span><br><span class="line">FShaderPipelineCache::<span class="built_in">SetBatchMode</span>(FShaderPipelineCache::BatchMode::Background);</span><br><span class="line"><span class="comment">// 恢复编译PSO</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">ResumeBatching</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>引擎中有多个CVars可用于控制PSO的捕获、加载等等配置，详细介绍详见:<a target="_blank" rel="noopener" href="https://consolehelp.imzlp.com/">UE Console Variables and Command</a>，在其中搜索<code>r.shaderpipelinecache</code>即可看到所有支持的CVars。</p>
+</blockquote>
+<p>也可以使用配置在游戏启动时自动构建，修改<code>DefaultEngine.ini</code>中<code>[ConsoleVariables]</code>的配置，它们否时定义在<code>Runtime\RenderCore\Private\ShaderPipelineCache.cpp</code>中的<code>ConsoleVariable</code>，可以根据自己的需要在运行时或配置文件中进行修改：</p>
+<div class="tabs" id="menu-items"><ul class="nav-tabs"><li class="tab active"><a href="#menu-items-1"><code>PSO引擎默认配置</code></a></li><li class="tab"><a href="#menu-items-2"><code>我修改的配置</code></a></li></ul><div class="tab-content"><div class="tab-pane active" id="menu-items-1"><figure class="highlight ini"><figcaption><span>DefaultEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleVariables]</span></span><br><span class="line"><span class="comment">;Sets the startup mode for the PSO cache, determining what the cache does after initialisation:</span></span><br><span class="line"><span class="comment">;0: Precompilation is paused and nothing will compile until a call to ResumeBatching().</span></span><br><span class="line"><span class="comment">;1: Precompilation is enabled in the &#x27;Fast&#x27; mode.</span></span><br><span class="line"><span class="comment">;2: Precompilation is enabled in the &#x27;Background&#x27; mode.</span></span><br><span class="line"><span class="comment">;Default is 1.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.StartupMode</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to compile in a single batch operation when compiling takes priority. Defaults to a maximum of 50 per frame, due to async. file IO it is less in practice.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BackgroundBatchSize</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to compile in a single batch operation when pre-optimizing the cache. Defaults to a maximum of 50 per frame, due to async. file IO it is less in practice.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PrecompileBatchSize</span>=<span class="number">50</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The target time (in ms) to spend precompiling each frame when in the background or 0.0 to disable. When precompiling is faster the batch size will grow and when slower will shrink to attempt to occupy the full amount. Defaults to 0.0 (off).</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BackgroundBatchTime</span>=<span class="number">0.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The target time (in ms) to spend precompiling each frame when compiling takes priority or 0.0 to disable. When precompiling is faster the batch size will grow and when slower will shrink to attempt to occupy the full amount. Defaults to 16.0 (max. ms per-frame of precompilation).</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BatchTime</span>=<span class="number">16.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The target time (in ms) to spend precompiling each frame when cpre-optimizing or 0.0 to disable. When precompiling is faster the batch size will grow and when slower will shrink to attempt to occupy the full amount. Defaults to 10.0 (off).</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PrecompileBatchTime</span>=<span class="number">0.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to log before automatically saving. 0 will disable automatic saving. Shipping defaults to 0, otherwise default is 100.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.SaveAfterPSOsLogged</span>=<span class="number">100</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the time where any logged PSO&#x27;s will be saved if the number is &lt; r.ShaderPipelineCache.SaveAfterPSOsLogged. Disabled when r.ShaderPipelineCache.SaveAfterPSOsLogged is 0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the time where any logged PSO&#x27;s will be saved if the number is &lt; r.ShaderPipelineCache.SaveAfterPSOsLogged. Disabled when r.ShaderPipelineCache.SaveAfterPSOsLogged is 0</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.AutoSaveTime</span>=<span class="number">30</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Mask used to precompile the cache. Defaults to all PSOs (-1)</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PreCompileMask</span>=-<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the time where any logged PSO&#x27;s will be saved when -logpso is on the command line.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.AutoSaveTimeBoundPSO</span>=<span class="number">10</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;If &gt; 0 then a log of all bound PSOs for this run of the program will be saved to a writable user cache file. Defaults to 0 but is forced on with -logpso.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.SaveBoundPSOLog</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set non zero to use GameFileMask during PSO precompile - recording should always save out the usage masks to make that data availble when needed.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.GameFileMaskEnabled</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set non zero to PreOptimize PSOs - this allows some PSOs to be compiled in the foreground before going in to game</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PreOptimizeEnabled</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The minimum bind count to allow a PSO to be precompiled.  Changes to this value will not affect PSOs that have already been removed from consideration.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.MinBindCount</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The maximum time to allow a PSO to be precompiled.  if greather than 0, the amount of wall time we will allow pre-compile of PSOs and then switch to background processing.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.MaxPrecompileTime</span>=<span class="number">0.0</span></span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="menu-items-2"><figure class="highlight ini"><figcaption><span>DefaultEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleVariables]</span></span><br><span class="line"><span class="comment">;Sets the startup mode for the PSO cache, determining what the cache does after initialisation:</span></span><br><span class="line"><span class="comment">;0: Precompilation is paused and nothing will compile until a call to ResumeBatching().</span></span><br><span class="line"><span class="comment">;1: Precompilation is enabled in the &#x27;Fast&#x27; mode.</span></span><br><span class="line"><span class="comment">;2: Precompilation is enabled in the &#x27;Background&#x27; mode.</span></span><br><span class="line"><span class="comment">;Default is 1.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.StartupMode</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to compile in a single batch operation when compiling takes priority. Defaults to a maximum of 50 per frame, due to async. file IO it is less in practice.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BatchSize</span>=<span class="number">50</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The target time (in ms) to spend precompiling each frame when compiling takes priority or 0.0 to disable. When precompiling is faster the batch size will grow and when slower will shrink to attempt to occupy the full amount. Defaults to 16.0 (max. ms per-frame of precompilation).</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BatchTime</span>=<span class="number">16.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to compile in a single batch operation when compiling takes priority. Defaults to a maximum of 50 per frame, due to async. file IO it is less in practice.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BackgroundBatchSize</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to compile in a single batch operation when pre-optimizing the cache. Defaults to a maximum of 50 per frame, due to async. file IO it is less in practice.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PrecompileBatchSize</span>=<span class="number">50</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The target time (in ms) to spend precompiling each frame when in the background or 0.0 to disable. When precompiling is faster the batch size will grow and when slower will shrink to attempt to occupy the full amount. Defaults to 0.0 (off).</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.BackgroundBatchTime</span>=<span class="number">11.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The target time (in ms) to spend precompiling each frame when cpre-optimizing or 0.0 to disable. When precompiling is faster the batch size will grow and when slower will shrink to attempt to occupy the full amount. Defaults to 10.0 (off).</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PrecompileBatchTime</span>=<span class="number">10.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the number of PipelineStateObjects to log before automatically saving. 0 will disable automatic saving. Shipping defaults to 0, otherwise default is 100.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.SaveAfterPSOsLogged</span>=<span class="number">100</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the time where any logged PSO&#x27;s will be saved if the number is &lt; r.ShaderPipelineCache.SaveAfterPSOsLogged. Disabled when r.ShaderPipelineCache.SaveAfterPSOsLogged is 0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the time where any logged PSO&#x27;s will be saved if the number is &lt; r.ShaderPipelineCache.SaveAfterPSOsLogged. Disabled when r.ShaderPipelineCache.SaveAfterPSOsLogged is 0</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.AutoSaveTime</span>=<span class="number">30</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Mask used to precompile the cache. Defaults to all PSOs (-1)</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PreCompileMask</span>=-<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set the time where any logged PSO&#x27;s will be saved when -logpso is on the command line.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.AutoSaveTimeBoundPSO</span>=<span class="number">10</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set non zero to use GameFileMask during PSO precompile - recording should always save out the usage masks to make that data availble when needed.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.GameFileMaskEnabled</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;Set non zero to PreOptimize PSOs - this allows some PSOs to be compiled in the foreground before going in to game</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.PreOptimizeEnabled</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The minimum bind count to allow a PSO to be precompiled.  Changes to this value will not affect PSOs that have already been removed from consideration.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.MinBindCount</span>=<span class="number">30</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;The maximum time to allow a PSO to be precompiled.  if greather than 0, the amount of wall time we will allow pre-compile of PSOs and then switch to background processing.</span></span><br><span class="line"><span class="attr">r.ShaderPipelineCache.MaxPrecompileTime</span>=<span class="number">33</span></span><br></pre></td></tr></table></figure></div></div></div>
+
+<p>开启了启动时自动构建PSO数据，会有以下log：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">LogRHI: Base name for record PSOs is ../../../FGame/Saved/CollectedPSOs/++UE4+Release-4.25-CL-0-FGame_SF_METAL_8F3222B7964FE2A89C849E90E0000736.rec.upipelinecache</span><br><span class="line">LogRHI: FPipelineCacheFile Header Game Version: 0</span><br><span class="line">LogRHI: FPipelineCacheFile Header Engine Data Version: 17</span><br><span class="line">LogRHI: FPipelineCacheFile Header TOC Offset: 293853</span><br><span class="line">LogRHI: FPipelineCacheFile File Size: 380497 Bytes</span><br><span class="line">LogRHI: Opened FPipelineCacheFile: ../../../FGame/Content/PipelineCaches/IOS/FGame_SF_METAL.stable.upipelinecache (GUID: 00000000000000000000000000000000) with 690 entries.</span><br><span class="line">LogRHI: Display: Opened pipeline cache and enqueued 441 of 441 tasks for precompile with BatchSize 50 and BatchTime 10.000000.</span><br></pre></td></tr></table></figure>
+
+<p>也可以在<code>DefaultGameUserSettings.ini</code>中设置PSO的<code>SortOrder</code>：</p>
+<figure class="highlight ini"><figcaption><span>DefaultGameUserSettings.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ShaderPipelineCache.CacheFile]</span></span><br><span class="line"><span class="comment">;default is 0</span></span><br><span class="line"><span class="comment">;Default = 0, // Whatever order they are already in.</span></span><br><span class="line"><span class="comment">;FirstToLatestUsed = 1, // Start with the PSOs with the lowest first-frame used and work toward those with the highest.</span></span><br><span class="line"><span class="comment">;MostToLeastUsed = 2 // Start with the most often used PSOs working toward the least.</span></span><br><span class="line"><span class="attr">SortOrder</span>=<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Profiling"><a href="#Profiling" class="headerlink" title="Profiling"></a>Profiling</h3><p>可以使用Unreal Ingishts查看shader link的耗时：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230524160612.png"></p>
+<p>以及通过<code>stat pipelinestatecache</code>，可以查看PSO的加载和生成情况。</p>
+<h3 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h3><h4 id="ShaderLibrary要求"><a href="#ShaderLibrary要求" class="headerlink" title="ShaderLibrary要求"></a>ShaderLibrary要求</h4><p>使用PSO的前提要求是必须要把Shader的序列化方式改成share shader library，如果是inline shader的形式，是无法使用Pre-Compiled的PSO的。运行时采集是可以的，但无法利用到下次打的包里。</p>
+<h4 id="scl-csv-to-shk"><a href="#scl-csv-to-shk" class="headerlink" title="scl.csv to shk"></a>scl.csv to shk</h4><blockquote>
+<p>4.27将StableExtension从<code>scl.csv</code>改成了<code>shk</code>。<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/4.27/Engine/Source/Runtime/RenderCore/Private/ShaderCodeLibrary.cpp#L65">ShaderCodeLibrary.cpp#L65</a></p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230525192513.png"></p>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/SharingAndReleasing/PSOCaching/index.html">PSO Cache</a>。</li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=0tzrsEm6V9Q&ab_channel=StephenMaloney">Unreal Engine 4: PSO Cache (Pipeline State Object) to Reduce Load Times/Hitches</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/72768828">UE4渲染引擎模块简介(2)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/24336/" target="_blank">UE项目优化：PSO Cache</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年04月22日 19时40分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有6.4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/24336/" target="_blank" title="UE项目优化：PSO Cache">https://imzlp.com/posts/24336/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/24336/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/PSOCache/" rel="tag"># PSOCache</a>
+              <a href="/tags/PSO/" rel="tag"># PSO</a>
+              <a href="/tags/%E4%BC%98%E5%8C%96/" rel="tag"># 优化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/8724/" rel="prev" title="UE5：新一代虚幻引擎初探">
+      <i class="fa fa-chevron-left"></i> UE5：新一代虚幻引擎初探
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/17996/" rel="next" title="UE开发笔记：Android篇">
+      UE开发笔记：Android篇 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AF%E7%94%A8ShaderStableKeys"><span class="nav-number">1.</span> <span class="nav-text">启用ShaderStableKeys</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E6%8D%95%E8%8E%B7PSO%E6%95%B0%E6%8D%AE"><span class="nav-number">2.</span> <span class="nav-text">运行时捕获PSO数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90-stablepc-csv"><span class="nav-number">3.</span> <span class="nav-text">生成*.stablepc.csv</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90-stable-upipelinecache"><span class="nav-number">4.</span> <span class="nav-text">生成*.stable.upipelinecache</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PSO-Cache%E7%9A%84%E5%8A%A0%E8%BD%BD%E4%B8%8E%E7%83%AD%E6%9B%B4"><span class="nav-number">5.</span> <span class="nav-text">PSO Cache的加载与热更</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BB%B6%E8%BF%9F%E9%87%87%E9%9B%86%E5%92%8C%E5%AD%98%E5%82%A8"><span class="nav-number">6.</span> <span class="nav-text">延迟采集和存储</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86"><span class="nav-number">7.</span> <span class="nav-text">错误处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Cook%E6%B2%A1%E6%9C%89%E7%94%9F%E6%88%90-scl-csv"><span class="nav-number">7.1.</span> <span class="nav-text">Cook没有生成.scl.csv</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E6%B2%A1%E6%9C%89%E7%94%9F%E6%88%90upipelinecache%E6%96%87%E4%BB%B6"><span class="nav-number">7.2.</span> <span class="nav-text">运行时没有生成upipelinecache文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Bad-PSO"><span class="nav-number">7.3.</span> <span class="nav-text">Bad PSO</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="nav-number">8.</span> <span class="nav-text">使用与配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Profiling"><span class="nav-number">9.</span> <span class="nav-text">Profiling</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F"><span class="nav-number">10.</span> <span class="nav-text">注意</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ShaderLibrary%E8%A6%81%E6%B1%82"><span class="nav-number">10.1.</span> <span class="nav-text">ShaderLibrary要求</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#scl-csv-to-shk"><span class="nav-number">10.2.</span> <span class="nav-text">scl.csv to shk</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">11.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/24336/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

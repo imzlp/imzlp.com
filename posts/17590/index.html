@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="重要通知：作者没有任何平台和渠道录制收费课程，也不对任何第三方的商业行为背书。请擦亮双眼，谨防上当受骗。本软件的开源协议：允许在商业项目中免费使用功能，但不允许任何第三方基于该插件进行任何形式的二次收费，包括但不限于录制收费课程、对插件及代码的二次分发等。 HotPatcher是一个用于管理热更版本和资源打包工具，用于追踪工程版本的原始资源变动来打出Patch。支持一键Cook多平台，一键打包多平">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE资源热更打包工具HotPatcher">
+<meta property="og:url" content="https://imzlp.com/posts/17590/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="重要通知：作者没有任何平台和渠道录制收费课程，也不对任何第三方的商业行为背书。请擦亮双眼，谨防上当受骗。本软件的开源协议：允许在商业项目中免费使用功能，但不允许任何第三方基于该插件进行任何形式的二次收费，包括但不限于录制收费课程、对插件及代码的二次分发等。 HotPatcher是一个用于管理热更版本和资源打包工具，用于追踪工程版本的原始资源变动来打出Patch。支持一键Cook多平台，一键打包多平">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323191117.webp">
+<meta property="article:published_time" content="2020-01-15T09:41:30.000Z">
+<meta property="article:modified_time" content="2020-08-31T17:27:31.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="HotPatcher">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323191117.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/17590/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE资源热更打包工具HotPatcher | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/17590/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE资源热更打包工具HotPatcher<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-01-15-17590.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-15 09:41 09:41:30:41" itemprop="dateCreated datePublished" datetime="2020-01-15T09:41:30+00:00">2020-01-15 09:41</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-31 17:27 17:27:31:27" itemprop="dateModified" datetime="2020-08-31T17:27:31+00:00">2020-08-31 17:27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E7%83%AD%E6%9B%B4%E6%96%B0/" itemprop="url" rel="index"><span itemprop="name">热更新</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/17590/" class="post-meta-item leancloud_visitors" data-flag-title="UE资源热更打包工具HotPatcher" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>31k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1:17</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>重要通知：作者没有任何平台和渠道录制收费课程，也不对任何第三方的商业行为背书。请擦亮双眼，谨防上当受骗。</strong><br><strong>本软件的开源协议：允许在商业项目中免费使用功能，但不允许任何第三方基于该插件进行任何形式的二次收费，包括但不限于录制收费课程、对插件及代码的二次分发等。</strong></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>是一个用于管理热更版本和资源打包工具，用于追踪工程版本的原始资源变动来打出Patch。支持一键Cook多平台，一键打包多平台Patch，编辑器支持Windows和MacOS，再写一套从服务器下载patch的流程就是一套完整的游戏热更方案。<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>已经在非常多的UE项目中使用，并会持续更新支持新的引擎版本，欢迎提issus。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>与UnrealFrontEnd中的Patch机制不同，UE的Patch管理工程时存在一些问题：基于原始的的工程版本，很难在不同的电脑上打出完全相同的Patch，也无法基于Patch的版本再打出一个Patch，并且Patch包含的内容不能够直观预览。并且不能方便地能够把外部文件打包到pak中（如lua文件、db等non-assets，往往不在Content目录下），也无法方便地管理工程和Patch版本。</p>
+<p>这个插件就是为了解决这样的问题，以项目原始资源作为版本依据，只需管理工程本身而无需关注UE生成的其他文件。并且可以方便地进行Cook/生成Pak/提取基础包中的资源信息/版本间diff/Patch拆分等操作。具有非常丰富的配置化选项与Commandlet支持，可以非常方便地实现自动化热更新出包流程。</p>
+<blockquote>
+<p>目前支持的引擎版本为UE4.21-UE5，并对IoStore机制提供了支持！有很多朋友私信来问插件相关的问题，我创建了个群来讨论UE热更新和HotPatcher插件的问题(QQ群958363331)，欢迎加入交流UE相关的技术。</p>
+</blockquote>
+<p>为了方便地统一收集和管理热更新和HotPatcher常见的问题与解决方案，我新建了一篇文章来记录和整理：<a href="https://imzlp.com/posts/16895/">UE4热更新：Questions &amp; Answers</a>，遇到问题可以先去看这个FAQ页面。关于比较多人反馈插件内配置参数与之前的录制视频不一致的问题，是因为插件进行了很多更新迭代，每个版本的详细变动，可看<a href="https://imzlp.com/posts/17590/#Update-Log">更新日志</a>。</p>
+<span id="more"></span>
+
+<h3 id="Showcase"><a href="#Showcase" class="headerlink" title="Showcase"></a>Showcase</h3><table>
+<thead>
+<tr>
+<th align="center">元梦之星</th>
+<th align="center">QQ</th>
+<th align="center">Apex Legends Mobile</th>
+<th align="center">WitiSports</th>
+<th align="center">MOSSAI</th>
+<th align="center">二之国：交错世界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/12/15/103025.png" height="160" width="160" /></td>
+<td align="center"><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202207280953994.webp" height="160" width="160" /></td>
+<td align="center"><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202207280956642.webp" height="160" width="160" /></td>
+<td align="center"><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/12/18/122654.png" height="160" width="160" /></td>
+<td align="center"><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/12/18/124705.png" height="160" width="160" /></td>
+<td align="center"><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/02/28/103324.png" height="160" width="160" /></td>
+</tr>
+</tbody></table>
+<h3 id="基于HotPatcher的资源管理框架"><a href="#基于HotPatcher的资源管理框架" class="headerlink" title="基于HotPatcher的资源管理框架"></a>基于HotPatcher的资源管理框架</h3><p>HotPatcher已经不仅仅只是一个热更打包工具，而是一套涵盖了热更新、构建提升、包体优化、资源审计等全方位的资源管理框架。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230106201027.webp"></p>
+<h3 id="Forward"><a href="#Forward" class="headerlink" title="Forward"></a>Forward</h3><p><strong>注意</strong>：该插件只能打出包含UE的资源以及添加的外部文件作为热更的内容（支持lua），修改的C++代码无法热更，需要自己设计好架构。如果是纯蓝图项目则可以完全使用这个工具进行热更。</p>
+<p>HotPatcher插件支持根据选择只打包指定的资源（可以指定<strong>包含过滤器</strong>以及<strong>忽略过滤器</strong>以及可以<strong>指定单个资源</strong>），支持资源的<strong>递归依赖分析</strong>（如只打包某个地图及其所有依赖的资源），打包的Path中可以选择不包含未引用的资源，也不会包含未改动的资源，还会分析项目中的无效资产以及忽略重定向器的资源，实现了<strong>基于项目资产的版本追踪</strong>而无需管理额外的内容（如DDC），只需要在打Patch之前Cook一遍保证Cook的内容是基于最新工程版本的即可（也支持在生成Patch时自动Cook所有要包含的资源）。而且还<strong>支持Chunk</strong>、支持<code>bMonilithic</code>模式，配置化的方式支持随意组合，<strong>支持导出资源的依赖关系</strong>，而且还支持通过Commandlet来执行Cook和Patch以及Release信息的导出，可以随意结合ci/cd实现自己的出包流程。</p>
+<p>除了包含UE的资源文件外，额外的支持：</p>
+<ul>
+<li>支持给特定的平台添加平台相关的文件（如每个平台的Wwise bnk文件）</li>
+<li>支持包含项目Cook出的非资源文件。如AssetRegistry.bin/GlobalShaderCache*.bin/ShaderBytecode*.ushaderbytecode；</li>
+<li>支持包含引擎、项目、和插件的ini文件；</li>
+<li>支持包含外部的文件夹和文件（如lua文件，视频文件等），并且可以自定义挂载点，供运行时访问；</li>
+<li>打出的pak中可以不包含任何UE的资源文件（只要在HotPatcher中不添加任何资源即可），方便只更新lua的代码或者只更新Ini之类的配置文件；</li>
+<li>支持分析不同平台的基础包的差异，生成统一的基础包描述文件，用于后续热更的版本比对。</li>
+</ul>
+<p>插件的其他功能：</p>
+<ul>
+<li>支持Cook单个资源；</li>
+<li>支持从PakList*.txt中导入多平台的基础包信息</li>
+<li>支持基于上一个patch版本再打出一个patch版本；</li>
+<li>支持检测未cook的资源；</li>
+<li>支持版本间的diff，可以看到新增、修改、删除（但是删除的资源在之前的版本的pak中是无法删除的，只是diff展示用）的资源信息；</li>
+<li>支持检测重复的文件包含；</li>
+<li>支持导出该插件所有的中间生成信息和配置；</li>
+<li>支持自定义UnrealPak的参数(可以自己指定加密参数与项目统一)；</li>
+<li>支持同时打出多个平台的patch；</li>
+<li>支持Patch的Chunk，指定在一个Patch版本中把资源分别打包到多个Pak中；</li>
+<li>支持检测Chunk的文件包含进行错误处理</li>
+<li>支持把Patch中的每个资源单独打包为pak，支持任意资源（包括但不限于UE asset/外部文件/各种cooked的bin数据、ini）只要是hotpatcher里可以添加的都可以单独打成pak。</li>
+<li>支持多线程打包pak，不启动<code>UrealPak.exe</code>，提高执行效率。</li>
+<li>支持导出所选资源的依赖关系</li>
+<li>编辑器支持Cook/AddToPatchSettings等功能，方便编辑器下的操作</li>
+<li>支持在Cook的同时手机Shader等metadata信息</li>
+<li>支持IoStore</li>
+<li>支持增量地更新Shader、AssetRegistry</li>
+<li>支持Shader Patch</li>
+</ul>
+<p>同时，我也写了一个批量Cook的工具，用于一键Cook指定的多个平台（当然使用命令行也可以），目的就是使用最少的步骤完成任务。</p>
+<p>我录了一个插件使用说明的视频：</p>
+<div class="video-container"><iframe src="https://www.youtube.com/embed/uDIP73unX8c" frameborder="0" loading="lazy" allowfullscreen></iframe></div>
+
+<p>如果不能翻墙可以看B站的链接：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Tz4y197tR/">UE4热更新：HotPatcher插件使用教程</a></p>
+<h3 id="插件使用流程"><a href="#插件使用流程" class="headerlink" title="插件使用流程"></a>插件使用流程</h3><blockquote>
+<p>为了方便版本管理，项目<strong>一定要</strong>使用某种版本控制工具，建议Git.</p>
+</blockquote>
+<ol>
+<li>打开HotPatcher，选择ByRelease，导出<code>*_Release.json</code>，其中记录了所指定的每个资源的信息；</li>
+<li>使用UE直接打包任意平台的项目（如windows/android/ios）</li>
+<li>在工程中修改/添加/删除资源，修改引擎/项目/插件的设置等；</li>
+<li><del>打开HotPatch，在Cook项选择你要打Patch的平台并执行Cook</del>（勾选<code>bCookPatcherAssets</code>）；</li>
+<li>打开HotPatcher，选择ByPatch，以上面导出的<code>*_Release.json</code>为基础版本，根据需求选择你需要打到Pak中的内容；</li>
+<li>点击<code>GeneratedPatch</code>，会生成Pak文件和各种信息（其中也包含当前版本的<code>*_Release.json</code>，使Patch可以增量更新）</li>
+<li>生成的Pak中就包含了与上次打出的包中所有差异的内容。</li>
+</ol>
+<h3 id="Cook参数说明"><a href="#Cook参数说明" class="headerlink" title="Cook参数说明"></a>Cook参数说明</h3><blockquote>
+<p><strong>重要</strong>：HotPatcher内实现了单独的Cook流程，无需再执行UE默认的Cook过程（插件中的<code>Cooker</code>部分），只需要在<code>Patch</code>的配置中启用<code>bCookPatchAssets</code>即可。</p>
+</blockquote>
+<p>HotPatcher中的Cook部分是为了打Patch时方便Cook多个平台，以及方便指定地图（插件会扫描整个项目中的所有地图并列出），不用每次Cook都使用命令行。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-CookContent.webp"></p>
+<p>Cook可选的分为<code>Platforms</code>/<code>Map(s)</code>/<code>Settings</code>：</p>
+<ul>
+<li><code>Platforms</code>：选择Cook 的平台，可以多选；</li>
+<li><code>Map(s)</code>：选择要Cook的Map，该选项下会列出当前工程里所有的Map，可以多选（代码里我也提供了列出引擎和插件目录下Map的选项，如果需要可以在<code>HotPatcherEditor.build.cs</code>中通过控制<code>ENABLE_COOK_ENGINE_MAP</code>和<code>ENABLE_COOK_PLUGIN_MAP</code>的值来自行开启）；</li>
+<li><code>Filter(s)</code>：可以选择只Cook指定的目录，可以添加多个；</li>
+<li><code>Settings</code>：选择Cook设置，默认提供了<code>Iterator</code>/<code>UnVersioned</code>/<code>CookAll</code>/<code>Compressed</code>四个选项，我也提供了<code>OtherOptions</code>可以自己指定要Cook 的参数。</li>
+</ul>
+<blockquote>
+<p>注意：<code>Map(s)</code>中的地图和<code>Settings</code>中的<code>CookAll</code>必须要选中其中的一个或者<code>Filters</code>中具有指定的目录才可以执行Cook，如果只选了CookMap，则只会Cook该Map所引用到的资源，没有被引用的不会被Cook，这个需要注意。</p>
+</blockquote>
+<p>点击CookContent之后会将Cook的log输出到UE的<code>OutputLog</code>中。</p>
+<h3 id="ByRelease参数说明"><a href="#ByRelease参数说明" class="headerlink" title="ByRelease参数说明"></a>ByRelease参数说明</h3><blockquote>
+<p>ByRelease操作导出的是一个json的文件，记录了导出时所选择的每个Asset资源的HASH值，基于此HASH值我们可以在后续的Patch中知道该资源是不是被修改了。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-Export-Release.webp"></p>
+<h4 id="Release-Settings"><a href="#Release-Settings" class="headerlink" title="Release Settings"></a>Release Settings</h4><ul>
+<li><strong>VersionId</strong>：指定当前导出的资源信息是什么版本。</li>
+<li><strong>ByPakList</strong>：从PakList导入来生成Release的配置。</li>
+<li><strong>PlatformsPakListFiles</strong>：打基础包生成的<code>PakList*.txt</code>文件，可以同时指定多个平台，用于分析各个平台的文件差异，并记录这些差异来生成项目在这些平台的Release.json文件，用于统一描述多个平台的基础包信息。</li>
+</ul>
+<blockquote>
+<p>在不通过指定<code>PakList*.txt</code>导出Release的情况下，导出的release.json中只包含项目中有引用的资源，没有引用的不会包含。但是引擎默认打包时会把一些没有引用的资源也打包到里面，这就会导致一些资源在基础包中事实上已经存在了，但是在release.json中没有记录，有用到这些资源的话会导致重复包含（使用时没有问题，只是这些资源在pak中会有两份）。使用<code>PakList*.txt</code>就不会存在这个问题。</p>
+</blockquote>
+<ul>
+<li><strong>IncludeFilter</strong>：当前Release扫描哪些目录下的资源。</li>
+<li><strong>IgnoreFilter</strong>：当前Release忽略哪些目录下的资源。</li>
+<li><strong>bAnalysisFilterDependencies</strong>：对所选过滤器的资源进行依赖分析</li>
+<li><strong>AssetRegistryDependencyTypes</strong>：对所选过滤器中得资源进行依赖分析时要包含的引用资源类型，依赖于<strong>bAnalysisFilterDependencies</strong>是否启用。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> EAssetRegistryDependencyType</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">enum</span> <span class="title class_">Type</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// Dependencies which don&#x27;t need to be loaded for the object to be used (i.e. soft object paths)</span></span><br><span class="line">		Soft = <span class="number">0x01</span>,</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Dependencies which are required for correct usage of the source asset, and must be loaded at the same time</span></span><br><span class="line">		Hard = <span class="number">0x02</span>,</span><br><span class="line"></span><br><span class="line">		<span class="comment">// References to specific SearchableNames inside a package</span></span><br><span class="line">		SearchableName = <span class="number">0x04</span>,</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Indirect management references, these are set through recursion for Primary Assets that manage packages or other primary assets</span></span><br><span class="line">		SoftManage = <span class="number">0x08</span>,</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Reference that says one object directly manages another object, set when Primary Assets manage things explicitly</span></span><br><span class="line">		HardManage = <span class="number">0x10</span>,</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Note: Also update FAssetRegistryDependencyOptions when adding more flags</span></span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">	<span class="type">static</span> <span class="type">const</span> Type None = (Type)(<span class="number">0</span>);</span><br><span class="line">	<span class="type">static</span> <span class="type">const</span> Type All = (Type)(Soft | Hard | SearchableName | SoftManage | HardManage);</span><br><span class="line">	<span class="type">static</span> <span class="type">const</span> Type Packages = (Type)(Soft | Hard);</span><br><span class="line">	<span class="type">static</span> <span class="type">const</span> Type Manage = (Type)(SoftManage | HardManage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>Soft</code>是具有<code>FSoftObjectReference</code>的资源引用，<code>Hard</code>是直接的资源引用，如果想要Soft和Hard都包含，可以选择<code>Package</code>，这个选项默认情况下选<code>Package</code>就好，除非你自己来处理资源引用关系。</p>
+<ul>
+<li><strong>IncludeHasRefAssetsOnly</strong>：对选中的过滤器中的资源文件进行依赖分析（递归分析至Map），如果资源没有被引用则不会打包到Patch中。</li>
+<li><strong>IncludeSpecifyAssets</strong>：结构的数组，可以指定当前Release中的单个资源，该结构的第一个参数需要指定资源，第二个参数控制是否分析并包含当前指定资源的依赖到pak中。</li>
+<li><strong>Add Extern Assets to Platform</strong>：用于指定在不同的平台包含的不同的文件。<ul>
+<li><strong>Target Platform</strong>：包含这些文件的平台（AllPlatform则是每个平台都包含）</li>
+<li><strong>AddExternFileToPak</strong>：记录Release中包含的非资源文件</li>
+<li><strong>AddExternDirectoryToPak</strong>：记录Release中包含的非资源文件</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><code>AddExternFileToPak</code>和<code>AddExternDirectoryToPak</code>对应的是<code>Project Settings</code>-<code>Packing</code>中的<code>Additional Non-Asset Directories To Package</code>等设置，用于标记本地包中所包含的非资源文件。</p>
+</blockquote>
+<h4 id="SaveTo"><a href="#SaveTo" class="headerlink" title="SaveTo"></a>SaveTo</h4><ul>
+<li><strong>SaveAssetDependency</strong>：是否存储当前Release版本中所选资源的依赖关系。</li>
+<li><strong>SaveReleaseConfig</strong>：是否存储当前Release的所有选项信息。</li>
+<li><strong>bBackupMetadatas</strong>：是否备份当前版本的Metadata目录。</li>
+<li><strong>BackupMetdataPlatforms</strong>：选择要备份Metadata的平台，该选项依赖于<code>bBackupMetadatas=true</code>。</li>
+<li><strong>SavePath</strong>：本次的Release信息存储位置。会在当前目录下创建出名字为<code>VersionId</code>的文件夹，所有的文件在此文件夹中，支持<code>[PROJECTDIR]</code>等标记相对路径。</li>
+</ul>
+<blockquote>
+<p>注意：导出Release时，资源的包含需要与UE直接打包时的设置一致，因为这里导出的Release是记录使用UE直接打出的包所包含的资源。</p>
+</blockquote>
+<h3 id="ByPatch参数说明"><a href="#ByPatch参数说明" class="headerlink" title="ByPatch参数说明"></a>ByPatch参数说明</h3><blockquote>
+<p>ByPatch是真正执行打包出Pak的工具，可以基于之前导出的版本(通过ByRelease导出的Json文件)，也可以包含外部文件/文件夹、配置文件（ini）、Cook出的非资源文件（AssetRegistry.bin等），并且可以指定多个平台，支持输入UnrealPak的参数，可以导出当前Patch的各种信息。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-Export-Patch.webp"></p>
+<p>支持指定资源过滤器：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-Export-Patch-Filter.webp"></p>
+<p>HotPatcher打Patch的选项解析：</p>
+<h4 id="BaseVersion"><a href="#BaseVersion" class="headerlink" title="BaseVersion"></a>BaseVersion</h4><ul>
+<li><strong>bByBaseVersion</strong>：是否是基于某个基础版本的Patch，若为<code>false</code>，则只打包选择的过滤器文件（依然会分析依赖）和添加的外部文件，若为<code>true</code>则必须要指定一个基础版本，否则无法执行Patch。同时该属性也会控制是否生成<code>Diff</code>信息，若为<code>false</code>则不生成<code>Diff</code>（没有基础版本diff也无意义）。</li>
+<li><strong>BaseVersion</strong>：该选项应选择Patch所基于的版本文件，可以<code>ByRelease</code>或者上次一的Patch生成，默认为<code>*_Release.json</code>。</li>
+</ul>
+<h4 id="PatchSettings"><a href="#PatchSettings" class="headerlink" title="PatchSettings"></a>PatchSettings</h4><ul>
+<li><strong>VersionId</strong>：当前Patch的版本的ID</li>
+<li><strong>IncludeFilter</strong>：当前Patch扫描哪些目录下的资源变动。</li>
+<li><strong>IgnoreFilter</strong>：当前Patch忽略哪些目录下的资源变动（资源依赖分析之前）。</li>
+<li><strong>bForceSkipContent</strong>：是否开启强制忽略掉某些资源（对Patch的最终结果进行过滤）</li>
+<li><strong>Force Skip Content Rules</strong>：强制忽略掉某些目录下的资源（对Patch的最终结果进行过滤），可以用于忽略Editor的Content内容，如<code>/Engine/Editor</code>和<code>/Engine/VREditor</code>等。</li>
+<li><strong>Force Skip Assets</strong>：再Patch的最终结果中忽略掉指定的资源。</li>
+<li><strong>bAnalysisFilterDependencies</strong>：对所选过滤器的资源进行依赖分析</li>
+<li><strong>Recursive Widget Tree</strong>：对于当前Patch中变动的UserWidget资源，递归分析包含它们的parent Widget资源，并包含进Patch中，用于解决修改了子控件，父控件不生效的问题。</li>
+<li><strong>AssetRegistryDependencyTypes</strong>：与<code>Release</code>中描述的含义相同。</li>
+<li><strong>IncludeHasRefAssetsOnly</strong>：对选中的过滤器中的资源文件进行依赖分析（递归分析至Map），如果资源没有被引用则不会打包到Patch中。</li>
+<li><strong>IncludeSpecifyAssets</strong>：结构的数组，可以指定需要打到Pak中的单个资源，该结构的第一个参数需要指定资源，第二个参数控制是否分析并包含当前指定资源的依赖到pak中，第三个参数<strong>AssetRegistryDependencyTypes</strong>与<code>Release</code>中描述的含义相同。。</li>
+<li><del><strong>IncludeAssetRegistry</strong>：在当前的Patch打出的Pak中包含<code>AssetRegistry.bin</code>文件。</del>（已废弃）</li>
+<li><del><strong>IncludeGlobalShaderCache</strong>：在当前的Patch打出的Pak中包含<code>GlobalShaderCache-*.bin</code>文件。</del>（已废弃）</li>
+<li><del><strong>IncludeShaderBytecode</strong>：在当前Patch打出的Pak中包含<code>PROJECT_NAME\Content\ShaderArchive*.ushaderbytecode</code>文件。</del>（已废弃）</li>
+<li><strong>IncludeEngineIni</strong>：在当前打出的Patch中包含引擎目录下的ini，也会包含平台相关的ini</li>
+<li><strong>IncludePluginIni</strong>：在当前打出的Patch中包含所有启用的插件中的ini（引擎目录和项目目录的插件都会包含）</li>
+<li><strong>IncludeProjectIni</strong>：在当前的Patch打出的Pak中包含项目的ini文件（不会包含<code>DefaultEditor*.ini</code>）</li>
+<li><strong>bEnableExternFilesDiff</strong>：是否对添加的外部文件进行Diff比对，用于只打包修改或者新增的外部文件。</li>
+<li><strong>Add Extern Assets to Platform</strong>：用于指定在不同的平台包含的不同的文件。<ul>
+<li><strong>Target Platform</strong>：包含这些文件的平台（AllPlatform则是每个平台都包含）</li>
+<li><strong>AddExternFileToPak</strong>：添加外部的非资源文件到Pak中，如txt、视频。</li>
+<li><strong>AddExternDirectoryToPak</strong>：记录Release中包含的非资源文件</li>
+</ul>
+</li>
+</ul>
+<p><strong>AddExternFileToPak</strong>的元素要求：</p>
+<ol>
+<li><code>FilePath</code>需要指定所选文件的路径。</li>
+<li><code>MountPath</code>为该文件被打包到Pak中的挂载路径，默认是<code>../../../PROJECT_NAME/</code>下。</li>
+</ol>
+<p>在游戏运行时可以通过<code>FPaths::ProjectDir</code>来访问。<br>如，AAAA.json的<code>MountPath</code>为<code>../../../HotPatcherExample/AAAAA.json</code>，在运行时加载的路径：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FPaths::Combine(FPaths::ProjectDir(),TEXT(&quot;AAAAAA.json&quot;));</span><br></pre></td></tr></table></figure>
+<p>Pak中的所有文件可以通过<code>IPlatformFile</code>来访问。</p>
+<ul>
+<li><p><strong>AddExternDirectoryToPak</strong>：结构的数组，添加外部文件夹到Pak中，该结构第一个参数(<code>DirectoryPath</code>)为指定系统中的文件夹路径，第二个参数(<code>Mount Point</code>)指定该路径在Pak中的挂载路径；指定文件夹下的所有文件会被递归包含，并且挂载路径均相对于所指定的<code>MountPoint</code>。</p>
+</li>
+<li><p><strong>IncludePakVersionFile</strong>：是否在当前打出的Patch中存储版本信息。</p>
+</li>
+<li><p><strong>PakVersionFileMountPoint</strong>：由<code>IncludePakVersionFile</code>控制是否可以编辑，用于指定<code>*_PakVersion.json</code>文件在Pak文件中的挂载点，默认为<code>../../../PROJECT_NAME/Extention/Versions</code>。</p>
+</li>
+</ul>
+<h4 id="ChunkOptions"><a href="#ChunkOptions" class="headerlink" title="ChunkOptions"></a>ChunkOptions</h4><p>我为HotPatch增加了Chunk的功能，支持把一个Patch中的资源分别打包到不同的Pak中去。如把一个Patch中的所有<code>Package</code>打包到一个pak里（或者把当前Patch的指定地图打包到某个pak里），所有的lua打包到另一个pak里。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/hotpatcher-chunk-options.webp"></p>
+<p>Chunk支持的参数如下：</p>
+<ul>
+<li><code>bEnableChunk</code>：是否对当前的Patch执行Chunk</li>
+<li><code>bCreateDefaultChunk</code>：是否创建默认的Chunk，用于存储在手动指定的Chunks中不存在的文件</li>
+<li><code>ChunkInfos</code>：Chunk信息的列表，用于指定Chunk中应该包含哪些资源。</li>
+</ul>
+<p><code>ChunkInfos</code>的是一个<code>FChunkInfo</code>的结构数组，其结构的成员为：</p>
+<ul>
+<li><code>ChunkName</code>：当前Chunk的名字<!-- - `bMonolithic`：是否为当前Chunk里的每个资源打出Pak（已支持），在开启`bMonolithic`模式时，会禁止添加外部文件和ini/Cook的内部数据，不然存放路径会有些歧义。 -->
+<!-- - `MonolithicPathMode`：单片模式的pak存储路径模式，`MountPath`是`Mount`的方式，`PackagePath`是资源的`LongPackageName`的路径。 --></li>
+<li><code>bStorageUnrealPakList</code>：是否存储当前Chunk的<code>PakCommand.txt</code></li>
+<li><code>bStorageIoStorePakList</code>：是否存储当前chunk的IoStore的paklist文件</li>
+<li><code>AssetIncludeFilters</code>：指定Chunk中的资源过滤器（注意所选过滤器中的资源不会进行依赖分析）</li>
+<li><code>AssetIgnoreFilters</code>：指定Chunk的忽略过滤器</li>
+<li><code>bAnalysisFilterDependencies</code>：对所选过滤器的资源进行依赖分析</li>
+<li><code>AssetRegistryDependencyTypes</code>：与<code>Release</code>中描述的含义相同。</li>
+<li><code>IncludeSpecifyAssets</code>：指定Chunk中包含哪些单个资源，支持进行依赖分析</li>
+<li><code>AddExternFileToPak</code>：添加外部文件到Chunk</li>
+<li><code>AddExternDirectoryToPak</code>：添加外部目录到Chunk，支持递归分析</li>
+<li><code>InternalFiles</code>：用于指定Chunk中是否包含<code>AssetRegistry.bin</code>和<code>Ini</code>等文件</li>
+</ul>
+<p>基本上Chunk的参数和Patch选择的参数的一致，可以按照需求配置。</p>
+<blockquote>
+<p>注意：Chunk的原理是：先在Patch的设置中选择资源，会执行一遍整个Patch的资源分析，分析出来的结果用于Chunk配置的过滤，意思就是Chunk中所包含的资源必须是本次Patch的中具有的，一定要注意<strong>AssetIncludeFilters</strong>不会进行依赖分析，如果你Patch中的过滤器中的资源引用到了其他模块，比如引擎或者插件，在Chunk中也需要指定相应的目录到过滤器。</p>
+<p>每个Chunk中所指定的资源可以重复，一份资源可以在ChunkA中包含也可以被ChunkB包含。</p>
+</blockquote>
+<p>而且我还给Chunk增加了错误提示，如果开启了Chunk模式，但是Patch中的所有资源没有在Chunk中全部指定，会在HotPatcher底部的<code>Infomations</code>中提示有哪些资源没有在Chunk中被包含，方便进行错误处理。</p>
+<!-- 
+**bMonolithic模式**：
+- 会把Chunk中所有的单个资源、文件都单独打包为一个pak
+- 存放路径为该资源的`mount point`路径 
+-->
+
+<h4 id="PakOptions"><a href="#PakOptions" class="headerlink" title="PakOptions"></a>PakOptions</h4><ul>
+<li><p><strong>bCookPatchAssets</strong>：是否开启为Patch中的uasset进行Cook，如果开启会在打包时对当前Patch中的所有uasset资源进行Cook（会增加Patch的生成时间，需要等待Cook完成）</p>
+</li>
+<li><p><strong>Io Store Settings</strong>：</p>
+</li>
+<li><p>bIoStore：是否开启Io Store</p>
+</li>
+<li><p>bAllowBulkDataInIoStore：是否允许bulk data存储到Io Store中</p>
+</li>
+<li><p>IoStorePakListOptions：传递给IoStorePaklist的参数，如<code>-compress</code></p>
+</li>
+<li><p>IoStoreCommandletOptions：传递给IoStoreCommandlet的参数</p>
+</li>
+<li><p>PlatformContainers：需要指定每个平台的<code>global.utoc</code>以及IoStore Patch的路径</p>
+</li>
+<li><p>bStoragePakList：存储IoStore的paklist文件</p>
+</li>
+<li><p>bStorageBulkDataInfo：存储StorageBulkDataInfo，当开启CookPatchAssets时，将Cook的信息存储到<code>BulkDataInfo.ubulkmanifest</code>，可以不开启（目前不支持CookPatchAssets支持IoStore）</p>
+</li>
+<li><p><strong>Unreal Pak Settings</strong></p>
+</li>
+<li><p>UnrealPakListOptions：传递给paklist文件的参数，如<code>-compress</code></p>
+</li>
+<li><p>UnrealCommandletOptions：传递给UnrealPak的参数</p>
+</li>
+<li><p><strong>Encrypt Settings</strong></p>
+</li>
+<li><p><code>bEncrypt</code>：开启加密</p>
+</li>
+<li><p><code>bEncrypt</code>：加密Index</p>
+</li>
+<li><p><code>bUseDefaultCrypt.ini</code>：使用项目中<code>config/DefaultCrypt.ini</code>中的配置</p>
+</li>
+<li><p><code>bSign</code>：开启Sign</p>
+</li>
+<li><p><code>CryptoKeys</code>：指定<code>Crypto.json</code>文件，当没有选中<code>bUseDefaultCrypt.ini</code>时可指定<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210615165506.webp"></p>
+</li>
+<li><p><strong>DefaultPakListOptions</strong>：该数组可以指定打包pak或IoStore每条资源的的参数，如<code>-compress</code>。</p>
+</li>
+<li><p><strong>DefaultCommandletOptions</strong>：该数据可以指定执行pak/IoStore的命令时commandlet的追加参数。</p>
+</li>
+<li><p><strong>ReplacePakCommandTexts</strong>：用于替换PakCommand.txt中的文本</p>
+</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/hotpatcher-pak-options-replace-pak-command-texts.webp"></p>
+<!-- - **UnrealPakOptions**：该数组为`UnrealPak.exe`程序的参数。如果什么都不指定，默认的配置为`UnrealPak.exe PAKFILE.pak -create=PAK_LIST.txt`。 -->
+<ul>
+<li><strong>PakTargetPlatforms</strong>：该数组为选择要打出的Patch的平台，可以多选，一定要注意所选的平台已经被Cook。</li>
+</ul>
+<p><strong>PakOptions Advanced</strong>:</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/hotpatcher-unrealpak-options-advanced.webp"></p>
+<ul>
+<li><strong>bCustomPakNameRegular</strong>：是否重写Pak命名规则，控制<strong>PakNameRegular</strong>是否可修改。</li>
+<li><strong>PakNameRegular</strong>：生成Pak的命名规则，可以通过预置变量值来控制，目前预置值有：<code>&#123;VERSION&#125;</code>/<code>&#123;BASEVERSION&#125;</code>/<code>&#123;CHUNKNAME&#125;</code>/<code>&#123;PLATFORM&#125;</code>四个值，在生成时会替换为当前配置的具体值，默认的命名规则为<code>&#123;VERSION&#125;_&#123;CHUNKNAME&#125;_&#123;PLATFORM&#125;_001_P</code>，如果在没有开启Chunk的情况下，<code>&#123;CHUNKNAME&#125;</code>值为空，并且会处理掉两个连续的<code>__</code>。</li>
+</ul>
+<h4 id="SaveTo-1"><a href="#SaveTo-1" class="headerlink" title="SaveTo"></a>SaveTo</h4><ul>
+<li><strong>bIgnoreDelatedAssetsInfo</strong>：在Patch信息中清理掉被删除的asset/文件信息，开启意味着不会记录被删除的文件。</li>
+<li><strong>bStorageDeletedAssetsToNewReleaseJson</strong>：控制ContentBrowser中删除的资源是否存储到新ReleaseJson中去，具体描述请看<a href="https://imzlp.com/posts/17590/#2020-11-07-Update">2020.11.07 Update</a>。</li>
+<li><strong>bStoragePakList</strong>：是否存储<code>UnrealPak.exe</code> 的<code>-Create</code>参数文件。</li>
+<li><strong>bStorageDiffAnalysisResults</strong>：是否存储当前的Patch版本与Base版本的差异信息。</li>
+<li><strong>bStorageAssetDependencies</strong>：是否存储当前Patch版本中所选资源的依赖关系。</li>
+<li><strong>bStoragePatchConfig</strong>：是否存储当前Patch的所有选项信息。</li>
+<li><strong>bBackupMetadatas</strong>：是否备份当前版本的Metadata目录。</li>
+<li><strong>SavePath</strong>：本次的Patch信息存储位置。会在当前目录下创建出名字为<code>VersionId</code>的文件夹，所有的文件在此文件夹中。</li>
+</ul>
+<h4 id="Advanced"><a href="#Advanced" class="headerlink" title="Advanced"></a>Advanced</h4><ul>
+<li><strong>bStandaloneMode</strong>：是否以独立模式运行，勾选会拉起一个单独的UE进程执行Patch任务，不会阻塞当前的编辑器，在资源规模庞大的情况下建议勾上此选项。</li>
+<li><strong>bScanCacheOptimize</strong>：开启以来扫描缓存优化，可以加快依赖分析的速度。</li>
+</ul>
+<h3 id="ByShaderPatch参数说明"><a href="#ByShaderPatch参数说明" class="headerlink" title="ByShaderPatch参数说明"></a>ByShaderPatch参数说明</h3><p>ShaderPatch通过指定新/旧版本的Metadata目录，读取其中的ShaderLibrarySource目录中的<code>.ushaderbytecode</code>文件来进行比对和Patch的。</p>
+<h4 id="Version"><a href="#Version" class="headerlink" title="Version"></a>Version</h4><ul>
+<li><strong>VersionID</strong>：当前ShaderPatch的版本号</li>
+</ul>
+<h4 id="Config"><a href="#Config" class="headerlink" title="Config"></a>Config</h4><ul>
+<li><strong>ShaderPatchConfigs</strong>：ShaderPatch的配置，是一个结构</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FShaderPatchConf</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line">	</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite)</span><br><span class="line">		ETargetPlatform Platform;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite)</span><br><span class="line">    	TArray&lt;FDirectoryPath&gt; OldMetadataDir;</span><br><span class="line">    <span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite)</span><br><span class="line">    	FDirectoryPath NewMetadataDir;</span><br><span class="line">    <span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite)</span><br><span class="line">   		<span class="type">bool</span> bNativeFormat;</span><br><span class="line">	<span class="comment">// since UE 4.26 (Below 4.26 this parameter has no effect)</span></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite)</span><br><span class="line">		<span class="type">bool</span> bDeterministicShaderCodeOrder = <span class="literal">true</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="Save"><a href="#Save" class="headerlink" title="Save"></a>Save</h4><ul>
+<li><strong>bStorageConfig</strong>：是否存储当前的配置文件</li>
+<li><strong>SavePath</strong>：Patch和配置文件的生成路径</li>
+</ul>
+<h4 id="Advanced-1"><a href="#Advanced-1" class="headerlink" title="Advanced"></a>Advanced</h4><ul>
+<li><strong>bStandaloneMode</strong>：拉起一个单独的进程执行任务，不阻塞编辑器。</li>
+</ul>
+<h3 id="Commandlet"><a href="#Commandlet" class="headerlink" title="Commandlet"></a>Commandlet</h3><p>我给插件提供了四个个Commandlet，分别是<code>HotCooker</code>和<code>HotPatcher</code>以及<code>HotRelease</code>和<code>HotShaderPatch</code>，用于Cook、Patch生成、导出Release信息以及ShaderPatch，</p>
+<p>这四个Commandlet都可以指定<code>-wait</code>参数当Commandlet执行完毕时等待输入（防止窗口自动关闭）。</p>
+<p>Commandlet指定的<code>-config</code>文件中的属性可以被替换，使用<code>-PropertyName=</code>来指定（目前不支持指定数组），如果是结构的嵌套属性，如<code>SavePath.Path</code>这样的成员属性，可以通过<code>.</code>来指定：<code>-savepath.path=</code>。</p>
+<p>HotPatcher的Commandlet增强支持可以看更新Log：<a href="#2021.01.14-Update">2021.01.14 Update</a></p>
+<h4 id="HotCooker"><a href="#HotCooker" class="headerlink" title="HotCooker"></a><del>HotCooker</del></h4><blockquote>
+<p><strong>重要</strong>：该功能已废弃，只需要勾选<code>bCookPatchAssets</code>即可。</p>
+</blockquote>
+<p>Cooker使用方法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe PROJECT.uproject -run=HotCooker -config=<span class="string">&quot;cook-config.json&quot;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>在编辑器中导出cook配置的时候如果选中了所有地图，会在导出的配置文件里会把bCookAllMap为true，在Cook的Commandlet里执行就会Cook所有地图了，而且只要bCookAllMap为true就会Cook所有地图，和CookMaps里的地图数量没关系。</p>
+</blockquote>
+<h4 id="HotPatcher"><a href="#HotPatcher" class="headerlink" title="HotPatcher"></a>HotPatcher</h4><p>Patcher使用方法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe PROJECT.uproject -run=HotPatcher -config=<span class="string">&quot;patch-config.json&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="HotRelease"><a href="#HotRelease" class="headerlink" title="HotRelease"></a>HotRelease</h4><p>Release使用方法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe PROJECT.uproject -run=HotRelease -config=<span class="string">&quot;export-release-config.json&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="HotShaderPatch"><a href="#HotShaderPatch" class="headerlink" title="HotShaderPatch"></a>HotShaderPatch</h4><p>ShaderPatch使用方法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe PROJECT.uproject -run=HotShaderPatch -config=<span class="string">&quot;export-shaderpatch-config.json&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>它们的<code>-config</code>参数所接收的文件都可以从编辑器中通过插件导出。</p>
+<h3 id="编辑器支持-UE4-23"><a href="#编辑器支持-UE4-23" class="headerlink" title="编辑器支持(UE4.23+)"></a>编辑器支持(UE4.23+)</h3><p>HotPatcher添加了在ContentBrowser中对资源选中的右键菜单扩展，可以实现一键Cook、添加所选的资源至Patch Setting的功能。</p>
+<h4 id="Cook"><a href="#Cook" class="headerlink" title="Cook"></a>Cook</h4><p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20201031181100.webp"></p>
+<h4 id="AddToPatchSettings"><a href="#AddToPatchSettings" class="headerlink" title="AddToPatchSettings"></a>AddToPatchSettings</h4><p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/add-to-patch-settings.webp"></p>
+<h3 id="项目设置"><a href="#项目设置" class="headerlink" title="项目设置"></a>项目设置</h3><p>插件支持在编辑器中右键选中资源进行Cook和打包，为了方便配置，在<code>Project Settings</code>中创建了<code>HotPatcher</code>的配置项：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210615165645.webp"></p>
+<p>可以用来指定UnrealPak的参数、加密配置、打包的存储目录等。</p>
+<h3 id="Update-Log"><a href="#Update-Log" class="headerlink" title="Update Log"></a>Update Log</h3><script src="https://gist.github.com/imzlp/69a2b196589490a5ef7b0ab1f13a4ef1.js"></script>
+
+<h4 id="2024-04-07-Update-v82-0"><a href="#2024-04-07-Update-v82-0" class="headerlink" title="2024.04.07 Update v82.0"></a>2024.04.07 Update v82.0</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v82.0">v82.0</a>，相较于上个版本，进行了大量优化和BUG修复。</p>
+<blockquote>
+<p><strong>不管在哪个引擎版本中使用HotPatcher，都强烈建议你更新到最新的版本，出现问题也便于排查。</strong></p>
+</blockquote>
+<p>更新内容如下</p>
+<ol>
+<li>修复在某些情况下<code>*.m.ubulk</code>文件未被打包进去的bug</li>
+<li>优化了PAK的打包耗时，对大量文件的扫描做了缓存和多线程优化，大幅提升打包速度</li>
+<li>支持Accompany的COOK模式</li>
+<li>添加了更多的性能标记</li>
+<li>优化日志级别</li>
+<li>支持cache-ddc-only的Cook模式</li>
+<li>模块启动时自动加载<code>../../../PROJECT_NAME/ShaderLibs</code>目录下的所有ShaderLibrary</li>
+<li>支持Nanite和WP的COOK</li>
+<li>WP的差异更新支持（由于WP的<code>One File Per Actor</code>机制，修改WP场景并不会导致关卡资源本身的变动，我扩展了一种检测机制，可以实现WP的差异检测）</li>
+<li>优化<code>FExternFiles</code>的访问</li>
+<li>优化Release记录的外部文件从绝对路径变为标记路径</li>
+<li>修复在UE5中COOK时产生假文件的问题</li>
+<li>修复导出release时的路径包含<code>//</code>的问题</li>
+<li>修复PatcherProxy获取到PackageTracker不准确的问题</li>
+<li>优化PackageTracker的实现，剔除已经Track到的资源</li>
+<li>优化PackageTracker，可递归Tracker分析</li>
+<li>统一CollectPakCommand中ParallelFor的锁，避免竞争问题</li>
+<li>支持-AddAssetsByFile=参数传递一个LongPackageName的列表打包</li>
+<li>修复ShaderLib未被打包进pak的问题</li>
+<li>允许在Cook的Cmdlet里添加Pre与Post任务</li>
+<li>优化插件Slate实现，在Toolbar中支持二级菜单，直接选中打开对应的页面</li>
+<li>支持监听进程的Crash，并会将Crash文件存储到Saved/HotPatcher/Crashs</li>
+<li>兼容GameFeaturePacker与ShaderPatcher两个Mods（均需更至最新）</li>
+</ol>
+<p>目前<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v82.0">v82.0</a>已经正式发布，可以从<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">hxhb/HotPatcher</a>拉取和更新。旧版本插件打开Patch页面也会有新版本的更新提示。</p>
+<h4 id="2023-06-05-Update-v81-0"><a href="#2023-06-05-Update-v81-0" class="headerlink" title="2023.06.05 Update v81.0"></a>2023.06.05 Update v81.0</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v81.0">Release v81.0</a>  </p>
+<p>1. 修复CmdlHandler的日志输出问题、DDC Backend配置不Clean<br>2. Cmdlet支持<code>TargetPlatformsOverride</code>可替换配置文件中的TargetPlatform<br>3. 执行Patch时可通过<code>NoSearchAllAssets</code>禁止资源扫描<br>4. 优化GC时机<br>5. 修复开启PackageTracker追踪到包含在基础版本里未变动的资源<br>6. 优化Notification输出格式<br>7. 统一patch时的config/release/diff的保存路径规则 <br>8. 支持仅Cook Shader类资源<br>9. 支持CookAdvancedOptions选项<br>10. 支持输出PakResults.json记录所有打包的资源及获取接口<br>11. 优化Log输出，非必要不打Error级别的日志<br>12. 避免Cooked文件检查对资源的加载<br>13. 支持ChunkAliasName，作为Chunk的别名，支持中文<br>14. 优化LoadShaderbytecode相关代码<br>15. 修复从加密pak中导入时的AESKey无效问题<br>16. 修复在Linux平台资源分析时的逻辑运算符的歧义<br>17. 添加更多的ProfilingTag<br>18. 更新MOD的版本<br>19. 修复UE5.1 Linux编译错误<br>20. 修复每个Chunk都包含了所有变更的问题<br>21. 修复GetProjectNotAssetDirConfig中多余的%s<br>22. 修复TargetPlatform注册时机晚于CDO的问题   </p>
+<blockquote>
+<p>注：本版本暂不支持UE5.2，同时这也应该是支持UE5.1的最后一个版本。因为UE5.2引擎中有实现变化，后续更新的适配中只会支持UE5的最新版本。</p>
+</blockquote>
+<h4 id="2023-02-28-Update-v80-1"><a href="#2023-02-28-Update-v80-1" class="headerlink" title="2023.02.28 Update v80.1"></a>2023.02.28 Update v80.1</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v80.1">Release v80.1</a></p>
+<ul>
+<li>修复PackageTrackerAsCluster中无效路径导致的ErrorLog</li>
+<li>调整Metadata的产出路径</li>
+<li>支持获取参与打包的资源列表</li>
+<li>优化PackageTracker的追踪实现</li>
+<li>修复ForceSkip的Directory/Asset过滤的bug</li>
+<li>修复多线程处理PakCommand时的竞争</li>
+<li>修复TargetPlatform注册时机晚于CDO的问题</li>
+<li>修复PackageTracker的资源没有进包的问题（PackageTracker的资源会进行ForceSkip检测）</li>
+<li>bSupportWorldComposition默认改为false</li>
+</ul>
+<h4 id="2023-01-08-Update-v80-0-HotPatcher-Modular"><a href="#2023-01-08-Update-v80-0-HotPatcher-Modular" class="headerlink" title="2023.01.08 Update v80.0 HotPatcher Modular"></a>2023.01.08 Update v80.0 HotPatcher Modular</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v80.0">Release v80.0</a>，<a href="https://imzlp.com/posts/30178/">HotPatcher 的模块化改造和开发规划</a>。</p>
+<ol>
+<li> 修复Regular相关的Category不显示问题</li>
+<li> 优化CmdHandler实现，支持Editor和Runtime的Config Override</li>
+<li> HotPatcher的模块化改造，详见<a href="https://imzlp.com/posts/30178/">HotPatcher 的模块化改造和开发规划</a></li>
+<li> 将ByShaderPatch与ByGameFeature分别创建为独立的Mod</li>
+<li> 优化插件的启动流程和优先级，支持模块的扩展</li>
+<li> 支持预览当前已安装的模块及检测单个模块的更新</li>
+</ol>
+<h4 id="2022-12-30-Update-v79-0"><a href="#2022-12-30-Update-v79-0" class="headerlink" title="2022.12.30 Update v79.0"></a>2022.12.30 Update v79.0</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v79.0">Release v79.0</a></p>
+<ol>
+<li>优化基础实现、关闭不必要的Log输出</li>
+<li>优化对依赖加载材质的额外Shader编译， 支持<code>NoPostLoadCacheDDC</code>参数控制（UE4中需要修改引擎才能使用该优化）</li>
+<li>优化CookCluster的分配策略</li>
+<li>优化Pak文件列表收集</li>
+<li>优化资源分析性能</li>
+<li>优化模块的可扩展性</li>
+<li>修复跨引擎版本的兼容性问题</li>
+<li>修复Shipping的C4172 ERROR</li>
+<li>修复不支持WP导致的基础包打包错误（<code>Found mor than one redistered Cook Package Splitter</code>）</li>
+<li> 支持<code>PakSaveDirRegular</code>，自定义Pak的输出路径</li>
+<li>支持PakPreset/CookAndPak以统一的方式执行</li>
+<li>支持全局的AllowCookPlatforms</li>
+</ol>
+<p>源码版引擎的<code>NoPostLoadCacheDDC</code>参数支持需要修改引擎，添加以下<code>[lipengzha]</code>中包裹的代码：</p>
+<blockquote>
+<p>Launcher引擎默认不支持该优化，Cook耗时会慢一些，但对功能无影响。</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Engine/Source/Runtime/Engine/Private/Materials/MaterialInstance.cpp</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UMaterialInstance::PostLoad</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="comment">//++[lipengzha] cmdlet option for disable cook in PostLoad </span></span><br><span class="line">	<span class="type">bool</span> bNoPostLoadCacheDDC = FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;NoPostLoadCacheDDC&quot;</span>));</span><br><span class="line">	<span class="keyword">if</span> (!bNoPostLoadCacheDDC &amp;&amp; TPM &amp;&amp; (TPM-&gt;<span class="built_in">RestrictFormatsToRuntimeOnly</span>() == <span class="literal">false</span>))</span><br><span class="line">	<span class="comment">//--[lipengzha]</span></span><br><span class="line">	&#123;</span><br><span class="line">		TArray&lt;ITargetPlatform*&gt; Platforms = TPM-&gt;<span class="built_in">GetActiveTargetPlatforms</span>();</span><br><span class="line">		<span class="comment">// Cache for all the shader formats that the cooking target requires</span></span><br><span class="line">		<span class="keyword">for</span> (int32 FormatIndex = <span class="number">0</span>; FormatIndex &lt; Platforms.<span class="built_in">Num</span>(); FormatIndex++)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">BeginCacheForCookedPlatformData</span>(Platforms[FormatIndex]);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Engine\Source\Runtime\Engine\Private\StaticMesh.cpp</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UStaticMesh::PostLoad</span><span class="params">()</span>  </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="comment">//++[lipengzha] cmdlet option for disable cook in PostLoad</span></span><br><span class="line">	<span class="type">bool</span> bNoPostLoadCacheDDC = FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;NoPostLoadCacheDDC&quot;</span>));  </span><br><span class="line">	<span class="keyword">if</span>(!bNoPostLoadCacheDDC)  </span><br><span class="line">	&#123;      </span><br><span class="line">		<span class="built_in">CacheDerivedData</span>();  </span><br><span class="line">	&#125;   </span><br><span class="line">	<span class="comment">//--[lipengzha]  </span></span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2022-11-29-Update-v78-0"><a href="#2022-11-29-Update-v78-0" class="headerlink" title="2022.11.29 Update v78.0"></a>2022.11.29 Update v78.0</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v78.0">Release v78.0</a></p>
+<blockquote>
+<p><strong>注意</strong>：因为UE5仍在早期阶段，Epic每次更新对引擎的变动挺大。所以，HotPatcher对UE5的支持只兼容最新引擎版本，暂不考虑UE5其他版本的兼容性（如UE5 EA/EA2/5.0.3等），请升级至UE5的最新版本或继续使用<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v77.0">v77.0</a>。<strong>UE4.x</strong>可更新插件的最新版本。<br><strong>特殊说明</strong>：目前暂未适配对UE5 <strong>World Partition</strong>的支持，不要用于打包该类型地图。</p>
+</blockquote>
+<ul>
+<li>支持UE5.1.0（UE5的先前版本不再支持）</li>
+<li>修复Patch开启PreCachePlatformData的问题</li>
+<li>修复在Ediror中Cook因GC导致的Crash</li>
+<li>修复Commandlet流程执行卡住的问题</li>
+<li>优化跨版本兼容性</li>
+<li>LICENSE更新，详见<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher#hotpatcher">README</a></li>
+</ul>
+<h4 id="2022-10-26-Update-v77-0"><a href="#2022-10-26-Update-v77-0" class="headerlink" title="2022.10.26 Update v77.0"></a>2022.10.26 Update v77.0</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v77.0">Release v77.0</a></p>
+<ul>
+<li><p>重构插件在UE5中的Cook机制</p>
+</li>
+<li><p>开启PackageTracker时ForceSkip失效的情况 </p>
+</li>
+<li><p>UE5中对目录扫描的问题(<code>/All/Game</code>)</p>
+</li>
+<li><p>修复目录的资源依赖分析问题</p>
+</li>
+<li><p>优化资源扫描，支持强制忽略某个资源</p>
+</li>
+<li><p>支持自定义保存的Cooked目录</p>
+</li>
+<li><p>Cook Cluster计数</p>
+</li>
+<li><p>优化Log输出</p>
+</li>
+<li><p>修复跨引擎版本的兼容性问题</p>
+</li>
+<li><p>Chunk不包含文件从Error改为Warning</p>
+</li>
+<li><p>修复部分HashCaculator未传递问题</p>
+</li>
+<li><p>细节修复与扩展性提升</p>
+</li>
+<li><h4 id="2022-09-19-Update-v76-3"><a href="#2022-09-19-Update-v76-3" class="headerlink" title="2022.09.19 Update v76.3"></a>2022.09.19 Update v76.3</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v76.3">Release v76.2</a></p>
+</li>
+<li><p>支持UE5.0.3引擎</p>
+</li>
+<li><p>优化分析变动材质的MaterialInstance进包（<code>bAnalysisMaterialInstance</code>）</p>
+</li>
+<li><p>修复一直启用GenerateGlobalAssetRegistry的问题</p>
+</li>
+<li><p>支持从<code>/Script/UnrealEd.ProjectPackagingSettings</code>下读取<code>bSkipEditorContent</code>控制是否忽略<code>/Engine/Editor*</code>和<code>/Engine/VREditor/</code>下的资源。</p>
+</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220919115524.webp"></p>
+<h4 id="2022-09-01-Update-v76-2"><a href="#2022-09-01-Update-v76-2" class="headerlink" title="2022.09.01 Update v76.2"></a>2022.09.01 Update v76.2</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v76.2">Release v76.2</a></p>
+<ul>
+<li>修复Not-uasset文件的diff差异时未计算HASH的问题</li>
+<li>修复导出Release时未计算not-uasset文件HASH问题</li>
+<li>修复FReleasePakParser中未计算文件HASH问题</li>
+<li>修复CryptoKeys文件未执行ReplaceMark</li>
+<li>支持给not-uasset目录添加通配符，只会添加匹配的文件</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20220801113102.webp"></p>
+<ul>
+<li>修复bAnalysisFilterDependencies失效的问题</li>
+<li>开启<code>bImprtProjectSettings</code>时，若只有一个平台，则把所有文件添加至该平台，若有多个平台，则添加至AllPlatforms</li>
+<li>针对PaperSprite的扫描优化，当PaperSprite配置AtlasGroups时忽略SourceTexture进包</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220831114930.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220831115134.webp"></p>
+<ul>
+<li>修复Toolbar被隐藏的问题，若想要全局屏蔽可以在<code>ProjectDefinitions</code>中添加<code>DISABLE_PLUGIN_TOOLBAR_MENU</code>宏</li>
+</ul>
+<h4 id="2022-07-28-Update-v76-1"><a href="#2022-07-28-Update-v76-1" class="headerlink" title="2022.07.28 Update v76.1"></a>2022.07.28 Update v76.1</h4><p>更新地址：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v76.1">Release v76.1</a></p>
+<ol>
+<li>支持UMultiCookScheduler_MatCulster的Class过滤 </li>
+<li>避免在CookPackage里通过反射获取枚举值（ParallelFor Crash）</li>
+<li>修复FHotPatcherActionManager的IsActiveAction问题</li>
+<li>optimize GetAssetPackageGUID</li>
+<li>支持ImportProjectSettings/HotPatcherAssetManager</li>
+<li>chunk中支持ForceSkip</li>
+<li>4.21禁用RTTI实现</li>
+<li>添加CmdHandler模块</li>
+<li>跨版本引擎兼容性问题修复</li>
+<li>修复一些crash问题</li>
+<li>停止支持ByOriginal的Cook模式（勾选<code>bCookPatchAssets</code>即可）</li>
+<li>新Mod支持</li>
+<li>支持第三方Mod开发</li>
+<li>优化代码组织方式</li>
+</ol>
+<h4 id="2022-03-31-Update-v76-0"><a href="#2022-03-31-Update-v76-0" class="headerlink" title="2022.03.31 Update v76.0"></a>2022.03.31 Update v76.0</h4><ul>
+<li>支持World Composition</li>
+<li>修复跨引擎版本的兼容性问题</li>
+<li>默认开启<code>bCookPatcherAssets</code></li>
+<li>优化代码、修复4.27中的编译问题</li>
+<li>支持非侵入式给HotPatcher开发模块</li>
+</ul>
+<p>在<code>HotPatcher/Mods</code>下，可以基于HotPatcher二次开发新的打包和资源管理模式，充分利用HotPatcher的框架功能，能够拓展更多的功能：</p>
+<ul>
+<li>资源分析</li>
+<li>打包</li>
+<li>资源扫描、管理、审计</li>
+<li>多进程Cook</li>
+<li>不同形式的热更新方式</li>
+</ul>
+<p>等等，根据业务的实际需求实现真正的定制化。</p>
+<h5 id="模块扩展示例"><a href="#模块扩展示例" class="headerlink" title="模块扩展示例"></a>模块扩展示例</h5><p>uplugin中添加HotPatcher的插件依赖：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;Plugins&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HotPatcher&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+<p>在build.cs中添加模块依赖：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PublicDependencyModuleNames.AddRange(<span class="keyword">new</span> <span class="built_in">string</span>[]&#123;</span><br><span class="line">    <span class="string">&quot;HotPatcherRuntime&quot;</span>,</span><br><span class="line">    <span class="string">&quot;HotPatcherCore&quot;</span>,</span><br><span class="line">    <span class="string">&quot;HotPatcherEditor&quot;</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在模块的<code>StartupModule</code>中即可注册到HotPatcher中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">THotPatcherTemplateHelper::<span class="built_in">AppendEnumeraters</span>&lt;EHotPatcherCookActionMode&gt;(TArray&lt;FString&gt;&#123;<span class="built_in">TEXT</span>(<span class="string">&quot;ByMultiProcess&quot;</span>)&#125;);</span><br><span class="line"><span class="function">FHotPatcherAction <span class="title">MultiCookerAction</span></span></span><br><span class="line"><span class="function"><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  TEXT(<span class="string">&quot;Cooker&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  LOCTEXT(<span class="string">&quot;ByMultiProcess&quot;</span>, <span class="string">&quot;ByMultiProcess&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  LOCTEXT(<span class="string">&quot;MultiCookerActionHint&quot;</span>, <span class="string">&quot;Use multi-process Cook Content&quot;</span>),</span></span></span><br><span class="line"><span class="params"><span class="function">  FSlateIcon(),</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="literal">nullptr</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">  CREATE_ACTION_WIDGET_LAMBDA(SMultiCookerPage,TEXT(<span class="string">&quot;ByMultiProcess&quot;</span>))</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>;</span><br><span class="line">FHotPatcherActionManager::<span class="built_in">Get</span>().<span class="built_in">RegisteHotPatcherAction</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Cooker&quot;</span>),<span class="built_in">TEXT</span>(<span class="string">&quot;ByMultiProcess&quot;</span>),MultiCookerAction);</span><br></pre></td></tr></table></figure>
+<p>效果：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20220331164012.webp"></p>
+<p>基于HotPatcher的核心功能，可以根据需求定制化界面、拓展新功能。</p>
+<h4 id="2022-02-15-Update-v75-2"><a href="#2022-02-15-Update-v75-2" class="headerlink" title="2022.02.15 Update v75.2"></a>2022.02.15 Update v75.2</h4><p>Release HotPacther <a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v75.2">v75.2</a></p>
+<ol>
+<li>修复GIsRequestingExit警告</li>
+<li>Commandlet支持引擎Tick</li>
+<li>支持特定资源类型的Cook/Ignore</li>
+<li>支持GCookLog控制更多的Cook日志</li>
+<li>支持导出Cook过程中进程加载的所有资源</li>
+<li>修复开启<code>CUSTOM_ASSET_GUID</code>时的编译错误</li>
+<li>修复派生类列表问题</li>
+<li>支持CookClassesMode</li>
+<li>修复Filter的路径匹配问题导致的资源进入不同的Pak</li>
+<li>修复Trace file的路径问题</li>
+<li>兼容UE4.21</li>
+</ol>
+<h4 id="2022-01-09-Update-v75-1"><a href="#2022-01-09-Update-v75-1" class="headerlink" title="2022.01.09 Update v75.1"></a>2022.01.09 Update v75.1</h4><p>Release HotPatcher <a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v75.1">v75.1</a>!</p>
+<ul>
+<li>Fix memory leak when serializing asset registry</li>
+<li>Fix Info.IndexHash.Hash Compiler error in 4.23</li>
+</ul>
+<h4 id="2022-01-26-Update-v75-0"><a href="#2022-01-26-Update-v75-0" class="headerlink" title="2022.01.26 Update v75.0"></a>2022.01.26 Update v75.0</h4><blockquote>
+<p>本次更新包含大量的内容，修正了一些问题和重构部分功能，提升了跨引擎版本的兼容性。</p>
+</blockquote>
+<ul>
+<li>重构了Cook流程，并支持了几种不同的Cook模式，加速Cook过程</li>
+<li>统一编辑器Cook、Patch流程、MultiCooker使用的Cook流程</li>
+<li>移除CookManager支持</li>
+<li>支持Chunk内资源编译的shader打包，之前是整个Patch打包单个ShaderLib，并且支持给每个Chunk自定义ShaderLib路径、命名</li>
+<li>支持排除资源类型</li>
+<li>修复IsSkipAsset在ParallelFor Cooking过程中的Crash问题</li>
+<li>Cook前清理旧Cooked文件</li>
+<li>添加了大量的Profiling Tag进行性能分析</li>
+<li>在修改引擎模式下，可以控制每个Cooker进程拉起的ShaderCompileWorker数量，避免操作系统进行频繁进程切换开销</li>
+<li>支持Patch版本号</li>
+<li>创建HotPatcherCore模块，与HotPatcherEditor模块分离，Editor只有编辑器部分逻辑</li>
+<li>修复序列化AssetRegistry的Crash问题</li>
+<li>修复Sandbox路径转换问题</li>
+<li>修复UE4Editor-cmd在非Development及32位模式下的问题</li>
+<li>清理冗余代码、接口、优化流程</li>
+<li>提升引擎兼容性，最低兼容至4.22（无ContentBrowser菜单相关功能）</li>
+</ul>
+<h4 id="2022-01-03-Update-v74"><a href="#2022-01-03-Update-v74" class="headerlink" title="2022.01.03 Update v74"></a>2022.01.03 Update v74</h4><ul>
+<li>重构依赖分析模块，性能提升一个数量级（测试2w资源量提升约70倍）</li>
+<li>重构了从Paklist/Pak文件导入Release信息的模块</li>
+<li>优化实现，清理了大量冗余接口，整理代码组织方式</li>
+<li>移除<code>AssetManagerEx</code>模块，将<code>UFLibAssetManagerHelper</code>函数库移入<code>HotPatcherRuntime</code></li>
+<li>修复4.25及之后的引擎版本中，由于引擎接口变动导致的<code>RecursiveWidgetTree</code>失效</li>
+<li>修复当开启基础版本比对时，<code>bRecursiveWidgetTree</code>分析不到部分父级UMG的情况</li>
+<li>Patch支持PackageTracker，用来追踪不在依赖关系中但在ImportTable中的的资源，如动画序列的<code>BoneCompressionSettings</code>设置，详见<a href="https://imzlp.com/posts/22570/#Cook%E6%97%B6%E7%9A%84%E4%BE%9D%E8%B5%96%E5%8A%A0%E8%BD%BD">Cook时的依赖加载</a>（<strong>注意</strong>：在编辑器中只有资源第一次加载或以Standalone模式执行时生效）。</li>
+</ul>
+<p><code>bRecursiveWidgetTree</code>的规则为：</p>
+<ol>
+<li>若没有指定基础版本，则默认递归分析Patch中UMG资源的所有引用它的父级UMG控件</li>
+<li>若指定基础版本，只会分析基础包中存在的父级UMG控件，避免带入非必要资源</li>
+</ol>
+<p>资源依赖分析优化数据：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211229162625.webp"></p>
+<p>同时对Release的导出也有巨大提升，2w资源量：</p>
+<ul>
+<li>旧版本导出release总耗时568.635s</li>
+<li>新版本总耗时57.28s</li>
+</ul>
+<h4 id="2021-12-27-Update-v73"><a href="#2021-12-27-Update-v73" class="headerlink" title="2021.12.27 Update v73"></a>2021.12.27 Update v73</h4><ul>
+<li>支持CUSTOM ASSET HASH计算</li>
+<li>替换部分即将在UE4.27/UE5中废弃的API</li>
+<li>Release添加bBackupProjectConfig，支持备份基础包的Config目录</li>
+<li>导出Release时支持<code>NoCompileShader</code>，避免因为加载资源导致的Shader编译，加速导出。</li>
+<li>优化代码，替换部分FString to FName、资源依赖扫描优化</li>
+<li>修复PackageTracker潜在的crash问题</li>
+<li>右键CookAndPakAction支持选择是否分析资源依赖</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211222141646.webp"></p>
+<blockquote>
+<p><strong>注意</strong>：在目前的版本中，获取uasset的HASH值是通过获取引擎内的<code>PackageGUID</code>，但是该属性即将在UE4.27和UE5中废弃，所以我添加了自定义的资源HASH计算支持，会计算原始的uasset文件的MD5值，用来替代即将废弃的<code>PackageGUID</code>（目前插件中并未开启，等UE正式废弃时会替换），对插件功能并无影响，但使用<code>PackageGUID</code>和通过计算MD5的<code>Release*.json</code>，不能通用，不然会造成全部的资源都具有差异。</p>
+</blockquote>
+<p>想要现在就开启的话，可以在<code>HotPatcherRuntime.build.cs</code>中将<code>bCustomAssetGUID=true</code>即可。</p>
+<h4 id="2021-12-14-Update-v72"><a href="#2021-12-14-Update-v72" class="headerlink" title="2021.12.14 Update v72"></a>2021.12.14 Update v72</h4><p>Github上的Release记录：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/releases/tag/v72">v72</a></p>
+<ul>
+<li>修复Mac的SVersionUpdater的Crash问题</li>
+<li>修复Mac Cook时开启share shader code异常</li>
+<li>修复在Mac上的编译错误</li>
+<li>优化Shader收集流程，保证在Cook完毕之后才关闭Shader收集</li>
+<li>废弃<code>bIncludeAssetRegistry</code>/<code>bIncludeGlobalShaderCache</code>/<code>bIncludeShaderBytecode</code>三个选项，有更好的替代实现，详见<a href="https://imzlp.com/posts/15810/">UE热更新：Shader 更新策略</a>。</li>
+</ul>
+<blockquote>
+<p>最近在做一个大更新，后续可以使用HotPatcher替换UE的Cook和分包机制，实现多进程甚至多机器的Cook任务分配，在基础包流程就可以使用HotPatcher进行管理，并加速UE的打包过程。</p>
+</blockquote>
+<p>Mac上Cook IOS，左边是UE默认CookCommandlet，右边是HotPatcher的Cook，都开启了ShareShaderCode：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211209172955.webp"></p>
+<h4 id="2021-11-21-Update-v71"><a href="#2021-11-21-Update-v71" class="headerlink" title="2021.11.21 Update v71"></a>2021.11.21 Update v71</h4><ul>
+<li>支持ue5-main分支的ZenLoader序列化机制</li>
+<li>从4.24起在Cook时开始默认开启<code>WITH_PACKAGE_CONTEXT</code></li>
+<li><code>PackageContexts</code>相关代码移入HotPactherEditor模块</li>
+<li>右键菜单的Cook and Pak Action支持PackageContext</li>
+<li>修复UE5中右键菜单执行失效的问题</li>
+<li>插件配置提供完整的PatchSettings模板</li>
+<li>支持Binaries Patch使用项目设置中的key进行解包</li>
+<li>优化代码</li>
+</ul>
+<blockquote>
+<p>目前ue5-main和UE5 EA版本已经有较大差异，引擎内部的相关实现细节尤其是序列化相关产生了很多变化，目前用了一些trick方法实现4/5的兼容，等UE5正式版出来之后，如果要同时兼容4/5有非常大差异会考虑单独给UE5一个开发分支。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211122000317.webp"></p>
+<h4 id="2021-11-19-Update-v70"><a href="#2021-11-19-Update-v70" class="headerlink" title="2021.11.19 Update v70"></a>2021.11.19 Update v70</h4><ul>
+<li>支持打包GameFeature/插件，在UE4.27/UE5中默认开启，详见文章：<a href="https://imzlp.com/posts/17658/">UE5：Game Feature预研</a></li>
+<li>重构Pak加密模块，支持从项目设置导入加密配置，并且与基础包加密方式对齐</li>
+<li>支持从<code>Project Settings</code>-<code>Crypto</code>的配置生成Crypto.json</li>
+<li>修复值类型的未初始化警告</li>
+<li>优化代码</li>
+</ul>
+<blockquote>
+<p>注意：UnrealPak通过<code>-encryptionini</code>指定使用项目Ini配置的代码有Bug，会导致Crash，我的实现中完全抛弃了Ini，统一使用Crypto.jon</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211118111836.webp"></p>
+<p>打包插件包含的文件：</p>
+<ul>
+<li>插件中的所有资源</li>
+<li>插件的uplugin</li>
+<li>插件中资源生成的AssetRegistry</li>
+<li>插件资源Cook时生成Shader Library</li>
+<li>插件<code>Config/</code>目录</li>
+</ul>
+<p>并封装了运行时库：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">IPluginManager::<span class="built_in">Get</span>().<span class="built_in">AddToPluginsList</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;../../../BlankExample/Plugins/GameFeatures/GF_Feature/GF_Feature.uplugin&quot;</span>));</span><br><span class="line">UFlibPakHelper::<span class="built_in">LoadAssetRegistry</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;GF_Feature&quot;</span>),<span class="built_in">TEXT</span>(<span class="string">&quot;../../../BlankExample/Plugins/GameFeatures/GF_Feature/&quot;</span>));</span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibPakHelper::LoadShaderbytecode</span><span class="params">(TEXT(<span class="string">&quot;GF_Feature&quot;</span>),TEXT(<span class="string">&quot;../../../BlankExample/Plugins/GameFeatures/GF_Feature/&quot;</span>))</span></span>;	</span><br></pre></td></tr></table></figure>
+
+<h4 id="2021-11-15-Update-v69"><a href="#2021-11-15-Update-v69" class="headerlink" title="2021.11.15 Update v69"></a>2021.11.15 Update v69</h4><ul>
+<li>支持给Patch中的资源生成AssetRegistry（会从项目配置中读取配置：<a href="https://imzlp.com/posts/19135/#%E6%8E%A7%E5%88%B6AssetRegistry%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96">控制 AssetRegistry 的序列化</a>）</li>
+<li>修复在UE5上的编译错误</li>
+<li>修复Slate、un-initialization vars警告</li>
+<li>Cook资源由Patch All变为Cook Chunk</li>
+<li>修复UE4.26+默认开启shader deterministic但未指定GameOpenOrder产生的错误</li>
+<li>支持版本号检测提示更新</li>
+</ul>
+<p>Patch中的AssetRegistry支持两种模式：<code>PATCH</code>/<code>PER_CHUNK</code>，区别在于：</p>
+<ul>
+<li><code>PATCH</code>：本Patch中只会生成一个AssetRegistry.bin，打包至0号Chunk中，其他的Chunk中不存在；</li>
+<li><code>PER_CHUNK</code>：如果Patch中有拆分Chunk，可以根据每个CHUNK中的资源创建出<code>CHUNK_NAME_AssetRegistry.bin</code>并只打包至Chunk的Pak中；</li>
+</ul>
+<p>能够自定义AssetRegistry.bin的Mount Point，并且可以自定义AssetRegistry的命名规则，默认是<code>[CHUNK_NAME]_AssetRegistry.bin</code>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211115190506.webp"></p>
+<p>插件版本号检测：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211116084223.webp"></p>
+<h4 id="2021-10-29-Update"><a href="#2021-10-29-Update" class="headerlink" title="2021.10.29 Update"></a>2021.10.29 Update</h4><ul>
+<li>支持Patch中的Shared Shader bytecode</li>
+</ul>
+<p>在Cook中收集Patch中所有的Shader并单独生成ShaderBytecode，实现Shader的增量更新。详情见文章：<a href="https://imzlp.com/posts/15810/#%E6%9B%B4%E5%A5%BD%E7%9A%84%E6%96%B9%E5%BC%8F">UE热更新：Shader更新策略#更好的方式</a></p>
+<h4 id="2021-08-06-Update"><a href="#2021-08-06-Update" class="headerlink" title="2021.08.06 Update"></a>2021.08.06 Update</h4><ul>
+<li>支持BinariesPatch模式匹配</li>
+<li>能够匹配/忽略文件大小、后缀</li>
+<li>修复从Pak中解压文件问题</li>
+<li>优化代码</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210806191137.webp"></p>
+<h4 id="2021-08-05-Update"><a href="#2021-08-05-Update" class="headerlink" title="2021.08.05 Update"></a>2021.08.05 Update</h4><ul>
+<li>打包时自动为各个平台添加<code>-AlignForMemoryMapping</code>参数，解决IOS的Crash问题。</li>
+</ul>
+<h4 id="2021-07-30-Update"><a href="#2021-07-30-Update" class="headerlink" title="2021.07.30 Update"></a>2021.07.30 Update</h4><ul>
+<li>支持从Pak文件中导入基础包文件列表，与打包Pak的ResponseFile可以互为替代。</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210730171800.webp"></p>
+<h4 id="2021-07-21-Update"><a href="#2021-07-21-Update" class="headerlink" title="2021.07.21 Update"></a>2021.07.21 Update</h4><ul>
+<li>基于二进制patch已经初步实现第一版</li>
+<li>给HotPatcher预留了BinariesPatch方案的实现接口（diff/patch的实现是另外一个插件，需要修改引擎，暂不开源，有兴趣的可以更新dev分支代码（已合并至主干），只需要继承IBinariesPatchFeature的接口实现一个二进制Diff/Patch的Feature，即可用插件来打包资源二进制的补丁）<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210721163505.webp"></li>
+</ul>
+<h4 id="2021-07-16-Update"><a href="#2021-07-16-Update" class="headerlink" title="2021.07.16 Update"></a>2021.07.16 Update</h4><ul>
+<li>支持对PrimaryAssetLabel管理的资源进行CookAndPak</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210716165318.webp"></p>
+<h4 id="2021-07-14-Update"><a href="#2021-07-14-Update" class="headerlink" title="2021.07.14 Update"></a>2021.07.14 Update</h4><ul>
+<li>支持从Primary AssetLabel导入Patch或Chunk的配置</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210715170433.webp"></p>
+<h4 id="2021-07-08-Update"><a href="#2021-07-08-Update" class="headerlink" title="2021.07.08 Update"></a>2021.07.08 Update</h4><ul>
+<li>修复crash问题</li>
+</ul>
+<h4 id="2021-07-02-Update"><a href="#2021-07-02-Update" class="headerlink" title="2021.07.02 Update"></a>2021.07.02 Update</h4><ul>
+<li>忽略对EditorOnly资源的检查</li>
+<li>增加Cook EditorOnly的失败提示及Log</li>
+</ul>
+<h4 id="2021-06-28-Update"><a href="#2021-06-28-Update" class="headerlink" title="2021.06.28 Update"></a>2021.06.28 Update</h4><blockquote>
+<p><code>Prject Settings</code>-<code>Plugins</code>-<code>HotPatcher</code>可查看插件的编辑器配置参数。</p>
+</blockquote>
+<ul>
+<li>CookAndPak与配置页面打包的流程统一</li>
+<li>CookAndPak支持同时选择目录和单个资源</li>
+<li>CookAndPak支持StandaloneMode运行</li>
+<li>可选保存CookAndPak的PatchConfig配置</li>
+<li>优化Patch流程，保证所有的资源Cook完毕之后才进行打包</li>
+<li>优化插件配置项</li>
+<li>对无效资源的检测添加保护，不会导致crash</li>
+<li>提供Preset功能，可以把在HotPatcher中配置的参数添加至预设配置（AddToPreset）</li>
+<li>ContentBrowser右键菜单支持Preset任务执行</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210629100730.webp" alt="AddToPreset"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210629095941.webp" alt="配置预设"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210629100018.webp" alt="CookAndPak"></p>
+<h4 id="2021-06-24-Update"><a href="#2021-06-24-Update" class="headerlink" title="2021.06.24 Update"></a>2021.06.24 Update</h4><ul>
+<li>修复CookAndPak的错误，在打包时保证已经Cook完成。</li>
+<li>支持PakExternalAction选项</li>
+</ul>
+<p>支持在编辑器右键菜单中打包外部文件，<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210624211012.webp"></p>
+<p>需要在<code>Project Settings</code>-<code>Plugins</code>-<code>Hot Patcher</code>中预先配置：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210624210856.webp"></p>
+<h4 id="2021-06-15-Update"><a href="#2021-06-15-Update" class="headerlink" title="2021.06.15 Update"></a>2021.06.15 Update</h4><ul>
+<li>优化代码，去除不需要的流程</li>
+<li>支持右键菜单<code>CookAndPak</code>开启加密</li>
+</ul>
+<p>在<code>Project Settings</code>-<code>Plugins</code>-<code>Hot Patcher</code>中进行设置：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210615162453.webp"></p>
+<blockquote>
+<p>注意：在目前(2021.06.15)UE5 EA引擎中存在Bug，不能开启这个功能，不然会Crash。</p>
+</blockquote>
+<h4 id="2021-06-09-Update"><a href="#2021-06-09-Update" class="headerlink" title="2021.06.09 Update"></a>2021.06.09 Update</h4><ul>
+<li>支持UE4.27</li>
+</ul>
+<h4 id="2021-06-06-Update"><a href="#2021-06-06-Update" class="headerlink" title="2021.06.06 Update"></a>2021.06.06 Update</h4><ul>
+<li>修复导出Patch的release.josn中不包含Add/Modify的文件信息</li>
+</ul>
+<h4 id="2021-06-04-Update"><a href="#2021-06-04-Update" class="headerlink" title="2021.06.04 Update"></a>2021.06.04 Update</h4><ul>
+<li>支持bCreateDefaultChunk，当拆分chunk时，如果有些文件在手动配置的Chunk中不存在，则默认创建一个Chunk用于存储它们。</li>
+</ul>
+<h4 id="2021-06-03-Update"><a href="#2021-06-03-Update" class="headerlink" title="2021.06.03 Update"></a>2021.06.03 Update</h4><ul>
+<li>UE4.26-UE5支持Io Store的Patch生成</li>
+<li>修复Paklist分析器的bug</li>
+<li>优化部分代码</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210603204952.webp"></p>
+<p><strong>注意</strong>：支持Io Store生成Patch仅支持UE4.26-UE5，目前UE对Io Store的支持仍有bug，在打Patch时有几点需要注意：</p>
+<ul>
+<li>只能使用HotCooker集成的Cook，不能开启Patch内的<code>bCookPatchAssets</code></li>
+<li>必须要指定基础包的<code>global.utoc</code></li>
+<li>UE5默认开启<code>bAsyncLoadingThreadEnabled</code>，在加载Shader时会存在问题，导致材质丢失，关闭即可恢复（应该是IoStore早期版本的bug）</li>
+<li>指定基础包内的其他<code>utoc</code>（<code>GenerateDiffPatch</code>/<code>PatchSource</code>）（可选）</li>
+<li>当patch包含多个chunk时必须开启多个进程来执行Io Store的生成，单个进程生成多个会Crash（UE的Bug）</li>
+</ul>
+<p>如果开启了<code>bCookPatchAssets</code>则加载Patch会有以下错误：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210603204800.webp"><br>在开启IoStore后引擎内Cook和插件提供的Cook的机制有所不同，有时间再详细分析看，看是否可以支持<code>bCookPatchAssets</code>。</p>
+<h4 id="2021-05-27-Update"><a href="#2021-05-27-Update" class="headerlink" title="2021.05.27 Update"></a>2021.05.27 Update</h4><ul>
+<li>修复Patch时生成的Release.json中BaseVersion/VersionId/Date信息缺失问题</li>
+<li>支持EA版UE5</li>
+</ul>
+<blockquote>
+<p>不过需要注意的是UE5默认开启了IO Store，目前插件并不支持IO Store的打包，所以可以暂时关闭UE5的 IO Store，不然pak无法挂载，准备有时间给插件做支持。看来UE5的的资源IO压力确实很大，从Oodle到IO Store的引入，应该都是在为支持UE5的资源量暴涨做铺垫。</p>
+</blockquote>
+<h4 id="2021-05-20-Update"><a href="#2021-05-20-Update" class="headerlink" title="2021.05.20 Update"></a>2021.05.20 Update</h4><ul>
+<li>支持直接Cook和打包在当前编辑器中创建的资源，对于新创建资源的打包无需重启编辑器了。</li>
+<li>梳理Patch/Release，拆分流程步骤，下一步实现多线程版本。</li>
+</ul>
+<h4 id="2021-05-18-Update"><a href="#2021-05-18-Update" class="headerlink" title="2021.05.18 Update"></a>2021.05.18 Update</h4><ul>
+<li>整理Release/Patch/ShaderPatch的通用代码</li>
+<li>优化配置逻辑，生成时不会变动配置中的<code>[PROJECTDIR]</code>等标记符，在执行任务时替换</li>
+<li>统一模式间的通用选项</li>
+<li>Advanced下增加<code>bScanCacheOptimize</code>，可以开启资源依赖扫描缓存优化</li>
+<li>增加Relase/Patch输出任务摘要</li>
+</ul>
+<p>Release的摘要：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">2021-05-19 07:38:31:642 : ---------------------HotPatcher Release Summary---------------------</span><br><span class="line">2021-05-19 07:38:31:642 : New Release Asset Number: 7591</span><br><span class="line">2021-05-19 07:38:31:642 : ======== IOS Non-Assets =========</span><br><span class="line">2021-05-19 07:38:31:643 : External Files: 82</span><br><span class="line">2021-05-19 07:38:31:643 : =================================</span><br><span class="line">2021-05-19 07:38:31:643 : ======== WindowsNoEditor Non-Assets =========</span><br><span class="line">2021-05-19 07:38:31:643 : External Files: 81</span><br><span class="line">2021-05-19 07:38:31:643 : =============================================</span><br><span class="line">2021-05-19 07:38:31:643 : ======== Android_ASTC Non-Assets =========</span><br><span class="line">2021-05-19 07:38:31:643 : External Files: 85</span><br><span class="line">2021-05-19 07:38:31:643 : ==========================================</span><br><span class="line">2021-05-19 07:38:31:643 : ======== AllPlatforms Non-Assets =========</span><br><span class="line">2021-05-19 07:38:31:643 : External Files: 1673</span><br><span class="line">2021-05-19 07:38:31:643 : ==========================================</span><br></pre></td></tr></table></figure>
+<p>Patch的摘要：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">LogMissionNotificationProxy: -----------------HotPatcher Patch Summary-----------------</span><br><span class="line">LogMissionNotificationProxy: =================</span><br><span class="line">LogMissionNotificationProxy: Add Asset Number: 6719</span><br><span class="line">LogMissionNotificationProxy: Modify Asset Number: 49</span><br><span class="line">LogMissionNotificationProxy: Delete Asset Number: 0</span><br><span class="line">LogMissionNotificationProxy: ======== AllPlatforms Non-Assets =========</span><br><span class="line">LogMissionNotificationProxy: Add Non-Asset Number: 975</span><br><span class="line">LogMissionNotificationProxy: Modify Non-Asset Number: 0</span><br><span class="line">LogMissionNotificationProxy: Delete Non-Asset Number: 0</span><br><span class="line">LogMissionNotificationProxy: ==========================================</span><br><span class="line">LogMissionNotificationProxy: ----------------HotPatcher Release Summary----------------</span><br><span class="line">LogMissionNotificationProxy: New Release Asset Number: 6719</span><br><span class="line">LogMissionNotificationProxy: ======== AllPlatforms Non-Assets =========</span><br><span class="line">LogMissionNotificationProxy: External Files: 975</span><br><span class="line">LogMissionNotificationProxy: ==========================================</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：本次修改有些配置属性的名字产生了变化，<code>SavePath</code>和<code>bStorageConfig</code>，对于已经导出的配置需要修改下这两个配置名字。</p>
+</blockquote>
+<h4 id="2021-05-17-Update"><a href="#2021-05-17-Update" class="headerlink" title="2021.05.17 Update"></a>2021.05.17 Update</h4><ul>
+<li>修复4.26的警告/4.22的编译错误</li>
+<li>添加GScanCacheOptimize的选项（默认开启）</li>
+<li>添加Patch/Release/ShaderPatch按钮的ToolTips，显示哪些必要选项没有配置。</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/image-20210517110832690.webp" alt="Patch"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210517111314.webp" alt="Release"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210517112734.webp" alt="Shader Patch"></p>
+<h4 id="2021-05-13-Update"><a href="#2021-05-13-Update" class="headerlink" title="2021.05.13 Update"></a>2021.05.13 Update</h4><ul>
+<li>修复crash问题</li>
+<li>SavePath/BaseVersion等路径支持标记符替换</li>
+</ul>
+<p>可选标记为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[ENGINEDIR]</span><br><span class="line">[ENGINE_CONTENT_DIR]</span><br><span class="line">[PROJECTDIR]</span><br><span class="line">[PROJECT_CONTENT_DIR]</span><br><span class="line">[PROJECT_SAVED_DIR]</span><br><span class="line">[PROJECT_CONFIG_DIR]</span><br></pre></td></tr></table></figure>
+<p>在执行时会替换为真正的本地目录，配置中所有的路径都可以通过标记符来指定相对路径了，能够导出完全通用的配置文件。</p>
+<ul>
+<li>优化依赖扫描的效率</li>
+</ul>
+<p>同一项目的相同patch配置：</p>
+<ol>
+<li>用之前的插件版本，分析依赖用了1m46s，优化后33s</li>
+<li>完整的patch时间从4:24s-&gt;2:40s（包含cook资源）</li>
+</ol>
+<p>插件中还有几处可以优化执行效率的地方，有时间再做。</p>
+<h4 id="2021-04-28-Update"><a href="#2021-04-28-Update" class="headerlink" title="2021.04.28 Update"></a>2021.04.28 Update</h4><p>为<code>BaseEngine.ini</code>中指定的<code>[Pak]</code>的<code>ExtensionsToNotUsePluginCompression</code>类型忽略<code>-compress</code>参数。</p>
+<figure class="highlight ini"><figcaption><span>BaseEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Pak]</span></span><br><span class="line">+<span class="attr">ExtensionsToNotUsePluginCompression</span>=uplugin</span><br><span class="line">+<span class="attr">ExtensionsToNotUsePluginCompression</span>=upluginmanifest</span><br><span class="line">+<span class="attr">ExtensionsToNotUsePluginCompression</span>=uproject</span><br><span class="line">+<span class="attr">ExtensionsToNotUsePluginCompression</span>=ini</span><br><span class="line">+<span class="attr">ExtensionsToNotUsePluginCompression</span>=icu</span><br><span class="line">+<span class="attr">ExtensionsToNotUsePluginCompression</span>=res</span><br></pre></td></tr></table></figure>
+<p>目的是，如果打包了这些类型的文件使用自动挂载，可能对应的压缩算法模块还没有启动，导致这些类型的文件加载失败，UE在打基础包时做了检测，插件中也做了相应支持。</p>
+<h4 id="2021-04-18-Update"><a href="#2021-04-18-Update" class="headerlink" title="2021.04.18 Update"></a>2021.04.18 Update</h4><ul>
+<li>支持编辑器右键Cook平台的白名单配置</li>
+<li>支持直接在编辑器中选中资源右键打包Pak</li>
+</ul>
+<p>在<code>Project Settings</code>-<code>Plugins</code>-<code>HotPatcher</code>具有配置选项：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210419105901.webp"></p>
+<p>当开启白名单时，编辑器中右键的平台只会有设置的选项：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210419110014.webp"></p>
+<p>右键菜单中新增了<code>Cook And Pak Actions</code>选项，可以右键选中多个资源，直接对选中资源进行Cook并打包成Pak，存储目录默认在<code>Saved/HotPatcher/Paks</code>中，可以通过配置修改。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210419165222.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210419110229.webp"></p>
+<h4 id="2021-03-25-Update"><a href="#2021-03-25-Update" class="headerlink" title="2021.03.25 Update"></a>2021.03.25 Update</h4><ul>
+<li>add bDeterministicShaderCodeOrder for 4.26+</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210325150000.webp"></p>
+<p><code>bDeterministicShaderCodeOrder</code>是位于<code>UProjectPackagingSettings</code>中声明，在4.26中加入，用来控制打包时Shader的存储顺序。</p>
+<figure class="highlight cpp"><figcaption><span>Editor/UnrealEd/Classes/Settings/ProjectPackagingSettings.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * With this option off, the shader code will be stored in the library essentially in a random order,</span></span><br><span class="line"><span class="comment"> * squarely the same in which the assets were loaded by the cooker. Enabling this will sort the shaders</span></span><br><span class="line"><span class="comment"> * by their hash, which makes the shader library more similar between the builds which can help patching, but</span></span><br><span class="line"><span class="comment"> * can adversely affect loading times.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">UPROPERTY</span>(config, EditAnywhere, Category = Packaging, meta = (EditCondition = <span class="string">&quot;bShareMaterialShaderCode&quot;</span>))</span><br><span class="line"><span class="type">bool</span> bDeterministicShaderCodeOrder;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2021-03-23-Update"><a href="#2021-03-23-Update" class="headerlink" title="2021.03.23 Update"></a>2021.03.23 Update</h4><ul>
+<li>修复在4.22上的编译错误</li>
+<li>增加HotRelease根据设置的paklist信息自动备份Metadata文件</li>
+</ul>
+<h4 id="2021-03-15-Update"><a href="#2021-03-15-Update" class="headerlink" title="2021.03.15 Update"></a>2021.03.15 Update</h4><ul>
+<li>增加Release/Patch备份Metadata目录的选项</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210315153529.webp" alt="Release Settings"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210315153409.webp" alt="Patch Settings"></p>
+<p>会把当前工程版本的Metadata目录拷贝至Release/Patch目录下（BackupMetadatas），可以方便管理DevelopmentAssetRegistry.bin和Shaderbytecode，可以用作版本的资产审计以及Shader Patch中。</p>
+<h4 id="2021-02-23-Update"><a href="#2021-02-23-Update" class="headerlink" title="2021.02.23 Update"></a>2021.02.23 Update</h4><ul>
+<li>ShaderPatch的文件生成提示</li>
+<li>ShaderPatch的Commandlet（<code>-run=HotShaderPatch</code>）</li>
+<li>修复Shader Patch的Reset Config错误</li>
+<li>代码优化</li>
+</ul>
+<p>4.25+生成ShaderPatch会Crash的解决方案：<a href="https://imzlp.com/notes/ue/#UE4-25%E4%B8%ADShaderPatch%E9%97%AE%E9%A2%98">UE4.25中ShaderPatch问题</a></p>
+<h4 id="2021-02-01-Update"><a href="#2021-02-01-Update" class="headerlink" title="2021.02.01 Update"></a>2021.02.01 Update</h4><ul>
+<li>修复勾选<code>Recursive Widget tree</code>时会stack overflow造成的crash，相关issues：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/issues/9">勾选recursive widget tree会几率栈溢出死循环，某些asset会必现。</a></li>
+</ul>
+<h4 id="2021-01-28-Update"><a href="#2021-01-28-Update" class="headerlink" title="2021.01.28 Update"></a>2021.01.28 Update</h4><ul>
+<li>修复DebugGame Editor运行时无法拉起新进程</li>
+<li>增加<code>bStandaloneMode</code>选项，可以控制是否拉起新进程执行任务（true会拉起新进程）</li>
+</ul>
+<h4 id="2021-01-22-Update"><a href="#2021-01-22-Update" class="headerlink" title="2021.01.22 Update"></a>2021.01.22 Update</h4><ul>
+<li>HotPatcher的Patch Commandlet可以指定平台</li>
+</ul>
+<p>通过<code>-AddPatchPlatforms=WindowsNoEditor,Android_ASTC,IOS</code>方式添加，多个平台使用<code>,</code>分隔。</p>
+<h4 id="2021-01-20-Update"><a href="#2021-01-20-Update" class="headerlink" title="2021.01.20 Update"></a>2021.01.20 Update</h4><ul>
+<li>基础包分Chunk的情况下，支持Release为某个平台添加多个paklist文件</li>
+</ul>
+<h4 id="2021-01-19-Update"><a href="#2021-01-19-Update" class="headerlink" title="2021.01.19 Update"></a>2021.01.19 Update</h4><ul>
+<li>支持通用的外部文件指定模式，可以解决在不同的项目路径之间使用通用的配置</li>
+</ul>
+<p>在指定外部文件/文件夹时可以使用<code>[PROJECTDIR]</code>在执行时会替换为真正的项目目录。</p>
+<p>可选的路径为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[ENGINEDIR]</span><br><span class="line">[ENGINE_CONTENT_DIR]</span><br><span class="line">[PROJECTDIR]</span><br><span class="line">[PROJECT_CONTENT_DIR]</span><br><span class="line">[PROJECT_SAVED_DIR]</span><br><span class="line">[PROJECT_CONFIG_DIR]</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意，在执行生产过程中会把真实的路径替换到当前的配置中（Patch和Release自动生成导出的配置文件都是绝对路径的，但是可以自己在编辑器内手动导出基于相对路径的配置文件）。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210119112031.webp"></p>
+<h4 id="2021-01-18-Update"><a href="#2021-01-18-Update" class="headerlink" title="2021.01.18 Update"></a>2021.01.18 Update</h4><ul>
+<li>Release/Patch的生成不阻塞Editor</li>
+<li>可以直接在Editor中看到Log</li>
+<li>统一UE的Notification的创建方式</li>
+</ul>
+<p>本次更新是把之前阻塞Editor的方式改成了拉起一个Commandlet的进程任务来执行，不会对当前的编辑器进程造成影响，与UE打包时相同，避免卡住Editor的焦虑感。</p>
+<h4 id="2021-01-14-Update"><a href="#2021-01-14-Update" class="headerlink" title="2021.01.14 Update"></a>2021.01.14 Update</h4><ul>
+<li>修复Cook Engine目录下插件资源时的路径错误</li>
+<li>byRelease支持命令行导入PlatformPakList</li>
+</ul>
+<p>添加方式为使用<code>-AddPlatformPakList=</code>，后面跟上平台名+PakList文件（可以支持多个文件，使用<code>+</code>分隔），多个平台可以使用逗号分隔。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-run=HotRelease -byPaklist=true -AddPlatformPakList=WindowsNoEditor+D:\PakList_FGame-WindowsNoEditor.txt -savepath.path=&quot;D:\\&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>三个Commandlet均支持替换Config中的参数</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210114164028.webp"></p>
+<ul>
+<li>HotRelease的Commandlet可以不指定config文件，直接指定值（需要指定导入paklist文件）</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20210114211217.webp"></p>
+<h4 id="2021-01-13-Update"><a href="#2021-01-13-Update" class="headerlink" title="2021.01.13 Update"></a>2021.01.13 Update</h4><ul>
+<li>修复Patch中包含插件资源的Cook失败</li>
+<li>修复Commandlet生成Patch加载不到资源</li>
+<li>一些其他优化</li>
+</ul>
+<h4 id="2021-01-11-Update"><a href="#2021-01-11-Update" class="headerlink" title="2021.01.11 Update"></a>2021.01.11 Update</h4><ul>
+<li>支持从项目中导入配置到Patch和Release的Setting中</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/hotpatcher-import-project-setting.webp"></p>
+<p><code>Project Settings</code>-<code>Packaging</code>-<code>Additional Asset Directories to Cook</code>会被添加到<code>AssetIncludeFilters</code>中。<br><code>Project Settings</code>-<code>Packaging</code>-<code>Directories to never cook</code>会被添加到<code>AssetIgnoreFilters</code>中。<br><code>Project Settings</code>-<code>Packaging</code>-<code>Additional Non-Asset Directories To Package</code>会被添加到<code>AddExternAssetsToPlatfotm</code>中（AllPlatform）。</p>
+<p>项目中<code>Config/DefaultEditor.ini</code>里的<code>AlwaysCookMaps</code>和<code>AllMaps</code>Section下配置的所有地图会被添加至<code>IncludeSpecifyAssets</code>中，并且会勾上<code>bAnalysisAssetDependencies</code>。</p>
+<h4 id="2021-01-08-Update"><a href="#2021-01-08-Update" class="headerlink" title="2021.01.08 Update"></a>2021.01.08 Update</h4><ul>
+<li>支持在ContentBrowser中添加目录到PatchSettings</li>
+<li>修复勾选CookAsset后通过Commnadlet生成Patch导致的<code>StaticFindObject</code>的crash错误</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LogWindows:Error:lllegal call to StaticFindObject() while serializing object data!</span><br></pre></td></tr></table></figure>
+
+<h4 id="2020-12-14-Update"><a href="#2020-12-14-Update" class="headerlink" title="2020.12.14 Update"></a>2020.12.14 Update</h4><ul>
+<li>添加UFlibPakReader函数库，可以实现在不Mount的情况下读取Pak中的文件</li>
+</ul>
+<h4 id="2020-12-11-Update"><a href="#2020-12-11-Update" class="headerlink" title="2020.12.11 Update"></a>2020.12.11 Update</h4><ul>
+<li>支持Shaderbytecode的Patch，通过<code>byShaderPatch</code>页面配置执行；</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20201211131553.webp"></p>
+<p>Shaderbytecode Patch的要求：</p>
+<ul>
+<li>备份每次打包的Cooked/PLATFORM/PROJECT_NAME/Metadata目录；</li>
+<li>最新版本的Cooked/PLATFORM/PROJECT_NAME/Metadata与旧版本的Metadata进行比对；</li>
+<li>生成的ushaderbytecode文件可以通过HotPatcher添加外部文件形式打包，运行时加载；</li>
+</ul>
+<blockquote>
+<p>注意：目前该功能在4.24及之前引擎版本正常，但是在4.25+中会触发异常，具体原因分析在这里：<a href="https://imzlp.com/notes/ue/#UE4-25%E4%B8%ADShaderPatch%E9%97%AE%E9%A2%98">UE4.25 中 ShaderPatch 问题</a>。解决这个问题需要改动引擎代码，可以根据上面笔记中的原因分析来修改。</p>
+</blockquote>
+<h4 id="2020-12-10-Update"><a href="#2020-12-10-Update" class="headerlink" title="2020.12.10 Update"></a>2020.12.10 Update</h4><ul>
+<li>修复HotRelease的Commandlet导出失败问题</li>
+</ul>
+<h4 id="2020-12-04-Update"><a href="#2020-12-04-Update" class="headerlink" title="2020.12.04 Update"></a>2020.12.04 Update</h4><ul>
+<li>HotPatcher支持UE4.26！</li>
+<li>修复在编辑器中Cook资源后，对其修改保存导致资源在下次加载时失败的问题</li>
+</ul>
+<h4 id="2020-11-26-Update"><a href="#2020-11-26-Update" class="headerlink" title="2020.11.26 Update"></a>2020.11.26 Update</h4><ul>
+<li>修复在Content Browser中Cook资源时的路径错误</li>
+<li>修复在新版本代码中无法预览的问题</li>
+</ul>
+<h4 id="2020-11-08-Update"><a href="#2020-11-08-Update" class="headerlink" title="2020.11.08 Update"></a>2020.11.08 Update</h4><ul>
+<li>支持对Cook单个资源时进行检测（对于新创建的资源，拿到的UPackage是不完全的， 使用它对资源进行Cook会Crash）</li>
+<li>ContentBrowser右键Cook资源时支持Cook失败的提示。</li>
+</ul>
+<p><strong>注意</strong>：如果在工程中新建了资源，直接对这些资源进行Cook是有问题的，因为通过引擎拿到的新创建资源的Package内的数据是不完全的，会导致执行Cook时的Crash，目前插件中的策略是检测要进行Cook的UPackage数据是否正确，如果不正确会忽略掉该资源。</p>
+<p>暂时的解决办法时，创建了资源之后重启编辑器，再对这些资源进行Cook或者创建Patch的操作，或者依然通过插件提供的Cook目录和指定地图的功能，不存在上面所说的这个问题，因为它的实现是拉起一个新的UE进程来执行Cook任务，所以本地的资源信息会重新加载）。</p>
+<h4 id="2020-11-07-Update"><a href="#2020-11-07-Update" class="headerlink" title="2020.11.07 Update"></a>2020.11.07 Update</h4><ul>
+<li>添加<code>bStorageDeletedAssetsToNewReleaseJson</code>：控制ContentBrowser中删除的资源是否存储到新ReleaseJson中去。</li>
+</ul>
+<p>其实就是两种版本管理模式：</p>
+<ol>
+<li>ReleaseJson中记录的是当前游戏版本中所有的资源（删除的资源，在UFS中依然存在，因为老Pak中的文件不会被删除）</li>
+<li>ReleaseJson中记录的是游戏中需要让玩家能够体验到的所有资源（不包含移动目录、删除之后的资源）</li>
+</ol>
+<p>真正在游戏中的资源没有区别，区别在于HotPatcher管理的版本信息。</p>
+<h4 id="2020-11-01-Update"><a href="#2020-11-01-Update" class="headerlink" title="2020.11.01 Update"></a>2020.11.01 Update</h4><ul>
+<li>（UE4.23+）支持直接在ContentBrowser中把所选资源添加至Patch Settings；</li>
+<li>支持在生成Patch时直接Cook资源（<code>bCookPatchAssets</code>）。需要注意的是，当Patch中资源很多的情况下，Cook十分耗时，并且需要编译Shader，会大大增加Patch 的生成时间，所以在生成Patch时开启Cook可以用在测试打包一些资源或者在ci中执行时开启，在编辑器中SlowTask进度会卡住编辑器；</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/cook-patch-assets.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/add-to-patch-settings.webp"></p>
+<h4 id="2020-10-31-Update"><a href="#2020-10-31-Update" class="headerlink" title="2020.10.31 Update"></a>2020.10.31 Update</h4><ul>
+<li>支持Cook单个资源（shader code包含在资源内）；</li>
+<li>（UE4.23+）支持在Content Browser中右键选中Assets(支持多选)进行Cook；</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20201031181100.webp"></p>
+<h4 id="2020-10-30-Update"><a href="#2020-10-30-Update" class="headerlink" title="2020.10.30 Update"></a>2020.10.30 Update</h4><ul>
+<li>PatchSetting支持<code>bForceSkipContent</code>用于强制忽略某些目录中的资源</li>
+<li><code>ForceSkipContentRules</code>为指定Patch中忽略的资源目录，默认值为<code>/Engine/Editor</code>和<code>/Engine/VREditor</code>，在项目设置中选择<code>Exclude editor content when cooking</code>这两个目录里的资源是不Cook的，所以也无法将他们打包。</li>
+<li><code>ForceSkipAssets</code>在Patch版本中忽略指定的资源。</li>
+<li>更名<code>DiffPatchVersion</code>等函数为<code>DiffPatchVersionWithPatchSetting</code>，并且传递<code>PatchSetting</code>，方便进行Diff时的选项控制。</li>
+</ul>
+<p>增加上述两个选项，一是为了与UE默认打包时不Cook的目录相匹配，二是可以自己控制哪些资源不被打包。<br>注意：<code>ForceSkipContentRules</code>与<code>AssetIgnoreFilters</code>的区别在于：<code>AssetIgnoreFilters</code>忽略的过滤器是进行资源依赖分析之前的步骤，可以用来设置为<code>AssetIncludeFilters</code>中的子目录；而<code>ForceSkipContentRules</code>是把经过diff之后的结果进行一遍过滤操作，排除这些前缀的资源。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20201031094735.webp"></p>
+<h4 id="2020-10-27-Update"><a href="#2020-10-27-Update" class="headerlink" title="2020.10.27 Update"></a>2020.10.27 Update</h4><ul>
+<li>支持从打包生成的PakList文件中分析出Release</li>
+<li>支持导入多个平台的PakList并分析出不同平台的文件差异</li>
+<li>ReleaseSetting和PatchSetting类从UObject改为USTRUCT</li>
+<li>统一使用序列化USTRUCT的方式来处理Import/Export配置</li>
+<li>支持在Patch中给特定平台添加特殊的文件（只在指定平台包含）</li>
+<li>使用<code>CustomDetailView</code>的方式给Detail面板添加导入PakList的按钮</li>
+<li>重构部分代码，适配给不同平台添加特殊文件。</li>
+<li>Release.json中剔除额外的配置信息</li>
+<li>修复MountListener在4.24的错误</li>
+</ul>
+<blockquote>
+<p>本次更新代码变动非常大，并且与之前版本导出的配置文件在当前版本中不通用，所以暂时发布到Dev分支，测试稳定之后合并到master分支，目前经过Relase/Patch/Chunk的流程测试，基本没有问题。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/20201027123319.webp"></p>
+<h4 id="2020-10-17-Update"><a href="#2020-10-17-Update" class="headerlink" title="2020.10.17 Update"></a>2020.10.17 Update</h4><ul>
+<li>支持对Widget的WidgetTree进行分析，解决子控件修改父控件不生效的问题</li>
+</ul>
+<p>如果一个Widget被修改了，能够通过控制这个选项来是否递归地添加所有包含它的Widget资源，可以解决修改了子控件，打patch父控件不生效的问题了。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/recursivr-widget-tree.webp"></p>
+<h4 id="2020-08-31-Update"><a href="#2020-08-31-Update" class="headerlink" title="2020.08.31 Update"></a>2020.08.31 Update</h4><ul>
+<li>增加导出Release的Commandlet支持</li>
+<li>清理重复的代码，整理组织方式</li>
+<li>增加控制生成Pak的命名规则</li>
+<li>修复Chunk不包含任何文件时也会打出空包的问题</li>
+<li>修复<code>UFlibPakHelper::GetMountedPaks</code>在4.25中Crash的问题</li>
+</ul>
+<h4 id="2020-06-04-Update"><a href="#2020-06-04-Update" class="headerlink" title="2020.06.04 Update"></a>2020.06.04 Update</h4><ul>
+<li>增加Cook导出配置的<code>bCookAllMap</code>属性，当为true时，在Commandlet模式下会Cook工程目录下中所有的地图。</li>
+<li>增加<strong>ByRelease</strong>支持通过<code>PakList*.txt</code>来生成配置，从而可以完全匹配基础包中的所有资源。</li>
+</ul>
+<h4 id="2020-06-03-Update"><a href="#2020-06-03-Update" class="headerlink" title="2020.06.03 Update"></a>2020.06.03 Update</h4><ul>
+<li>增加插件Cook的Commandlet</li>
+<li>增加插件Patch的Commandlet</li>
+</ul>
+<h4 id="2020-04-27-Update"><a href="#2020-04-27-Update" class="headerlink" title="2020.04.27 Update"></a>2020.04.27 Update</h4><ul>
+<li>增加Chunk的<code>bMonolithic</code>模式下的<code>MonolithicPathMode</code>，用于指定单片模式下的pak存储路径规则。</li>
+</ul>
+<h4 id="2020-04-24-Update"><a href="#2020-04-24-Update" class="headerlink" title="2020.04.24 Update"></a>2020.04.24 Update</h4><ul>
+<li>增加是否对过滤器中的资源进行依赖分析的选项</li>
+</ul>
+<h4 id="2020-04-23-Update"><a href="#2020-04-23-Update" class="headerlink" title="2020.04.23 Update"></a>2020.04.23 Update</h4><ul>
+<li>增加可选引用资源的类型</li>
+</ul>
+<h4 id="2020-04-18-Update"><a href="#2020-04-18-Update" class="headerlink" title="2020.04.18 Update"></a>2020.04.18 Update</h4><ul>
+<li>为<code>UnrealOptions</code>默认添加<code>-compressionformats</code>参数。</li>
+<li>增加<code>PreviewChunk</code>的选项，在开启Chunk的情况下可以方便地知道哪个chunk中有哪些资源。</li>
+</ul>
+<h4 id="2020-04-10-Update"><a href="#2020-04-10-Update" class="headerlink" title="2020.04.10 Update"></a>2020.04.10 Update</h4><ul>
+<li>增加<code>ReplacePakCommandTexts</code>选项，可以自己根据需求替换PakCommand.txt中的文本，如替换打到pak中的资源的<code>MountPath</code></li>
+</ul>
+<h4 id="2020-04-09-Update"><a href="#2020-04-09-Update" class="headerlink" title="2020.04.09 Update"></a>2020.04.09 Update</h4><ul>
+<li>修复在没有选择过滤器时从PatchSetting生成Chunk的问题/对资源重定向器的溯源操作</li>
+<li>修复转换Cooked路径时的问题</li>
+<li>支持导出所有pak的信息、删除pakversion选项</li>
+<li>支持Release和Patch导出资源的依赖关系</li>
+<li>给ExportRelease增加FScopeSlowTask进度显示</li>
+<li>增加可以指定<code>PakCommand</code>参数的选项</li>
+</ul>
+<h4 id="2020-04-08-Update"><a href="#2020-04-08-Update" class="headerlink" title="2020.04.08 Update"></a>2020.04.08 Update</h4><ul>
+<li>支持多线程打包Pak，直接调用<code>    ExecuteUnrealPak</code>而不是启动<code>UnrealPak.exe</code>，极大提升效率。</li>
+<li>修复PreviewPatch在选中BaseVersion的情况下与Diff信息不一致的问题</li>
+</ul>
+<h4 id="2020-04-07-Update"><a href="#2020-04-07-Update" class="headerlink" title="2020.04.07 Update"></a>2020.04.07 Update</h4><ul>
+<li>支持<code>bMonolithic</code>模式，可以把所有引用每个资源单独打到一个pak中。</li>
+<li>统一了Asset、Cooked的bin、外部文件、ini等所有文件的pak方式。</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/hotpatcher-chunk-settings.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/hotpatcher-chunk-bmonilithic-mode-generated-files.webp"></p>
+<h4 id="2020-04-03-Update"><a href="#2020-04-03-Update" class="headerlink" title="2020.04.03 Update"></a>2020.04.03 Update</h4><ul>
+<li>完成Patch的Chunk功能，统一Patch和Chunk的打包流程</li>
+<li>代码优化、流程梳理</li>
+<li>去除<code>IncludePakVersionFile</code>和<code>PakVersionFileMountPoint</code>选项</li>
+</ul>
+<h4 id="2020-04-02-Update"><a href="#2020-04-02-Update" class="headerlink" title="2020.04.02 Update"></a>2020.04.02 Update</h4><ul>
+<li>增加Patch的Chunk功能</li>
+<li>修复<code>FPatcherSpecifyAsset</code>序列化与反序列化的问题</li>
+<li>优化组织结构</li>
+</ul>
+<h4 id="2020-03-28-Update"><a href="#2020-03-28-Update" class="headerlink" title="2020.03.28 Update"></a>2020.03.28 Update</h4><ul>
+<li>修复当基于基础版本打patch时导出的<code>*Release.json</code>不全的问题。</li>
+</ul>
+<h4 id="2020-03-05-Update"><a href="#2020-03-05-Update" class="headerlink" title="2020.03.05 Update"></a>2020.03.05 Update</h4><ul>
+<li>修复当Cook的进程异常退出时没有清掉任务状态的问题。</li>
+<li>在代码中增加Cook时可选Engine或Plugin中的地图，在<code>HotPatcherEditor.build.cs</code>中通过控制<code>ENABLE_COOK_ENGINE_MAP</code>和<code>ENABLE_COOK_PLUGIN_MAP</code>的值来自行开启。</li>
+</ul>
+<h4 id="2020-02-14-Update"><a href="#2020-02-14-Update" class="headerlink" title="2020.02.14 Update"></a>2020.02.14 Update</h4><ul>
+<li>增加了Patch和Release配置的导入导出</li>
+<li>生成Pak的默认命名改成XXX_TARGET_PLATFORM_001_P.pak</li>
+<li>修复了一些潜在问题，建议更新。</li>
+</ul>
+<h4 id="2019-12-08-Update"><a href="#2019-12-08-Update" class="headerlink" title="2019.12.08 Update"></a>2019.12.08 Update</h4><ul>
+<li>新增是否对资源进行依赖扫描的选项，增加diff预览。</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-Diff-view.webp"></p>
+<h4 id="2020-02-19-Update"><a href="#2020-02-19-Update" class="headerlink" title="2020.02.19 Update"></a>2020.02.19 Update</h4><ul>
+<li>为插件增加了导出release时可以选择添加外部文件和文件夹，对应ue打包时添加的非资源外部文件目录。还支持外部文件的diff（可选），对于指定的外部文件和目录，会检测只有修改或者新增的文件才会打包到pak中。</li>
+</ul>
+<h4 id="2020-01-13-Update"><a href="#2020-01-13-Update" class="headerlink" title="2020.01.13 Update"></a>2020.01.13 Update</h4><ul>
+<li>新增生成时的错误信息提示，对未Cook资源的扫描以及重复添加的外部文件进行检测，增加可以指定特定资源到Pak中，并且可选是否对该资源进行依赖分析。</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-GeneratedPatch-ErrorMsg.webp"></p>
+<h4 id="2020-01-14-Update"><a href="#2020-01-14-Update" class="headerlink" title="2020.01.14 Update"></a>2020.01.14 Update</h4><ul>
+<li>修复会扫描到Redirector会提示Redirector的资源未Cooked，为ExportRelease增加<code>IncludeSpecifyAssets</code>，可以指定某个资源了（如只指定某个地图）。</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-diff-specifty-assets.webp"></p>
+<h4 id="2020-01-19-Update"><a href="#2020-01-19-Update" class="headerlink" title="2020.01.19 Update"></a>2020.01.19 Update</h4><ul>
+<li>增加指定要Cook的目录</li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/17590/HotPatcher/HotPatcher-Add-Specify-Cook-Directories.webp"></p>
+<h3 id="更新计划"><a href="#更新计划" class="headerlink" title="更新计划"></a>更新计划</h3><p>为了使HotPatcher更易用和更强大，我会在这里记录一些不错的更新建议。</p>
+<ol>
+<li><del>增加支持多线程扫描资源依赖分析</del>(通过拉起单独的进程执行)</li>
+<li><del>在UnrealPak下增加直接指定Pak加密参数的选项（开放了可以指定UnrealPak的参数，自己指定加密的参数即可）</del></li>
+<li><del>指定Cook单个资源</del></li>
+<li><del>把打包出的Pak命名从<code>XX_TARGET_PLATFORM_P.pak</code>改成<code>XX_TARGET_PLATFORM_0_P</code>或者中间的数字可以指定。</del></li>
+<li><del>Patch和Release配置文件的导入和导出、以及快速地清理配置。</del></li>
+<li><del>为release增加包含外部文件的选项，与UE的打包时包含外部文件同步。</del></li>
+<li><del>增加对外部文件的Diff，不用每次打包时把所有的外部文件都打包到pak中。</del></li>
+<li><del>在一个Patch中打包出多个pak文件，可选哪些资源打到哪个Pak中。</del></li>
+<li><del>为<code>Chunk</code>的<code>bMonolithic</code>模式增加多线程支持</del></li>
+<li><del>增加<code>Commandlet</code>的支持</del></li>
+<li><del>增加导出Release的Commandlet支持</del></li>
+<li><del>增加可控制生成Pak的命名规则</del></li>
+<li><del>支持打Patch时给特殊的平台添加NoAssets资源</del></li>
+<li><del>追踪UMG的子控件被修改后引用到它的Widget资源</del></li>
+<li><del>支持给多个从多个平台的paklist中分析基础包的Release.json</del></li>
+<li><del>对Patch的最终结果进行过滤</del></li>
+<li><del>设置忽略Editor的资源内容</del></li>
+<li><del>添加的外部文件以相对路径存储于Release.json中</del>(使用Mountpath来进行版本比对)</li>
+<li><del>支持打出shaderbytecode的patch</del></li>
+<li><del>Patch时不阻塞编辑器，使用异步任务实现</del></li>
+</ol>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                本文会持续更新HotPatcher的文档。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/17590/" target="_blank">UE资源热更打包工具HotPatcher</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年01月15日 09时41分<br/>
+             
+              <span>更新时间:</span>2020年08月31日 17时27分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有31k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/17590/" target="_blank" title="UE资源热更打包工具HotPatcher">https://imzlp.com/posts/17590/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/17590/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+              <a href="/tags/HotPatcher/" rel="tag"># HotPatcher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/20367/" rel="prev" title="UE源码分析：修改游戏默认的数据存储路径">
+      <i class="fa fa-chevron-left"></i> UE源码分析：修改游戏默认的数据存储路径
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/25915/" rel="next" title="UE项目的设计规范和代码标准">
+      UE项目的设计规范和代码标准 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Showcase"><span class="nav-number">1.</span> <span class="nav-text">Showcase</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8EHotPatcher%E7%9A%84%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E6%A1%86%E6%9E%B6"><span class="nav-number">2.</span> <span class="nav-text">基于HotPatcher的资源管理框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Forward"><span class="nav-number">3.</span> <span class="nav-text">Forward</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">插件使用流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cook%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="nav-number">5.</span> <span class="nav-text">Cook参数说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ByRelease%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="nav-number">6.</span> <span class="nav-text">ByRelease参数说明</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Release-Settings"><span class="nav-number">6.1.</span> <span class="nav-text">Release Settings</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SaveTo"><span class="nav-number">6.2.</span> <span class="nav-text">SaveTo</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ByPatch%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="nav-number">7.</span> <span class="nav-text">ByPatch参数说明</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#BaseVersion"><span class="nav-number">7.1.</span> <span class="nav-text">BaseVersion</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PatchSettings"><span class="nav-number">7.2.</span> <span class="nav-text">PatchSettings</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ChunkOptions"><span class="nav-number">7.3.</span> <span class="nav-text">ChunkOptions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PakOptions"><span class="nav-number">7.4.</span> <span class="nav-text">PakOptions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SaveTo-1"><span class="nav-number">7.5.</span> <span class="nav-text">SaveTo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advanced"><span class="nav-number">7.6.</span> <span class="nav-text">Advanced</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ByShaderPatch%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="nav-number">8.</span> <span class="nav-text">ByShaderPatch参数说明</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Version"><span class="nav-number">8.1.</span> <span class="nav-text">Version</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Config"><span class="nav-number">8.2.</span> <span class="nav-text">Config</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Save"><span class="nav-number">8.3.</span> <span class="nav-text">Save</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Advanced-1"><span class="nav-number">8.4.</span> <span class="nav-text">Advanced</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Commandlet"><span class="nav-number">9.</span> <span class="nav-text">Commandlet</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HotCooker"><span class="nav-number">9.1.</span> <span class="nav-text">HotCooker</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HotPatcher"><span class="nav-number">9.2.</span> <span class="nav-text">HotPatcher</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HotRelease"><span class="nav-number">9.3.</span> <span class="nav-text">HotRelease</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HotShaderPatch"><span class="nav-number">9.4.</span> <span class="nav-text">HotShaderPatch</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E6%94%AF%E6%8C%81-UE4-23"><span class="nav-number">10.</span> <span class="nav-text">编辑器支持(UE4.23+)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Cook"><span class="nav-number">10.1.</span> <span class="nav-text">Cook</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AddToPatchSettings"><span class="nav-number">10.2.</span> <span class="nav-text">AddToPatchSettings</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E8%AE%BE%E7%BD%AE"><span class="nav-number">11.</span> <span class="nav-text">项目设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Update-Log"><span class="nav-number">12.</span> <span class="nav-text">Update Log</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2024-04-07-Update-v82-0"><span class="nav-number">12.1.</span> <span class="nav-text">2024.04.07 Update v82.0</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2023-06-05-Update-v81-0"><span class="nav-number">12.2.</span> <span class="nav-text">2023.06.05 Update v81.0</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2023-02-28-Update-v80-1"><span class="nav-number">12.3.</span> <span class="nav-text">2023.02.28 Update v80.1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2023-01-08-Update-v80-0-HotPatcher-Modular"><span class="nav-number">12.4.</span> <span class="nav-text">2023.01.08 Update v80.0 HotPatcher Modular</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-12-30-Update-v79-0"><span class="nav-number">12.5.</span> <span class="nav-text">2022.12.30 Update v79.0</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-11-29-Update-v78-0"><span class="nav-number">12.6.</span> <span class="nav-text">2022.11.29 Update v78.0</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-10-26-Update-v77-0"><span class="nav-number">12.7.</span> <span class="nav-text">2022.10.26 Update v77.0</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-09-19-Update-v76-3"><span class="nav-number">12.8.</span> <span class="nav-text">2022.09.19 Update v76.3</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-09-01-Update-v76-2"><span class="nav-number">12.9.</span> <span class="nav-text">2022.09.01 Update v76.2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-07-28-Update-v76-1"><span class="nav-number">12.10.</span> <span class="nav-text">2022.07.28 Update v76.1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-03-31-Update-v76-0"><span class="nav-number">12.11.</span> <span class="nav-text">2022.03.31 Update v76.0</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E6%89%A9%E5%B1%95%E7%A4%BA%E4%BE%8B"><span class="nav-number">12.11.1.</span> <span class="nav-text">模块扩展示例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-02-15-Update-v75-2"><span class="nav-number">12.12.</span> <span class="nav-text">2022.02.15 Update v75.2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-01-09-Update-v75-1"><span class="nav-number">12.13.</span> <span class="nav-text">2022.01.09 Update v75.1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-01-26-Update-v75-0"><span class="nav-number">12.14.</span> <span class="nav-text">2022.01.26 Update v75.0</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2022-01-03-Update-v74"><span class="nav-number">12.15.</span> <span class="nav-text">2022.01.03 Update v74</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-12-27-Update-v73"><span class="nav-number">12.16.</span> <span class="nav-text">2021.12.27 Update v73</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-12-14-Update-v72"><span class="nav-number">12.17.</span> <span class="nav-text">2021.12.14 Update v72</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-11-21-Update-v71"><span class="nav-number">12.18.</span> <span class="nav-text">2021.11.21 Update v71</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-11-19-Update-v70"><span class="nav-number">12.19.</span> <span class="nav-text">2021.11.19 Update v70</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-11-15-Update-v69"><span class="nav-number">12.20.</span> <span class="nav-text">2021.11.15 Update v69</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-10-29-Update"><span class="nav-number">12.21.</span> <span class="nav-text">2021.10.29 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-08-06-Update"><span class="nav-number">12.22.</span> <span class="nav-text">2021.08.06 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-08-05-Update"><span class="nav-number">12.23.</span> <span class="nav-text">2021.08.05 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-07-30-Update"><span class="nav-number">12.24.</span> <span class="nav-text">2021.07.30 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-07-21-Update"><span class="nav-number">12.25.</span> <span class="nav-text">2021.07.21 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-07-16-Update"><span class="nav-number">12.26.</span> <span class="nav-text">2021.07.16 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-07-14-Update"><span class="nav-number">12.27.</span> <span class="nav-text">2021.07.14 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-07-08-Update"><span class="nav-number">12.28.</span> <span class="nav-text">2021.07.08 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-07-02-Update"><span class="nav-number">12.29.</span> <span class="nav-text">2021.07.02 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-28-Update"><span class="nav-number">12.30.</span> <span class="nav-text">2021.06.28 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-24-Update"><span class="nav-number">12.31.</span> <span class="nav-text">2021.06.24 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-15-Update"><span class="nav-number">12.32.</span> <span class="nav-text">2021.06.15 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-09-Update"><span class="nav-number">12.33.</span> <span class="nav-text">2021.06.09 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-06-Update"><span class="nav-number">12.34.</span> <span class="nav-text">2021.06.06 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-04-Update"><span class="nav-number">12.35.</span> <span class="nav-text">2021.06.04 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-06-03-Update"><span class="nav-number">12.36.</span> <span class="nav-text">2021.06.03 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-05-27-Update"><span class="nav-number">12.37.</span> <span class="nav-text">2021.05.27 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-05-20-Update"><span class="nav-number">12.38.</span> <span class="nav-text">2021.05.20 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-05-18-Update"><span class="nav-number">12.39.</span> <span class="nav-text">2021.05.18 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-05-17-Update"><span class="nav-number">12.40.</span> <span class="nav-text">2021.05.17 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-05-13-Update"><span class="nav-number">12.41.</span> <span class="nav-text">2021.05.13 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-04-28-Update"><span class="nav-number">12.42.</span> <span class="nav-text">2021.04.28 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-04-18-Update"><span class="nav-number">12.43.</span> <span class="nav-text">2021.04.18 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-03-25-Update"><span class="nav-number">12.44.</span> <span class="nav-text">2021.03.25 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-03-23-Update"><span class="nav-number">12.45.</span> <span class="nav-text">2021.03.23 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-03-15-Update"><span class="nav-number">12.46.</span> <span class="nav-text">2021.03.15 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-02-23-Update"><span class="nav-number">12.47.</span> <span class="nav-text">2021.02.23 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-02-01-Update"><span class="nav-number">12.48.</span> <span class="nav-text">2021.02.01 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-28-Update"><span class="nav-number">12.49.</span> <span class="nav-text">2021.01.28 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-22-Update"><span class="nav-number">12.50.</span> <span class="nav-text">2021.01.22 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-20-Update"><span class="nav-number">12.51.</span> <span class="nav-text">2021.01.20 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-19-Update"><span class="nav-number">12.52.</span> <span class="nav-text">2021.01.19 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-18-Update"><span class="nav-number">12.53.</span> <span class="nav-text">2021.01.18 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-14-Update"><span class="nav-number">12.54.</span> <span class="nav-text">2021.01.14 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-13-Update"><span class="nav-number">12.55.</span> <span class="nav-text">2021.01.13 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-11-Update"><span class="nav-number">12.56.</span> <span class="nav-text">2021.01.11 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2021-01-08-Update"><span class="nav-number">12.57.</span> <span class="nav-text">2021.01.08 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-12-14-Update"><span class="nav-number">12.58.</span> <span class="nav-text">2020.12.14 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-12-11-Update"><span class="nav-number">12.59.</span> <span class="nav-text">2020.12.11 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-12-10-Update"><span class="nav-number">12.60.</span> <span class="nav-text">2020.12.10 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-12-04-Update"><span class="nav-number">12.61.</span> <span class="nav-text">2020.12.04 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-11-26-Update"><span class="nav-number">12.62.</span> <span class="nav-text">2020.11.26 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-11-08-Update"><span class="nav-number">12.63.</span> <span class="nav-text">2020.11.08 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-11-07-Update"><span class="nav-number">12.64.</span> <span class="nav-text">2020.11.07 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-11-01-Update"><span class="nav-number">12.65.</span> <span class="nav-text">2020.11.01 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-10-31-Update"><span class="nav-number">12.66.</span> <span class="nav-text">2020.10.31 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-10-30-Update"><span class="nav-number">12.67.</span> <span class="nav-text">2020.10.30 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-10-27-Update"><span class="nav-number">12.68.</span> <span class="nav-text">2020.10.27 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-10-17-Update"><span class="nav-number">12.69.</span> <span class="nav-text">2020.10.17 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-08-31-Update"><span class="nav-number">12.70.</span> <span class="nav-text">2020.08.31 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-06-04-Update"><span class="nav-number">12.71.</span> <span class="nav-text">2020.06.04 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-06-03-Update"><span class="nav-number">12.72.</span> <span class="nav-text">2020.06.03 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-27-Update"><span class="nav-number">12.73.</span> <span class="nav-text">2020.04.27 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-24-Update"><span class="nav-number">12.74.</span> <span class="nav-text">2020.04.24 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-23-Update"><span class="nav-number">12.75.</span> <span class="nav-text">2020.04.23 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-18-Update"><span class="nav-number">12.76.</span> <span class="nav-text">2020.04.18 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-10-Update"><span class="nav-number">12.77.</span> <span class="nav-text">2020.04.10 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-09-Update"><span class="nav-number">12.78.</span> <span class="nav-text">2020.04.09 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-08-Update"><span class="nav-number">12.79.</span> <span class="nav-text">2020.04.08 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-07-Update"><span class="nav-number">12.80.</span> <span class="nav-text">2020.04.07 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-03-Update"><span class="nav-number">12.81.</span> <span class="nav-text">2020.04.03 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-04-02-Update"><span class="nav-number">12.82.</span> <span class="nav-text">2020.04.02 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-03-28-Update"><span class="nav-number">12.83.</span> <span class="nav-text">2020.03.28 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-03-05-Update"><span class="nav-number">12.84.</span> <span class="nav-text">2020.03.05 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-14-Update"><span class="nav-number">12.85.</span> <span class="nav-text">2020.02.14 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2019-12-08-Update"><span class="nav-number">12.86.</span> <span class="nav-text">2019.12.08 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-19-Update"><span class="nav-number">12.87.</span> <span class="nav-text">2020.02.19 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-13-Update"><span class="nav-number">12.88.</span> <span class="nav-text">2020.01.13 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-14-Update"><span class="nav-number">12.89.</span> <span class="nav-text">2020.01.14 Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-19-Update"><span class="nav-number">12.90.</span> <span class="nav-text">2020.01.19 Update</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E8%AE%A1%E5%88%92"><span class="nav-number">13.</span> <span class="nav-text">更新计划</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/17590/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文部分内容摘自Unreal Engine的官方博客文章：从虚幻4中采集360度立体电影，其余部分为修正该文章错误和提供一个现成可行的解决方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Unreal Engine 4采集360°全景视频">
+<meta property="og:url" content="https://imzlp.com/posts/64044/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="本文部分内容摘自Unreal Engine的官方博客文章：从虚幻4中采集360度立体电影，其余部分为修正该文章错误和提供一个现成可行的解决方案。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230418095411.webp">
+<meta property="article:published_time" content="2016-09-05T19:44:11.000Z">
+<meta property="article:modified_time" content="2016-09-05T19:44:11.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="全景视频">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="VR">
+<meta property="article:tag" content="虚拟现实">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230418095411.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/64044/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>使用Unreal Engine 4采集360°全景视频 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/64044/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用Unreal Engine 4采集360°全景视频<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2016-09-05-64044.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-09-05 19:44 19:44:11:44" itemprop="dateCreated datePublished" datetime="2016-09-05T19:44:11+00:00">2016-09-05 19:44</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/64044/" class="post-meta-item leancloud_visitors" data-flag-title="使用Unreal Engine 4采集360°全景视频" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文部分内容摘自Unreal Engine的官方博客文章：<a target="_blank" rel="noopener" href="https://www.unrealengine.com/zh-CN/blog/capturing-stereoscopic-360-screenshots-videos-movies-unreal-engine-4">从虚幻4中采集360度立体电影</a>，其余部分为修正该文章错误和提供一个现成可行的解决方案。</p>
+<span id="more"></span>
+<h3 id="采集单帧双眼图像"><a href="#采集单帧双眼图像" class="headerlink" title="采集单帧双眼图像"></a>采集单帧双眼图像</h3><p>首先，我们需要确保启用了相应的插件。</p>
+<p>在编辑器打开的情况下，转到<code>编辑（Edit）</code>-&gt; <code>插件（Plugins）</code>，然后选择左边的<code>电影采集（Movie Capture）</code>设置，确保对<code>立体全景电影采集（Stereo Panoramic Movie Capture）</code>选择<code>启用（Enabled）</code>。<br>然后重新启动场景编辑器。</p>
+<p>注：您可能还需要再次快速<code>构建(Build)</code>，具体取决于您是否在分支中获得了本地更改，因为工具附带的插件dll 可能已经<strong>陈旧</strong>。</p>
+<p>当编辑器重新启动后，再次转到<code>编辑器（Editor）</code>-&gt; <code>插件（Plugins）</code>-&gt;<code> 电影采集（Movie Capture）</code>，并再次检查其是否已启用。</p>
+<p>打开关卡蓝图(level Blueprint)，新建<code>Event BeginPlay</code>事件，然后再新建数个(具体依据需求而定)<code>Execute Console Command</code>节点来存放我们需要执行的命令。<br>我们可以先来一次采集测试，将下面这两条命令放入<code>Execute Console Command</code>节点中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SP.OutputDir F:/StereoCaptureFrames</span><br><span class="line">// 采集单帧</span><br><span class="line">SP.PanoramicScreenshot</span><br></pre></td></tr></table></figure>
+<p>如图：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/EventBeginPlayExecuteConsoleCommand.webp"></p>
+<p>然后就可以<code>启动(Play)</code>项目了，此时系统可能会长时间无响应（估计有一分钟左右），然后将会有两帧影像存储到您在先前用<code>SP.OutputDir</code>指定的目录中（其实是在该目录中的一个日期与时间目录下），一个是左眼图像，另一个是右眼图像。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/1.webp"></p>
+<h3 id="将左右眼图像自动组合成单一图像"><a href="#将左右眼图像自动组合成单一图像" class="headerlink" title="将左右眼图像自动组合成单一图像"></a>将左右眼图像自动组合成单一图像</h3><p>这部分是我依据上面提到的官方文章修改的，也是上述文章中错误最多的部分。<br>在执行下列步骤之前首先需要保证你使用官方插件采集全景时可以成功导出左右眼图像。</p>
+<p>首先先将引擎中的全景采集插件(Stereo Panoramic Movie Capture)目录剪切(注意是cut而不是copy)出来，一是供我们修改，二是防止和我们自己编译的有冲突。Unreal引擎中的插件在路径\4.12\Engine\Plugins下，在这里我们需要将其中的<strong>StereoPanorama</strong>(\Engine\Plugins\Experimental\StereoPanorama)剪切出来。</p>
+<p>然后打开你要采集全景视频的项目文件夹，在项目文件夹的根目录下新建一个<strong>Plugins</strong>文件夹，将上一步剪切的<strong>StereoPanorama</strong>文件夹粘贴到这里。<br>此时该项目的文件结构应该是这样的(碍于篇幅只列出必要文件):<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/ProjectFolderList.webp"></p>
+<p>后面我会着重讲到修改SceneCapturer.cpp中的代码来实现我们想要的功能。</p>
+<p>现在，打开你想要采集全景视频的项目。<br>在场景编辑器中依次打开<strong>Edit-&gt;Plugins-&gt;Project-&gt;MovieCapture</strong>启用<code>Stereo Panoramic Movie Capture</code>然后重启场景编辑器。<br>再次检查<code>Stereo Panoramic Movie Capture</code>是否被启用。<br>如果上面都OK，那么下面就开始正式开搞。</p>
+<p>首先，打开\YouProjectFolder\Plugins\StereoPanorama\Source\StereoPanorama\Private\SceneCapturer.cpp，大概八九百行代码的样子，而且我用diff对比了一下引擎版本4.11和4.12两个引擎版本的SceneCapturer.cpp区别，其实没有实质性的改变，就是修改了一些不合规范(随意)的变量命名，所以这份教程在4.11和4.12中都是通用的。</p>
+<p>为了使我们能够方便地控制合成的开关，我们需要定义一个bool常量在文件的头部，这样，在我们不需要开启合并的时候修改该常量的值即可，不必再修改其余的代码。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Newly inserted code.Defined a const bool</span></span><br><span class="line"><span class="type">const</span> <span class="type">bool</span> CombineAtlasesOnOutput = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+<p>现在我们需要在代码中有条件地禁用每只眼睛的输出(通过上面定义的<code>CombineAtlasesOnOutput</code>来控制)。<br>然后找到<code>USceneCapturer::SaveAtlas()</code>的底部，找到这样一段代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">IImageWrapperPtr ImageWrapper = ImageWrapperModule.<span class="built_in">CreateImageWrapper</span>( EImageFormat::PNG );</span><br><span class="line">ImageWrapper-&gt;<span class="built_in">SetRaw</span>(SphericalAtlas.<span class="built_in">GetData</span>(), SphericalAtlas.<span class="built_in">GetAllocatedSize</span>(), SphericalAtlasWidth, SphericalAtlasHeight, ERGBFormat::BGRA, <span class="number">8</span>);</span><br><span class="line"><span class="type">const</span> TArray&lt;uint8&gt;&amp; PNGData = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line">FFileHelper::<span class="built_in">SaveArrayToFile</span>( PNGData, *AtlasName );</span><br></pre></td></tr></table></figure>
+<p>这几行代码就是控制左右眼输出的，如果我们定义的<code>CombineAtlasesOnOutput</code>为<code>true</code>，就意味这我们需要合并两张眼睛的图像，那么我们就需要禁掉它(左右单独输出)，如果为<code>false</code>则我们需要输出左右眼的单独序列帧，所以就需要执行它。<br>综上，可以写一个if语句来判断<code>CombineAtlasesOnOutput</code>的值：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">IImageWrapperPtr ImageWrapper = ImageWrapperModule.<span class="built_in">CreateImageWrapper</span>( EImageFormat::PNG );</span><br><span class="line"><span class="keyword">if</span> (!CombineAtlasesOnOutput)</span><br><span class="line">&#123;</span><br><span class="line">	ImageWrapper-&gt;<span class="built_in">SetRaw</span>(SphericalAtlas.<span class="built_in">GetData</span>(), SphericalAtlas.<span class="built_in">GetAllocatedSize</span>(), SphericalAtlasWidth, SphericalAtlasHeight, ERGBFormat::BGRA, <span class="number">8</span>);</span><br><span class="line">	<span class="type">const</span> TArray&lt;uint8&gt;&amp; PNGData = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line">	FFileHelper::<span class="built_in">SaveArrayToFile</span>(PNGData, *AtlasName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样会导致一个错误，因为<code>PNGData</code>是在if的作用域内定义的，如果执行到了if后(被释放掉)或者根本没有执行到(if判断为false(<code>!true</code>))就会导致后面对<code>PNGData</code>的使用造成错误。<br>在上面if语句之后的代码块中对<code>PNGData</code>的使用处为:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (FStereoPanoramaManager::GenerateDebugImages-&gt;<span class="built_in">GetInt</span>() != <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    FString FrameStringUnprojected = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%s_%05d_Unprojected.webp&quot;</span>), *Folder, CurrentFrameCount);</span><br><span class="line">    FString AtlasNameUnprojected = OutputDir / Timestamp / FrameStringUnprojected;</span><br><span class="line"></span><br><span class="line">    ImageWrapper-&gt;<span class="built_in">SetRaw</span>(SurfaceData.<span class="built_in">GetData</span>(), SurfaceData.<span class="built_in">GetAllocatedSize</span>(), UnprojectedAtlasWidth, UnprojectedAtlasHeight, ERGBFormat::BGRA, <span class="number">8</span>);</span><br><span class="line">    <span class="type">const</span> TArray&lt;uint8&gt;&amp; PNGDataUnprojected = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line">    <span class="comment">// 原来的代码为 FFileHelper::SaveArrayToFile(PNGData, *AtlasNameUnprojected);</span></span><br><span class="line">    FFileHelper::<span class="built_in">SaveArrayToFile</span>(PNGDataUnprojected, *AtlasNameUnprojected);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>diff</strong>:<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/diffcode01.webp"></p>
+<p>对禁用左右眼单帧输出部分，如果只写这部分代码，现在再执行采集是不会有任何有意义图像输出的(因为现在已经把左右眼输出禁用了)。下面继续搞将两张合并到一块的方法。</p>
+<p>官方博文中给出了这部分代码，但是不知道是什么原因，模板类(<code>TArray&lt;T&gt;</code>)的所有参数都不见了，这样直接粘贴到代码里是无论如何也编译不过的。<br>官方提供的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">TArraySphericalLeftEyeAtlas = <span class="built_in">SaveAtlas</span>( <span class="built_in">TEXT</span>( <span class="string">&quot;Left&quot;</span> ), UnprojectedLeftEyeAtlas );</span><br><span class="line">TArraySphericalRightEyeAtlas = <span class="built_in">SaveAtlas</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Right&quot;</span>), UnprojectedRightEyeAtlas);</span><br><span class="line"></span><br><span class="line"><span class="comment">//*NEW* - Begin</span></span><br><span class="line"><span class="keyword">if</span> (CombineAtlasesOnOutput)</span><br><span class="line">&#123;</span><br><span class="line">	TArrayCombinedAtlas;</span><br><span class="line">	CombinedAtlas.<span class="built_in">Append</span>(SphericalLeftEyeAtlas);</span><br><span class="line">	CombinedAtlas.<span class="built_in">Append</span>(SphericalRightEyeAtlas);</span><br><span class="line">	IImageWrapperPtr ImageWrapper = ImageWrapperModule.<span class="built_in">CreateImageWrapper</span>(EImageFormat::JPEG);</span><br><span class="line">	ImageWrapper-&gt;<span class="built_in">SetRaw</span>(CombinedAtlas.<span class="built_in">GetData</span>(), CombinedAtlas.<span class="built_in">GetAllocatedSize</span>(), SphericalAtlasWidth, SphericalAtlasHeight * <span class="number">2</span>, ERGBFormat::BGRA, <span class="number">8</span>);</span><br><span class="line">	<span class="type">const</span> TArray&amp; PNGData = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line">	<span class="comment">// Generate name</span></span><br><span class="line">	FString FrameString = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Frame_%05d.webp&quot;</span>), CurrentFrameCount);</span><br><span class="line">	FString AtlasName = OutputDir / Timestamp / FrameString;</span><br><span class="line">	FFileHelper::<span class="built_in">SaveArrayToFile</span>(PNGData, *AtlasName);</span><br><span class="line">	ImageWrapper.<span class="built_in">Reset</span>();</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//*NEW* - END</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Dump out how long the process took</span></span><br><span class="line">FDateTime EndTime = FDateTime::<span class="built_in">UtcNow</span>();</span><br><span class="line">FTimespan Duration = EndTime - StartTime;</span><br><span class="line"><span class="built_in">UE_LOG</span>( LogStereoPanorama, Log, <span class="built_in">TEXT</span>( <span class="string">&quot;Duration:%g seconds for frame %d&quot;</span> ), Duration.<span class="built_in">GetTotalSeconds</span>(), CurrentFrameCount );</span><br><span class="line">StartTime = EndTime;</span><br></pre></td></tr></table></figure>
+
+<p>真是满腹槽点，因为之前没读过Unreal引擎的代码，我还以为是我自己搞错了，后来读了相关的代码(自己对了一下上面代码的语法)才发现是官方代码写错了…</p>
+<p>上面所有的<code>TArray</code>的模板参数都没有了，正确的用法是<code>TArray&lt;T&gt;</code>，模板类的类型推导是在编译时计算的，而现在的问题是怎么通过现有的代码逆推回去<code>TArray</code>该有的模板参数。<br>没办法(其实有，看后面)，来一点一点分析下吧。</p>
+<p>首先，我们可以通过以下两行代码可以确定<code>SphericalLeftEyeAtlas</code>和<code>SphericalRightEyeAtlas</code>是同一种类型(废话)</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">TArraySphericalLeftEyeAtlas = <span class="built_in">SaveAtlas</span>( <span class="built_in">TEXT</span>( <span class="string">&quot;Left&quot;</span> ), UnprojectedLeftEyeAtlas );</span><br><span class="line">TArraySphericalRightEyeAtlas = <span class="built_in">SaveAtlas</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Right&quot;</span>), UnprojectedRightEyeAtlas);</span><br></pre></td></tr></table></figure>
+
+<p>现在我们可以通过查看引擎中已有的代码(<code>SaveAtlas()</code>的定义)来获取<code>SphericalLeftEyeAtlas</code>和<code>SphericalRightEyeAtlas</code>应该是什么类型，就是看下调用<code>SaveAtlas()</code>的返回类型是什么。</p>
+<p>引擎中定义的<code>SaveAtlas()</code>返回类型为<code>TArray&lt;FColor&gt;</code></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">TArray&lt;FColor&gt; <span class="title">USceneCapturer::SaveAtlas</span><span class="params">(FString Folder, <span class="type">const</span> TArray&lt;FColor&gt;&amp; SurfaceData)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>OK现在可以确定<code>SphericalLeftEyeAtlas</code>和<code>SphericalRightEyeAtlas</code>都是<code>TArray&lt;FColor&gt;</code>了。</p>
+<p>而后面<code>CombinedAtlas</code>的类型可以通过<code>SphericalLeftEyeAtlas</code>和<code>SphericalRightEyeAtlas</code>推导出来：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">TArrayCombinedAtlas;</span><br><span class="line">CombinedAtlas.<span class="built_in">Append</span>(SphericalLeftEyeAtlas);</span><br><span class="line">CombinedAtlas.<span class="built_in">Append</span>(SphericalRightEyeAtlas);</span><br></pre></td></tr></table></figure>
+
+<p>成员函数<code>append()</code>从其函数名可以看出来其是在用容器<code>TArray</code>定义的一个实例中添加一个元素，所以我们可以确定<code>CombinedAtlas</code>的类型和<code>SphericalLeftEyeAtlas</code>和<code>SphericalRightEyeAtlas</code>一样，即<code>TArray&lt;FColor&gt;</code>。</p>
+<p>剩余的代码中用到<code>TArray&lt;T&gt;</code>的就只有<code>PNGData</code>了:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> TArray&amp; PNGData = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>方法同上，我们查看一下<code>GetCompressed()</code>的定义就可以得到<code>PNGData</code>真正的类型。</p>
+<p><code>GetCompressed()</code>是<code>FImageWrapperBase</code>类中的成员：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> TArray&lt;uint8&gt;&amp; <span class="title">FImageWrapperBase::GetCompressed</span><span class="params">(int32 Quality)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>即得到PNGData真正的类型为<code>TArray&lt;uint8&gt;&amp;</code></p>
+<p>修改完的代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">TArray&lt;FColor&gt; SphericalLeftEyeAtlas  = <span class="built_in">SaveAtlas</span>( <span class="built_in">TEXT</span>( <span class="string">&quot;Left&quot;</span> ), UnprojectedLeftEyeAtlas );</span><br><span class="line">TArray&lt;FColor&gt; SphericalRightEyeAtlas = <span class="built_in">SaveAtlas</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Right&quot;</span>), UnprojectedRightEyeAtlas);</span><br><span class="line"></span><br><span class="line"><span class="comment">//*NEW* - Begin</span></span><br><span class="line"><span class="keyword">if</span> (CombineAtlasesOnOutput)</span><br><span class="line">&#123;</span><br><span class="line">	TArray&lt;FColor&gt; CombinedAtlas;</span><br><span class="line">	CombinedAtlas.<span class="built_in">Append</span>(SphericalLeftEyeAtlas);</span><br><span class="line">	CombinedAtlas.<span class="built_in">Append</span>(SphericalRightEyeAtlas);</span><br><span class="line">	IImageWrapperPtr ImageWrapper = ImageWrapperModule.<span class="built_in">CreateImageWrapper</span>(EImageFormat::JPEG);</span><br><span class="line">	ImageWrapper-&gt;<span class="built_in">SetRaw</span>(CombinedAtlas.<span class="built_in">GetData</span>(), CombinedAtlas.<span class="built_in">GetAllocatedSize</span>(), SphericalAtlasWidth, SphericalAtlasHeight * <span class="number">2</span>, ERGBFormat::BGRA, <span class="number">8</span>);</span><br><span class="line">	<span class="type">const</span> TArray&lt;uint8&gt;&amp; PNGData = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line">	<span class="comment">// Generate name</span></span><br><span class="line">	FString FrameString = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Frame_%05d.webp&quot;</span>), CurrentFrameCount);</span><br><span class="line">	FString AtlasName = OutputDir / Timestamp / FrameString;</span><br><span class="line">	FFileHelper::<span class="built_in">SaveArrayToFile</span>(PNGData, *AtlasName);</span><br><span class="line">	ImageWrapper.<span class="built_in">Reset</span>();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//*NEW* - END</span></span><br></pre></td></tr></table></figure>
+
+<p>我修改好的<code>SceneCapturer.cpp</code>可以<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1cBT0HC">点此下载</a>。</p>
+<p>此时再编译这个插件然后再启动项目就会采集并将左右眼合并成一张图片了。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/2.webp"></p>
+<p>其实修复上面的代码还有一个更简单的方法：在C++11中，其实可以不用上面写得这么麻烦去翻定义来查返回类型是什么，在定义新对象来接收调用返回的对象的时候都可以用<code>auto</code>关键字来定义，这样编译器就会自动给我们推导出所要接收的对象真正的类型。</p>
+<p>如，上面的代码可以写为:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> SphericalLeftEyeAtlas  = <span class="built_in">SaveAtlas</span>( <span class="built_in">TEXT</span>( <span class="string">&quot;Left&quot;</span> ), UnprojectedLeftEyeAtlas );</span><br><span class="line"><span class="keyword">auto</span> SphericalRightEyeAtlas = <span class="built_in">SaveAtlas</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Right&quot;</span>), UnprojectedRightEyeAtlas);</span><br><span class="line"></span><br><span class="line"><span class="comment">//*NEW* - Begin</span></span><br><span class="line"><span class="keyword">if</span> (CombineAtlasesOnOutput)</span><br><span class="line">&#123;</span><br><span class="line">  	<span class="comment">// 此处不可以用auto，auto定义的变量必须有初始值，因为若没有编译器无法推导其类型</span></span><br><span class="line">	TArray&lt;FColor&gt; CombinedAtlas;</span><br><span class="line">	CombinedAtlas.<span class="built_in">Append</span>(SphericalLeftEyeAtlas);</span><br><span class="line">	CombinedAtlas.<span class="built_in">Append</span>(SphericalRightEyeAtlas);</span><br><span class="line">	IImageWrapperPtr ImageWrapper = ImageWrapperModule.<span class="built_in">CreateImageWrapper</span>(EImageFormat::JPEG);</span><br><span class="line">	ImageWrapper-&gt;<span class="built_in">SetRaw</span>(CombinedAtlas.<span class="built_in">GetData</span>(), CombinedAtlas.<span class="built_in">GetAllocatedSize</span>(), SphericalAtlasWidth, SphericalAtlasHeight * <span class="number">2</span>, ERGBFormat::BGRA, <span class="number">8</span>);</span><br><span class="line">	<span class="keyword">auto</span> PNGData = ImageWrapper-&gt;<span class="built_in">GetCompressed</span>(<span class="number">100</span>);</span><br><span class="line">	<span class="comment">// Generate name</span></span><br><span class="line">	FString FrameString = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Frame_%05d.webp&quot;</span>), CurrentFrameCount);</span><br><span class="line">	FString AtlasName = OutputDir / Timestamp / FrameString;</span><br><span class="line">	FFileHelper::<span class="built_in">SaveArrayToFile</span>(PNGData, *AtlasName);</span><br><span class="line">	ImageWrapper.<span class="built_in">Reset</span>();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//*NEW* - END</span></span><br></pre></td></tr></table></figure>
+<p>是不是方便了很多！但是这样写以后如果要重构的话…那画面太美。俗话说的好，动态类型一时爽，代码重构火葬场。虽然具有了<code>auto</code>的C++仍然是静态类型语言，但是在编译期的类型推导足够让程序猿们造成依赖(主要是懒)了。</p>
+<p>C++11中有很多很多好用的新特性，而且我翻看UnrealEngine的代码也发现其中大规模运用了C++11的特性，所以还是要好好补充一下C++11特性的知识比较好。</p>
+<p>更多C++11的内容可以看我这篇博文：<a href="https://imzlp.com/2016/05/12/cpp11-new-features/">C++11的语法糖</a></p>
+<h3 id="采集连续的序列帧"><a href="#采集连续的序列帧" class="headerlink" title="采集连续的序列帧"></a>采集连续的序列帧</h3><p>通过上面的几个步骤我们可以顺利地采集出合并左右眼睛的单帧，但是我们终究还是需要采集连续帧然后来合并这些序列帧生成视频的。</p>
+<p>我们可以通过这个命令来采集连续的序列帧：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 采集多个连续帧数(一段视频)可以用SP.PanoramicMovie，其后应该有两个参数startime和endtime</span></span><br><span class="line"><span class="comment">// startime和endtime皆为帧数</span></span><br><span class="line"><span class="comment">// 假如我要采集1s的视频，且已经在工程中设置其fps为30，我们就可以采集从第0帧到第29帧的图像(1s)</span></span><br><span class="line">SP.PanoramicMovie <span class="number">0</span> <span class="number">29</span></span><br></pre></td></tr></table></figure>
+
+<p>但是直接这样做会有问题，假如你项目中设置FPS为30，(单独)直接加这一条命令(<code>SP.PanoramicMovie 0 29</code>)会导致你采集的帧数30帧并不是实际项目1s的帧数，如果这样采集出来合成视频的话，大概等同于快进了4-5倍，所以说直接这样会导致采集掉帧。其实就是因为采集视频的时候引擎不是按固定步长时间运行的。</p>
+<p>在采集电影时，首先<strong>一定要记住</strong>的最重要的事情是：要按固定的时间步长运行。</p>
+<p>假如我们需要采集一秒30帧的图像，我们必须要告诉引擎必须按固定的时间步长使时间流逝，除非你希望2秒钟的视频只有两个输出帧。</p>
+<p>你需要依次做以下几步：</p>
+<ol>
+<li><p>在<code>场景编辑器(UE4Editor)</code>-&gt;<code>编辑(Edit)</code>-&gt; <code>项目设置(Projects settings)</code>-&gt;<code>引擎(Engine)</code>-&gt;<code>一般设置(General Settings)</code>-&gt;<code>Framerate</code>中勾选上<code>Fixed Frame Rate</code>并设置为<code>30</code>(依据你想要采集的FPS)<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/framerate.webp"></p>
+</li>
+<li><p>在启动引擎时添加参数。<br>我们可以在引擎启动时添加<code>-usefixedtimestep -fps=</code>来让引擎以固定的步长时间流逝。<br>可以在UE4Editor快捷方式中添加该指令:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X:\Unreal\4.12\Engine\Binaries\Win64\UE4Editor.exe -usefixedtimestep -fps=30 -notexturestreaming</span><br></pre></td></tr></table></figure>
+<p><code>-notexturestreaming</code>参数的作用是关闭<code>纹理流</code>。</p>
+</li>
+</ol>
+<p>执行上面两步之后再使用<code>SP.PanoramicMovie</code>来采集就不会出现丢帧的效果了。</p>
+<h3 id="合并采集的图像序列为全景视频"><a href="#合并采集的图像序列为全景视频" class="headerlink" title="合并采集的图像序列为全景视频"></a>合并采集的图像序列为全景视频</h3><p>通过上面几个步骤以及再参照官方文档的部分教程，我们可以顺利地得到一些序列帧。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/3.webp"></p>
+<p>如何将这些序列帧合并为可以播放的全景视频是当前的任务，官方那篇博文推荐的是<strong>ffmpeg(we tend to just use ffmpeg.)</strong><br>你可以自己去<a target="_blank" rel="noopener" href="https://ffmpeg.org/">ffmpeg官网</a>下载，或者<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1sl8GZRf">在此下载</a>我离线的版本。</p>
+<p>使用方法就是，将上一步下载下来的<code>ffmpeg.exe</code>放在导出全景图的目录,然后打开CMD跳转到该目录后执行以下命令:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -y -r 30 -i Frame_%05d.webp -vcodec mpeg4 -qscale 0.01 video.mp4</span><br></pre></td></tr></table></figure>
+<p><code>-r</code>是帧率(FPS)，更多的参数可以看ffmpeg的文档——<a target="_blank" rel="noopener" href="https://ffmpeg.org/ffmpeg.html">ffmpeg Documentation</a><br>执行完毕就会在当前目录下生成一个video.mp4文件。</p>
+<p>或者要是实在不想动手也可以用下面的批处理命令(注意:不要把ffmpeg和该批处理放在和图片的同级的目录)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">@<span class="built_in">echo</span> off</span><br><span class="line"><span class="built_in">set</span> /p fps=Please input FPS(1-60):</span><br><span class="line"><span class="built_in">set</span> /p  quality=Please input video quality(0.01-255).The smaller number more clarity:</span><br><span class="line">ffmpeg -y -r %fps% -i ../Frame_%%05d.webp -vcodec mpeg4 -qscale %quality% ../video.mp4</span><br></pre></td></tr></table></figure>
+
+<p>你的目录结构应该是下面这样的，才可以执行<code>ConvertImagesToVideo.bat</code><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/ImagesFolderList.webp"></p>
+<p>含有<code>ConvertImagesToVideo.bat</code>的ffmpeg压缩包可以<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1jH7tiFO">点此下载</a>。</p>
+<h3 id="资源整理"><a href="#资源整理" class="headerlink" title="资源整理"></a>资源整理</h3><p>如果不想动手改代码且懒得编译的话可以<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1c1CVdzM">点此下载</a>我修改并编译好的版本，使用方法类似上面。将官方的插件文件夹中的<code>StereoPanorama</code>删掉(或者自己留存)之后，将前面下载的插件压缩包解压到你需要采集的项目的根目录(或者直接替换掉官方的插件)。</p>
+<p>此时该项目的文件结构应该是这样的(碍于篇幅只列出必要文件):<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/64044/projectList.webp"></p>
+<p>然后启动项目，在场景编辑器里启用(并添加好采集节点)就可以开始采集全景序列帧了。</p>
+<p>另附其他工具：</p>
+<ol>
+<li>修改并编译好的<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1c1CVdzM">StereoPanorama</a></li>
+<li>修改好的<a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1c3LVJo">SceneCapturer.cpp</a></li>
+<li><a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1eRGoLhw">ffmpeg(There is no bat)</a></li>
+<li><a target="_blank" rel="noopener" href="http://pan.baidu.com/s/1jH7tiFO">ffmpeg and bat</a></li>
+</ol>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://www.unrealengine.com/zh-CN/blog/capturing-stereoscopic-360-screenshots-videos-movies-unreal-engine-4">从虚幻 4 中采集 360 度立体电影</a></li>
+<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffmpeg.html">ffmpeg Documentation</a></li>
+<li><a href="https://imzlp.com/2016/05/12/cpp11-new-features/">C++11的语法糖</a></li>
+</ol>
+<h3 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h3><p>其实写了这么多，总共精要的部分是没有多少的，主要是记录了一下<code>debug</code>的方式…<br>另外，还是要多读引擎的代码以及不盲目的相信官方才行。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/64044/" target="_blank">使用Unreal Engine 4采集360°全景视频</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2016年09月05日 19时44分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4.8k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/64044/" target="_blank" title="使用Unreal Engine 4采集360°全景视频">https://imzlp.com/posts/64044/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/64044/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E5%85%A8%E6%99%AF%E8%A7%86%E9%A2%91/" rel="tag"># 全景视频</a>
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/VR/" rel="tag"># VR</a>
+              <a href="/tags/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/" rel="tag"># 虚拟现实</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/30227/" rel="prev" title="读《C++语言的设计与演化》及一些疑问的解答">
+      <i class="fa fa-chevron-left"></i> 读《C++语言的设计与演化》及一些疑问的解答
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/33213/" rel="next" title="读CSAPP：与《现代操作系统》的比较">
+      读CSAPP：与《现代操作系统》的比较 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%87%E9%9B%86%E5%8D%95%E5%B8%A7%E5%8F%8C%E7%9C%BC%E5%9B%BE%E5%83%8F"><span class="nav-number">1.</span> <span class="nav-text">采集单帧双眼图像</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%86%E5%B7%A6%E5%8F%B3%E7%9C%BC%E5%9B%BE%E5%83%8F%E8%87%AA%E5%8A%A8%E7%BB%84%E5%90%88%E6%88%90%E5%8D%95%E4%B8%80%E5%9B%BE%E5%83%8F"><span class="nav-number">2.</span> <span class="nav-text">将左右眼图像自动组合成单一图像</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%87%E9%9B%86%E8%BF%9E%E7%BB%AD%E7%9A%84%E5%BA%8F%E5%88%97%E5%B8%A7"><span class="nav-number">3.</span> <span class="nav-text">采集连续的序列帧</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%88%E5%B9%B6%E9%87%87%E9%9B%86%E7%9A%84%E5%9B%BE%E5%83%8F%E5%BA%8F%E5%88%97%E4%B8%BA%E5%85%A8%E6%99%AF%E8%A7%86%E9%A2%91"><span class="nav-number">4.</span> <span class="nav-text">合并采集的图像序列为全景视频</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E6%95%B4%E7%90%86"><span class="nav-number">5.</span> <span class="nav-text">资源整理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-number">6.</span> <span class="nav-text">参考文章</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">7.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/64044/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

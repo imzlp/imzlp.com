@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="UE使用的是C++这种编译型语言，在编译之后就成了二进制，只有通过玩家重新安装才能打到更新游戏的目的。但是对于游戏业务而言，对于需求调整和bug修复时间要求非常迫切，频繁地让玩家更新App是不能接受的，游戏项目一般使用Lua作为游戏业务的脚本语言，是为了把运行时不可变的C++代码变成运行时可更新的Lua代码。 UE官方没有提供Lua的支持，但是腾讯开源了UnLua，在我当前的项目使用了，这两天我梳">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE热更新：基于UnLua的Lua编程指南">
+<meta property="og:url" content="https://imzlp.com/posts/36659/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="UE使用的是C++这种编译型语言，在编译之后就成了二进制，只有通过玩家重新安装才能打到更新游戏的目的。但是对于游戏业务而言，对于需求调整和bug修复时间要求非常迫切，频繁地让玩家更新App是不能接受的，游戏项目一般使用Lua作为游戏业务的脚本语言，是为了把运行时不可变的C++代码变成运行时可更新的Lua代码。 UE官方没有提供Lua的支持，但是腾讯开源了UnLua，在我当前的项目使用了，这两天我梳">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323184439.webp">
+<meta property="article:published_time" content="2020-03-24T10:50:17.000Z">
+<meta property="article:modified_time" content="2021-06-22T11:08:09.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="Lua">
+<meta property="article:tag" content="UnLua">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323184439.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/36659/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE热更新：基于UnLua的Lua编程指南 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/36659/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE热更新：基于UnLua的Lua编程指南<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-03-24-36659.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-24 10:50 10:50:17:50" itemprop="dateCreated datePublished" datetime="2020-03-24T10:50:17+00:00">2020-03-24 10:50</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-06-22 11:08 11:08:09:08" itemprop="dateModified" datetime="2021-06-22T11:08:09+00:00">2021-06-22 11:08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/Lua/" itemprop="url" rel="index"><span itemprop="name">Lua</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/36659/" class="post-meta-item leancloud_visitors" data-flag-title="UE热更新：基于UnLua的Lua编程指南" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>UE使用的是C++这种编译型语言，在编译之后就成了二进制，只有通过玩家重新安装才能打到更新游戏的目的。但是对于游戏业务而言，对于需求调整和bug修复时间要求非常迫切，频繁地让玩家更新App是不能接受的，游戏项目一般使用Lua作为游戏业务的脚本语言，是为了把运行时不可变的C++代码变成运行时可更新的Lua代码。</p>
+<p>UE官方没有提供Lua的支持，但是腾讯开源了<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua">UnLua</a>，在我当前的项目使用了，这两天我梳理了一下UnLua的资料（主要是官方文档、issus、宣讲PPT），加上自己测试UnLua写了一个小Demo的感悟，形成了本篇UE结合UnLua的编程指南，主要是总结使用UnLua来写业务的一些基本方法和坑，方便查看，本篇文章会持续更新。</p>
+<blockquote>
+<p>另外，Lua文件打包成Pak可以用我之前开源的工具：<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">hxhb/HotPatcher</a>，而且我基于UnLua自己修改了一个版本，添加了一些额外的优化，源码集成了<a target="_blank" rel="noopener" href="https://github.com/diegonehab/luasocket">Luasocket</a>/<a target="_blank" rel="noopener" href="https://github.com/Tencent/LuaPanda">Luapanda</a>/<code>lpeg</code>/<code>Sproto</code>/<code>Luacrypt</code>库，可以直接使用<a target="_blank" rel="noopener" href="https://github.com/Tencent/LuaPanda">LuaPanda</a>调试，Github地址为：<a target="_blank" rel="noopener" href="https://github.com/hxhb/debugable-unlua">hxhb/debugable-unlua</a>.</p>
+</blockquote>
+<span id="more"></span>
+
+<p><strong>参考资料</strong>：</p>
+<ul>
+<li><a href="UnLua/UnLua_UE4%E4%B8%8B%E7%9A%84Lua%E8%84%9A%E6%9C%AC%E6%8F%92%E4%BB%B6.pdf">UnLua_UE4下的Lua脚本插件PPT</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/blob/master/UnLua_Programming_Guide_EN.md">UnLua_Programming_Guide_EN</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.lua.org/pil/contents.html">Programming in Lua,1th</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/">Tencent/UnLua/issus</a></li>
+</ul>
+<h3 id="UnLua注意事项"><a href="#UnLua注意事项" class="headerlink" title="UnLua注意事项"></a>UnLua注意事项</h3><p>这些是UnLua官方仓库里我摘录出来的一些可能有坑的地方。</p>
+<ul>
+<li>并非所有的UFUNCTION都支持，只支持<code>BlueprintNativeEvent</code>/<code>BlueprintImplementationEvent</code>/<code>Replication Notify</code>/<code>Animation Notify</code>/<code>Input Event</code>。</li>
+<li>UnLua不支持多State，所以在PIE模式下运行多个Client会有问题。<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/78">issus/78</a></li>
+<li><del>不要在Lua里访问蓝图定义的结构体。<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/119">issues/119</a> / <a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/40">issus/40</a></del>（新的提交已支持）</li>
+<li>UnLua里使用<code>self.Super</code>不会递归向下遍历继承层次中的所有基类。<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/131">issus/131</a></li>
+<li>非dynamic delegate不支持。<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/128">issus/128</a></li>
+<li>不可以直接导出类的static成员，但可以为它封装一个static方法。<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/22">issus/22</a></li>
+<li>不支持绑定lua脚本到对象实例，NewObject指定的脚本是绑定到UCLASS的。<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/134">issus/134</a></li>
+<li>Unlua里使用<code>UE4.TArray</code>的下标规则是从1开始的，与引擎中<code>TArray</code>以0开始不同.<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/41">issues/41</a></li>
+<li>注意导出给Lua的函数很多与蓝图中的名字不同，如蓝图中的<code>GetActorTransform</code>其实在lua里要用<code>GetTransform</code>，在lua里使用的名字都是C++真实定义的函数名字，而不是<code>DisplayName</code>的名字。</li>
+</ul>
+<h3 id="Lua代码提示"><a href="#Lua代码提示" class="headerlink" title="Lua代码提示"></a>Lua代码提示</h3><h4 id="导出符号"><a href="#导出符号" class="headerlink" title="导出符号"></a>导出符号</h4><p>UnLua提供了对引擎内反射符号的导出，也可以自己静态导出非反射类的符号，并且提供了一个<code>Commandlet</code>类<code>UUnLuaIntelliSenseCommandlet</code>导出这些符号。</p>
+<p>下面简单介绍一下<code>Commandlet</code>的调用方法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor-cmd.exe PROJECT_PATH.uproject -run=COMMANDLET</span><br></pre></td></tr></table></figure>
+<p>那么UnLua的Commandlet用法为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:\UnrealEngine\Epic\UE_4.23\Engine\Binaries\Win64\UE4Editor-cmd.exe C:\Users\imzlp\Documents\UnrealProjectSSD\MicroEnd_423\MicroEnd_423.uproject -run=UnLuaIntelliSense</span><br></pre></td></tr></table></figure>
+
+<p>执行完毕之后，会生成<code>UnLua/Interamate/IntelliSense</code>这个目录，里面有引擎导出到lua的符号。</p>
+<h4 id="VSCode中使用"><a href="#VSCode中使用" class="headerlink" title="VSCode中使用"></a>VSCode中使用</h4><p>在VSCode中安装Emmylua插件，安装之后把上一步生成的<code>IntelliSense</code>目录添加到vcode的工作区即可。</p>
+<h3 id="调用父类函数"><a href="#调用父类函数" class="headerlink" title="调用父类函数"></a>调用父类函数</h3><p>在UEC++中，当我们重写了一个父类的虚函数，可以通过调用<code>Super::</code>来指定调用父类实现，但是在Lua中不同。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">self</span>.Super.ReceiveBeginPlay(<span class="built_in">self</span>)</span><br></pre></td></tr></table></figure>
+<p>在Lua使用<code>self.Super</code>来调用父类的函数。</p>
+<blockquote>
+<p>注意：UnLua里的Super只是简单模拟了“继承”语义，在继承多层的情况下会有问题，Super不会主动向下遍历Super。“父类”不是Class()返回的表的元表，只设置在Super这个field上（元表在插件的c++代码里定义了，这个过程已经固化）。</p>
+</blockquote>
+<p>对于<code>基类的基类</code>的Super调用：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">a.lua</span><br><span class="line"><span class="keyword">local</span> a = Class()</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">a:test</span><span class="params">()</span></span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> a</span><br><span class="line"></span><br><span class="line"><span class="comment">--------------------------------------</span></span><br><span class="line"></span><br><span class="line">b.lua</span><br><span class="line"><span class="keyword">local</span> b = Class(<span class="string">&quot;a&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">--------------------------------------</span></span><br><span class="line"></span><br><span class="line">c.lua</span><br><span class="line"><span class="keyword">local</span> c = Class(<span class="string">&quot;b&quot;</span>)</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">a:test</span><span class="params">()</span></span></span><br><span class="line"> c.Super.Super.test(<span class="built_in">self</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>该问题摘录于UnLua的issus：<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/131">Class内的Super的使用问题</a></p>
+</blockquote>
+<h3 id="调用被覆写的方法"><a href="#调用被覆写的方法" class="headerlink" title="调用被覆写的方法"></a>调用被覆写的方法</h3><blockquote>
+<p>注意：Lua和原来的类并不是继承关系，而是依附关系，lua依赖于蓝图或者C++的类。Lua覆写的类的函数，相当于给当前类的函数换了一个实现。</p>
+</blockquote>
+<p>当在Lua中重写了一个附属类的UFUNCTION函数时，可以通过下列方法调用,有点类似于<code>Super</code>但要写成<code>Overridden</code>：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">BP_Game_C:ReceiveBeginPlay</span><span class="params">()</span></span></span><br><span class="line">   <span class="built_in">self</span>.Overridden.ReceiveBeginPlay(<span class="built_in">self</span>) </span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>注意一定要传<code>self</code>进去，不然Unlua调用的时候执行的参数检查会Crash，在UnLua中调用UE函数有点类似于拿到成员函数的原生指针，必须要手动传this进去。</p>
+<h3 id="调用UE的C-函数"><a href="#调用UE的C-函数" class="headerlink" title="调用UE的C++函数"></a>调用UE的C++函数</h3><p>UnLua在编译时可以开启是否启用UE的namespace（也就是UE的函数都需要加UE4前缀）。</p>
+<p>调用方法为：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4.UKismetSystemLibrary.PrintString(<span class="built_in">self</span>,<span class="string">&quot;HelloWorld&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>参数与C++调用的相匹配（具有默认参数的同样可以不写）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UKismetSystemLibrary::<span class="built_in">PrintString</span>(<span class="keyword">this</span>,<span class="built_in">TEXT</span>(<span class="string">&quot;Hello&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="覆写多返回值的函数"><a href="#覆写多返回值的函数" class="headerlink" title="覆写多返回值的函数"></a>覆写多返回值的函数</h3><h4 id="蓝图"><a href="#蓝图" class="headerlink" title="蓝图"></a>蓝图</h4><p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/36659/UnLua/override-mulit-return-value.webp"></p>
+<p>覆写的lua代码：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:GetName</span><span class="params">(InString)</span></span></span><br><span class="line">    UE4.UKismetSystemLibrary.PrintString(<span class="built_in">self</span>,InString)</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>,<span class="string">&quot;helloworld&quot;</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="C"><a href="#C" class="headerlink" title="C++"></a>C++</h4><p>因为C++的多返回值是通过传递引用参数进去实现的，所以在Lua中这个不太一样。</p>
+<p>如下面的C++函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// .h</span></span><br><span class="line"><span class="built_in">UFUNCTION</span>(BlueprintCallable, Category = <span class="string">&quot;GameCore|Flib|GameFrameworkStatics&quot;</span>, meta = (CallableWithoutWorldContext, WorldContext = <span class="string">&quot;WorldContextObject&quot;</span>))</span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">bool</span> <span class="title">LuaGetMultiReturnExample</span><span class="params">(UObject* WorldContextObject, FString&amp; OutString, int32&amp; OutInt, UObject*&amp; OutGameInstance)</span></span>;</span><br><span class="line"><span class="comment">// .cpp</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibGameFrameworkStatics::LuaGetMultiReturnExample</span><span class="params">(UObject* WorldContextObject, FString&amp; OutString, int32&amp; OutInt, UObject*&amp; OutGameInstance)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">bool</span> bStatus = <span class="literal">false</span>;</span><br><span class="line">	<span class="keyword">if</span> (WorldContextObject)</span><br><span class="line">	&#123;</span><br><span class="line">		OutString = <span class="built_in">TEXT</span>(<span class="string">&quot;HelloWorld&quot;</span>);</span><br><span class="line">		OutInt = <span class="number">1111</span>;</span><br><span class="line">		OutGameInstance = UGameplayStatics::<span class="built_in">GetGameInstance</span>(WorldContextObject);</span><br><span class="line">		bStatus = <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> bStatus;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数接收<code>WorldContextObject</code>的参数，并接收<code>FString</code>/<code>int32</code>/<code>UObject*</code>这三个类型的引用类型，并返回一个bool，那么这个函数该怎么在lua中接收这些参数值的？</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> ret1,ret2,ret3,ret4 = UE4.UFlibGameFrameworkStatics.LuaGetMultiReturnExample(<span class="built_in">self</span>,<span class="literal">nil</span>,<span class="literal">nil</span>,<span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
+
+<p>这种<code>local ret1,ret2=func()</code>的这种写法是Lua里的规则，可以看Programming in Lua，4th的第六章。</p>
+<blockquote>
+<p>注意：接收引用参数的返回值和真正函数返回值的顺序是：ret1,ret2,ret3都是引用参数，最终函数的返回bool是最后一个ret4。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/36659/UnLua/lua-call-cpp-function-get-multi-ret.webp"></p>
+<h4 id="非const引用参数作为返回值需要注意的问题"><a href="#非const引用参数作为返回值需要注意的问题" class="headerlink" title="非const引用参数作为返回值需要注意的问题"></a>非const引用参数作为返回值需要注意的问题</h4><blockquote>
+<p><strong>注意</strong>：当调用UFUNCTION函数时，非const引用参数可以忽略，但是非UFUNCTION而是静态导出的函数则不行，因为UnLua对静态导出的函数有参数个数检查。</p>
+</blockquote>
+<p>而且，使用引用作为返回参数的的使用方式需要考虑到下面两种情况：</p>
+<ol>
+<li>非const引用作为纯输出</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">GetPlayerBaseInfo</span><span class="params">(int32 &amp;Level, <span class="type">float</span> &amp;Health, FString &amp;Name)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Level = <span class="number">7</span>;</span><br><span class="line">    Health = <span class="number">77</span>;</span><br><span class="line">    Name = <span class="string">&quot;Marcus&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种情况下返回值和传入值是没有任何关系的。在lua中可以这么使用：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> level,heath,name = <span class="built_in">self</span>:GetPlayerBaseInfo(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>非const引用参数既作为输入又作为输出</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">GetPlayerBaseInfo</span><span class="params">(int32 &amp;Level, <span class="type">float</span> &amp;Health, FString &amp;Name)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Level += <span class="number">7</span>;</span><br><span class="line">    Health += <span class="number">77</span>;</span><br><span class="line">    Name += <span class="string">&quot;Marcus&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这种情况下，返回值和输入是有直接关系的，所以不能像情况1中那样使用：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> level,heath,name</span><br><span class="line">level,heath,name = <span class="built_in">self</span>:GetPlayerBaseInfo(level,heath,name);</span><br></pre></td></tr></table></figure>
+
+<p>在这种情况下，在lua里调用传入的参数和返回的参数是都<strong>必须</strong>要传递和接收的，这样才会有正常的行为，如果不接收返回值：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> level,heath,name</span><br><span class="line"><span class="built_in">self</span>:GetPlayerBaseInfo(level,heath,name);</span><br></pre></td></tr></table></figure>
+
+<p><code>level,heath,name</code>这些传进去的对象的值并不会像C++中传递的引用那样值会改变。</p>
+<blockquote>
+<p>所以函数怎么调用还是要看函数里是怎么写的。</p>
+</blockquote>
+<p>这个在UnLua的issus里有提到：<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/25">issus/25</a></p>
+<h3 id="检测是否继承接口"><a href="#检测是否继承接口" class="headerlink" title="检测是否继承接口"></a>检测是否继承接口</h3><p>C++里使用<code>UKismetSystemLibrary::DoesImplementInterface</code>，Lua里也一样，不过区别是接口类型的传入：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> CubeClass = UE4.UClass.Load(<span class="string">&quot;/Game/Cube_Blueprint.Cube_Blueprint&quot;</span>)</span><br><span class="line"><span class="keyword">local</span> World = <span class="built_in">self</span>:GetWorld()</span><br><span class="line"><span class="keyword">local</span> Cube_Ins = World:SpawnActor(CubeClass,<span class="built_in">self</span>:GetTransform(),UE4.ESpawnActorCollisionHandlingMethod.AlwaysSpawn, <span class="built_in">self</span>, <span class="built_in">self</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> UE4.UKismetSystemLibrary.DoesImplementInterface(Cube_Ins,UE4.UMyInterface) <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">print</span>(fmt(<span class="string">&quot;&#123;1&#125; inheritanced &#123;2&#125;&quot;</span>,CubeClass,UE4.UMyInterface))</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>要使用<code>UE4.U*Interface</code>这种形式。</p>
+<h3 id="获取TScriptInterface接口对象"><a href="#获取TScriptInterface接口对象" class="headerlink" title="获取TScriptInterface接口对象"></a>获取TScriptInterface接口对象</h3><p>当我们在C++中获得一个接口时，获得的类型是<code>TScriptInterface&lt;&gt;</code>类型，本来以为还要自己导出<code>TScriptInterface</code>才可以拿到接口，但是发现并不是这样，UnLua里可以直接拿到<code>TScriptInterface&lt;&gt;</code>就像普通的UObject对象：</p>
+<p>如下面这样一个函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UFUNCTION</span>(BlueprintCallable, Category = <span class="string">&quot;GameCore|Flib|GameFrameworkStatics&quot;</span>, meta = (CallableWithoutWorldContext,WorldContext=<span class="string">&quot;WorldContextObject&quot;</span>))</span><br><span class="line"><span class="function"><span class="type">static</span> TScriptInterface&lt;IINetGameInstance&gt; <span class="title">GetNetGameInstance</span><span class="params">(UObject* WorldContextObject)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>在Lua里调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">local GameInstance = UE4.UFlibGameFrameworkStatics.<span class="built_in">GetNetGameInstance</span>(self);</span><br></pre></td></tr></table></figure>
+
+<p>这个得到的类型在C++里是<code>TScriptInterface&lt;&gt;</code>但在Lua里得到的就是该接口的UObject对象。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/36659/UnLua/unlua-get-tscriptinterface.webp"></p>
+<h3 id="调用成员函数"><a href="#调用成员函数" class="headerlink" title="调用成员函数"></a>调用成员函数</h3><p>上面讲了怎么得到<code>TScriptInterface</code>的接口（在lua里得到的其实就是该接口的UObject），那么怎么通过它来调用接口的函数呢？有三种方法。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This class does not need to be modified.</span></span><br><span class="line"><span class="built_in">UINTERFACE</span>(BlueprintType,MinimalAPI)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">UINetGameInstance</span> : <span class="keyword">public</span> UIBaseEntityInterface</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_BODY</span>()</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">GWORLD_API</span> IINetGameInstance</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">UFUNCTION</span>(Category = <span class="string">&quot;GameCore|GamePlayFramework&quot;</span>)</span><br><span class="line">		<span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">FindSubsystem</span><span class="params">(<span class="type">const</span> FString&amp; InSysName,TScriptInterface&lt;IISubsystem&gt;&amp; OutSubsystem)</span></span>=<span class="number">0</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="通过对象调用函数"><a href="#通过对象调用函数" class="headerlink" title="通过对象调用函数"></a>通过对象调用函数</h4><ol>
+<li>可以通过拿到实现接口的对象然后通过该对象调用函数（使用lua的<code>:</code>操作符）：</li>
+</ol>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> GameInstance = UE4.UFlibGameFrameworkStatics.GetNetGameInstance(<span class="built_in">self</span>);</span><br><span class="line"><span class="keyword">local</span> findRet1,findRet2 = GameInstance:FindSubsystem(<span class="string">&quot;TouchController&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h4 id="指定类和函数名调用"><a href="#指定类和函数名调用" class="headerlink" title="指定类和函数名调用"></a>指定类和函数名调用</h4><ol start="2">
+<li>也可以直接通过指定实现该接口的类型名字来调用，就像函数指针，需要把调用该函数的对象传递进去：</li>
+</ol>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> GameInstance = UE4.UFlibGameFrameworkStatics.GetNetGameInstance(<span class="built_in">self</span>);</span><br><span class="line"><span class="keyword">local</span> findRet1,findRet2 = UE4.UNetGameInstance.FindSubsystem(GameInstance,<span class="string">&quot;TouchController&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="指定接口的类和函数名调用"><a href="#指定接口的类和函数名调用" class="headerlink" title="指定接口的类和函数名调用"></a>指定接口的类和函数名调用</h4><ol start="3">
+<li>以及通过接口的类型调用（因为接口也是UClass，接口中的函数也都标记了UFUNCTION）：</li>
+</ol>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> GameInstance = UE4.UFlibGameFrameworkStatics.GetNetGameInstance(<span class="built_in">self</span>);</span><br><span class="line"><span class="keyword">local</span> findRet1,findRet2 = UE4.UINetGameInstance.FindSubsystem(GameInstance,<span class="string">&quot;TouchController&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取UClass"><a href="#获取UClass" class="headerlink" title="获取UClass"></a>获取UClass</h3><p>lua中获取uclass可以用于创建对象，其方法为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">local uclass = UE4.UClass.<span class="built_in">Load</span>(<span class="string">&quot;/Game/Core/Blueprints/AI/BP_AICharacter.BP_AICharacter_C&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>Load的路径是该类的<code>PackagePath</code>。</p>
+<p>如，在lua中加载UMG的类然后创建并添加至视口：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:ReceiveBeginPlay</span><span class="params">()</span></span></span><br><span class="line">    <span class="keyword">local</span> UMG_C = UE4.UClass.Load(<span class="string">&quot;/Game/Test/BPUI_TestMain.BPUI_TestMain_C&quot;</span>)</span><br><span class="line">    <span class="keyword">local</span> UMG_TestMain_Ins = UE4.UWidgetBlueprintLibrary.Create(<span class="built_in">self</span>,UMG_C)</span><br><span class="line">    UMG_TestMain_Ins:AddToViewport()</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：UnLua官方的<code>UE4.UClass.Load</code>实现是默认只能创建蓝图类的，具体实现看<code>LuaLib_Class.cpp</code>中的<code>UClass_Load</code>的实现。</p>
+<p>可以修改一下支持C++的类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">int32 <span class="title">UClass_Load</span><span class="params">(lua_State *L)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    int32 NumParams = <span class="built_in">lua_gettop</span>(L);</span><br><span class="line">    <span class="keyword">if</span> (NumParams != <span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid parameters!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *ClassName = <span class="built_in">lua_tostring</span>(L, <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">if</span> (!ClassName)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid class name!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="function">FString <span class="title">ClassPath</span><span class="params">(ClassName)</span></span>;</span><br><span class="line"></span><br><span class="line">	<span class="type">bool</span> IsCppClass = ClassPath.<span class="built_in">StartsWith</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Script&quot;</span>));</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!IsCppClass)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">const</span> TCHAR *Suffix = <span class="built_in">TEXT</span>(<span class="string">&quot;_C&quot;</span>);</span><br><span class="line">		int32 Index = INDEX_NONE;</span><br><span class="line">		ClassPath.<span class="built_in">FindChar</span>(<span class="built_in">TCHAR</span>(<span class="string">&#x27;.&#x27;</span>), Index);</span><br><span class="line">		<span class="keyword">if</span> (Index == INDEX_NONE)</span><br><span class="line">		&#123;</span><br><span class="line">			ClassPath.<span class="built_in">FindLastChar</span>(<span class="built_in">TCHAR</span>(<span class="string">&#x27;/&#x27;</span>), Index);</span><br><span class="line">			<span class="keyword">if</span> (Index != INDEX_NONE)</span><br><span class="line">			&#123;</span><br><span class="line">				<span class="type">const</span> FString Name = ClassPath.<span class="built_in">Mid</span>(Index + <span class="number">1</span>);</span><br><span class="line">				ClassPath += <span class="built_in">TCHAR</span>(<span class="string">&#x27;.&#x27;</span>);</span><br><span class="line">				ClassPath += Name;</span><br><span class="line">				ClassPath.<span class="built_in">AppendChars</span>(Suffix, <span class="number">2</span>);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">if</span> (ClassPath.<span class="built_in">Right</span>(<span class="number">2</span>) != <span class="built_in">TEXT</span>(<span class="string">&quot;_C&quot;</span>))</span><br><span class="line">			&#123;</span><br><span class="line">				ClassPath.<span class="built_in">AppendChars</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;_C&quot;</span>), <span class="number">2</span>);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    FClassDesc *ClassDesc = <span class="built_in">RegisterClass</span>(L, <span class="built_in">TCHAR_TO_ANSI</span>(*ClassPath));</span><br><span class="line">    <span class="keyword">if</span> (ClassDesc &amp;&amp; ClassDesc-&gt;<span class="built_in">AsClass</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        UnLua::<span class="built_in">PushUObject</span>(L, ClassDesc-&gt;<span class="built_in">AsClass</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">lua_pushnil</span>(L);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>C++类的路径为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/Script/GWorld.GWorldGameEngine</span><br></pre></td></tr></table></figure>
+
+<p>以<code>/Script</code>开头，其后是该C++类所属的模块名，<code>.</code>之后的是类名（不包含<code>U</code>/<code>A</code>之类的开头）。</p>
+<h3 id="LoadObject"><a href="#LoadObject" class="headerlink" title="LoadObject"></a>LoadObject</h3><p>把资源加载到内存：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> Object = LoadObject(<span class="string">&quot;/Game/Core/Blueprints/AI/BT_Enemy&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>比如加载某个材质球给模型：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">function Cube3_Blueprint_C:<span class="built_in">ReceiveBeginPlay</span>()</span><br><span class="line">    local MatIns = <span class="built_in">LoadObject</span>(<span class="string">&quot;/Game/TEST/Cube_Mat_Ins&quot;</span>)</span><br><span class="line">    UE4.UPrimitiveComponent.<span class="built_in">SetMaterial</span>(self.StaticMeshComponent,<span class="number">0</span>,MatIns)</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+
+<p>注：LuaObject在UnLua里对应的是<code>LoadObject&lt;Object&gt;</code>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">int32 <span class="title">UObject_Load</span><span class="params">(lua_State *L)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">  UObject *Object = <span class="built_in">LoadObject</span>&lt;UObject&gt;(<span class="literal">nullptr</span>, *ObjectPath);</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建对象"><a href="#创建对象" class="headerlink" title="创建对象"></a>创建对象</h3><blockquote>
+<p>注意：Lua中创建的对象使用动态绑定是绑定到该类的UCLASS上，并不是绑定到该New出来的实例。</p>
+</blockquote>
+<p>UnLua中对<code>NewObject</code>处理的代码为<code>Global_NewObject</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FScopedLuaDynamicBinding <span class="title">Binding</span><span class="params">(L, Class, ANSI_TO_TCHAR(ModuleName), TableRef)</span></span>;</span><br><span class="line">UObject *Object = <span class="built_in">StaticConstructObject_Internal</span>(Class, Outer, Name);</span><br></pre></td></tr></table></figure>
+
+<h4 id="SpawnActor"><a href="#SpawnActor" class="headerlink" title="SpawnActor"></a>SpawnActor</h4><p>Lua中SpawnActor以及动态绑定：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> World = <span class="built_in">self</span>:GetWorld()</span><br><span class="line"><span class="keyword">local</span> WeaponClass = UE4.UClass.Load(<span class="string">&quot;/Game/Core/Blueprints/Weapon/BP_DefaultWeapon.BP_DefaultWeapon&quot;</span>)</span><br><span class="line"><span class="keyword">local</span> NewWeapon = World:SpawnActor(WeaponClass, <span class="built_in">self</span>:GetTransform(), UE4.ESpawnActorCollisionHandlingMethod.AlwaysSpawn, <span class="built_in">self</span>, <span class="built_in">self</span>, <span class="string">&quot;Weapon.BP_DefaultWeapon_C&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="NewObject"><a href="#NewObject" class="headerlink" title="NewObject"></a>NewObject</h4><p>lua中调用NewObject以及动态绑定：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> ProxyObj = NewObject(ObjClass, <span class="built_in">self</span>, <span class="literal">nil</span>, <span class="string">&quot;Objects.ProxyObject&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>UnLua中的<code>NewObject</code>可以接收四个参数，依次是：创建的UClass、Outer、Name，以及动态绑定的Lua脚本。</p>
+<h4 id="Component"><a href="#Component" class="headerlink" title="Component"></a>Component</h4><blockquote>
+<p>注意：原版UnLua只可以加载BP的UClass，这个需要做改动(修改<code>LuaLib_Class.cpp</code>中的<code>UClass_Load</code>函数，检测传入是C++类时把添加<code>_C</code>后缀的逻辑去掉)， 而且创建Component时也需要对其调用<code>OnComponentCreated</code>和<code>RegisterComponent</code>，这两个函数不是UFUNCTION，需要手动导出。</p>
+</blockquote>
+<p>导出ActorComponent中<code>OnComponentCreated</code>和<code>RegisterComponent</code>等函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Export Actor Component</span></span><br><span class="line"><span class="built_in">BEGIN_EXPORT_REFLECTED_CLASS</span>(UActorComponent)</span><br><span class="line">	<span class="built_in">ADD_FUNCTION</span>(RegisterComponent)</span><br><span class="line">	<span class="built_in">ADD_FUNCTION</span>(OnComponentCreated)</span><br><span class="line">	<span class="built_in">ADD_FUNCTION</span>(UnregisterComponent)</span><br><span class="line">	<span class="built_in">ADD_CONST_FUNCTION_EX</span>(<span class="string">&quot;IsRegistered&quot;</span>,<span class="type">bool</span>, IsRegistered)</span><br><span class="line">	<span class="built_in">ADD_CONST_FUNCTION_EX</span>(<span class="string">&quot;HasBeenCreated&quot;</span>,<span class="type">bool</span>, HasBeenCreated)</span><br><span class="line"><span class="built_in">END_EXPORT_CLASS</span>()</span><br><span class="line"><span class="built_in">IMPLEMENT_EXPORTED_CLASS</span>(UActorComponent)</span><br></pre></td></tr></table></figure>
+
+<p>则使用时与C++的使用方法一致：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> StaticMeshClass = UE4.UClass.Load(<span class="string">&quot;/Script/Engine.StaticMeshComponent&quot;</span>)</span><br><span class="line"><span class="keyword">local</span> MeshObject = LoadObject(<span class="string">&quot;/Engine/VREditor/LaserPointer/CursorPointer&quot;</span>)</span><br><span class="line"><span class="keyword">local</span> StaticMeshComponent= NewObject(StaticMeshClass,<span class="built_in">self</span>,<span class="string">&quot;StaticMesh&quot;</span>)</span><br><span class="line">StaticMeshComponent:SetStaticMesh(MeshObject)</span><br><span class="line">StaticMeshComponent:RegisterComponent()</span><br><span class="line">StaticMeshComponent:OnComponentCreated()</span><br><span class="line"><span class="built_in">self</span>:ReceiveStaticMeshComponent(StaticMeshComponent)</span><br><span class="line"><span class="comment">-- StaticMeshComponent:K2_AttachToComponent(self.StaticMeshComponent,&quot;&quot;,EAttachmentRule.SnapToTarget,EAttachmentRule.SnapToTarget,EAttachmentRule.SnapToTarget)</span></span><br><span class="line">UE4.UStaticMeshComponent.K2_AttachToComponent(StaticMeshComponent,<span class="built_in">self</span>.StaticMeshComponent,<span class="string">&quot;&quot;</span>,EAttachmentRule.SnapToTarget,EAttachmentRule.SnapToTarget,EAttachmentRule.SnapToTarget)</span><br></pre></td></tr></table></figure>
+
+<h4 id="UMG"><a href="#UMG" class="headerlink" title="UMG"></a>UMG</h4><p>创建UMG首先需要获取到UI的UClass，然后使用<code>UWidgetBlueprintLibrary::Create</code>来创建，与C++一致：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> UMG_C = UE4.UClass.Load(<span class="string">&quot;/Game/Test/BPUI_TestMain.BPUI_TestMain_C&quot;</span>)</span><br><span class="line"><span class="keyword">local</span> UMG_TestMain_Ins = UE4.UWidgetBlueprintLibrary.Create(<span class="built_in">self</span>,UMG_C)</span><br><span class="line">UMG_TestMain_Ins:AddToViewport()</span><br></pre></td></tr></table></figure>
+
+<h3 id="绑定代理"><a href="#绑定代理" class="headerlink" title="绑定代理"></a>绑定代理</h3><h4 id="动态多播代理"><a href="#动态多播代理" class="headerlink" title="动态多播代理"></a>动态多播代理</h4><p>在C++代码中写了一个动态多播代理：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam</span>(FGameInstanceDyDlg, <span class="type">const</span> FString&amp;,InString);</span><br><span class="line"></span><br><span class="line"><span class="comment">// in class</span></span><br><span class="line"><span class="built_in">UPROPERTY</span>()</span><br><span class="line">FGameInstanceDyDlg GameInstanceDyDlg;</span><br></pre></td></tr></table></figure>
+
+<p>在lua中绑定，可以绑定到lua的函数：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> GameInstance = UE4.UFlibGameFrameworkStatics.GetNetGameInstance(<span class="built_in">self</span>);</span><br><span class="line">GameInstance.GameInstanceDyMultiDlg:Add(<span class="built_in">self</span>,LoadingMap_C.BindGameInstanceDyMultiDlg)</span><br><span class="line"></span><br><span class="line"><span class="comment">-- test bind dynamic multicast delegate lua func</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:BindGameInstanceDyMultiDlg</span><span class="params">(InString)</span></span></span><br><span class="line">    UE4.UKismetSystemLibrary.PrintString(<span class="built_in">self</span>,InString)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>同样也可以对该代理进行调用、清理、移除：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-- remove </span><br><span class="line">GameInstance.GameInstanceDyMultiDlg:<span class="built_in">Remove</span>(self,LoadingMap_C.BindGameInstanceDyDlg)</span><br><span class="line">-- Clear</span><br><span class="line">GameInstance.GameInstanceDyMultiDlg:<span class="built_in">Clear</span>()</span><br><span class="line">-- broadcast</span><br><span class="line">GameInstance.GameInstanceDyMultiDlg:<span class="built_in">Broadcast</span>(<span class="string">&quot;66666666&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="动态代理"><a href="#动态代理" class="headerlink" title="动态代理"></a>动态代理</h4><p>C++中有如下动态代理声明：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">DECLARE_DYNAMIC_DELEGATE_OneParam</span>(FGameInstanceDyDlg,<span class="type">const</span> FString&amp;,InString);</span><br><span class="line"></span><br><span class="line"><span class="comment">// in class</span></span><br><span class="line"><span class="built_in">UPROPERTY</span>()</span><br><span class="line">FGameInstanceDyDlg GameInstanceDyDlg;</span><br></pre></td></tr></table></figure>
+
+<p>在lua中绑定：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GameInstance.GameInstanceDyDlg:Bind(<span class="built_in">self</span>,LoadingMap_C.BindGameInstanceDyMultiDlg)</span><br><span class="line"></span><br><span class="line"><span class="comment">-- test bind dynamic delegate lua func</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:BindGameInstanceDyDlg</span><span class="params">(InString)</span></span></span><br><span class="line">    UE4.UKismetSystemLibrary.PrintString(<span class="built_in">self</span>,InString)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>动态代理支持<code>Bind</code>/<code>Unbind</code>/<code>Execute</code>操作：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- bind</span></span><br><span class="line">GameInstance.GameInstanceDyDlg:Bind(<span class="built_in">self</span>,LoadingMap_C.BindGameInstanceDyMultiDlg)</span><br><span class="line"><span class="comment">-- UnBind</span></span><br><span class="line">GameInstance.GameInstanceDyDlg:Unbind()</span><br><span class="line"><span class="comment">-- Execute</span></span><br><span class="line">GameInstance.GameInstanceDyDlg:Execute(<span class="string">&quot;GameInstanceDyMultiDlg&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="不支持非Dynamic-Delegate"><a href="#不支持非Dynamic-Delegate" class="headerlink" title="不支持非Dynamic Delegate"></a>不支持非Dynamic Delegate</h4><p>因为<code>BindStatic</code>/<code>BindRaw</code>/<code>BindUFunction</code>这些都是模板函数，UnLua的静态导出方案不支持将他们导出。</p>
+<p>官方issus：<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/128">如何正确静态导出继承自FScriptDelegate的普通委托</a></p>
+<h3 id="使用异步事件"><a href="#使用异步事件" class="headerlink" title="使用异步事件"></a>使用异步事件</h3><h4 id="Delay"><a href="#Delay" class="headerlink" title="Delay"></a>Delay</h4><p>如果想要使用类似Delay的函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * Perform a latent action with a delay (specified in seconds).  Calling again while it is counting down will be ignored.</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * @param WorldContextWorld context.</span></span><br><span class="line"><span class="comment"> * @param Duration length of delay (in seconds).</span></span><br><span class="line"><span class="comment"> * @param LatentInfo The latent action.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">UFUNCTION</span>(BlueprintCallable, Category=<span class="string">&quot;Utilities|FlowControl&quot;</span>, meta=(Latent, WorldContext=<span class="string">&quot;WorldContextObject&quot;</span>, LatentInfo=<span class="string">&quot;LatentInfo&quot;</span>, Duration=<span class="string">&quot;0.2&quot;</span>, Keywords=<span class="string">&quot;sleep&quot;</span>))</span><br><span class="line"><span class="function"><span class="type">static</span> <span class="title">voidDelay</span><span class="params">(UObject* WorldContextObject, <span class="type">float</span> Duration, <span class="keyword">struct</span> FLatentActionInfo LatentInfo )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>在lua中可以通过<code>协程(coroutine)</code>来实现：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:DelayFunc</span><span class="params">(Induration)</span></span></span><br><span class="line">    <span class="built_in">coroutine</span>.<span class="built_in">resume</span>(<span class="built_in">coroutine</span>.<span class="built_in">create</span>(</span><br><span class="line">        <span class="function"><span class="keyword">function</span><span class="params">(WorldContectObject,duration)</span></span>    </span><br><span class="line">            UE4.UKismetSystemLibrary.Delay(WorldContectObject,duration)</span><br><span class="line">            UE4.UKismetSystemLibrary.PrintString(WorldContectObject,<span class="string">&quot;Helloworld&quot;</span>)</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    ),</span><br><span class="line">    <span class="built_in">self</span>,Induration)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>就是通过<code>coroutine.create</code>绑定上一个函数，可以直接在<code>coroutine.create</code>里写，或者绑定上一个已有的函数：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:DelayFunc</span><span class="params">(Induration)</span></span></span><br><span class="line">    <span class="built_in">coroutine</span>.<span class="built_in">resume</span>(<span class="built_in">coroutine</span>.<span class="built_in">create</span>(LoadingMap_C.DoDelay),<span class="built_in">self</span>,<span class="built_in">self</span>,Induration)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:DoDelay</span><span class="params">(WorldContectObject,duration)</span></span>    </span><br><span class="line">    UE4.UKismetSystemLibrary.Delay(WorldContectObject,duration)</span><br><span class="line">    UE4.UKismetSystemLibrary.PrintString(WorldContectObject,<span class="string">&quot;Helloworld&quot;</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>但是要<strong>注意一点</strong>：在绑定已有的lua函数时，传递的参数需要多一个<code>self</code>，标识调用指定函数的调用者。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">coroutine</span>.<span class="built_in">resume</span>(<span class="built_in">coroutine</span>.<span class="built_in">create</span>(LoadingMap_C.DoDelay),<span class="built_in">self</span>,<span class="built_in">self</span>,Induration)</span><br></pre></td></tr></table></figure>
+
+<p>这里的第一个<code>self</code>，就是在通过<code>self</code>调用<code>LoadingMap_C.DoDelay</code>，后面的两个参数才作为传递给协程函数的参数。</p>
+<p>调用代码为：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:ReceiveBeginPlay</span><span class="params">()</span></span></span><br><span class="line">    <span class="comment">-- 5s后输出HelloWorld</span></span><br><span class="line">    <span class="built_in">self</span>:DelayFunc(<span class="number">5.0</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：对于直接是UFUNCTION但是带有<code>FLatentActionInfo</code>的函数可以直接使用上面的方法，但是对于UE封装的异步节点，不是函数而是一个类的节点需要自己导出。</p>
+</blockquote>
+<h4 id="AsyncLoadPrimaryAsset"><a href="#AsyncLoadPrimaryAsset" class="headerlink" title="AsyncLoadPrimaryAsset"></a>AsyncLoadPrimaryAsset</h4><p>在C++里可以使用<code>UAsyncActionLoadPrimaryAsset::AsyncLoadPrimaryAsset</code>来异步加载资源：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * Load a primary asset into memory. The completed delegate will go off when the load succeeds or fails, you should cast the Loaded object to verify it is the correct type.</span></span><br><span class="line"><span class="comment"> * If LoadBundles is specified, those bundles are loaded along with the asset</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">UFUNCTION</span>(BlueprintCallable, meta=(BlueprintInternalUseOnly=<span class="string">&quot;true&quot;</span>, Category = <span class="string">&quot;AssetManager&quot;</span>, AutoCreateRefTerm = <span class="string">&quot;LoadBundles&quot;</span>, WorldContext = <span class="string">&quot;WorldContextObject&quot;</span>))</span><br><span class="line"><span class="function"><span class="type">static</span> UAsyncActionLoadPrimaryAsset* <span class="title">AsyncLoadPrimaryAsset</span><span class="params">(UObject* WorldContextObject, FPrimaryAssetId PrimaryAsset, <span class="type">const</span> TArray&lt;FName&gt;&amp; LoadBundles)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>想要在Lua中使用的话需要把<code>FPrimaryAssetId</code>这个结构导出：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;UnLuaEx.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;LuaCore.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;UObject/PrimaryAssetId.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="built_in">BEGIN_EXPORT_CLASS</span>(FPrimaryAssetId,<span class="type">const</span> FString&amp;)</span><br><span class="line">	<span class="built_in">ADD_FUNCTION_EX</span>(<span class="string">&quot;ToString&quot;</span>,FString, ToString)</span><br><span class="line">	<span class="built_in">ADD_STATIC_FUNCTION_EX</span>(<span class="string">&quot;FromString&quot;</span>,FPrimaryAssetId, FromString,<span class="type">const</span> FString&amp;)</span><br><span class="line">	<span class="built_in">ADD_FUNCTION_EX</span>(<span class="string">&quot;IsValid&quot;</span>, <span class="type">bool</span>, IsValid)</span><br><span class="line"><span class="built_in">END_EXPORT_CLASS</span>()</span><br><span class="line"><span class="built_in">IMPLEMENT_EXPORTED_CLASS</span>(FPrimaryAssetId)</span><br></pre></td></tr></table></figure>
+
+<p>然后就可以在Lua中使用了，如异步加载关卡资源，加载完成后打开：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Cube_Blueprint_C:ReceiveBeginPlay</span><span class="params">()</span></span></span><br><span class="line">    <span class="keyword">local</span> Map = UE4.FPrimaryAssetId(<span class="string">&quot;Map:/Game/Test/LoadingMap&quot;</span>)</span><br><span class="line">    <span class="keyword">local</span> AsyncActionLoadPrimaryAsset = UE4.UAsyncActionLoadPrimaryAsset.AsyncLoadPrimaryAsset(<span class="built_in">self</span>,Map,<span class="literal">nil</span>)</span><br><span class="line">    AsyncActionLoadPrimaryAsset.Completed:Add(<span class="built_in">self</span>,Cube_Blueprint_C.ReceiveLoadedMap)</span><br><span class="line">    AsyncActionLoadPrimaryAsset:Activate()</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Cube_Blueprint_C:ReceiveLoadedMap</span><span class="params">(Object)</span></span></span><br><span class="line">    UE4.UGameplayStatics.OpenLevel(<span class="built_in">self</span>,<span class="string">&quot;/Game/Test/LoadingMap&quot;</span>,<span class="literal">true</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="SetTimer"><a href="#SetTimer" class="headerlink" title="SetTimer"></a>SetTimer</h4><p>有些需求需要Timer循环调用，在C++里可以使用<code>UKismetSystemLibrary::K2_SetTimerDelegate</code>，在蓝图中对应的是<code>SetTimerByEvent</code>，因为它是<code>UFUNCTION</code>的函数，所以在lua中也可以调用。</p>
+<p>绑定代理和清理操作：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:ReceiveBeginPlay</span><span class="params">()</span></span></span><br><span class="line">    UpdateUILoopCount = <span class="number">0</span>;</span><br><span class="line">	UpdateUITimerHandle = UE4.UKismetSystemLibrary.K2_SetTimerDelegate(&#123;<span class="built_in">self</span>,LoadingMap_C.UpdateUI&#125;,<span class="number">0.3</span>,<span class="literal">true</span>)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">LoadingMap_C:UpdateUI</span><span class="params">()</span></span></span><br><span class="line">    <span class="keyword">if</span> UpdateUILoopCount &lt; <span class="number">10</span> <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;HelloWorld&quot;</span>)</span><br><span class="line">        UpdateUILoopCount = UpdateUILoopCount + <span class="number">1</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        UE4.UKismetSystemLibrary.K2_ClearAndInvalidateTimerHandle(<span class="built_in">self</span>,UpdateUITimerHandle)</span><br><span class="line">    <span class="keyword">end</span> </span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>{self,FUNCTION}会创建出来一个Delegate，本来还以为要自己导出一个创建Dynamic Delegate的方法，其实不用。</p>
+</blockquote>
+<h3 id="绑定UMG控件事件"><a href="#绑定UMG控件事件" class="headerlink" title="绑定UMG控件事件"></a>绑定UMG控件事件</h3><p>如果要绑定类似<code>UButton</code>的<code>OnPressed</code>/<code>OnClicked</code>/<code>OnReleased</code>/<code>OnHovered</code>/<code>OnUnhovered</code>等事件，它们都是多播代理，所以要用<code>Add</code>来添加：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">DECLARE_DYNAMIC_MULTICAST_DELEGATE</span>(FOnButtonClickedEvent);</span><br><span class="line"><span class="built_in">DECLARE_DYNAMIC_MULTICAST_DELEGATE</span>(FOnButtonPressedEvent);</span><br><span class="line"><span class="built_in">DECLARE_DYNAMIC_MULTICAST_DELEGATE</span>(FOnButtonReleasedEvent);</span><br><span class="line"><span class="built_in">DECLARE_DYNAMIC_MULTICAST_DELEGATE</span>(FOnButtonHoverEvent);</span><br></pre></td></tr></table></figure>
+
+<p>在lua中绑定：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UMG_LoadingMap_C:Construct</span><span class="params">()</span></span></span><br><span class="line">    <span class="built_in">self</span>.ButtonItem.OnPressed:Add(<span class="built_in">self</span>,UMG_LoadingMap_C.OnButtonItemPressed)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UMG_LoadingMap_C:OnButtonItemPressed</span><span class="params">()</span></span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;On Button Item Pressed&quot;</span>)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="UE4-TArray"><a href="#UE4-TArray" class="headerlink" title="UE4.TArray"></a>UE4.TArray</h3><p>Unlua里使用<code>UE4.TArray</code>的下标规则是从1开始的，而不是与引擎中相同的0.<a target="_blank" rel="noopener" href="https://github.com/Tencent/UnLua/issues/41">issues/41</a></p>
+<h3 id="Cast"><a href="#Cast" class="headerlink" title="Cast"></a>Cast</h3><p>UnLua里的类型转换语法为：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Obj:Cast(UE4.AActor)</span><br></pre></td></tr></table></figure>
+
+<p>如：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> Character = Pawn:Cast(UE4.ABP_CharacterBase_C)</span><br></pre></td></tr></table></figure>
+
+<h3 id="lua使用蓝图结构"><a href="#lua使用蓝图结构" class="headerlink" title="lua使用蓝图结构"></a>lua使用蓝图结构</h3><p>在bp里创建一个蓝图结构:<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/36659/UnLua/ue-bp-struct.webp"><br>在UnLua里可以通过下列方式访问:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">local bp_struct_ins = UE4.<span class="built_in">FBPStruct</span>()</span><br><span class="line">bp_struct_ins.string = <span class="string">&quot;123456&quot;</span></span><br><span class="line">bp_struct_ins.int32 = <span class="number">12345</span></span><br><span class="line">bp_struct_ins.<span class="type">float</span> = <span class="number">123.456</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">fmt</span>(<span class="string">&quot;string: &#123;&#125;,int32: &#123;&#125;,float: &#123;&#125;&quot;</span>,bp_struct_ins.string,bp_struct_ins.int32,bp_struct_ins.<span class="type">float</span>))</span><br></pre></td></tr></table></figure>
+<p>可以像C++的结构那样使用,需要<strong>注意</strong>的地方为,需要在蓝图结构类型的名字前加<code>F</code>,如上面的例子里,在蓝图中的名字为<code>BPStruct</code>,在UnLua中访问时则为<code>FBPStruct</code>.</p>
+<h3 id="Insight-Profiler"><a href="#Insight-Profiler" class="headerlink" title="Insight Profiler"></a>Insight Profiler</h3><p>可以把<code>SCOPED_NAMED_EVENT</code>封装到Lua端，但是因为Lua没有C++的RAII机制，无法实时地检测离开作用域时机，所以只能通过在起始和结尾位置添加标记：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">TimerMgr:UpdateTimer</span><span class="params">(DeltaTime)</span></span></span><br><span class="line">    <span class="keyword">local</span> profile_tag = UE4.FProfileTag(<span class="string">&quot;TimerMgr_UpdateTimer&quot;</span>)</span><br><span class="line">    <span class="comment">-- dosomething...</span></span><br><span class="line">    profile_tag:End()</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>在C++端的实现：</p>
+<figure class="highlight cpp"><figcaption><span>ProfileTag.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CoreMinimal.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ProfileTag.generated.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="built_in">USTRUCT</span>()</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FProfileTag</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">GENERATED_BODY</span>()</span><br><span class="line">    <span class="built_in">FProfileTag</span>()&#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Begin</span><span class="params">(<span class="type">const</span> FString&amp; Name)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(bInit) <span class="keyword">return</span>;</span><br><span class="line">        <span class="built_in">StaticBegin</span>(Name);</span><br><span class="line">        bInit = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">End</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(bInit)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">StaticEnd</span>();</span><br><span class="line">            bInit = <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ~<span class="built_in">FProfileTag</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">End</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">StaticBegin</span><span class="params">(<span class="type">const</span> FString&amp; Name)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_IMPLEMENTS_BeginNamedEventStatic</span></span><br><span class="line">        FPlatformMisc::<span class="built_in">BeginNamedEventStatic</span>(FColor::Yellow, *Name);</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">        FPlatformMisc::<span class="built_in">BeginNamedEvent</span>(FColor::Yellow, *Name);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">StaticEnd</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        FPlatformMisc::<span class="built_in">EndNamedEvent</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">bool</span> bInit = <span class="literal">false</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>暴露给Lua端：</p>
+<figure class="highlight cpp"><figcaption><span>Lualib_ProfileTag.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;UnLuaEx.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;LuaCore.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ProfileTag.h&quot;</span></span></span><br><span class="line"><span class="function"><span class="type">static</span> int32 <span class="title">FProfileTag_New</span><span class="params">(lua_State *L)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	int32 NumParams = <span class="built_in">lua_gettop</span>(L);</span><br><span class="line">	<span class="keyword">if</span> (NumParams &lt; <span class="number">1</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid parameters!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="type">void</span> *Userdata = <span class="built_in">NewTypedUserdata</span>(L, FProfileTag);</span><br><span class="line">	FProfileTag *V = <span class="built_in">new</span>(Userdata) <span class="built_in">FProfileTag</span>();</span><br><span class="line">	<span class="keyword">if</span> (NumParams &gt; <span class="number">1</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		FString Name = <span class="built_in">ANSI_TO_TCHAR</span>((<span class="type">char</span>*)<span class="built_in">lua_tostring</span>(L,<span class="number">2</span>));</span><br><span class="line">		V-&gt;<span class="built_in">Begin</span>(Name);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> int32 <span class="title">FProfileTag_Begin</span><span class="params">(lua_State *L)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	int32 NumParams = <span class="built_in">lua_gettop</span>(L);</span><br><span class="line">	<span class="keyword">if</span> (NumParams &lt; <span class="number">1</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid parameters!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	FProfileTag *V = (FProfileTag*)<span class="built_in">GetCppInstanceFast</span>(L, <span class="number">1</span>);</span><br><span class="line">	<span class="keyword">if</span> (!V)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid FProfileTag!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	FString Name = <span class="built_in">ANSI_TO_TCHAR</span>((<span class="type">char</span>*)<span class="built_in">lua_tostring</span>(L,<span class="number">2</span>));</span><br><span class="line">	V-&gt;<span class="built_in">Begin</span>(Name);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">static</span> int32 <span class="title">FProfileTag_End</span><span class="params">(lua_State *L)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	int32 NumParams = <span class="built_in">lua_gettop</span>(L);</span><br><span class="line">	<span class="keyword">if</span> (NumParams &lt; <span class="number">1</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid parameters!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	FProfileTag *V = (FProfileTag*)<span class="built_in">GetCppInstanceFast</span>(L, <span class="number">1</span>);</span><br><span class="line">	<span class="keyword">if</span> (!V)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogUnLua, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;%s: Invalid FProfileTag!&quot;</span>), <span class="built_in">ANSI_TO_TCHAR</span>(__FUNCTION__));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	V-&gt;<span class="built_in">End</span>();</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">const</span> luaL_Reg FProfileTagLib[] =</span><br><span class="line">&#123;</span><br><span class="line">	&#123;<span class="string">&quot;__call&quot;</span>,FProfileTag_New&#125;,</span><br><span class="line">	&#123; <span class="string">&quot;Begin&quot;</span>, FProfileTag_Begin &#125;,</span><br><span class="line">	&#123; <span class="string">&quot;End&quot;</span>, FProfileTag_End &#125;,</span><br><span class="line">	&#123; <span class="literal">nullptr</span>, <span class="literal">nullptr</span> &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">BEGIN_EXPORT_REFLECTED_CLASS</span>(FProfileTag)</span><br><span class="line">	<span class="built_in">ADD_STATIC_FUNCTION_EX</span>(<span class="string">&quot;StaticBegin&quot;</span>,<span class="type">void</span>,StaticBegin,<span class="type">const</span> FString&amp;)</span><br><span class="line">	<span class="built_in">ADD_STATIC_FUNCTION_EX</span>(<span class="string">&quot;StaticEnd&quot;</span>,<span class="type">void</span>,StaticEnd)</span><br><span class="line">	<span class="built_in">ADD_LIB</span>(FProfileTagLib)</span><br><span class="line"><span class="built_in">END_EXPORT_CLASS</span>()</span><br><span class="line"><span class="built_in">IMPLEMENT_EXPORTED_CLASS</span>(FProfileTag)</span><br></pre></td></tr></table></figure>
+<p>然后即可在Lua中使用，并且能够在Unreal Insight中查看Lua端代码执行的消耗：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210622110706.webp"></p>
+<p>提供了三种使用方式：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- using 1</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">TimerMgr:UpdateTimer</span><span class="params">(DeltaTime)</span></span></span><br><span class="line">    <span class="keyword">local</span> profile_tag = UE4.FProfileTag(<span class="string">&quot;TimerMgr_UpdateTimer&quot;</span>)</span><br><span class="line">    <span class="comment">-- dosomething...</span></span><br><span class="line">    profile_tag:End()</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- using 2</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">TimerMgr:UpdateTimer</span><span class="params">(DeltaTime)</span></span></span><br><span class="line">    <span class="keyword">local</span> profile_tag = UE4.FProfileTag()</span><br><span class="line">    profile_tag:Begin((<span class="string">&quot;TimerMgr_UpdateTimer&quot;</span>))</span><br><span class="line">    <span class="comment">-- dosomething...</span></span><br><span class="line">    profile_tag:End()</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- using 3</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">TimerMgr:UpdateTimer</span><span class="params">(DeltaTime)</span></span></span><br><span class="line">    UE4.FProfileTag.StaticBegin((<span class="string">&quot;TimerMgr_UpdateTimer&quot;</span>))</span><br><span class="line">    <span class="comment">-- dosomething...</span></span><br><span class="line">    UE4.FProfileTag.StaticEnd()</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>建议使用创建对象的方式使用，因为创建的对象，如果漏掉End，在lua对象被销毁时也会调用End，不会造成Insight的数据采集问题，使用<code>StaticBegin/StaticEnd</code>则一定要保证所有的代码分支能执行到<code>StaticEnd</code>。<br>可以组合lua的<code>debug.getinfo(1).name</code>获取函数名字在Insight中显示：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">TimerMgr:UpdateTimer</span><span class="params">(DeltaTime)</span></span></span><br><span class="line">    <span class="keyword">local</span> profile_tag = UE4.FProfileTag(<span class="built_in">debug</span>.<span class="built_in">getinfo</span>(<span class="number">1</span>).name)</span><br><span class="line">    <span class="comment">-- dosomething...</span></span><br><span class="line">    profile_tag:End()</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                未完待续，欢迎指出问题和交流意见。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/36659/" target="_blank">UE热更新：基于UnLua的Lua编程指南</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年03月24日 10时50分<br/>
+             
+              <span>更新时间:</span>2021年06月22日 11时08分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有5.8k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/36659/" target="_blank" title="UE热更新：基于UnLua的Lua编程指南">https://imzlp.com/posts/36659/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/36659/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+              <a href="/tags/Lua/" rel="tag"># Lua</a>
+              <a href="/tags/UnLua/" rel="tag"># UnLua</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/8470/" rel="prev" title="ModularFeature：为UE4集成ZSTD压缩算法">
+      <i class="fa fa-chevron-left"></i> ModularFeature：为UE4集成ZSTD压缩算法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/20425/" rel="next" title="UEC++与标准C++的区别与联系">
+      UEC++与标准C++的区别与联系 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#UnLua%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">1.</span> <span class="nav-text">UnLua注意事项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lua%E4%BB%A3%E7%A0%81%E6%8F%90%E7%A4%BA"><span class="nav-number">2.</span> <span class="nav-text">Lua代码提示</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%BC%E5%87%BA%E7%AC%A6%E5%8F%B7"><span class="nav-number">2.1.</span> <span class="nav-text">导出符号</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VSCode%E4%B8%AD%E4%BD%BF%E7%94%A8"><span class="nav-number">2.2.</span> <span class="nav-text">VSCode中使用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E7%88%B6%E7%B1%BB%E5%87%BD%E6%95%B0"><span class="nav-number">3.</span> <span class="nav-text">调用父类函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E8%A2%AB%E8%A6%86%E5%86%99%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">4.</span> <span class="nav-text">调用被覆写的方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8UE%E7%9A%84C-%E5%87%BD%E6%95%B0"><span class="nav-number">5.</span> <span class="nav-text">调用UE的C++函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A6%86%E5%86%99%E5%A4%9A%E8%BF%94%E5%9B%9E%E5%80%BC%E7%9A%84%E5%87%BD%E6%95%B0"><span class="nav-number">6.</span> <span class="nav-text">覆写多返回值的函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%93%9D%E5%9B%BE"><span class="nav-number">6.1.</span> <span class="nav-text">蓝图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C"><span class="nav-number">6.2.</span> <span class="nav-text">C++</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%9D%9Econst%E5%BC%95%E7%94%A8%E5%8F%82%E6%95%B0%E4%BD%9C%E4%B8%BA%E8%BF%94%E5%9B%9E%E5%80%BC%E9%9C%80%E8%A6%81%E6%B3%A8%E6%84%8F%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">6.3.</span> <span class="nav-text">非const引用参数作为返回值需要注意的问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%B5%8B%E6%98%AF%E5%90%A6%E7%BB%A7%E6%89%BF%E6%8E%A5%E5%8F%A3"><span class="nav-number">7.</span> <span class="nav-text">检测是否继承接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96TScriptInterface%E6%8E%A5%E5%8F%A3%E5%AF%B9%E8%B1%A1"><span class="nav-number">8.</span> <span class="nav-text">获取TScriptInterface接口对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0"><span class="nav-number">9.</span> <span class="nav-text">调用成员函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E5%AF%B9%E8%B1%A1%E8%B0%83%E7%94%A8%E5%87%BD%E6%95%B0"><span class="nav-number">9.1.</span> <span class="nav-text">通过对象调用函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%87%E5%AE%9A%E7%B1%BB%E5%92%8C%E5%87%BD%E6%95%B0%E5%90%8D%E8%B0%83%E7%94%A8"><span class="nav-number">9.2.</span> <span class="nav-text">指定类和函数名调用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%87%E5%AE%9A%E6%8E%A5%E5%8F%A3%E7%9A%84%E7%B1%BB%E5%92%8C%E5%87%BD%E6%95%B0%E5%90%8D%E8%B0%83%E7%94%A8"><span class="nav-number">9.3.</span> <span class="nav-text">指定接口的类和函数名调用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96UClass"><span class="nav-number">10.</span> <span class="nav-text">获取UClass</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LoadObject"><span class="nav-number">11.</span> <span class="nav-text">LoadObject</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%AF%B9%E8%B1%A1"><span class="nav-number">12.</span> <span class="nav-text">创建对象</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SpawnActor"><span class="nav-number">12.1.</span> <span class="nav-text">SpawnActor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NewObject"><span class="nav-number">12.2.</span> <span class="nav-text">NewObject</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Component"><span class="nav-number">12.3.</span> <span class="nav-text">Component</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#UMG"><span class="nav-number">12.4.</span> <span class="nav-text">UMG</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%91%E5%AE%9A%E4%BB%A3%E7%90%86"><span class="nav-number">13.</span> <span class="nav-text">绑定代理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%A4%9A%E6%92%AD%E4%BB%A3%E7%90%86"><span class="nav-number">13.1.</span> <span class="nav-text">动态多播代理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86"><span class="nav-number">13.2.</span> <span class="nav-text">动态代理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E6%94%AF%E6%8C%81%E9%9D%9EDynamic-Delegate"><span class="nav-number">13.3.</span> <span class="nav-text">不支持非Dynamic Delegate</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%BC%82%E6%AD%A5%E4%BA%8B%E4%BB%B6"><span class="nav-number">14.</span> <span class="nav-text">使用异步事件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Delay"><span class="nav-number">14.1.</span> <span class="nav-text">Delay</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AsyncLoadPrimaryAsset"><span class="nav-number">14.2.</span> <span class="nav-text">AsyncLoadPrimaryAsset</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SetTimer"><span class="nav-number">14.3.</span> <span class="nav-text">SetTimer</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%91%E5%AE%9AUMG%E6%8E%A7%E4%BB%B6%E4%BA%8B%E4%BB%B6"><span class="nav-number">15.</span> <span class="nav-text">绑定UMG控件事件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UE4-TArray"><span class="nav-number">16.</span> <span class="nav-text">UE4.TArray</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cast"><span class="nav-number">17.</span> <span class="nav-text">Cast</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lua%E4%BD%BF%E7%94%A8%E8%93%9D%E5%9B%BE%E7%BB%93%E6%9E%84"><span class="nav-number">18.</span> <span class="nav-text">lua使用蓝图结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Insight-Profiler"><span class="nav-number">19.</span> <span class="nav-text">Insight Profiler</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/36659/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

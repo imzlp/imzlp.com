@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="C++ STL中的顺序容器和关联容器概念和用法整理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="顺序容器与关联容器">
+<meta property="og:url" content="https://imzlp.com/posts/33878/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="C++ STL中的顺序容器和关联容器概念和用法整理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/33878/map-container-constructor.webp">
+<meta property="article:published_time" content="2015-02-18T13:26:31.000Z">
+<meta property="article:modified_time" content="2015-02-18T13:26:31.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="技术笔记">
+<meta property="article:tag" content="STL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/33878/map-container-constructor.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/33878/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>顺序容器与关联容器 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/33878/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          顺序容器与关联容器<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2015-02-18-33878.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-02-18 13:26 13:26:31:26" itemprop="dateCreated datePublished" datetime="2015-02-18T13:26:31+00:00">2015-02-18 13:26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">技术笔记</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/C/STL/" itemprop="url" rel="index"><span itemprop="name">STL</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/33878/" class="post-meta-item leancloud_visitors" data-flag-title="顺序容器与关联容器" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>20 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>C++ STL中的顺序容器和关联容器概念和用法整理。</p>
+<span id="more"></span>
+<h2 id="顺序容器"><a href="#顺序容器" class="headerlink" title="顺序容器"></a>顺序容器</h2><blockquote>
+<p>顺序容器是容纳特定类型对象的集合。<br>我们曾经使用过一种容器<code>标准库vector类型</code>这是一种<code>顺序容器(sequential container)</code>，它将单一类型元素聚集起来成为容器，然后根据位置来存储和访问这些元素，这就是<code>顺序容器</code>。</p>
+</blockquote>
+<p><strong>注意：顺序容器的元素排列次序和元素值无关，而是由元素添加到容器里的次序决定的。</strong></p>
+<blockquote>
+<p>标准库定义了三种顺序容器类型：vector、list、deque(双端队列”double-endde queue”的简写，发音”deck”)。<br>他们的差别在于<a href="#%E8%AE%BF%E9%97%AE%E5%85%83%E7%B4%A0%E7%9A%84%E6%96%B9%E5%BC%8F"><code>访问元素的方式</code></a>，以及<code>添加或删除元素相关操作的运行代价</code>。</p>
+</blockquote>
+<p>标准库还提供了三种<a href="%E5%AE%B9%E5%99%A8%E9%80%82%E9%85%8D%E5%99%A8"><code>容器的适配器</code></a>，实际上是根据原始容器类型所提供的操作，通过定义新的操作接口，来适应基础的容器类型。顺序容器适配器包括stack、queue和priority_queue类型。</p>
+<table>
+<thead>
+<tr>
+<th align="center">顺序容器类型</th>
+<th align="center">数据组织方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">vector</td>
+<td align="center">支持快速随机访问</td>
+</tr>
+<tr>
+<td align="center">list</td>
+<td align="center">支持快速插入/删除</td>
+</tr>
+<tr>
+<td align="center">deque</td>
+<td align="center">双端队列</td>
+</tr>
+<tr>
+<td align="center"><strong>顺序容器适配器</strong></td>
+<td align="center"><strong>数据组织方式</strong></td>
+</tr>
+<tr>
+<td align="center">stack</td>
+<td align="center">后进后出(LIFO)栈</td>
+</tr>
+<tr>
+<td align="center">queue</td>
+<td align="center">先进先出(FIFO)队列</td>
+</tr>
+<tr>
+<td align="center">priority_queue</td>
+<td align="center">有优先级管理的队列</td>
+</tr>
+<tr>
+<td align="center">容器只定义了少量操作，大多数额外操作由算法库提供，我们将在<strong>泛型算法</strong>章节学习算法库。</td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>标准库为由容器定义的操作强加了公共的接口。这些容器的差别在于它们提供哪些操作，但是如果两个容器提供了相同的操作，则它们的接口(名字和参数个数)应该相同。</p>
+</blockquote>
+<p>容器的操作集合形成以下的层次结构：</p>
+<ul>
+<li>一些操作适用于所有的容器</li>
+<li>另外一些操作只适用于顺序或关联容器类型</li>
+<li>还有一些操作是适用于顺序和关联容器类型的一个子集(map/set)</li>
+</ul>
+<h3 id="顺序容器的定义"><a href="#顺序容器的定义" class="headerlink" title="顺序容器的定义"></a>顺序容器的定义</h3><p>为了定义一个容器类型的对象，必须先包含相关的头文件。<br>即下列头文件之一:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;list&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;deque&gt;</span></span></span><br></pre></td></tr></table></figure>
+<p>所有的容器都是类模板（可以定义任意多种数据类型）。要定义某种特殊的数据类型，必须在容器名后面添加一对尖括号，尖括号里面提供容器中存放的元素的类型：</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;string&gt; sevc;</span><br><span class="line">list&lt;<span class="type">int</span>&gt; ilist;</span><br><span class="line">deque&lt;pair&lt;string,<span class="type">int</span>&gt;&gt; strint;</span><br></pre></td></tr></table></figure>
+<p>所有的容器类型都定义了<a href="https://imzlp.com/2015/01/23/C++%20Primer%C2%B7%E5%9F%BA%E6%9C%AC%E8%AF%AD%E8%A8%80%C2%B7%E5%8F%98%E9%87%8F%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/#%E9%BB%98%E8%AE%A4%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><code>默认构造函数</code></a>，当没有显式初始化式时，用于创建指定类型的空容器对象。默认构造函数不带参数。<br>容器类型最常用的构造函数就是<a href="https://imzlp.com/2015/01/23/C++%20Primer%C2%B7%E5%9F%BA%E6%9C%AC%E8%AF%AD%E8%A8%80%C2%B7%E5%8F%98%E9%87%8F%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/#%E9%BB%98%E8%AE%A4%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><code>默认构造函数</code></a>。在大多数程序中，使用默认构造函数能达到最佳运行时性能，并且使容器更容易使用。</p>
+<h3 id="容器元素的初始化"><a href="#容器元素的初始化" class="headerlink" title="容器元素的初始化"></a>容器元素的初始化</h3><p>除了默认构造函数，容器类型还提供其他的构造函数，使之可以指定元素初值。</p>
+<table>
+<thead>
+<tr>
+<th align="center">容器构造函数</th>
+<th align="center">作用</th>
+<th align="center">适用范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">C<T> c;</td>
+<td align="center">创建一个名为c的空容器.C是容器类型名，如vectro，T是元素类型，如string和int</td>
+<td align="center">所有容器</td>
+</tr>
+<tr>
+<td align="center">C c(c2);</td>
+<td align="center">创建容器c2的副本c;c和c2必须具有相同的容器类型，并存放同类型的元素</td>
+<td align="center">所有容器</td>
+</tr>
+<tr>
+<td align="center">C c(b.e);</td>
+<td align="center">创建c，其元素是迭代器b和e标示的范围内元素的副本</td>
+<td align="center">所有容器</td>
+</tr>
+<tr>
+<td align="center">C c(n.t);</td>
+<td align="center">用n个值为t的元素创建容器c，其中值t必须是容器类型c的值，或者是可转换为该类型的值</td>
+<td align="center">顺序容器</td>
+</tr>
+<tr>
+<td align="center">C c(n);</td>
+<td align="center">创建有n个值初始化元素的容器c</td>
+<td align="center">顺序容器</td>
+</tr>
+</tbody></table>
+<h4 id="将一个容器初始化为另一个容器的副本"><a href="#将一个容器初始化为另一个容器的副本" class="headerlink" title="将一个容器初始化为另一个容器的副本"></a>将一个容器初始化为另一个容器的副本</h4><figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建容器testInitCopy,并将其初始化为容器test的副本</span></span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">testInitCopy</span><span class="params">(test)</span></span>;</span><br><span class="line">cout&lt;&lt;<span class="string">&quot;vector&lt;int&gt; testInitCopy(test):&quot;</span>&lt;&lt;endl</span><br><span class="line">	&lt;&lt;<span class="string">&quot;C&lt;T&gt; testInitCopy(test)&quot;</span>&lt;&lt;endl;</span><br><span class="line"><span class="keyword">for</span>(vector&lt;<span class="type">int</span>&gt;::iterator textInitCopyIter=testInitCopy.<span class="built_in">begin</span>();</span><br><span class="line">	textInitCopyIter!=testInitCopy.<span class="built_in">end</span>();textInitCopyIter++)</span><br><span class="line">		cout&lt;&lt;*textInitCopyIter&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li>将一个容器复制给另一个容器时，类型必须匹配：<code>容器类型</code>和<code>元素类型</code>都必须相同。</li>
+<li>适用于<code>所有容器</code></li>
+</ul>
+</blockquote>
+<h4 id="初始化为一段元素的副本"><a href="#初始化为一段元素的副本" class="headerlink" title="初始化为一段元素的副本"></a>初始化为一段元素的副本</h4><p><strong>注意</strong>:使用迭代器初始化一个容器时，不要求容器类型相同。容器内的元素类型也可以不相同，只要他们相互兼容，能够将要复制的元素转换为所构建的新容器的元素类型，即可实现复制。</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//容器testInitTwoIter和容器test类型相同，而使用的迭代器则是test.begin()和test.end()</span></span><br><span class="line"><span class="comment">//则在这个实例中也是将容器test完全复制给容器testInitTwoIter</span></span><br><span class="line"><span class="comment">//(与vector&lt;int&gt; testInitCopy(test)结果一致，实现方式不同)</span></span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">testInitTwoIter</span><span class="params">(test.begin(),test.end())</span></span>;</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;vector&lt;int&gt; testInitTwoIter(test.begin(),test.end()):&quot;</span>&lt;&lt;endl;</span><br><span class="line"><span class="keyword">for</span>(vector&lt;<span class="type">int</span>&gt;::iterator testInitTwoIterBegin=testInitTwoIter.<span class="built_in">begin</span>();</span><br><span class="line">	testInitTwoIterBegin!=testInitTwoIter.<span class="built_in">end</span>();testInitTwoIterBegin++)</span><br><span class="line">	cout&lt;&lt;*testInitTwoIterBegin&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//容器testchar和容器testint类型不同</span></span><br><span class="line"><span class="comment">//元素赋值使用类型转换char-&gt;int(字符类型的ASCII码值)</span></span><br><span class="line">vector&lt;<span class="type">char</span>&gt; testchar;</span><br><span class="line"><span class="keyword">for</span>(<span class="type">char</span> i=<span class="string">&#x27;A&#x27;</span>;i!=<span class="string">&#x27;K&#x27;</span>;i++)&#123;</span><br><span class="line">	testchar.<span class="built_in">push_back</span>(i);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//遍历输出testchar</span></span><br><span class="line"><span class="keyword">for</span>(vector&lt;<span class="type">char</span>&gt;::iterator testiter=testchar.<span class="built_in">begin</span>();</span><br><span class="line">	testiter!=testchar.<span class="built_in">end</span>();testiter++)</span><br><span class="line">	cout&lt;&lt;*testiter&lt;&lt;<span class="string">&quot;  &quot;</span>;</span><br><span class="line">cout&lt;&lt;endl;</span><br><span class="line"><span class="comment">//将testin初始化为testchar的副本(类型转换)</span></span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">testint</span><span class="params">(testchar.begin(),testchar.end())</span></span>;</span><br><span class="line"><span class="comment">//遍历输出testint</span></span><br><span class="line"><span class="keyword">for</span>(vector&lt;<span class="type">int</span>&gt;::iterator testintiter=testint.<span class="built_in">begin</span>();</span><br><span class="line">	testintiter!=testint.<span class="built_in">end</span>();testintiter++)&#123;</span><br><span class="line">	cout&lt;&lt;*testintiter&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A  B  C  D  E  F  G  H  I  J</span><br><span class="line"><span class="number">65</span> <span class="number">66</span> <span class="number">67</span> <span class="number">68</span> <span class="number">69</span> <span class="number">70</span> <span class="number">71</span> <span class="number">72</span> <span class="number">73</span> <span class="number">74</span></span><br></pre></td></tr></table></figure>
+<p>或者初始化一段元素副本:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">char</span>&gt;::iterator charIter1=testchar.<span class="built_in">begin</span>()+<span class="number">2</span>,charIter2=testchar.<span class="built_in">end</span>()<span class="number">-2</span>;</span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">testint</span><span class="params">(charIter1,charIter2)</span></span>;</span><br><span class="line"><span class="comment">//遍历输出testint</span></span><br><span class="line"><span class="keyword">for</span>(vector&lt;<span class="type">int</span>&gt;::iterator testintiter=testint.<span class="built_in">begin</span>();</span><br><span class="line">	testintiter!=testint.<span class="built_in">end</span>();testintiter++)&#123;</span><br><span class="line">	cout&lt;&lt;*testintiter&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<blockquote>
+<p><code>67</code> <code>68</code> <code>69</code> <code>70</code> <code>71</code> <code>72</code></p>
+</blockquote>
+<h4 id="分配和初始化指定数目的元素-只适用于顺序容器"><a href="#分配和初始化指定数目的元素-只适用于顺序容器" class="headerlink" title="分配和初始化指定数目的元素(只适用于顺序容器)"></a>分配和初始化指定数目的元素(只适用于顺序容器)</h4><h5 id="创建指定数目元素的容器并提供初始化式"><a href="#创建指定数目元素的容器并提供初始化式" class="headerlink" title="创建指定数目元素的容器并提供初始化式"></a>创建指定数目元素的容器并提供初始化式</h5><blockquote>
+<p>创建<code>顺序容器</code>时，可<code>显式指定容器大小</code>和一个(<strong>可选的</strong>)元素初始化式。<br><code>容器大小</code>可以是<code>常量</code>或<code>非常量表达式</code>，元素初始化式则必须是可用于初始化其元素类型的对象的值。</p>
+</blockquote>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> vector&lt;<span class="type">int</span>&gt;::size_type vectorSize=<span class="number">10</span>;</span><br><span class="line"><span class="comment">//创建含有vectorSize个元素的vector&lt;string&gt;容器，容器内每个元素都被初始化为&quot;Hi&quot;字符串</span></span><br><span class="line"><span class="function">vector&lt;string&gt; <span class="title">test</span><span class="params">(vectorSize,<span class="string">&quot;Hi&quot;</span>)</span></span>;</span><br><span class="line"><span class="keyword">for</span>(vector&lt;string&gt;::iterator testiter=test.<span class="built_in">begin</span>();</span><br><span class="line">	testiter!=test.<span class="built_in">end</span>();testiter++)&#123;</span><br><span class="line">	cout&lt;&lt;*testiter&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果:</p>
+<blockquote>
+<p>Hi Hi Hi Hi Hi Hi Hi Hi Hi Hi</p>
+</blockquote>
+<p>**<code>注意</code>**：创建容器时，除了指定元素个数，还可以选择是否提供元素初始化式。也可以只指定容器大小。</p>
+<h5 id="创建指定数目元素的容器但不提供初始化式"><a href="#创建指定数目元素的容器但不提供初始化式" class="headerlink" title="创建指定数目元素的容器但不提供初始化式"></a>创建指定数目元素的容器但不提供初始化式</h5><figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建vectorSize个元素的容器，不显式提供初始化式(值初始化为0)</span></span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">testint</span><span class="params">(vectorSize)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>或者这样：</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">unsigned</span> <span class="title">get_word_count</span><span class="params">(<span class="type">const</span> string &amp;file_name)</span></span>;</span><br><span class="line"><span class="function">vector&lt;string&gt; <span class="title">test</span><span class="params">(get_word_count(<span class="string">&quot;Chimera&quot;</span>))</span></span></span><br></pre></td></tr></table></figure>
+<p>不提供元素初始化式规则：</p>
+<blockquote>
+<p>不提供元素初始化式时，标准库将为该容器实现<code>值初始化</code>。<br>采用这种类型的初始化，元素类型必须是内置或者复合类型，或者提供了默认构造函数的类类型。<br>如果元素类型没有默认构造函数，则必须显式指定其元素初始化式。</p>
+</blockquote>
+<p><strong>知识补充:</strong></p>
+<blockquote>
+<p><strong><code>值初始化</code>**：如果没有指定元素的初始化式，那么标准库将自行提供一个元素初始值进行</strong>值初始化**(value initializationd)。这个由库生成的初始值将用来初始化容器中的每一个元素，具体值为何，取决于存储在容器中元素的数据类型。<br><strong>元素类型可能是没有定义任何构造函数的类类型</strong>，这种情况下，标准库仍产生一股带初始值的对象，这个对象的每个成员进行了值初始化。</p>
+</blockquote>
+<p><strong>注意</strong>：接受容器大小做形参的构造函数<strong>只适用于</strong><code>顺序容器</code>，而<strong>关联容器不支持这种初始化</strong>。</p>
+<p>###容器内元素的类型约束<br>C++中，大多数类型都可以用作容器的元素类型。<br>容器元素类型必须满足以下两个约束:</p>
+<ul>
+<li>元素类型必须支持赋值运算</li>
+<li>元素类型的对象必须可以复制</li>
+</ul>
+<p><strong>注意：<a href="https://imzlp.com/2015/02/22/C++%20Primer%C2%B7%E5%AE%B9%E5%99%A8%E5%92%8C%E7%AE%97%E6%B3%95%C2%B7%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8/"><code>关联容器</code></a>的键类型还需要满足其他约束。</strong></p>
+<p><strong>除了<code>引用类型</code>外，<code>所有内置和复合类型</code>都可以用作元素类型。引用不支持一般意义上的赋值运算，因此没有元素是引用类型的容器。</strong></p>
+<p>除输入输出(IO)标准库类型之外（<code>IO对象不可复制或赋值,因此不能创建存放IO类型对象的容器</code>）,所有其他标准库类型都是有效的<strong>容器元素类型</strong>.</p>
+<blockquote>
+<p>容器本身也满足上述要求,可以定义元素本身就是容器类型的容器.</p>
+</blockquote>
+<h4 id="容器操作的特殊要求"><a href="#容器操作的特殊要求" class="headerlink" title="容器操作的特殊要求"></a>容器操作的特殊要求</h4><blockquote>
+<p>支持<code>复制</code>和<code>赋值</code>功能室容器元素类型的最低要求.此外,一些容器操作队元素类型还有特殊的要求,如果元素类型不支持这些特殊要求,则相关的容器操作就不能执行:可以定义该类型的容器,但不能使用某些特定的操作.</p>
+</blockquote>
+<h5 id="需外加类型要求的容器操作"><a href="#需外加类型要求的容器操作" class="headerlink" title="需外加类型要求的容器操作"></a>需外加类型要求的容器操作</h5><p><strong>需外加类型要求的容器操作</strong>:指定容器大小并提供单个初始化式的构造函数.如果容器存储类类型的对象,那么只有放其元素类型提供默认构造函数时,容器才能使用这种构造函数.</p>
+<p>考虑以下代码:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//假设类foo没有默认构造函数,但提供给了一个需要int型形参的默认构造函数.</span></span><br><span class="line">vector&lt;foo&gt; empty;	<span class="comment">//OK,没有初始化,不需要默认构造函数</span></span><br><span class="line"><span class="function">vector&lt;foo&gt; <span class="title">bad</span><span class="params">(<span class="number">10</span>)</span></span>;	<span class="comment">//error,该句是创建十个初始化元素容器,但foo没有提供默认构造函数</span></span><br><span class="line"><span class="function">vector&lt;foo&gt; <span class="title">ok</span><span class="params">(<span class="number">10</span>,<span class="number">1</span>)</span></span>;	<span class="comment">//ok,初始化十个int型元素为1,1的数据类型为int,则使用int型的默认构造函数初始化容器.</span></span><br></pre></td></tr></table></figure>
+<p>**注意:**只有在同时指定每个元素的初始化式时,才能使用给定容器大小的构造函数来创建同类型的容器对象.所以在描述容器操作时,应该留意每个操作队元素类型的约束.</p>
+<h4 id="容器的容器"><a href="#容器的容器" class="headerlink" title="容器的容器"></a>容器的容器</h4><blockquote>
+<p>因为容器受容器元素类型的约束,所以可定义元素是<strong>容器类型的容器</strong>.</p>
+</blockquote>
+<p>考虑如下代码:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//use &quot;&gt; &gt;&quot; not &quot;&gt;&gt;&quot;</span></span><br><span class="line">vector&lt; vector&lt;string&gt; &gt; lines; <span class="comment">//vector of vector</span></span><br></pre></td></tr></table></figure>
+<p><strong>注意</strong>:必须使用空格隔开两个相邻的&gt;符号,以示这是两个分开的符号,否则系统会认为&gt;&gt;是单个符号,为右移操作符,导致编译时错误.</p>
+<blockquote>
+<p><strong>习题</strong></p>
+<ul>
+<li>定义一个list对象来存储deque对象,该deque对象存放int型元素.<br><code>list&lt;deque&lt;int&gt;&gt; listDeque;</code></li>
+<li>为什么我们不能使用容器来存储iostream对象?<br><code>因为IO库类型不支持复制和赋值操作.</code></li>
+<li>假设有一个名为Foo的类,该类没有定义默认构造函数,但提供了一个需要int型参数的构造函数,定义一个存放Foo的list对象,该对象有十个元素.<br><code>list&lt;Foo&gt; listFoo(10,0);</code></li>
+</ul>
+</blockquote>
+<h3 id="迭代器和迭代器范围"><a href="#迭代器和迭代器范围" class="headerlink" title="迭代器和迭代器范围"></a>迭代器和迭代器范围</h3><blockquote>
+<p>容器是否为const类型决定了迭代器是否为const类型.</p>
+</blockquote>
+<p>每种容器类型都提供若干不共同工作的迭代器类型.<br><strong>与容器类型一样,所有迭代器具有相同的接口:如果某种迭代器支持某种操作,那么支持这种操作的其他迭代器也会以相同的方式支持这种操作.</strong></p>
+<p>例如:所有的迭代器都支持以解引用运算从容器中读入一个元素.类似的,容器都提供自增自减操作符来支持从一个元素草下一个元素的访问.</p>
+<p>标准库容器类型所提供的运算</p>
+<table>
+<thead>
+<tr>
+<th align="center">操作</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">*iter</td>
+<td align="center">返回迭代器iter所指向的元素的引用</td>
+</tr>
+<tr>
+<td align="center">iter-&gt;mem</td>
+<td align="center">对iter解引用,获取指定元素中名为mem的成员.等效于(*item).mem</td>
+</tr>
+<tr>
+<td align="center">++iter / iter++</td>
+<td align="center">给iter加1,使其指向容器里的下一元素</td>
+</tr>
+<tr>
+<td align="center">–iter / iter–</td>
+<td align="center">给iter减1,使其指向容器里的前一个元素</td>
+</tr>
+<tr>
+<td align="center">iter1=iter2  iter1!=iter2</td>
+<td align="center">比较两个迭代器是否相等(不等).当两个迭代器指向同一个元素,或者他们都指向同一个容器超出末端的下一位置时,两个迭代器相等</td>
+</tr>
+</tbody></table>
+<h4 id="vector和deque容器的迭代器提供额外的运算"><a href="#vector和deque容器的迭代器提供额外的运算" class="headerlink" title="vector和deque容器的迭代器提供额外的运算"></a>vector和deque容器的迭代器提供额外的运算</h4><p>C++定义的容器中,只有<strong>vector</strong>和<strong>deque</strong>容器提供下面两种重要的运算集合:</p>
+<ul>
+<li>迭代器算数运算</li>
+<li>可以使用除了<code>!=</code>和<code>==</code>之外的运算符里比较两个迭代器(<code>!=</code>和<code>==</code>这两种关系运算符适用于所有容器).</li>
+</ul>
+<p>vector和deque类型迭代器支持的操作(如表)</p>
+<table>
+<thead>
+<tr>
+<th align="center">操作</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">iter+n<br/>iter-n</td>
+<td align="center">在迭代器上加(减)整数值n,将产生指向容器前面(后面)第n个元素的迭代器</td>
+</tr>
+<tr>
+<td align="center">iter+=iter2<br/>iter-=iter2</td>
+<td align="center">迭代器加减法的复合赋值运算:将iter1加上或减去iter2的运算结果复制给iter1</td>
+</tr>
+<tr>
+<td align="center">iter1-iter2</td>
+<td align="center">两个迭代器的减法,其运算结果加上右边的迭代器即得到左边的迭代器.<br/>这两个迭代器<code>必须</code>指向同一个容器中的元素或超出容器末端的下一位置.<br/><strong>只适用于vector或deque容器</strong></td>
+</tr>
+<tr>
+<td align="center">&gt;,&gt;=,&lt;,&lt;=</td>
+<td align="center"><code>迭代器的关系运算符</code><br/>当一个迭代器指向元素在容器中位于另一个迭代器指向的元素之前,则前一个迭代器小于后一个迭代器.<br/>关系操作符的两个迭代器必须指向同一个容器中的元素或超出容器末端的下一位置.<br/><strong>只适用于vector或deque容器</strong></td>
+</tr>
+</tbody></table>
+<p><strong>注意:**关系操作符只适用于vector或deque容器,因为只有这两种容器为其元素提供<code>快速</code>和<code>随机</code>的访问.他们<code>确保</code>可以</strong>根据元素位置直接有效地访问指定的容器元素**.这两种容器都支持通过元素位置实现的随机访问,因此他们的迭代器可以有效地实现算数和关系运算.</p>
+<p>例如,计算vector对象的中点位置:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt;::iterator iter=vec.<span class="built_in">begin</span>()+vec.<span class="built_in">size</span>()/<span class="number">2</span>;	<span class="comment">//OK</span></span><br><span class="line"><span class="comment">//error version</span></span><br><span class="line"><span class="function">list&lt;<span class="type">int</span>&gt; <span class="title">listint</span><span class="params">(vec.begin(),vec.end())</span></span>;</span><br><span class="line">listint.<span class="built_in">begin</span>()+listint.<span class="built_in">size</span>()/<span class="number">2</span>;	<span class="comment">//list容器的迭代器不支持加法运算</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>list容器的迭代器既不支持算数运算(加法或减法),也不支持关系运算(&lt;=,&lt;,&gt;=,&gt;),它只提供前置和后置的自增和自减以及相等(不等)运算</p>
+</blockquote>
+<h5 id="习题"><a href="#习题" class="headerlink" title="习题"></a>习题</h5><p>1.下面的程序错在哪里?如何改正.</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">list&lt;<span class="type">int</span>&gt; lst1;</span><br><span class="line">list&lt;<span class="type">int</span>&gt;::iterator iter1 = list1.<span class="built_in">begin</span>(),</span><br><span class="line">					iter2 = list1.<span class="built_in">end</span>();</span><br><span class="line"><span class="keyword">while</span>(iter1 &lt; iter2)<span class="comment">/*...*/</span></span><br></pre></td></tr></table></figure>
+<p>答案:list容器不支持关系运算,可以把while循环修改为<code>while(iter1 != iter2)</code><br>2.假设vec_iter绑定到vector对象的一个元素,该vector对象存放string类型的元素,请问下面的语句实现什么功能?</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(vec_iter-&gt;empty)<span class="comment">/*...*/</span></span><br></pre></td></tr></table></figure>
+<p>答案:若vec_iter为空则返回true进入if语句,否则返回false不能进入if语句.<br>3.编写一个循环将list容器的元素逆序输出.</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> one_ten[<span class="number">10</span>]=&#123;<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>&#125;;</span><br><span class="line"><span class="function">list&lt;<span class="type">int</span>&gt; <span class="title">listInt</span><span class="params">(one_ten,one_ten+<span class="number">10</span>)</span></span>;</span><br><span class="line">list&lt;<span class="type">int</span>&gt;::iterator beg=listInt.<span class="built_in">begin</span>(),</span><br><span class="line">					end=listInt.<span class="built_in">end</span>();</span><br><span class="line"><span class="keyword">while</span>(end!=beg)</span><br><span class="line">	cout&lt;&lt;*--end&lt;&lt;endl;</span><br></pre></td></tr></table></figure>
+<p>4.下列迭代器的用法哪些(如果有的话)是错误的?</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> vector&lt;<span class="type">int</span>&gt; <span class="title">ivec</span><span class="params">(<span class="number">10</span>)</span></span>;</span><br><span class="line"><span class="function">vector&lt;string&gt;	  <span class="title">sevc</span><span class="params">(<span class="number">10</span>)</span></span>;</span><br><span class="line"><span class="function">list&lt;<span class="type">int</span>&gt;		  <span class="title">ilist</span><span class="params">(<span class="number">10</span>)</span></span>;</span><br><span class="line"></span><br><span class="line">(a)vector&lt;<span class="type">int</span>&gt;::iterator 	it=ivec.<span class="built_in">begin</span>();</span><br><span class="line"><span class="comment">//容器ivec为const,迭代器也应为const,因为非const可以通过迭代器修改其值</span></span><br><span class="line">(b)list&lt;<span class="type">int</span>&gt;iterator 	 	it=ilist.<span class="built_in">begin</span>()+<span class="number">2</span>;</span><br><span class="line"><span class="comment">//list容器迭代器不支持算数运算</span></span><br><span class="line">(c)vector&lt;string&gt;::iterator it=&amp;sevc[<span class="number">0</span>];<span class="comment">//OK</span></span><br><span class="line">(d)<span class="keyword">for</span>(vector&lt;string&gt;::iterator it = sevc.<span class="built_in">begin</span>();it != <span class="number">0</span>;++it)<span class="comment">/*...*/</span></span><br><span class="line">迭代器为指针,永远不会等于<span class="number">0</span>,应改成it != sevc.<span class="built_in">end</span>().</span><br></pre></td></tr></table></figure>
+<h4 id="迭代器范围"><a href="#迭代器范围" class="headerlink" title="迭代器范围"></a>迭代器范围</h4><p>C++语言使用一对迭代器标记<strong>迭代器范围(iterator range)</strong>,这两个迭代器分别指向同一个容器中的两个元素或<strong>超出末端的下一位置(end)</strong>.通常将他们命名为first和last,或beg和end,用于标记容器中一段元素的范围.</p>
+<blockquote>
+<p><strong>注意:**第二个迭代器last(end)从来不是指向元素范围的最后一个元素,而是指向最后一个元素的下一位置.该范围内的元素包括迭代器first(beg)指向的元素,以及从frist开始一直到last(end)指向位置之前的所有元素.<br>**如果first(beg)和last(end)相等,则迭代器范围为空.</strong><br>此类元素范围称作<strong>左闭合区间(left-inclusive interval)</strong>,其标准表示方式为:$[first,last)$,表示范围从first开始到last结束,但不包括last.<br>迭代器lst可以等于first(容器为空),或者指向first标记元素后面的某个元素(容器非空),但<code>绝对</code>不能指向first标记的前面的元素.</p>
+</blockquote>
+<h5 id="对形成迭代器范围的迭代器的要求"><a href="#对形成迭代器范围的迭代器的要求" class="headerlink" title="对形成迭代器范围的迭代器的要求"></a>对形成迭代器范围的迭代器的要求</h5><p>迭代器first和last如果满足以下条件,则可形成一个迭代器范围:</p>
+<ul>
+<li>他们指向<strong>同一个容器中的元素</strong>或<strong>超出末端的下一位置</strong></li>
+<li>如果这两个迭代器不相等,则对first反复做自增运算必须能够到达last.(<strong>在容器中.last绝对不能位于first之前</strong>)</li>
+</ul>
+<p>编译器自己不能保证上述要求,编译器无法知道迭代器所关联的是哪个容器,也不知道容器内有多少个元素.若不能满足上述要求,将导致运行时未定义的行为.</p>
+<h5 id="使用做闭合区间的编程意义"><a href="#使用做闭合区间的编程意义" class="headerlink" title="使用做闭合区间的编程意义"></a>使用做闭合区间的编程意义</h5><p>左闭合区间有两个方便使用的性质,所以标准库使用此类区间.<br>假设first和last标记了一个有效的迭代器范围,则:</p>
+<ul>
+<li><strong>当first与last相等时</strong>,迭代器范围为空</li>
+<li><strong>当first与last不相等时</strong>,迭代器范围内至少有一个元素,而且first指向该区间的第一个元素.通过若干次自增运算可以使first的值不断增大,直到first==last为止.<br>根据以上两个性质意味着我们可以安全地编写如下循环:</li>
+</ul>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(first != last)&#123;</span><br><span class="line">	<span class="comment">//safe to use *first because we know there is at least one element</span></span><br><span class="line">	++first;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="习题-1"><a href="#习题-1" class="headerlink" title="习题"></a>习题</h5><p>1.要标记处有效的迭代器范围,迭代器需要满足什么约束?<br>(a)指向同一个容器的元素或超出末端的下一位置<br>(b)两个迭代器不相等时,first通过反复自增能够到达last<br>2.编写一个函数,其形参是一对迭代器和一个int型数据,实现在迭代器标记范围内寻找给int型数值的功能,并返回一个bool结果,以指明是否找到指定数据.</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">find_int</span><span class="params">(vector&lt;<span class="type">int</span>&gt;::const_iterator first,</span></span></span><br><span class="line"><span class="params"><span class="function">			  vector&lt;<span class="type">int</span>&gt;::const_iterator last,<span class="type">int</span> find_num)</span></span>&#123;</span><br><span class="line">	<span class="keyword">while</span>(first != last)&#123;</span><br><span class="line">		<span class="keyword">if</span>(*first == find_num)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">            first++;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>3.重写程序,查找元素的值,并返回找到的元素的迭代器.确保程序在寻找的元素不存在时也能正常的工作.</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line">vector&lt;<span class="type">int</span>&gt;::<span class="function">const_iterator <span class="title">find_int</span><span class="params">(vector&lt;<span class="type">int</span>&gt;::const_iterator first,</span></span></span><br><span class="line"><span class="params"><span class="function">									 vector&lt;<span class="type">int</span>&gt;::const_iterator last,</span></span></span><br><span class="line"><span class="params"><span class="function">									 <span class="type">int</span> find_num)</span></span>&#123;</span><br><span class="line">	<span class="keyword">while</span>(first != last)&#123;</span><br><span class="line">		<span class="keyword">if</span>(*first == find_num)</span><br><span class="line">			<span class="keyword">return</span> first;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">            first++;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span>(first == last)</span><br><span class="line">        <span class="keyword">return</span> last;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line"><span class="type">int</span> one_ten[<span class="number">10</span>]=&#123;<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>&#125;;</span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">vecInt</span><span class="params">(one_ten,one_ten+<span class="number">10</span>)</span></span>;</span><br><span class="line"><span class="keyword">if</span>(<span class="built_in">find_int</span>(vecInt.<span class="built_in">begin</span>(),vecInt.<span class="built_in">end</span>(),<span class="number">9</span>)!=vecInt.<span class="built_in">end</span>())</span><br><span class="line">    cout&lt;&lt;<span class="string">&quot;Yes&quot;</span>&lt;&lt;endl;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    cout&lt;&lt;<span class="string">&quot;No&quot;</span>&lt;&lt;endl;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>4.使用迭代器编写程序,从标准输入设备读取若干string对象,并将他们存储在一个vector对象中,然后输出该vector对象中的所有元素。</p>
+<h2 id="关联容器"><a href="#关联容器" class="headerlink" title="关联容器"></a>关联容器</h2><p><strong>关联容器</strong>和<strong>顺序容器</strong>的本质差别在于：</p>
+<ul>
+<li><strong>关联容器</strong>通过**键(key)**存储和读取元素。</li>
+<li><strong>顺序容器</strong>通过元素在容器中的位置顺序存储和访<br>问元素。</li>
+</ul>
+<blockquote>
+<p><strong>关联容器大部分行为和顺序容器相同，但其独善之处在于支持键的使用</strong></p>
+</blockquote>
+<p><code>关联容器(associative container)</code>支持通过键来高效地查找和读取元素。</p>
+<blockquote>
+<p>两个基本的关联容器类型是<code>map</code>和<code>set</code>：</p>
+<ul>
+<li><code>map</code>的元素以键-值(key-value)的形式组织：键用作元素在map中的索引。</li>
+<li><code>set</code>仅包含一个键，并有效地支持关于某个键是否存在的查询。</li>
+</ul>
+</blockquote>
+<blockquote>
+<p><strong>适用范围：</strong></p>
+<ul>
+<li><code>map</code>:需要存储（乃至修改）每个键所关联值得情况。</li>
+<li><code>set</code>:有效存储不同值得集合。</li>
+</ul>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th align="center">关联容器类型</th>
+<th align="center">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">map</td>
+<td align="center">关联数组，元素通过键来存储和读取</td>
+</tr>
+<tr>
+<td align="center">set</td>
+<td align="center">大小可变的集合，通过键实现的快速读取</td>
+</tr>
+<tr>
+<td align="center">multimap</td>
+<td align="center">支持同一个键多次出现的map类型</td>
+</tr>
+<tr>
+<td align="center">multiset</td>
+<td align="center">支持同一个键多次出现的set类型</td>
+</tr>
+<tr>
+<td align="center">set和map类型的对象所包含的元素都具有不同的键，不允许为同一个键添加第二个元素。</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center"><strong>注意</strong>：如果一个键必须对应多个实例，则需要使用<code>multinap</code>和<code>multiset</code>类型。</td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<h3 id="引言·pair类型"><a href="#引言·pair类型" class="headerlink" title="引言·pair类型"></a>引言·pair类型</h3><p>与关联容器相关的简单的标准库类型——<strong>pair类型</strong>，该类型在<code>utility</code>头文件中定义。</p>
+<table>
+<thead>
+<tr>
+<th align="center">pair类型</th>
+<th align="center">提供的操作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">pair&lt;T1,T2&gt; p1</td>
+<td align="center">创建一个空的pair类型，它的两个元素分别是T1和T2类型,采用值初始化</td>
+</tr>
+<tr>
+<td align="center">pair&lt;T1,T2&gt; p1(v1,v2)</td>
+<td align="center">创建一个空的pair类型，它的两个元素分别是T1和T2类型,其中first成员初始    化为v1,second成员被初始化为v2</td>
+</tr>
+<tr>
+<td align="center">make_pair(v1,v2)</td>
+<td align="center">以v1和v2值创建一个新的pair对象，其元素类型分别是v1和v2的类型</td>
+</tr>
+<tr>
+<td align="center">p1 &lt; p2</td>
+<td align="center">两个pair对象之间的小于运算，其定义遵循字典次序:如果p1.first&lt;p2.first或者!(p2.first&lt;p1.first)&amp;&amp;p1.second&lt;p2.second，则返回true</td>
+</tr>
+<tr>
+<td align="center">p1 = p2</td>
+<td align="center">如果两个pair对象的first和second成员依次相等，则这两个对象相等，该运算使用其元素的==操作符</td>
+</tr>
+<tr>
+<td align="center">p.first</td>
+<td align="center">返回p中名为first的（公有）数据成员</td>
+</tr>
+<tr>
+<td align="center">p.second</td>
+<td align="center">返回p中名为second的（公有）数据成员</td>
+</tr>
+</tbody></table>
+<h4 id="pair的创建和初始化"><a href="#pair的创建和初始化" class="headerlink" title="pair的创建和初始化"></a>pair的创建和初始化</h4><p><strong>pair包含两个数据值。与容器一样，pair也是一种模板类型。</strong><br>在创建pair对象时，必须提供两个类型名：<code>pair对象所包含的两个数据成员各自对应的类型名字，这两个类型不必相同</code></p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//first is string,second is int.</span></span><br><span class="line">pair&lt;string,<span class="type">int</span>&gt; strint;</span><br><span class="line"><span class="comment">//first and second is int.</span></span><br><span class="line">par&lt;<span class="type">int</span>,<span class="type">int</span>&gt; twoint;</span><br><span class="line"><span class="comment">//first is string.second is vector&lt;int&gt;</span></span><br><span class="line">pair&lt;string,vector&lt;<span class="type">int</span>&gt;&gt; line;</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong>如果在创建pair对象时不提供初始化式，则调用默认构造函数对其成员采用<code>值初始化</code>。<br>也可以在定义时为每个成员提供初始化式：</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//将twostr.first初始化为vision,two.second初始化为smile.</span></span><br><span class="line"><span class="function">pair&lt;string,string&gt; <span class="title">twoste</span><span class="params">(<span class="string">&quot;vision&quot;</span>,<span class="string">&quot;smile&quot;</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>pair类型的使用相当繁琐，如果需要定义多个相同的pair对象，可以用<code>typedef</code>简化其声明:</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> pair&lt;string,string&gt; twostr；</span><br><span class="line"><span class="function">twostr <span class="title">VS</span><span class="params">(<span class="string">&quot;vision&quot;</span>,<span class="string">&quot;smile&quot;</span>)</span></span>;</span><br><span class="line"><span class="function">twostr <span class="title">HelloWorld</span><span class="params">(<span class="string">&quot;Hello&quot;</span>,<span class="string">&quot;World&quot;</span>)</span></span></span><br></pre></td></tr></table></figure>
+<h4 id="生成新的pair对象"><a href="#生成新的pair对象" class="headerlink" title="生成新的pair对象"></a>生成新的pair对象</h4><p>除了构造函数，标准库还定义了一个<strong>make_pair函数，由传递给它的两个实参生成一个新的pair对象。</strong></p>
+<p>例.创建一个新的pair对象并赋值给一个已存在的pair对象：</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建一个pair对象</span></span><br><span class="line">pair&lt;string,string&gt; next_twostr;</span><br><span class="line"><span class="comment">//创建两个string对象用于输入（make_pair的参数）</span></span><br><span class="line">string first,second;</span><br><span class="line"><span class="comment">//读入两个string对象，并使用make_pair创建一个新的pair对象然后赋值给next_twostr.</span></span><br><span class="line"><span class="keyword">while</span>(cin&gt;&gt;first&gt;&gt;second)</span><br><span class="line">	next_twostr=<span class="built_in">make_pair</span>(first,second);</span><br></pre></td></tr></table></figure>
+<p>因为pair的数据是公有的，所以可以直接地读取输入。</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pair&lt;string,string&gt; next_twostr;</span><br><span class="line">cin&gt;&gt;next_twostr.first&gt;&gt;nexttwostr.second);</span><br></pre></td></tr></table></figure>
+<h4 id="习题-2"><a href="#习题-2" class="headerlink" title="习题"></a>习题</h4><p>10.1编写程序读入一系列string对象和int型数据，将每一组存储在一个pair对象中，然后将这些pair对象存储在vector对象中。</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	pair&lt;string,<span class="type">int</span>&gt; strint;</span><br><span class="line">	vector&lt; pair&lt;string,<span class="type">int</span>&gt; &gt; vectwostr;</span><br><span class="line">	<span class="keyword">while</span>(cin&gt;&gt;strint.first&gt;&gt;strint.second)&#123;</span><br><span class="line">	    vectwostr.<span class="built_in">push_back</span>(strint);</span><br><span class="line">	    <span class="keyword">if</span>(strint.second==<span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;Output:&quot;</span>&lt;&lt;endl;</span><br><span class="line">	<span class="keyword">for</span>(vector&lt; pair&lt;string,<span class="type">int</span>&gt; &gt;::iterator begin=vectwostr.<span class="built_in">begin</span>();</span><br><span class="line">	begin!=vectwostr.<span class="built_in">end</span>();begin++)&#123;</span><br><span class="line">		<span class="comment">//(*begin).first,对迭代器使用点操作符之前要对该指针(迭代器)进行解引用操作</span></span><br><span class="line">		<span class="comment">//因为点操作符优先级高于解引用，所有要用括号，或者begin-&gt;first，使用箭头操作符也可。</span></span><br><span class="line">		cout&lt;&lt;(*begin).first&lt;&lt;<span class="string">&quot; &quot;</span>&lt;&lt;(*begin).second&lt;&lt;endl;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>10.2 在前一题中，至少可使用三种方法创建pair对象，编写三个版本的程序，分别采用不同的方法创建pair对象。你认为哪种方法更容易编写和理解，为什么？</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">string teststr = <span class="string">&quot;Hello&quot;</span>;</span><br><span class="line"><span class="type">int</span> testint = <span class="number">11</span>;</span><br><span class="line">pair&lt;string,<span class="type">int</span>&gt; one;</span><br><span class="line"><span class="function">pair&lt;string,<span class="type">int</span>&gt; <span class="title">two</span><span class="params">(teststr,testint)</span></span>;</span><br><span class="line">pair&lt;string.<span class="type">int</span>&gt; three = <span class="built_in">make_pair</span>(tststr,testint);</span><br></pre></td></tr></table></figure>
+<p>答：我觉得第三种<code>pair&lt;string.int&gt; three = make_pair(tststr,testint);</code>这种方式更容易编写和理解，因为调用了make_pair函数，明确生成了一个pair对象。</p>
+<h3 id="关联容器-1"><a href="#关联容器-1" class="headerlink" title="关联容器"></a>关联容器</h3><p>关联容器共享大部分——但并非全部顺序容器操作。</p>
+<blockquote>
+<p>关联容器不提供<code>font</code>、<code>push_font</code>、<code>pop_font</code>、<code>back</code>、<code>push_back</code>和<code>pop_back</code>操作。</p>
+</blockquote>
+<h4 id="根据键排列元素"><a href="#根据键排列元素" class="headerlink" title="根据键排列元素"></a>根据键排列元素</h4><blockquote>
+<p>对于顺序容器也提供的相同操作，关联容器也<strong>重新定义了这些操作的含义和返回类型</strong>，其中的差别在于关联容器使用了键。</p>
+</blockquote>
+<p><strong>容器元素根据键的次序排列:</strong><code>在迭代遍历关容器时，我们可以确保按键的顺序访问元素，而与元素在容器中存放的位置完全无关。</code></p>
+<h4 id="习题-3"><a href="#习题-3" class="headerlink" title="习题"></a>习题</h4><p>10.2 在前一题中，至少可使用三种方法创建pair对象，编写三个版本的程序，分别采用不同的方法创建pair对象。你认为哪种方法更容易编写和理解，为什么？</p>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">string teststr = <span class="string">&quot;Hello&quot;</span>;</span><br><span class="line"><span class="type">int</span> testint = <span class="number">11</span>;</span><br><span class="line">pair&lt;string,<span class="type">int</span>&gt; one;</span><br><span class="line"><span class="function">pair&lt;string,<span class="type">int</span>&gt; <span class="title">two</span><span class="params">(teststr,testint)</span></span>;</span><br><span class="line">pair&lt;string.<span class="type">int</span>&gt; three = <span class="built_in">make_pair</span>(tststr,testint);</span><br></pre></td></tr></table></figure>
+<p>答：我觉得第三种<code>pair&lt;string.int&gt; three = make_pair(tststr,testint);</code>这种方式更容易编写和理解，因为调用了make_pair函数，明确生成了一个pair对象。</p>
+<p>10.3 描述 关联容器和顺序容器的差别</p>
+<blockquote>
+<p>答：关联容器和顺序容器的本质差别在于：关联容器使用键(key)存储和读取元素，儿顺序容器通过元素在容器中的位置顺序存储和读取元素。</p>
+</blockquote>
+<p>10.4 举例说明list、vector、deque、map以及set类型分别适用的情况。</p>
+<ul>
+<li>list适用于需要在任何位置都能快速高效地插入和删除元素(不需要移动其他任何元素)，但不使用随机访问的情况(访问某个元素需要从头遍历)</li>
+<li>vector适用于不需要随机插入/删除但需要快速随机访问(下标)的情况。</li>
+<li>deque适用于在队列两端快速插入/删除的操作，但和vector一样不需要随机插入/删除，且支持对所有元素的随机访问的情况。</li>
+<li>map适用于需要关联的数据，比如人名和电话号码。</li>
+<li>set适用于键集合的情况，比如黑名单等。</li>
+</ul>
+<h3 id="map容器"><a href="#map容器" class="headerlink" title="map容器"></a>map容器</h3><blockquote>
+<p><strong>map是键-值的一对组合。</strong><br><strong>map类型</strong>通常可以理解为<strong>关联数组</strong>：可使用键作为下标获取一个值，正如内置数组类型一样。<br><strong>关联的本质在于元素的值与某个特定的键相关联，而并非通过元素在数组中的位置来获取。</strong></p>
+</blockquote>
+<h4 id="map对象的定义"><a href="#map对象的定义" class="headerlink" title="map对象的定义"></a>map对象的定义</h4><p>要使用map对象，必须包含map头文件。</p>
+<blockquote>
+<p><strong>在定义map对象时，必须分别指明键和值得类型。</strong></p>
+</blockquote>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//定义一个名为strint的map对象，由string类型类型的键索引，关联的值为int</span></span><br><span class="line">map&lt;string,<span class="type">int</span>&gt; strint;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/33878/map-container-constructor.webp"></p>
+<h4 id="键类型的约束"><a href="#键类型的约束" class="headerlink" title="键类型的约束"></a>键类型的约束</h4><p>在使用关联容器时，它的键不但有一个类型，而且还有一个相关的比较函数。<strong>默认情况下，标准库使用键类型定义的<code>&lt;</code>操作符来实现键的比较。</strong><br>我们将在<strong>面向对象编程·句柄的使用</strong>节来介绍如何重写默认的操作符，并提供自定义的操作符函数。</p>
+<blockquote>
+<p>注意：所用的比较函数必须在键类型上定义**严格弱排序(strict weak ordering)**。<br>严格弱排序理解为：键类型数据上的“小于”关系。但也可以选择将比较函数设计的更复杂。</p>
+</blockquote>
+<ul>
+<li>当一个键与自身比较时，肯定会导致false结果。</li>
+<li>在比较两个键时，不能出现相互小于的情况。<br>如果<code>k1</code>&lt;<code>k2</code>,<code>k2</code>&lt;<code>k3</code>，则k1必然小于k3</li>
+<li>对于两个键，如果它们相互之间都不存在小于关系，则容器将之视为相同的键。</li>
+</ul>
+<p><strong>用做map对象的键时，可使用任意一个键值来访问它。</strong></p>
+<blockquote>
+<p><strong>注意</strong><br><code>键类型必须定义&lt;操作符</code>，而且该操作符能“正确的工作”。<br>对于键类型，<strong>唯一的约束就是必须支持&lt;运算符</strong>，至于是否支持其他的关系或相等运算，则不作要求。</p>
+</blockquote>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/33878/" target="_blank">顺序容器与关联容器</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2015年02月18日 13时26分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有8.1k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/33878/" target="_blank" title="顺序容器与关联容器">https://imzlp.com/posts/33878/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/33878/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" rel="tag"># 技术笔记</a>
+              <a href="/tags/STL/" rel="tag"># STL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/39435/" rel="prev" title="创业维艰·如何完成比难更难的事">
+      <i class="fa fa-chevron-left"></i> 创业维艰·如何完成比难更难的事
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/42362/" rel="next" title="C++的基础语法整理">
+      C++的基础语法整理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8"><span class="nav-number">1.</span> <span class="nav-text">顺序容器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="nav-number">1.1.</span> <span class="nav-text">顺序容器的定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%85%83%E7%B4%A0%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">1.2.</span> <span class="nav-text">容器元素的初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%86%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%BA%E5%8F%A6%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8%E7%9A%84%E5%89%AF%E6%9C%AC"><span class="nav-number">1.2.1.</span> <span class="nav-text">将一个容器初始化为另一个容器的副本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%BA%E4%B8%80%E6%AE%B5%E5%85%83%E7%B4%A0%E7%9A%84%E5%89%AF%E6%9C%AC"><span class="nav-number">1.2.2.</span> <span class="nav-text">初始化为一段元素的副本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E5%92%8C%E5%88%9D%E5%A7%8B%E5%8C%96%E6%8C%87%E5%AE%9A%E6%95%B0%E7%9B%AE%E7%9A%84%E5%85%83%E7%B4%A0-%E5%8F%AA%E9%80%82%E7%94%A8%E4%BA%8E%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8"><span class="nav-number">1.2.3.</span> <span class="nav-text">分配和初始化指定数目的元素(只适用于顺序容器)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E6%8C%87%E5%AE%9A%E6%95%B0%E7%9B%AE%E5%85%83%E7%B4%A0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%B9%B6%E6%8F%90%E4%BE%9B%E5%88%9D%E5%A7%8B%E5%8C%96%E5%BC%8F"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">创建指定数目元素的容器并提供初始化式</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E6%8C%87%E5%AE%9A%E6%95%B0%E7%9B%AE%E5%85%83%E7%B4%A0%E7%9A%84%E5%AE%B9%E5%99%A8%E4%BD%86%E4%B8%8D%E6%8F%90%E4%BE%9B%E5%88%9D%E5%A7%8B%E5%8C%96%E5%BC%8F"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">创建指定数目元素的容器但不提供初始化式</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E6%93%8D%E4%BD%9C%E7%9A%84%E7%89%B9%E6%AE%8A%E8%A6%81%E6%B1%82"><span class="nav-number">1.2.4.</span> <span class="nav-text">容器操作的特殊要求</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%9C%80%E5%A4%96%E5%8A%A0%E7%B1%BB%E5%9E%8B%E8%A6%81%E6%B1%82%E7%9A%84%E5%AE%B9%E5%99%A8%E6%93%8D%E4%BD%9C"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">需外加类型要求的容器操作</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E7%9A%84%E5%AE%B9%E5%99%A8"><span class="nav-number">1.2.5.</span> <span class="nav-text">容器的容器</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%92%8C%E8%BF%AD%E4%BB%A3%E5%99%A8%E8%8C%83%E5%9B%B4"><span class="nav-number">1.3.</span> <span class="nav-text">迭代器和迭代器范围</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#vector%E5%92%8Cdeque%E5%AE%B9%E5%99%A8%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%8F%90%E4%BE%9B%E9%A2%9D%E5%A4%96%E7%9A%84%E8%BF%90%E7%AE%97"><span class="nav-number">1.3.1.</span> <span class="nav-text">vector和deque容器的迭代器提供额外的运算</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B9%A0%E9%A2%98"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">习题</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E8%8C%83%E5%9B%B4"><span class="nav-number">1.3.2.</span> <span class="nav-text">迭代器范围</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AF%B9%E5%BD%A2%E6%88%90%E8%BF%AD%E4%BB%A3%E5%99%A8%E8%8C%83%E5%9B%B4%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E8%A6%81%E6%B1%82"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">对形成迭代器范围的迭代器的要求</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%81%9A%E9%97%AD%E5%90%88%E5%8C%BA%E9%97%B4%E7%9A%84%E7%BC%96%E7%A8%8B%E6%84%8F%E4%B9%89"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">使用做闭合区间的编程意义</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B9%A0%E9%A2%98-1"><span class="nav-number">1.3.2.3.</span> <span class="nav-text">习题</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">关联容器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E8%A8%80%C2%B7pair%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.1.</span> <span class="nav-text">引言·pair类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#pair%E7%9A%84%E5%88%9B%E5%BB%BA%E5%92%8C%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">2.1.1.</span> <span class="nav-text">pair的创建和初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E6%96%B0%E7%9A%84pair%E5%AF%B9%E8%B1%A1"><span class="nav-number">2.1.2.</span> <span class="nav-text">生成新的pair对象</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B9%A0%E9%A2%98-2"><span class="nav-number">2.1.3.</span> <span class="nav-text">习题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8-1"><span class="nav-number">2.2.</span> <span class="nav-text">关联容器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%B9%E6%8D%AE%E9%94%AE%E6%8E%92%E5%88%97%E5%85%83%E7%B4%A0"><span class="nav-number">2.2.1.</span> <span class="nav-text">根据键排列元素</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B9%A0%E9%A2%98-3"><span class="nav-number">2.2.2.</span> <span class="nav-text">习题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#map%E5%AE%B9%E5%99%A8"><span class="nav-number">2.3.</span> <span class="nav-text">map容器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#map%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="nav-number">2.3.1.</span> <span class="nav-text">map对象的定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%94%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E7%BA%A6%E6%9D%9F"><span class="nav-number">2.3.2.</span> <span class="nav-text">键类型的约束</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/33878/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

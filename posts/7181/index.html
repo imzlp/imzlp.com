@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="ASTC是Adaptive Scalable Texture Compression的简称，是在移动端流行的贴图压缩方案。当平台使用ASTC打包时，UE默认使用Intel ISPC Texture Compressor压缩贴图，但它具有一些局限性，只支持8x8及以上的压缩规格，10x10和12x12则不支持，如果在项目中指定它们，也是会使用8x8的规格。除ISPC外，引擎中也提供了ARM的astc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE中ASTC贴图压缩分析及效率优化">
+<meta property="og:url" content="https://imzlp.com/posts/7181/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="ASTC是Adaptive Scalable Texture Compression的简称，是在移动端流行的贴图压缩方案。当平台使用ASTC打包时，UE默认使用Intel ISPC Texture Compressor压缩贴图，但它具有一些局限性，只支持8x8及以上的压缩规格，10x10和12x12则不支持，如果在项目中指定它们，也是会使用8x8的规格。除ISPC外，引擎中也提供了ARM的astc">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230204123239.webp">
+<meta property="article:published_time" content="2022-09-08T19:01:53.000Z">
+<meta property="article:modified_time" content="2022-09-08T19:01:53.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="ASTC">
+<meta property="article:tag" content="贴图压缩">
+<meta property="article:tag" content="包体优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230204123239.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/7181/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE中ASTC贴图压缩分析及效率优化 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/7181/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE中ASTC贴图压缩分析及效率优化<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2022-09-08-7181.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">ASTC texture compression analysis and efficiency optimization in UE</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-09-08 19:01 19:01:53:01" itemprop="dateCreated datePublished" datetime="2022-09-08T19:01:53+00:00">2022-09-08 19:01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/ASTC/" itemprop="url" rel="index"><span itemprop="name">ASTC</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/7181/" class="post-meta-item leancloud_visitors" data-flag-title="UE中ASTC贴图压缩分析及效率优化" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><code>ASTC</code>是<code>Adaptive Scalable Texture Compression</code>的简称，是在移动端流行的贴图压缩方案。当平台使用ASTC打包时，UE默认使用<a target="_blank" rel="noopener" href="https://github.com/GameTechDev/ISPCTextureCompressor">Intel ISPC Texture Compressor</a>压缩贴图，但它具有一些局限性，只支持<code>8x8</code>及以上的压缩规格，<code>10x10</code>和<code>12x12</code>则不支持，如果在项目中指定它们，也是会使用<code>8x8</code>的规格。除<a target="_blank" rel="noopener" href="https://github.com/GameTechDev/ISPCTextureCompressor">ISPC</a>外，引擎中也提供了ARM的<a target="_blank" rel="noopener" href="https://github.com/ARM-software/astc-encoder">astc-encoder</a>压缩方式，可以支持<code>8x8</code>以下的规格，但默认未启用，而且引擎中的集成压缩效率非常低，在大规模资源中，使用<a target="_blank" rel="noopener" href="https://github.com/ARM-software/astc-encoder">astc-encoder</a>压缩贴图对Cook耗时是非常大的挑战。</p>
+<p>本篇文章分析UE中贴图使用ASTC压缩的配置以及实现方式，以及引擎中<a target="_blank" rel="noopener" href="https://github.com/ARM-software/astc-encoder">astc-encoder</a>的压缩效率和优化思路。</p>
+<span id="more"></span>
+
+<h2 id="Texture的压缩配置"><a href="#Texture的压缩配置" class="headerlink" title="Texture的压缩配置"></a>Texture的压缩配置</h2><p>在<code>Project Settings</code>-<code>Cooker</code>-<code>Texture</code>可以设置默认的资源质量和大小的级别：<a target="_blank" rel="noopener" href="https://cs.github.com/EpicGames/UnrealEngine/blob/d9d435c9c280b99a6c679b517adedd3f4b02cfd7/Engine/Source/Developer/DeveloperToolSettings/Classes/CookerSettings.h?q=ASTC+Compression+vs+Size#L161">CookerSettings.h</a></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909155342437.webp"></p>
+<p>与ASTC块大小的对照：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0=12x12 </span><br><span class="line">1=10x10 </span><br><span class="line">2=8x8 </span><br><span class="line">3=6x6 </span><br><span class="line">4=4x4 </span><br></pre></td></tr></table></figure>
+<p>引擎里的默认值是3：<a target="_blank" rel="noopener" href="https://cs.github.com/EpicGames/UnrealEngine/blob/d9d435c9c280b99a6c679b517adedd3f4b02cfd7/Engine/Config/BaseEngine.ini?q=DefaultASTCQualityBySize#L2665">Engine/Config/BaseEngine.ini</a></p>
+<p>在Texture的资源编辑中也可以针对某个Texture单独设置： </p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/notes/ue/index/2020/20210112154624.webp">  </p>
+<p>Lowest-&gt;Hightest对应着<code>0-4</code>的值，使用Default则使用项目设置中的配置。  </p>
+<p>并且，设置<code>Compression Settings</code>的类型也会对资源压缩的类型有差别，Default则是项目设置中的参数，如果设置成NormalMap的类型会是<code>ASTC_4x4</code>的。 </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.nvidia.com/astc-texture-compression-for-game-assets#_Toc398571904">Using ASTC Texture Compression for Game Assets</a> </li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/RenderingAndGraphics/Textures/TextureCompressionSettings/index.html">Texture Compression Settings</a> </li>
+</ul>
+<h2 id="Intel-ISPC"><a href="#Intel-ISPC" class="headerlink" title="Intel ISPC"></a>Intel ISPC</h2><p>Intel ISPC是引擎中默认的ASTC压缩器，但它只支持最大块大小8x8，像更高的10x10和12x12是不支持的。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220905143615.webp"></p>
+<p>它的Github README中有介绍：</p>
+<blockquote>
+<p>ASTC (LDR, block sizes up to 8x8)</p>
+</blockquote>
+<p>在<a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/picgo/2022/ASTC_USER_GUIDE.pdf">Adaptive Scalable Texture Compression User Guide</a>中也有具体的描述：</p>
+<blockquote>
+<p>The Intel ISPC Texture Compressoris a compression library developed by Intel, supporting multiple texture formats include ASTC. It uses the Intel ISPC (Implicit SPMD Program Compiler) compilerto parallelize key parts of the compressor implementation for the target CPU SIMD instruction set.<br>The ASTC support in the tool only supports the 2D LDR profile and block sizes up to 8x8. It has image quality that is similar to astcenc -fast for photographic imagery, but can be up to three times faster at compressing. Its quality is measurably worse than astcenc -fast for non-photographic imagery, such as normal maps, mask maps, or cartoon-like color data.</p>
+</blockquote>
+<p>这意味着在UE中，使用ASTC如果在项目配置中设置<code>8x8</code>以上的压缩设置会无效，因为这种ISPC压缩方式最大仅支持8x8的。</p>
+<p>UE代码中的实现同样如此：<a target="_blank" rel="noopener" href="https://cs.github.com/EpicGames/UnrealEngine/blob/d9d435c9c280b99a6c679b517adedd3f4b02cfd7/Engine/Source/Developer/TextureFormatIntelISPCTexComp/Private/TextureFormatIntelISPCTexComp.cpp?q=GetQualityFormat#L422">Engine/Source/Developer/TextureFormatIntelISPCTexComp/Private/TextureFormatIntelISPCTexComp.cpp</a></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220905151355.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220905154510.webp"></p>
+<h2 id="ARM-astcenc"><a href="#ARM-astcenc" class="headerlink" title="ARM astcenc"></a>ARM astcenc</h2><p>UE还提供了了另一套ASTC的Texture压缩方式：ARM的<a target="_blank" rel="noopener" href="https://github.com/ARM-software/astc-encoder">astc-encoder</a>。如果没有使用<code>ISPC</code>的话就会使用它。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Developer\TextureFormatASTC\Private\TextureFormatASTC.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_MAC</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> SUPPORTS_ISPC_ASTC	1</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> SUPPORTS_ISPC_ASTC	0</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>引擎中的代码：<a target="_blank" rel="noopener" href="https://cs.github.com/EpicGames/UnrealEngine/blob/d9d435c9c280b99a6c679b517adedd3f4b02cfd7/Engine/Source/Developer/TextureFormatASTC/Private/TextureFormatASTC.cpp?q=SUPPORTS_ISPC_ASTC#L450">TextureFormatASTC.cpp#L450</a></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220908172407937.webp"></p>
+<p>默认情况下，在UE4的版本中，只能通过修改<code>SUPPORTS_ISPC_ASTC</code>宏定义的值或修改引擎中上图<code>CompressImage</code>代码实现。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">bool</span> <span class="title">UseArmASTCCompressor</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">bool</span> bUseArmASTC = <span class="literal">false</span>;</span><br><span class="line">	GConfig-&gt;<span class="built_in">GetBool</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Script/UnrealEd.CookerSettings&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;UsArmASTCCompressor&quot;</span>), bUseArmASTC, GEngineIni);</span><br><span class="line">	<span class="keyword">return</span> bUseArmASTC;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// for CompressImage</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> SUPPORTS_ISPC_ASTC</span></span><br><span class="line"><span class="keyword">if</span> (!<span class="built_in">UseArmASTCCompressor</span>())</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">return</span> IntelISPCTexCompFormat.<span class="built_in">CompressImage</span>(InImage, BuildSettings, bImageHasAlphaChannel, OutCompressedImage);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">// arm astcenc...</span></span><br></pre></td></tr></table></figure>
+<p>编辑<code>DefaultEngine.ini</code>即可控制开关：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/UnrealEd.CookerSettings]</span></span><br><span class="line"><span class="attr">UsArmASTCCompressor</span>=<span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>当关闭ISPC压缩时，替代的ARM astcenc会拉起引擎<code>Binaries/ThirdParty</code>下的<code>astsenc</code>程序来压缩贴图：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220908173014.webp"></p>
+<p>调用栈：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220909093607.webp"></p>
+<p>拉起单独的进程执行的，不是在UE进程内执行，在拉起astcenc执行压缩的过程中，UE的Cook进程默认是逐资源，虽然DDC的cache过程可以是异步的，但从Cook的角度看，当前资源仍然是阻塞执行的。并且因为是拉起单独的进程处理，可能会产生很多的进程启动和切换开销，这个过程会非常慢，可能一张贴图的耗时都要好几分钟，对于构建时间是比较大的挑战。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909132605743.webp"></p>
+<p><code>astcenc</code>的执行，是根据贴图设置构造出<code>astcenc</code>的命令行参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 4x4</span></span><br><span class="line">../../../Engine/Binaries/ThirdParty/ARM/Win32/astcenc.exe -c <span class="string">&quot;D:/UnrealProjects/AstcExample/Intermediate/Cache/60c572f7-471422f1-24309fb0-45c3d4f9-RGBToASTCIn.webp&quot;</span> <span class="string">&quot;D:/UnrealProjects/AstcExample/Intermediate/Cache/60c572f7-471422f1-24309fb0-45c3d4f9-RGBToASTCOut.astc&quot;</span> 4x4 -thorough  -esw bgr1 -ch 1 1 1 0 <span class="string">&quot;</span></span><br><span class="line"><span class="string"># 12x12</span></span><br><span class="line"><span class="string">../../../Engine/Binaries/ThirdParty/ARM/Win32/astcenc.exe -c &quot;</span>D:/UnrealProjects/AstcExample/Intermediate/Cache/ea8ed05a-4371fffd-333d47a1-cf7b6490-RGBToASTCIn.webp<span class="string">&quot; &quot;</span>D:/UnrealProjects/AstcExample/Intermediate/Cache/ea8ed05a-4371fffd-333d47a1-cf7b6490-RGBToASTCOut.astc<span class="string">&quot; 12x12 -thorough -normal_percep -esw bbbg -dsw rgba&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220908201044125.webp"></p>
+<p>拉起来多个进程是要对贴图的多个Mip机别进行分别压缩：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909094931319.webp"></p>
+<p>每个Mip对应着一个<code>astcenc</code>的处理进程。调用栈：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909105954190.webp"></p>
+<blockquote>
+<p>注意：不同的Mip机别的压缩参数完全相同，但进行压缩的Image是不同的，这一点要注意，从上图的调用栈中也能看出来。</p>
+</blockquote>
+<h2 id="UE5"><a href="#UE5" class="headerlink" title="UE5"></a>UE5</h2><p>在UE5中，ASTC默认也是ISPC的压缩器，但可以通过<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/5.1/Engine/Source/Developer/TextureFormatASTC/Private/TextureFormatASTC.cpp#L37">cook.ASTCTextureCompressor</a>来控制，0是ISPC，1是arm的。</p>
+<p>并且在<code>Project Settings</code>-<code>Cooker</code>中可以配置使用的默认压缩器：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220908165210.webp"></p>
+<h2 id="效率分析-amp-优化"><a href="#效率分析-amp-优化" class="headerlink" title="效率分析&amp;优化"></a>效率分析&amp;优化</h2><h3 id="DDC-Log"><a href="#DDC-Log" class="headerlink" title="DDC Log"></a>DDC Log</h3><p>分析贴图的压缩过程，可以开启<code>Log</code>和<code>LogTexture</code>的<code>Verbose</code>的日志机别：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">; DefaultEngine.ini</span></span><br><span class="line"><span class="section">[Core.Log]</span></span><br><span class="line"><span class="attr">LogDerivedDataCache</span>=Verbose</span><br><span class="line"><span class="attr">LogTexture</span>=Verbose</span><br></pre></td></tr></table></figure>
+<p>在执行Cook过程会输出以下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">LogDerivedDataCache: Verbose: GetSynchronous TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) Cache miss on TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A</span><br><span class="line">LogTexture: Display: Building textures: T_ForestGround_D (ASTC_RGBAuto, 2048X2048)</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogTextureFormatASTC: Display: Compressing to ASTC (options = &#x27;6x6 -fast  -esw bgra -ch 1 1 1 1&#x27;)...</span><br><span class="line">LogDerivedDataCache: Verbose: Put TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP0_2048x2048 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) queueing TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312 for put</span><br><span class="line">LogDerivedDataCache: Verbose: Put TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP1_1024x1024 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) queueing TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5 for put</span><br><span class="line">LogDerivedDataCache: Verbose: Put TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP2_512x512 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) queueing TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125 for put</span><br><span class="line">LogDerivedDataCache: Verbose: Put TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP3_256x256 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) queueing TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532 for put</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125</span><br><span class="line">LogDerivedDataCache: Verbose: Put TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP4_128x128 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) queueing TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716 for put</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532</span><br><span class="line">LogDerivedDataCache: Verbose: Put TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) queueing TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A for put</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716</span><br><span class="line">LogTexture: Verbose: Storing texture in DDC:</span><br><span class="line">  Key: TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B</span><br><span class="line">  Format: ASTC_6x6</span><br><span class="line">  Mip0 2048x2048 1871424 bytes TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP0_2048x2048</span><br><span class="line">  Mip1 1024x1024 467856 bytes TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP1_1024x1024</span><br><span class="line">  Mip2 512x512 118336 bytes TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP2_512x512</span><br><span class="line">  Mip3 256x256 29584 bytes TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP3_256x256</span><br><span class="line">  Mip4 128x128 7744 bytes TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP4_128x128</span><br><span class="line">  Mip5 64x64 1936 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP5_64x64</span><br><span class="line">  Mip6 32x32 576 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP6_32x32</span><br><span class="line">  Mip7 16x16 144 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP7_16x16</span><br><span class="line">  Mip8 8x8 64 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP8_8x8</span><br><span class="line">  Mip9 4x4 16 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP9_4x4</span><br><span class="line">  Mip10 2x2 16 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP10_2x2</span><br><span class="line">  Mip11 1x1 16 bytes [inline] TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP11_1x1</span><br><span class="line">  Derived Data: 4648 bytes</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronous TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP0_2048x2048 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;, Handle 19506</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronous TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP1_1024x1024 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;, Handle 19507</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronous TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP2_512x512 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;, Handle 19508</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronous TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP3_256x256 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;, Handle 19509</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronous TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CBBEBEB5538C060A_07_0000803F0000803F0000803F000000000000803F00000000000000000000803F0000000000000000020000000100000100000000000101000000040000803FFFFFFFFF00000000FF00FF00FFFF8180803B_MIP4_128x128 from &#x27;/Game/ExampleContent/Landscapes/Textures/T_ForestGround_D.T_ForestGround_D&#x27;, Handle 19510</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) CacheHit from InFlightCache on TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312</span><br><span class="line">LogDerivedDataCache: Verbose: WaitAsynchronousCompletion, Handle 19506</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) CacheHit from InFlightCache on TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronousResults, bDataWasBuilt: 0, Handle 19506, SUCCESS</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) CacheHit from InFlightCache on TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) CacheHit from InFlightCache on TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532</span><br><span class="line">LogDerivedDataCache: Verbose: AsyncPutWrapper (HierarchicalDerivedDataBackend) CacheHit from InFlightCache on TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716</span><br><span class="line">LogDerivedDataCache: Verbose: WaitAsynchronousCompletion, Handle 19507</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronousResults, bDataWasBuilt: 0, Handle 19507, SUCCESS</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532</span><br><span class="line">LogDerivedDataCache: Verbose: WaitAsynchronousCompletion, Handle 19508</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache: Successful cache put of TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125 to ../../../Engine/DerivedDataCache/7/7/2/TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAUTO_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125.udd</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronousResults, bDataWasBuilt: 0, Handle 19508, SUCCESS</span><br><span class="line">LogDerivedDataCache: Verbose: WaitAsynchronousCompletion, Handle 19509</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronousResults, bDataWasBuilt: 0, Handle 19509, SUCCESS</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=1 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__AFC2F7816F8391CA659275BFD85152D17743C125</span><br><span class="line">LogDerivedDataCache: Verbose: WaitAsynchronousCompletion, Handle 19510</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A</span><br><span class="line">LogDerivedDataCache: Verbose: GetAsynchronousResults, bDataWasBuilt: 0, Handle 19510, SUCCESS</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=0 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache: Successful cache put of TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716 to ../../../Engine/DerivedDataCache/1/1/3/TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAUTO_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716.udd</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache: Successful cache put of TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5 to ../../../Engine/DerivedDataCache/7/1/7/TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAUTO_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5.udd</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=1 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__4190A033AE05AC24DA30E7B5AD2E6827F260A716</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=1 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__F5074C647712694523D5FA76B15A7517E5FCEDF5</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache: Successful cache put of TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A to ../../../Engine/DerivedDataCache/5/8/2/TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAUTO_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A.udd</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache: Successful cache put of TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532 to ../../../Engine/DerivedDataCache/2/1/5/TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAUTO_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532.udd</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=1 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__EA6A229E23092C6517F13F71B2BF5C2E8C64457A</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache: Successful cache put of TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312 to ../../../Engine/DerivedDataCache/2/6/1/TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAUTO_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312.udd</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=1 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__C1072EE744DD250899FAB02DB01DEEB85A98C532</span><br><span class="line">LogDerivedDataCache: Verbose: ../../../Engine/DerivedDataCache CachedDataProbablyExists=1 for TEXTURE_564290F8998644E39A2118D5C683187B_ASTC_RGBAuto_25638_39DF77B84020C752CB__47BCD9955FA7DFF7F5CFEFB8D7FBCF9D3D9B6312</span><br></pre></td></tr></table></figure>
+<p>便于查看DDC和贴图压缩过程中的详细信息。</p>
+<h3 id="主要耗时"><a href="#主要耗时" class="headerlink" title="主要耗时"></a>主要耗时</h3><p>通过前面的分析，在使用ARM astcenc进行Cook时的贴图压缩时，单张贴图的开销情况大概有以下几部分：</p>
+<ol>
+<li>文件的序列化（看到压缩时需要存盘/读取）</li>
+<li>压缩进程的冷启动</li>
+<li>等待压缩完毕（压缩进程退出）</li>
+<li>多个Mip级别会拉起多个进程</li>
+</ol>
+<p>在UE原始的Cook流程中，逐资源处理，没有办法很好地利用起来硬件的多核优势，本质上就是Cook一张贴图逐Mip拉起来进程压缩，这样串行循环的过程。</p>
+<p>使用HotPatcher进行单张贴图的ARM astcenc测试，从几秒到数分钟不等：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Display: Package /Game/ExampleContent/Landscapes/Textures/T_ForestGround_D Time : <span class="number">29.767000</span>s</span><br><span class="line">Display: Package /Game/ExampleContent/Landscapes/Textures/T_ForestGround_N Time : <span class="number">145.753000</span>s</span><br><span class="line">Display: Package /Game/ExampleContent/ScriptExamples/PivotPainter/Textures/T_PalmTree_N Time : <span class="number">232.641000</span>s</span><br></pre></td></tr></table></figure>
+<p>Cook 28张贴图耗时<strong>14分钟</strong>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909132759447.webp"></p>
+<p>而贴图又是工程中最大量的资源类型，完全DDC miss的情况下，Cook耗时难以想象，达到数十小时。</p>
+<h3 id="替换astcenc"><a href="#替换astcenc" class="headerlink" title="替换astcenc"></a>替换astcenc</h3><p>在UE4中，引擎默认使用的预编译<code>astcenc</code>是版本非常古老的<code>1.3</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ASTC codec version 1.3</span><br><span class="line">Copyright (C) 2011-2013 ARM Limited</span><br><span class="line">All rights reserved. Use of this software is subject to terms of its license.</span><br></pre></td></tr></table></figure>
+<p>并且是32位的，没有SSE/SSE2指令集优化：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">FILE HEADER VALUES</span><br><span class="line">             14C machine (x86)</span><br><span class="line">               5 number of sections</span><br><span class="line">        515B0518 time date stamp Wed Apr  3 00:19:36 2013</span><br><span class="line">               0 file pointer to symbol table</span><br><span class="line">               0 number of symbols</span><br><span class="line">              E0 size of optional header</span><br><span class="line">             102 characteristics</span><br><span class="line">                   Executable</span><br><span class="line">                   32 bit word machine</span><br></pre></td></tr></table></figure>
+
+<h4 id="升级astcenc版本"><a href="#升级astcenc版本" class="headerlink" title="升级astcenc版本"></a>升级astcenc版本</h4><p>看Github上的release note中的记录以及一些文章，较新版本的astcenc对于压缩性能还是有不少提升的。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/astcenc-31-high-performance-astc-texture-compressor">astcenc 3.1: high performance texture compression</a></li>
+</ul>
+<blockquote>
+<p>在UE5中，集成的astcenc是<code>3.2.0</code>，并且是64位的版本，具有SSE的指令集优化。但UE5中的astcenc不能直接放到UE4里使用，版本间参数的差异还是挺大的，需要把UE5的实现移植到UE4内。让旧版引擎中构造的astcenc参数和新版本匹配</p>
+</blockquote>
+<h4 id="编译x64-SSE版本"><a href="#编译x64-SSE版本" class="headerlink" title="编译x64 SSE版本"></a>编译x64 SSE版本</h4><p>这种方式，可以保持引擎内astcenc的参数兼容，无需对引擎实现产生变动，只需编译出一个64位的SSE指令集优化版本。</p>
+<blockquote>
+<p>注：编译64位时默认启用了SSE指令集优化，无需再单独指定<code>/arch:sse</code>。</p>
+</blockquote>
+<p>优化前：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909181632045.webp"></p>
+<p>优化后：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909171652073.webp"></p>
+<p>从原来的<code>7m12s</code>到<code>1m24s</code>，节省了约80%的耗时，有非常大的提升。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Win32</th>
+<th>Win64 SSE</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>耗时（s）</td>
+<td>432</td>
+<td>84</td>
+</tr>
+</tbody></table>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/202209121004187.webp"></p>
+<h3 id="并行CacheDDC"><a href="#并行CacheDDC" class="headerlink" title="并行CacheDDC"></a>并行CacheDDC</h3><p>通过替代astcenc可以提高单张贴图的压缩效率，但逐资源地处理过程，哪怕所有Mip都并行处理，最多也就拉起Mip数量的astcenc进程，在超大核心CPU下，也不能够跑满机器性能。</p>
+<p>所以，可以把单个资源的Cook过程拆开，批量地去Cache资源的DDC，但不执行序列化操作。通过异步任务拉起astcenc执行实际的压缩过程，可以实现单个UE进程同时处理多个贴图压缩的过程。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220909142352756.webp"></p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220909142610.webp"></p>
+<p>这样能够充分利用多核心CPU的性能，而避免逐资源逐Mip执行时，跑不满性能，CPU空转的情况。</p>
+<p>但在这种单Cook进程，并行压缩贴图的情况，对于机器CPU性能要求较高。简单来说，如果一个4核心CPU拉起远超于核心数量的任务数，不仅起不到加速的作用，反而会因为进程的频繁切换而变慢（增加系统进程调度开销、进程间的CPU竞争等）。</p>
+<p>合理的做法是，根据核心数决定任务数量，充分利用CPU的同时避免超负载。但一台机器的物理性能总归是有限的，对于海量的资源和单机瓶颈难以兼顾。</p>
+<p>所以我实现了一种，多机器并行Cook的方案，不同于FastBuild与IB这种联机编译的实现，它们局限在代码和Shader的编译，但无法用在其他的资源类型中，在本文的这种情况下，贴图的压缩耗时已经远超于Shader的编译耗时。</p>
+<p>单机的运行模拟：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220905164130.webp"></p>
+<p>在多机模式下，每个Agent可以按照机器性能分配一定的资源量，可以避免单机的机能限制。并且机器间可以共享互相产出的DDC数据，实现真正地并行Cook。</p>
+<h2 id="相关资料"><a href="#相关资料" class="headerlink" title="相关资料"></a>相关资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://developer.arm.com/documentation/100959/0100">ARM Guide for Unreal Engine 4 Optimizing Mobile Gaming Graphics Version 1.0</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Android/Reference/">Android Development Reference</a></li>
+<li><a target="_blank" rel="noopener" href="https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/astcenc-31-high-performance-astc-texture-compressor">astcenc 3.1: high performance texture compression</a></li>
+<li><a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/picgo/2022/ASTC_USER_GUIDE.pdf">ARM ASTC user guide</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/158740249">ASTC纹理压缩格式详解</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/7181/" target="_blank">UE中ASTC贴图压缩分析及效率优化</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2022年09月08日 19时01分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/7181/" target="_blank" title="UE中ASTC贴图压缩分析及效率优化">https://imzlp.com/posts/7181/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/7181/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/ASTC/" rel="tag"># ASTC</a>
+              <a href="/tags/%E8%B4%B4%E5%9B%BE%E5%8E%8B%E7%BC%A9/" rel="tag"># 贴图压缩</a>
+              <a href="/tags/%E5%8C%85%E4%BD%93%E4%BC%98%E5%8C%96/" rel="tag"># 包体优化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/23932/" rel="prev" title="循迹研究：如何写好一篇技术文章">
+      <i class="fa fa-chevron-left"></i> 循迹研究：如何写好一篇技术文章
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/22655/" rel="next" title="UE中多阶段的自动化资源检查方案">
+      UE中多阶段的自动化资源检查方案 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Texture%E7%9A%84%E5%8E%8B%E7%BC%A9%E9%85%8D%E7%BD%AE"><span class="nav-number">1.</span> <span class="nav-text">Texture的压缩配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Intel-ISPC"><span class="nav-number">2.</span> <span class="nav-text">Intel ISPC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ARM-astcenc"><span class="nav-number">3.</span> <span class="nav-text">ARM astcenc</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE5"><span class="nav-number">4.</span> <span class="nav-text">UE5</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E7%8E%87%E5%88%86%E6%9E%90-amp-%E4%BC%98%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">效率分析&amp;优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DDC-Log"><span class="nav-number">5.1.</span> <span class="nav-text">DDC Log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E8%80%97%E6%97%B6"><span class="nav-number">5.2.</span> <span class="nav-text">主要耗时</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%BF%E6%8D%A2astcenc"><span class="nav-number">5.3.</span> <span class="nav-text">替换astcenc</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%87%E7%BA%A7astcenc%E7%89%88%E6%9C%AC"><span class="nav-number">5.3.1.</span> <span class="nav-text">升级astcenc版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%96%E8%AF%91x64-SSE%E7%89%88%E6%9C%AC"><span class="nav-number">5.3.2.</span> <span class="nav-text">编译x64 SSE版本</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B6%E8%A1%8CCacheDDC"><span class="nav-number">5.4.</span> <span class="nav-text">并行CacheDDC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99"><span class="nav-number">6.</span> <span class="nav-text">相关资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/7181/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="受新冠病毒(COVID-19)影响，整个春节都禁足在家，目前还没有复工，只能看看书整理一下笔记，希望疫情尽快过去，希望朋友们都身体健康。本篇文章的主要内容是分析一下在使用UE开发时使用的C++和**标准C++**在语法上有哪些区别，UEC++本质是C++的一个超集，它支持和使用C++的全部特性，但是它在标准特性之上自己构建了一套语法。很多开发中的编译问题只有知道了两者的边界，才能够快速和准确地定位">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UEC++与标准C++的区别与联系">
+<meta property="og:url" content="https://imzlp.com/posts/20425/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="受新冠病毒(COVID-19)影响，整个春节都禁足在家，目前还没有复工，只能看看书整理一下笔记，希望疫情尽快过去，希望朋友们都身体健康。本篇文章的主要内容是分析一下在使用UE开发时使用的C++和**标准C++**在语法上有哪些区别，UEC++本质是C++的一个超集，它支持和使用C++的全部特性，但是它在标准特性之上自己构建了一套语法。很多开发中的编译问题只有知道了两者的边界，才能够快速和准确地定位">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323184545.webp">
+<meta property="article:published_time" content="2020-02-11T11:22:44.000Z">
+<meta property="article:modified_time" content="2020-02-11T11:22:44.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="UnrealEngine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323184545.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/20425/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UEC++与标准C++的区别与联系 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/20425/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UEC++与标准C++的区别与联系<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-02-11-20425.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-11 11:22 11:22:44:22" itemprop="dateCreated datePublished" datetime="2020-02-11T11:22:44+00:00">2020-02-11 11:22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/20425/" class="post-meta-item leancloud_visitors" data-flag-title="UEC++与标准C++的区别与联系" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>受<a target="_blank" rel="noopener" href="https://g.co/kgs/oevWTp">新冠病毒(COVID-19)</a>影响，整个春节都禁足在家，目前还没有复工，只能看看书整理一下笔记，希望疫情尽快过去，希望朋友们都身体健康。<br>本篇文章的主要内容是分析一下在使用UE开发时使用的C++和**标准C++**在语法上有哪些区别，UEC++本质是C++的一个超集，它支持和使用C++的全部特性，但是它在标准特性之上自己构建了一套语法。很多开发中的编译问题只有知道了两者的边界，才能够快速和准确地定位问题出现在哪个阶段。对于使用UE之前就学习过C++的来说这不是什么问题，但是对于先接触UE然后慢慢学C++的同学来说，这是个挺大的问题。</p>
+<p><strong>标准C++**是基于</strong>ISO/IEC 14882**的语言规范（C++98/03/11/14/17等标准），UEC++则是我们开发当中使用的Epic在标准C++之上扩展的用法，这里不讨论GC、反射之类的基于C++之上自己构建的对象体系，也不涉及UE中的各种库，关注的着重点在于核心语法层面。</p>
+<span id="more"></span>
+<p>近期博客的更新文章里，写了一些UE反射机制的内容，可以作为本篇文章的进阶内容结合来看：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/12624/">UE4反射实现分析：基础概念</a></li>
+<li><a href="https://imzlp.com/posts/23694/">UE4反射实现分析：C++ 特性</a></li>
+<li><a href="https://imzlp.com/posts/9780/">UE4的反射实现分析：反射代码生成（一）</a></li>
+</ul>
+<p>在UE4.23+以后，UE所支持的C++标准是可以被控制的，在<code>*.target.cs</code>和<code>*.build.cs</code>中均可以设置<code>CppStandard</code>的值，目前有三个标准可选：<code>Cpp14</code>、<code>Cpp17</code>、<code>Latast</code>，它控制了传递给编译器的<code>/std:c++*</code>值。</p>
+<p>开始具体的分析之前，首先要知道标准C++和UE C++都是怎么执行编译的，因为只有先区分了最根本的使用区别，才能够进一步分析为什么会有这些区别。</p>
+<h2 id="编译标准C-代码"><a href="#编译标准C-代码" class="headerlink" title="编译标准C++代码"></a>编译标准C++代码</h2><p>首先，C++的代码只依赖于编译器，如下面代码:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hw.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> HW_MSG <span class="string">&quot;HelloWorld&quot;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  std::cout&lt;&lt;HW_MSG&lt;&lt;std::endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>想要编译上面的代码，需要使用一个编译器（GCC/MSVC）等，VS使用的是MSVC，以GCC为例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ g++ hw.cpp -o hw.exe</span><br></pre></td></tr></table></figure>
+<p>通过这一行命令就会编译出hw.exe，但是编译器是一套工具链，虽然只执行了一条命令，但是它其实是调用了一串的工具进行预处理、语法分析、编译、链接等等一系列操作，不过它们不是本篇文章的重点，有兴趣的可以看一下我之前的这篇文章：<a href="https://imzlp.com/posts/27118/">C/C++编译和链接模型分析</a>。<br>举上面的例子需要关注的有两点：</p>
+<ol>
+<li>标准C++语法可以直接用编译器编译；</li>
+<li>编译器对代码需要执行预处理、语法分析、编译、链接等操作；</li>
+</ol>
+<h2 id="编译UEC-代码"><a href="#编译UEC-代码" class="headerlink" title="编译UEC++代码"></a>编译UEC++代码</h2><p>首先，UEC++代码，并不像标准C++那样把代码单独存在一个文件就可以编译的，UE自己搭建了一套编译体系，所有基于UE引擎的代码必须要通过UE的这套编译体系才可以编译。<br>我之前写过UE构建系统的一些文章，想要UE项目的构建系统可以看一下：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/6362/">Build flow of the Unreal Engine4 project</a></li>
+<li><a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/blog/posts/16643/">UE4 Build System：Target and Module</a></li>
+</ul>
+<p>UEC++的代码必须要依赖于一个<strong>UE项目</strong>，其基本项目结构为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Example\GWorld\Source&gt;tree /a /f</span><br><span class="line">|   GWorld.Target.cs</span><br><span class="line">|</span><br><span class="line">\---GWorld</span><br><span class="line">        GWorld.Build.cs</span><br><span class="line">        GWorld.cpp</span><br><span class="line">        GWorld.h</span><br><span class="line">        Public/</span><br><span class="line">        Private/</span><br></pre></td></tr></table></figure>
+<p>其中各个文件的职责为：</p>
+<ul>
+<li><code>*.Target.cs</code>是用来控制的是生成的可执行程序的外部编译环境，就是所谓的Target。比如，生成的是什么<code>Type</code>(Game/Client/Server/Editor/Program)，开不开启RTTI(<code>bForceEnableRTTI</code>)，CRT使用什么方式链接(<code>bUseStaticCRT</code>)等等。</li>
+<li><code>*.Build.cs</code>控制的是Module编译过程，由它来控制所属Module的对其他Module的依赖、文件包含、链接、宏定义等等相关的操作，<code>*.Build.cs</code>告诉UE的构建系统，它是一个Module，并且编译的时候要做哪些事情。</li>
+<li>其余的是代码源文件(一般情况下头文件放在<code>Public/</code>，实现放在<code>Private/</code>)</li>
+</ul>
+<p>UE构建系统的重点是UBT和UHT，他们各自的作用我之前的文章中有提到：</p>
+<ul>
+<li>UBT的作用是收集和构建编译环境，调用UHT生成代码，然后<strong>调用真正的编译器进行编译</strong></li>
+<li>UHT的作用是把项目中所有代码里的UHT标记翻译为真正的C++代码（如<code>UCLASS/GENERATED_BODY</code>等等），它属于UBT工作流程中的一环</li>
+</ul>
+<p>上面写的需要关注的有三点：</p>
+<ol>
+<li>UEC++的代码必须通过UE自己的构建体系</li>
+<li>UEC++的代码必须要通过UHT进行翻译成<strong>真正的C++代码</strong></li>
+<li>UE的项目里真正进入编译阶段的，全部都是标准C++的代码</li>
+</ol>
+<p>所以，UEC++和标准C++的区别在于，UEC++自己定义了一些语法，需要通过专门的解释器进行翻译，然后再通过C++编译器进行编译（进入标准C++的编译流程）。</p>
+<p>关于流程上的区别就说这么多，下面的内容来写UE具体有哪些特殊的语法。</p>
+<h2 id="UEC-的特殊语法"><a href="#UEC-的特殊语法" class="headerlink" title="UEC++的特殊语法"></a>UEC++的特殊语法</h2><p>UEC++的特殊语法主要是用于指导UHT来产生辅助代码的方式。<br>来聊UEC++的特殊语法之前，需要先明确一点：<code>UCLASS</code>/<code>UFUNCTION</code>/<code>UPROPERTY</code>等都不是<strong>真正有意义的C++宏</strong>，他们是<strong>UHT的标记</strong>，在经过UHT生成代码之后他们就是空宏了，没有意义。<br>UE的代码是把<strong>UHT标记</strong>和<strong>真正的宏</strong>都以<strong>宏的形式</strong>来表现，从结果来说，它们都是生成了一些代码，但是它们的处理流程不同。<br>UHT标记是先通过UHT进行扫描并生成代码，再通过编译器进行预处理等等，这里存在一个先后的过程，其限制就为：<strong>对UHT对代码的处理在前，编译器对宏的预处理在后，所以在UE中没办法用宏来包裹UHT标记</strong>。</p>
+<p>UE的UHT标记包括但不限于：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/Functions/Specifiers/index.html">Function Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/Metadata/index.html">Metadata Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/Properties/Specifiers/index.html">Property Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/Structs/Specifiers/index.html">Struct Specifiers</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/Reference/Interfaces/index.html">Interfaces</a></li>
+</ul>
+<p>可以从<code>Runtime\CoreUObject\Public\ObjectMacros.h</code>看更多的UHT标记，有一个简单的分辨方法：如果这个宏是一个空宏，那么它就是一个UHT标记：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime\CoreUObject\Public\ObjectMacros.h</span></span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line"><span class="comment">// These macros wrap metadata parsed by the Unreal Header Tool, and are otherwise</span></span><br><span class="line"><span class="comment">// ignored when code containing them is compiled by the C++ compiler</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UPROPERTY(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UFUNCTION(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> USTRUCT(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UMETA(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UPARAM(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UENUM(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UDELEGATE(...)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// This pair of macros is used to help implement GENERATED_BODY() and GENERATED_USTRUCT_BODY()</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BODY_MACRO_COMBINE_INNER(A,B,C,D) A##B##C##D</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BODY_MACRO_COMBINE(A,B,C,D) BODY_MACRO_COMBINE_INNER(A,B,C,D)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Include a redundant semicolon at the end of the generated code block, so that intellisense parsers can start parsing</span></span><br><span class="line"><span class="comment">// a new declaration if the line number/generated code is out of date.</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> GENERATED_BODY_LEGACY(...) BODY_MACRO_COMBINE(CURRENT_FILE_ID,_,__LINE__,_GENERATED_BODY_LEGACY);</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> GENERATED_BODY(...) BODY_MACRO_COMBINE(CURRENT_FILE_ID,_,__LINE__,_GENERATED_BODY);</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> GENERATED_USTRUCT_BODY(...) GENERATED_BODY()</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> GENERATED_UCLASS_BODY(...) GENERATED_BODY_LEGACY()</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> GENERATED_UINTERFACE_BODY(...) GENERATED_BODY_LEGACY()</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> GENERATED_IINTERFACE_BODY(...) GENERATED_BODY_LEGACY()</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> UE_BUILD_DOCS || defined(__INTELLISENSE__ )</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UCLASS(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UCLASS(...) BODY_MACRO_COMBINE(CURRENT_FILE_ID,_,__LINE__,_PROLOG)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UINTERFACE(...) UCLASS()</span></span><br><span class="line"><span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+
+<p>下面简单列举一些：</p>
+<ol start="0">
+<li><p><code>*.generated.h</code>这个文件是UE特有的，它是UHT生成的代码（大多都是宏）</p>
+</li>
+<li><p><code>UCLASS</code>/<code>UFUNCTION</code>/<code>UPROPERTY</code>/<code>UENUM</code>等<strong>标记</strong>在C++中是没有的，它们的作用是指导UHT生成什么样的辅助代码；</p>
+</li>
+<li><p><code>GENERATED_BODY</code>等系列宏标准C++是没有的，它的作用在于把UHT生成的代码包含到当前类中来；</p>
+</li>
+<li><p><code>BlueprintNativeEvent</code>函数的实现需要加<code>_Implementation</code>，这个规则是没有的，上面提到了C++中连<code>UFUNCTION</code>都没有；</p>
+</li>
+<li><p>C++中没有Slate</p>
+</li>
+<li><p>UE项目中的宏都会生成在<code>Intermediate\Build\Win64\UE4Editor\Development\MODULE_NAME</code>下，如<code>MODULE_NAME_API</code>是导出符号，在标准C++项目中需要你自己定义导出。</p>
+</li>
+<li><p>标准C++的接口可以通过抽象类的来实现，并不需要一个特定基类，而且并没有UE中不可以提供数据成员的限制（仅从语法的角度，当然从设计思路上接口要无状态）</p>
+</li>
+<li><p>标准C++没有UE中的DELEGATE</p>
+</li>
+<li><p><code>Cast&lt;&gt;</code>和<code>NewObject&lt;&gt;</code>是UE特有的，C++使用四种标准cast和<code>new</code></p>
+</li>
+<li><p>C++也没有UE的Thunk函数</p>
+</li>
+<li><p>…</p>
+</li>
+</ol>
+<p>了解UEC++和标准C++的区别的关键点在于能够了解两者在构建流程上的区别，这一点能够区分开之后，再多的语法区别都是在这个结构内。至于UEC++的反射，这是另一个可以写很大篇幅的内容了，先挖个坑。</p>
+<h2 id="如何学习C"><a href="#如何学习C" class="headerlink" title="如何学习C++"></a>如何学习C++</h2><p>从最开始接触C语言到现在快有十年了，也看了不少C++的书，但是我觉得学习C++最重要的是要去了解一下那些特性为什么这么设计，受哪些历史特性的限制，了解特性之间的关联，再去看看这些特性的编译器的实现，很多犄角旮旯的东西产生的原因就很明显了。<br>推荐一些书（建议按照顺序阅读，带*建议必读）：</p>
+<ol>
+<li>The C Programing Language</li>
+<li>*C++ Primer / The C++ Programming Language</li>
+<li>*inside the c++ object model</li>
+<li>*Effective C++</li>
+<li>Modern Effective C++</li>
+<li>C++ coding standard: 101 rules, guidelines and best practices</li>
+<li>*The design and evolution of c++</li>
+</ol>
+<p>前两本是基础语法，如果没有太多时间，可以读C++ Primer或者TC++PL中的其中一本即可，我还写过一篇文章对比这两本书<a href="https://imzlp.com/posts/4367">读TC++PL、C++Primer和ISO C++</a>，有兴趣的可以读一下，学习C++后面的路还很长。<br>我建议学完基础语法之后就开始大量地写代码，因为只看懂了理论，不上手多写是没有意义的。</p>
+<h2 id="如何学习UEC"><a href="#如何学习UEC" class="headerlink" title="如何学习UEC++"></a>如何学习UEC++</h2><p>在C++的基础语法学的差不多了之后，直接就开始在UE中写项目吧，作为<strong>开放源代码</strong>的引擎（但UE不是开源软件，许可证区别），没有什么是藏着掖着的，可以在边写项目的同时边尝试看UE引擎里的代码，去尝试分析UE的构建流程和代码生成。</p>
+<p>我的一个小技巧就是，可以多去翻一下<code>Intermediate</code>中通过UHT生产的代码，不少的错误或者疑问的问题都能在里面找到答案。</p>
+<p>最重要的还是：多看！多写！多思考！</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/20425/" target="_blank">UEC++与标准C++的区别与联系</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年02月11日 11时22分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/20425/" target="_blank" title="UEC++与标准C++的区别与联系">https://imzlp.com/posts/20425/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/20425/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/36659/" rel="prev" title="UE热更新：基于UnLua的Lua编程指南">
+      <i class="fa fa-chevron-left"></i> UE热更新：基于UnLua的Lua编程指南
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/20367/" rel="next" title="UE源码分析：修改游戏默认的数据存储路径">
+      UE源码分析：修改游戏默认的数据存储路径 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%A0%87%E5%87%86C-%E4%BB%A3%E7%A0%81"><span class="nav-number">1.</span> <span class="nav-text">编译标准C++代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91UEC-%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">编译UEC++代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UEC-%E7%9A%84%E7%89%B9%E6%AE%8A%E8%AF%AD%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">UEC++的特殊语法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0C"><span class="nav-number">4.</span> <span class="nav-text">如何学习C++</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0UEC"><span class="nav-number">5.</span> <span class="nav-text">如何学习UEC++</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/20425/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

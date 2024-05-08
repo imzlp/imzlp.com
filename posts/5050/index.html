@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="最近想到还有块树莓派在吃灰，今天使用frp折腾了一下内网穿透，把放在家里的树莓派也可以通过外网访问。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用frp进行内网穿透">
+<meta property="og:url" content="https://imzlp.com/posts/5050/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="最近想到还有块树莓派在吃灰，今天使用frp折腾了一下内网穿透，把放在家里的树莓派也可以通过外网访问。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/start-frps.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/server-autostart-frps.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/start-frpc.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/link-to-raspberry-pi-by-internet.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/autostart-client-frpc.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/local-mstsc-link-to-raspberry-pi.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/remote-mstsc-link-to-raspberry-pi-login.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/remote-mstsc-link-to-raspberry-pi-login2.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/remote-mstsc-link-to-raspberry-pi-login-successed.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/use-frp-rdp-link-to-my-home-computer.webp">
+<meta property="article:published_time" content="2018-06-09T11:40:09.000Z">
+<meta property="article:modified_time" content="2018-11-10T16:19:17.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="树莓派">
+<meta property="article:tag" content="frp">
+<meta property="article:tag" content="内网穿透">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/5050/start-frps.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/5050/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>使用frp进行内网穿透 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/5050/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用frp进行内网穿透<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2018-06-09-5050.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-06-09 11:40 11:40:09:40" itemprop="dateCreated datePublished" datetime="2018-06-09T11:40:09+00:00">2018-06-09 11:40</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-11-10 16:19 16:19:17:19" itemprop="dateModified" datetime="2018-11-10T16:19:17+00:00">2018-11-10 16:19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/" itemprop="url" rel="index"><span itemprop="name">折腾记录</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%98%E8%85%BE%E8%AE%B0%E5%BD%95/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/" itemprop="url" rel="index"><span itemprop="name">内网穿透</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/5050/" class="post-meta-item leancloud_visitors" data-flag-title="使用frp进行内网穿透" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近想到还有块树莓派在吃灰，今天使用<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp">frp</a>折腾了一下内网穿透，把放在家里的树莓派也可以通过外网访问。</p>
+<span id="more"></span>
+<p>前置需求：</p>
+<ol>
+<li>具有公网IP的机器一台(具有公网IP的宽带或者VPS均可)</li>
+<li>域名一个(非必需)</li>
+</ol>
+<h2 id="环境介绍"><a href="#环境介绍" class="headerlink" title="环境介绍"></a>环境介绍</h2><p>首先我们需要在具有公网IP的机器上配置和启动<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp">frp</a>的服务端，我使用的我是自己的VPS，以下涉及frp服务端的操作均在我的VPS上执行，系统环境如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@visionsmile:~<span class="comment"># lsb_release -a</span></span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID:	Debian</span><br><span class="line">Description:	Debian GNU/Linux 8.9 (jessie)</span><br><span class="line">Release:	8.9</span><br><span class="line">Codename:	jessie</span><br></pre></td></tr></table></figure>
+<h2 id="下载frp"><a href="#下载frp" class="headerlink" title="下载frp"></a>下载frp</h2><p>然后下载<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp">frp</a>，<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp">frp</a>项目提供了很多平台的二进制程序，可以在<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp/releases">这里</a>按需下载。<br>我这里需要下载的是amd64版本的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ wget https://github.com/fatedier/frp/releases/download/v0.20.0/frp_0.20.0_linux_amd64.tar.gz</span><br></pre></td></tr></table></figure>
+<p>下载完之后解压：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ tar -xvzf frp_0.20.0_linux_amd64.tar.gz</span><br><span class="line">$ <span class="built_in">cd</span> frp_0.20.0_linux_amd64</span><br></pre></td></tr></table></figure>
+
+<h2 id="frp配置和启动"><a href="#frp配置和启动" class="headerlink" title="frp配置和启动"></a>frp配置和启动</h2><p>此时目录下具有这样的目录结构：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root:~/downloads/frp_0.20.0_linux_amd64<span class="comment"># ls</span></span><br><span class="line">frpc  frpc_full.ini  frpc.ini  frps  frps_full.ini  frps.ini  LICENSE</span><br></pre></td></tr></table></figure>
+<p>frps是frp的服务端程序，frps.ini是服务端的配置。frps.ini的全部配置选项可以看这里：<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp/blob/master/conf/frps_full.ini">frps_full.ini</a>.<br>当前的frp版本的frps.ini的默认配置如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> frps.ini</span><br><span class="line">[common]</span><br><span class="line">bind_port = 7000</span><br></pre></td></tr></table></figure>
+<p>这里的<code>bind_port</code>既是后面我们使用frpc(frp客户端)连接到服务端的端口，请保证该端口被防火墙(iptables)放行。</p>
+<blockquote>
+<p>注意：如果是阿里云的服务器，需要在网页的安全组里设置放行端口，直接在服务器上使用ufw或者iptables是没有效果的。</p>
+</blockquote>
+<p>在这里我不写太复杂的东西，保持默认即可，更多功能可以去读项目的<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp/blob/master/README_zh.md">frp/README</a></p>
+<p>然后就可以启动frp了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./frps -c frps.ini</span><br></pre></td></tr></table></figure>
+<p>执行之后如下图：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/start-frps.webp"></p>
+<h2 id="配置frps在服务器上开机启动"><a href="#配置frps在服务器上开机启动" class="headerlink" title="配置frps在服务器上开机启动"></a>配置frps在服务器上开机启动</h2><p>Linux上设置开机启动有两种方法，一种是把启动命令添加到<code>/etc/ec.local</code>中，另一种则是使用<code>systemd</code>创建服务。这里我两种都会介绍一下，但是我推荐使用systemd.</p>
+<p>首先先在服务器上将frp拷贝到<code>/etc</code>目录下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo <span class="built_in">mkdir</span> /etc/frp</span><br><span class="line"><span class="comment"># 在解压frp的目录下执行</span></span><br><span class="line">$ sudo <span class="built_in">cp</span> * /etc/frp</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用systemd"><a href="#使用systemd" class="headerlink" title="使用systemd"></a>使用systemd</h3><p>然后新建开机启动的服务，我使用的是systemd来启动frps服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo <span class="built_in">cd</span> /etc/systemd/system</span><br><span class="line">$ sudo nono frps.service</span><br></pre></td></tr></table></figure>
+<p>将下面内容填入其中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=frps daemon</span><br><span class="line">[Service]</span><br><span class="line">Type=idle</span><br><span class="line">ExecStart=/usr/bin/frp/frps -c /usr/bin/frp/frps.ini</span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<p>保存退出，然后修改权限：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo <span class="built_in">chmod</span> 755 frps.service</span><br></pre></td></tr></table></figure>
+<p>现在就可以启动了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo systemctl start frps</span><br><span class="line"><span class="comment"># 开机启动frps服务</span></span><br><span class="line">$ sudo systemctl <span class="built_in">enable</span> frps</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-etc-rc-local"><a href="#使用-etc-rc-local" class="headerlink" title="使用/etc/rc.local"></a>使用/etc/rc.local</h3><p>因为服务端是被动接收不需要依赖其他的服务启动顺序也可以直接写到了<code>/etc/rc.local</code>中，客户端有点不一样，后面详说。<br>添加开机启动命令(已经执行过移动frp的目录到<code>/etc/frp</code>)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ sudo nano /etc/rc.local</span><br><span class="line"><span class="comment"># 将下面内容填入到exit 0之前</span></span><br><span class="line"><span class="comment">#开机启动frps</span></span><br><span class="line"><span class="built_in">nohup</span> /etc/frp/frps -c /etc/frp/frps.ini &gt;/dev/null 2&gt;&amp;1 &amp;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/server-autostart-frps.webp"></p>
+<h2 id="使用域名解析服务端地址-可选"><a href="#使用域名解析服务端地址-可选" class="headerlink" title="使用域名解析服务端地址(可选)"></a>使用域名解析服务端地址(可选)</h2><p>之所以要使用域名是因为如果我们的服务端出现了问题，客户端直接也没用了，但是我又想如果这台服务器挂掉，我可以在不修改客户端的情况下连接到另一台服务器。<br>如果在frpc中直接填死服务端的IP地址是没办法做到这一点的，所以我想到的是使用一个域名解析到我想要连接到的服务器地址。<br>所以，我们使用一个域名(或者二级域名)解析到我们想要连接的服务器地址：比如我在dnspod上将<code>frp.imzlp.com</code>解析A到了服务器<code>XXX.XXX.XXX.XXX</code>。改完之后记得<code>ping</code>一下看是否连通。</p>
+<p><strong>与上面下载frp服务端的方式相同，下载frp的客户端。注意下面的命令在客户端机器(raspberry pi)上执行。</strong></p>
+<p>frp客户端的默认配置如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ cat frpc.ini</span><br><span class="line">[common]</span><br><span class="line">server_addr = 127.0.0.1</span><br><span class="line">server_port = 7000</span><br><span class="line"></span><br><span class="line">[ssh]</span><br><span class="line">type = tcp</span><br><span class="line">local_ip = 127.0.0.1</span><br><span class="line">local_port = 22</span><br><span class="line">remote_port = 6000</span><br></pre></td></tr></table></figure>
+<p>暂时需要修改的是<code>server_addr</code>和<code>server_port</code>，因为上面我使用了默认的端口，所以在这里只需要修改<code>server_addr</code>就可以了。<br>改为我的自定义域名(如果没有域名则也可以直接指定服务端的IP地址)，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ cat frpc.ini</span><br><span class="line">[common]</span><br><span class="line">server_addr = frp.imzlp.com</span><br><span class="line">server_port = 7000</span><br><span class="line"></span><br><span class="line">[ssh]</span><br><span class="line">type = tcp</span><br><span class="line">local_ip = 127.0.0.1</span><br><span class="line">local_port = 22</span><br><span class="line">remote_port = 6000</span><br></pre></td></tr></table></figure>
+<p>在<code>[ssh]</code>lable下的<code>local_port</code>的客户端的端口转发到服务端的<code>remote_port</code>端口。也要保证在服务端<code>remote_port</code>被防火墙放行，不然也是连接不上的。<br>然后就可以在客户机上启动<code>frpc</code>了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./frpc -c frpc.ini</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/start-frpc.webp"></p>
+<h2 id="尝试连接内网SSH"><a href="#尝试连接内网SSH" class="headerlink" title="尝试连接内网SSH"></a>尝试连接内网SSH</h2><p>通过上面的操作，frps和frpc均已启动，我们可以尝试一下通过互联网连接树莓派的ssh，因为我上面使用了域名的解析，所以我可以直接使用域名：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ssh -oPort=6000 pi@frp.imzlp.com</span><br></pre></td></tr></table></figure>
+<p>注意：要指定ssh连接的服务端端口(即在frpc.ini)中的<code>remote_port</code>参数。不出意外连接成功，如下：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/link-to-raspberry-pi-by-internet.webp"></p>
+<h2 id="配置frpc在客户端上开机启动"><a href="#配置frpc在客户端上开机启动" class="headerlink" title="配置frpc在客户端上开机启动"></a>配置frpc在客户端上开机启动</h2><blockquote>
+<p>注意：这里是Linux的介绍，Windows的脚本在后面。</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 执行在frp_0.20.0_linux_arm的目录（配置文件均已更改）</span></span><br><span class="line">$ sudo <span class="built_in">mkdir</span> /etc/frp</span><br><span class="line">$ sudo <span class="built_in">cp</span> * /etc/frp</span><br></pre></td></tr></table></figure>
+
+<p>在客户端开机启动我使用的是<code>systemd</code>的服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo <span class="built_in">cd</span> /etc/systemd/system</span><br><span class="line">$ sudo nono frpc.service</span><br></pre></td></tr></table></figure>
+<p>将下面内容填入其中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=frpc daemon</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=idle</span><br><span class="line">ExecStartPre=/bin/sleep 5</span><br><span class="line">ExecStart=/etc/frp/frpc -c /etc/frp/frpc.ini</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<p>请特别注意上面脚本中的这两行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Type=idle</span><br><span class="line">ExecStartPre=/bin/sleep 5</span><br></pre></td></tr></table></figure>
+<p>这两条语句的目的是等待系统初始化完成，如果frp直接在开机时启动会因为链接不上网络(如果是使用域名的可能会因为DNS解析不到)而错误中止。<br><strong>注意：</strong>如果不希望等待，则可以把<code>ExecStartPre</code>去掉，但是要求在frpc的配置中把<code>login_fail_exit</code>设置为<code>false</code>。</p>
+<p>启动frpc并设置为开机启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl start frpc</span><br><span class="line">$ systemctl <span class="built_in">enable</span> frpc</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/autostart-client-frpc.webp"></p>
+<h2 id="使用kcp协议"><a href="#使用kcp协议" class="headerlink" title="使用kcp协议"></a>使用kcp协议</h2><p>使用过kcp来加速ss肯定会知道，kcp加速会带来更高的传输效率和降低延迟。<br>frp现在的版本(&gt;v0.12.0)的底层通信协议支持kcp，可以在配置文件中手动启用：<br><strong>服务端：</strong><br>在服务端的frps.ini中启用 kcp 协议支持，指定一个 udp 端口用于接收客户端请求：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># frps.ini</span><br><span class="line">[common]</span><br><span class="line">bind_port = 7000</span><br><span class="line"># kcp 绑定的是 udp 端口，可以和 bind_port 一样</span><br><span class="line">kcp_bind_port = 7000</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端：</strong><br>在 frpc.ini 指定需要使用的协议类型，目前只支持 tcp 和 kcp。其他代理配置不需要变更：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># frpc.ini</span><br><span class="line">[common]</span><br><span class="line">server_addr = x.x.x.x</span><br><span class="line"># server_port 指定为 frps 的 kcp_bind_port</span><br><span class="line">server_port = 7000</span><br><span class="line">protocol = kcp</span><br></pre></td></tr></table></figure>
+
+<h2 id="开启加密和流量压缩"><a href="#开启加密和流量压缩" class="headerlink" title="开启加密和流量压缩"></a>开启加密和流量压缩</h2><p>有些局域网会做流量的特征识别进行拦截，frp也提供了流量加密和压缩(在frpc.ini中添加)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">use_encryption = <span class="literal">true</span></span><br><span class="line">use_compression = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="使用Mstsc远程连接"><a href="#使用Mstsc远程连接" class="headerlink" title="使用Mstsc远程连接"></a>使用Mstsc远程连接</h2><p>在我之前的文章<a href="https://imzlp.com/posts/15989">将树莓派打造成便携的Linux编译环境</a>中写到过可以在树莓派上安装<code>xrdp</code>使其可以被windows的mstsc连接。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装xrdp 使其可以使用mstsc连接</span></span><br><span class="line">$ sudo apt-get install xrdp</span><br></pre></td></tr></table></figure>
+<p>通过局域网连接时这样的：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/local-mstsc-link-to-raspberry-pi.webp"></p>
+<p>因为mstsc默认访问的端口时3389，所以在我们想要通过互联网访问时，需要将树莓派(客户端)的3389端口映射到服务器端的端口。<br>具体操作如下：<br>编辑客户端frpc.ini，添加一个lable:</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[xvnc]</span><br><span class="line">type=tcp</span><br><span class="line">local_ip=127.0.0.1</span><br><span class="line">local_port=3389</span><br><span class="line">remote_port=6001</span><br></pre></td></tr></table></figure>
+<p>代表着就是，将本地的3389端口映射为服务器端的6001端口，保存后重启frpc服务即可。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl restart frpc</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong>与上面提到的相同，要保证服务器端的6001端口没有被防火墙禁用。<br>操作完毕之后就可以使用Mstsc在外网链接了(同样我使用域名)：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/remote-mstsc-link-to-raspberry-pi-login.webp"><br>连接上之后就和局域网连接一样了：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/remote-mstsc-link-to-raspberry-pi-login2.webp"><br>登陆进去之后：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/remote-mstsc-link-to-raspberry-pi-login-successed.webp"></p>
+<p>同样的方法也可以使用在windows作为客户端的远程连接上，比anydesk或者teamviewer强多了。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/5050/use-frp-rdp-link-to-my-home-computer.webp"><br>十分酸爽，太流畅了，就像操作本地的电脑一样。<br>还可以使用<a target="_blank" rel="noopener" href="https://github.com/stascorp/rdpwrap">rdpwrap</a>，使远程连接访问其他账户时不会把本地账户踢出(等同于WindowsServer的功能)。</p>
+<h2 id="重新加载配置"><a href="#重新加载配置" class="headerlink" title="重新加载配置"></a>重新加载配置</h2><p>frp提供了一种方法从修改的配置文件读取变动并应用代理的更新(这样就不用中止再重新启动了)。<br>将下面的参数添加到<code>frpc.ini</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># frpc.ini</span></span><br><span class="line">admin_addr = 127.0.0.1</span><br><span class="line">admin_port = 7400</span><br></pre></td></tr></table></figure>
+<p>重新加载的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">frpc reload -c ./frpc.ini</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong>当前的frp版本(v0.20.0)只有<code>start</code>里的内容才会被重新加载，比如<code>server_addr</code>等，所以如果<code>frpc.ini</code>中<code>server_addr</code>有变动，使用<code>reload</code>也并不会重新连接到新的服务器。</p>
+<h2 id="我的frp配置文件"><a href="#我的frp配置文件" class="headerlink" title="我的frp配置文件"></a>我的frp配置文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#frps.ini</span></span><br><span class="line">[common]</span><br><span class="line">bind_port = 7000</span><br><span class="line">kcp_bind_port = 7000</span><br><span class="line">token = xxxxxxx</span><br><span class="line">authentication_timeout = 900</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#frpc.ini</span></span><br><span class="line">[common]</span><br><span class="line">server_addr = frp.imzlp.com</span><br><span class="line">server_port = 7000</span><br><span class="line">protocol = kcp</span><br><span class="line">token = xxxxxxx</span><br><span class="line">login_fail_exit = <span class="literal">false</span></span><br><span class="line"><span class="comment"># 避免多个客户端的proxy同名造成的连接失败，在不同的客户端要有不同的userName</span></span><br><span class="line">user = imzlp</span><br><span class="line"></span><br><span class="line">admin_addr = 127.0.0.1</span><br><span class="line">admin_port = 7400</span><br><span class="line"></span><br><span class="line">[SSH]</span><br><span class="line"><span class="built_in">type</span> = tcp</span><br><span class="line">local_ip = 127.0.0.1</span><br><span class="line">local_port = 22</span><br><span class="line">remote_port = 6000</span><br><span class="line">use_encryption = <span class="literal">true</span></span><br><span class="line">use_compression = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">[XVNC]</span><br><span class="line"><span class="built_in">type</span>=tcp</span><br><span class="line">local_ip=127.0.0.1</span><br><span class="line">local_port=3389</span><br><span class="line">remote_port=6001</span><br><span class="line">use_encryption = <span class="literal">true</span></span><br><span class="line">use_compression = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>我写了一个py脚本来检测我域名的DNS更新，如果有更新就重启客户端的frpc服务：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 注意，此脚本不能在windows上用。</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">initFrp</span>():</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;starting frpc service.&quot;</span>)</span><br><span class="line">    os.system(<span class="string">&quot;sudo systemctl restart frpc.service&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">gethostbyname</span>(<span class="params">url=<span class="string">&quot;frp.imzlp.com&quot;</span></span>):</span><br><span class="line">    <span class="comment"># print(url)</span></span><br><span class="line">    ip=socket.gethostbyname(url);</span><br><span class="line">    <span class="comment"># print(ip)</span></span><br><span class="line">    <span class="keyword">return</span> ip</span><br><span class="line"></span><br><span class="line">url=<span class="string">&quot;frp.imzlp.com&quot;</span></span><br><span class="line">ip=gethostbyname(url);</span><br><span class="line">initFrp()</span><br><span class="line">ExecCommandIndex=<span class="number">0</span>;</span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    <span class="keyword">if</span>(ip!=gethostbyname(url)):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Restarting frpc service.&quot;</span>);</span><br><span class="line">        os.system(<span class="string">&quot;sudo systemctl restart frpc.service&quot;</span>);</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;frpc service is Restared.&quot;</span>);</span><br><span class="line">        ip=gethostbyname(url)</span><br><span class="line">        ++ExecCommandIndex</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;domain frp.imzlp.com DNS ip is&quot;</span>,ip)</span><br><span class="line">    time.sleep(<span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+<p>同样地我把它加入到了<code>systemctl</code>的启动服务里面：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/systemd/system/syncfrpcdns.service</span></span><br><span class="line">[Unit]</span><br><span class="line">Description=Sync frpc Domain Server daemon</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=idle</span><br><span class="line">ExecStartPre=/bin/sleep 10</span><br><span class="line">ExecStart=/usr/bin/python3.4 /etc/frp/SyncFrpServerHost.py</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<p>也同样开启开机启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo systemctl <span class="built_in">enable</span> syncfrpcdns.service</span><br></pre></td></tr></table></figure>
+<p>上上面的脚本是只能在Linux下跑的，我也写了一个功能相同的可以在Win下跑的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># SyncFrpServerHost.py</span></span><br><span class="line"><span class="comment"># 在Windows上可用</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">GetHotsByName</span>(<span class="params">url=<span class="string">&quot;frp.imzlp.com&quot;</span></span>):</span><br><span class="line">  ip=socket.gethostbyname(url);</span><br><span class="line">  <span class="keyword">return</span> ip</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">FrpcIsRuning</span>():</span><br><span class="line">  findTaskProcess=os.popen(<span class="string">&#x27;tasklist|find \&quot;frpc.exe\&quot;&#x27;</span>)</span><br><span class="line">  findTaskOut=findTaskProcess.read()</span><br><span class="line">  <span class="keyword">return</span> findTaskOut.find(<span class="string">&quot;frpc.exe&quot;</span>)!=-<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">StartFrp</span>(<span class="params">frpcDir,frpcIniDir,FrpcStartUpInfo</span>):</span><br><span class="line">  frpProcess=subprocess.Popen([frpcDir,<span class="string">&quot;-c&quot;</span>,frpcIniDir],stdout = subprocess.PIPE,startupinfo=FrpcStartUpInfo)</span><br><span class="line">  <span class="keyword">while</span> <span class="keyword">not</span> FrpcIsRuning():</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Starting Frpc Process Again...&quot;</span>)</span><br><span class="line">    frpProcess=subprocess.Popen([frpcDir,<span class="string">&quot;-c&quot;</span>,frpcIniDir],stdout = subprocess.PIPE,startupinfo=FrpcStartUpInfo)</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Frpc Process is strting.&quot;</span>)</span><br><span class="line">  <span class="keyword">return</span> frpProcess</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">  frpcDir=<span class="string">&quot;C:\\Program Files\\BuildPath\\UserTools\\frp\\frpc.exe&quot;</span></span><br><span class="line">  frpcIniDir=<span class="string">&quot;C:\\Program Files\\BuildPath\\UserTools\\frp\\frpc.ini&quot;</span></span><br><span class="line">  frpcDomainUrl=<span class="string">&quot;frp.imzlp.com&quot;</span></span><br><span class="line">  UpdateSleepTime=<span class="number">10</span></span><br><span class="line"></span><br><span class="line">  <span class="comment"># 隐藏启动的fcp窗口</span></span><br><span class="line">  FrpcStartUpInfo=subprocess.STARTUPINFO()</span><br><span class="line">  FrpcStartUpInfo.dwFlags = subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW</span><br><span class="line">  FrpcStartUpInfo.wShowWindow=subprocess.SW_HIDE</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> FrpcIsRuning():</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Restarting Frpc Process...&quot;</span>)</span><br><span class="line">    os.system(<span class="string">&quot;taskkill /f /t /im frpc.exe&quot;</span>)</span><br><span class="line">  frpProcess=StartFrp(frpcDir,frpcIniDir,FrpcStartUpInfo)</span><br><span class="line">  ip=GetHotsByName(frpcDomainUrl);</span><br><span class="line">  ExecCommandIndex=<span class="number">0</span>;</span><br><span class="line">  <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    <span class="keyword">if</span> FrpcIsRuning() <span class="keyword">is</span> <span class="literal">False</span>:</span><br><span class="line">      frpProcess=StartFrp(frpcDir,frpcIniDir,FrpcStartUpInfo)</span><br><span class="line">    <span class="keyword">if</span>(ip!=GetHotsByName(frpcDomainUrl)):</span><br><span class="line">      frpProcess.kill()</span><br><span class="line">      <span class="built_in">print</span>(<span class="string">&quot;Restarting frpc service.&quot;</span>);</span><br><span class="line">      frpProcess=StartFrp(frpcDir,frpcIniDir,FrpcStartUpInfo)</span><br><span class="line">      <span class="built_in">print</span>(<span class="string">&quot;frpc service is Restared.&quot;</span>);</span><br><span class="line">      ip=GetHotsByName(frpcDomainUrl)</span><br><span class="line">      ++ExecCommandIndex</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">      <span class="built_in">print</span>(<span class="string">&quot;domain frp.imzlp.com DNS ip is&quot;</span>,ip)</span><br><span class="line">    time.sleep(UpdateSleepTime)</span><br><span class="line"></span><br><span class="line">main()</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong>该脚本可以作为Frpc的开机启动程序，不用再单独设置Frpc的开机的开机启动。最好把<code>frpc.ini</code>中的<code>login_fail_exit</code>设置为<code>false</code>。<br>开机启动且隐藏窗口可以写一个简单的vbs来实现(其实也可以使用<code>pythonw</code>)：</p>
+<figure class="highlight vbs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DIM</span> objShell</span><br><span class="line"><span class="keyword">set</span> objShell=wscript.<span class="built_in">createObject</span>(<span class="string">&quot;wscript.shell&quot;</span>)</span><br><span class="line">iReturn=objShell.Run(<span class="string">&quot;python SyncFrpServerHost.py&quot;</span>, <span class="number">0</span>, <span class="literal">TRUE</span>)</span><br></pre></td></tr></table></figure>
+<p>将其快捷方式放在<code>C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp</code>下即可。</p>
+<p>这样当我切换<code>frp.imzlpe.me</code>的服务器时，客户端检测到DNS变化也会更新连接到新的服务器的。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>操作时最重要的一点是要检查端口是否被防火墙放行，因为连接不上很有可能是端口被禁止了而不是frp配置的问题。<br>frp的更多使用方法可以看这里：<a target="_blank" rel="noopener" href="https://github.com/fatedier/frp/blob/master/README_zh.md">frp/README</a>。</p>
+<h2 id="Update"><a href="#Update" class="headerlink" title="Update"></a>Update</h2><p><strong>2018.11.10 16:19</strong></p>
+<ul>
+<li>增加服务端上使用systemd来启动frps.</li>
+<li>修改部分措辞</li>
+<li>增加阿里云的安全组介绍</li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/5050/" target="_blank">使用frp进行内网穿透</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2018年06月09日 11时40分<br/>
+             
+              <span>更新时间:</span>2018年11月10日 16时19分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.2k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/5050/" target="_blank" title="使用frp进行内网穿透">https://imzlp.com/posts/5050/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/5050/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91%E8%8E%93%E6%B4%BE/" rel="tag"># 树莓派</a>
+              <a href="/tags/frp/" rel="tag"># frp</a>
+              <a href="/tags/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/" rel="tag"># 内网穿透</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/11515/" rel="prev" title="抓取UE API并生成带索引的Dash文档">
+      <i class="fa fa-chevron-left"></i> 抓取UE API并生成带索引的Dash文档
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/3380/" rel="next" title="UE和VR开发技术笔记">
+      UE和VR开发技术笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">环境介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BDfrp"><span class="nav-number">2.</span> <span class="nav-text">下载frp</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#frp%E9%85%8D%E7%BD%AE%E5%92%8C%E5%90%AF%E5%8A%A8"><span class="nav-number">3.</span> <span class="nav-text">frp配置和启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEfrps%E5%9C%A8%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8A%E5%BC%80%E6%9C%BA%E5%90%AF%E5%8A%A8"><span class="nav-number">4.</span> <span class="nav-text">配置frps在服务器上开机启动</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8systemd"><span class="nav-number">4.1.</span> <span class="nav-text">使用systemd</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-etc-rc-local"><span class="nav-number">4.2.</span> <span class="nav-text">使用&#x2F;etc&#x2F;rc.local</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%9C%B0%E5%9D%80-%E5%8F%AF%E9%80%89"><span class="nav-number">5.</span> <span class="nav-text">使用域名解析服务端地址(可选)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%9D%E8%AF%95%E8%BF%9E%E6%8E%A5%E5%86%85%E7%BD%91SSH"><span class="nav-number">6.</span> <span class="nav-text">尝试连接内网SSH</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEfrpc%E5%9C%A8%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%8A%E5%BC%80%E6%9C%BA%E5%90%AF%E5%8A%A8"><span class="nav-number">7.</span> <span class="nav-text">配置frpc在客户端上开机启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8kcp%E5%8D%8F%E8%AE%AE"><span class="nav-number">8.</span> <span class="nav-text">使用kcp协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%90%AF%E5%8A%A0%E5%AF%86%E5%92%8C%E6%B5%81%E9%87%8F%E5%8E%8B%E7%BC%A9"><span class="nav-number">9.</span> <span class="nav-text">开启加密和流量压缩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8Mstsc%E8%BF%9C%E7%A8%8B%E8%BF%9E%E6%8E%A5"><span class="nav-number">10.</span> <span class="nav-text">使用Mstsc远程连接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE"><span class="nav-number">11.</span> <span class="nav-text">重新加载配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84frp%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">12.</span> <span class="nav-text">我的frp配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">13.</span> <span class="nav-text">结语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Update"><span class="nav-number">14.</span> <span class="nav-text">Update</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/5050/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

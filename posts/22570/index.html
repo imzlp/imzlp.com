@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="默认情况下，在UE中打包项目时，会拉起BuildCookRun来执行Compile&#x2F;Cook&#x2F;Pak&#x2F;Stage等一系列流程。在UE中，只有参与Cook的资源才会被打包，但是通常会包含很多预期之外的资源，可能会造成困扰，到底引擎依赖哪些资源？以及该如何管理UE参与打包的资源。 本篇文章从UE打包时分析资源进行Cook的规则入手，研究在打包时究竟会将哪些资源进行Cook，了解这一点对于资源管理很有作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE资源管理：引擎打包资源分析">
+<meta property="og:url" content="https://imzlp.com/posts/22570/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="默认情况下，在UE中打包项目时，会拉起BuildCookRun来执行Compile&#x2F;Cook&#x2F;Pak&#x2F;Stage等一系列流程。在UE中，只有参与Cook的资源才会被打包，但是通常会包含很多预期之外的资源，可能会造成困扰，到底引擎依赖哪些资源？以及该如何管理UE参与打包的资源。 本篇文章从UE打包时分析资源进行Cook的规则入手，研究在打包时究竟会将哪些资源进行Cook，了解这一点对于资源管理很有作">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051818482.webp">
+<meta property="article:published_time" content="2021-12-31T14:33:25.000Z">
+<meta property="article:modified_time" content="2021-12-31T14:33:25.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="资源管理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051818482.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/22570/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE资源管理：引擎打包资源分析 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/22570/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE资源管理：引擎打包资源分析<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-12-31-22570.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">UE Resource Management: Engine Packaging Resource Analysis</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-12-31 14:33 14:33:25:33" itemprop="dateCreated datePublished" datetime="2021-12-31T14:33:25+00:00">2021-12-31 14:33</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">资源管理</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/22570/" class="post-meta-item leancloud_visitors" data-flag-title="UE资源管理：引擎打包资源分析" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>默认情况下，在UE中打包项目时，会拉起BuildCookRun来执行Compile/Cook/Pak/Stage等一系列流程。在UE中，只有参与Cook的资源才会被打包，但是通常会包含很多预期之外的资源，可能会造成困扰，到底引擎依赖哪些资源？以及该如何管理UE参与打包的资源。</p>
+<p>本篇文章从UE打包时分析资源进行Cook的规则入手，研究在打包时究竟会将哪些资源进行Cook，了解这一点对于资源管理很有作用，基于此可以实现自定义的Cook过程，将Cook任务分配至不同的进程乃至机器实现并行化，加速UE的构建过程。</p>
+<p>除了uasset这些资源外，打包时还有很多Non-Asset文件，如ini、Shader Library、AssetRegistry、或者项目中添加的脚本文件等等，在之前的文章<a href="https://imzlp.com/posts/17371/">UE热更新：需求分析与方案设计</a>中有过介绍，UE对于它们的<strong>收集</strong>并不在Cook阶段（Shader Library和AssetRegistry是在Cook阶段生成），本篇文章暂不作讨论，后续会写一篇专门介绍的文章。</p>
+<span id="more"></span>
+
+<p>UE参与Cook的资源，从逻辑上大概可以分为以下几个类别：</p>
+<ol>
+<li>项目设置的关键资源，如StartupMap、GameMode、GameInstance、DefaultTouchInterface等，它们是必要资源</li>
+<li>默认打包的几个UI目录</li>
+<li>引擎启动时通过代码加载的资源</li>
+<li>项目设置中配置的Cook资源（包括<code>Directory to Alway Cook</code>、<code>PrimaryAssetLabel</code>等标记的要进行Cook的资源）</li>
+<li>通过执行<code>FGameDelegates::Get().GetCookModificationDelegate()</code>传递给CookOnTheFlyServer的资源。</li>
+<li>在一定条件下若没有指定资源，则分析项目、插件目录下的资源</li>
+<li>本地化资源（UE支持给不同的Culture使用不同的资源，不过不常用）</li>
+</ol>
+<p>UE关于资源的分析流程非常复杂，而且散落在各个地方，还包含了各种条件检测，想要完整地分析出项目依赖的资源，十分不便。这也是不太方便能精确UE到底打包了哪些资源的原因。</p>
+<p>基于这些痛点，我准备基于HotPatcher实现一套简洁规范的资源收集和打包流程。究其本质，打包资源，是要将引擎和程序运行时需要用到的必要资源打包进去。这是最根本的需求，UE里的资源配置和检测那么复杂都是为了满足它，但我们可以将其精简，进行统一分析和管理。</p>
+<h3 id="CookCommandlet"><a href="#CookCommandlet" class="headerlink" title="CookCommandlet"></a>CookCommandlet</h3><p>引擎中提供了UCookCommandlet，来实现资源的Cook，在打包流程中，它由UAT拉起。默认的Cook命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">D:/UnrealEngine/Engine/Engine/Binaries/Win64/UE4Editor-Cmd.exe</span><br><span class="line">D:/UnrealProjects/Blank425/Blank425.uproject</span><br><span class="line">-run=Cook</span><br><span class="line">-TargetPlatform=WindowsNoEditor</span><br><span class="line">-fileopenlog</span><br><span class="line">-unversioned</span><br><span class="line">-abslog=D:/UnrealEngine/Engine/Engine/Programs/AutomationTool/Saved/Cook-2021.12.07-15.47.10.txt</span><br><span class="line">-stdout</span><br><span class="line">-CrashForUAT</span><br><span class="line">-unattended</span><br><span class="line">-NoLogTimes</span><br><span class="line">-UTF8Output</span><br></pre></td></tr></table></figure>
+
+<p>它会执行到<code>UCookCommandlet</code>的main中：</p>
+<figure class="highlight cpp"><figcaption><span>Source\Editor\UnrealEd\Private\Commandlets\CookCommandlet.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* UCommandlet interface</span></span><br><span class="line"><span class="comment"> *****************************************************************************/</span></span><br><span class="line"></span><br><span class="line"><span class="function">int32 <span class="title">UCookCommandlet::Main</span><span class="params">(<span class="type">const</span> FString&amp; CmdLineParams)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">COOK_STAT</span>(<span class="type">double</span> CookStartTime = FPlatformTime::<span class="built_in">Seconds</span>());</span><br><span class="line">  Params = CmdLineParams;</span><br><span class="line">  <span class="built_in">ParseCommandLine</span>(*Params, Tokens, Switches);</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它在经过一些参数检测后会将执行流程传递到<code>CookByTheBook</code>，创建出<code>CookOnTheFlyServer</code>，并调用<code>StartCookByTheBook</code>。</p>
+<p>引擎打包时的资源都会在CookOnTheFlyServer中被Cook，并生成Shader和AssetRegistry，可以说CookOnTheFlyServer就是UE打包过程中将在编辑器中通用格式的uasset，序列化为平台格式的过程。</p>
+<h3 id="资源分析"><a href="#资源分析" class="headerlink" title="资源分析"></a>资源分析</h3><blockquote>
+<p>UE打包时加载资源的思路是：先找到本地uasset文件，将路径转换为PackageName，进行加载，在加载时会把依赖的资源也加载了，然后将其一起Cook。</p>
+</blockquote>
+<h4 id="StartupPackages"><a href="#StartupPackages" class="headerlink" title="StartupPackages"></a>StartupPackages</h4><p>在<code>CookOnTheFlyServer.cpp</code>的<code>UCookOnTheFlyServer::Initialize</code>中，将已经加载到内存中的资源添加到了<code>CookByTheBookOptions-&gt;StartupPackages</code>中：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201143900.webp"></p>
+<p>CookOnTheFlyServer在后续的流程会将它们添加到Cook列表中，并会处理重定向器。</p>
+<h4 id="AllMaps"><a href="#AllMaps" class="headerlink" title="AllMaps"></a>AllMaps</h4><p>没有通过命令行指定任何地图的情况下会给<code>MapIniSections</code>添加<code>AllMaps</code>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201145609.webp"><br>它是<code>DefaultEditor.ini</code>中的<code>Section</code>：</p>
+<figure class="highlight ini"><figcaption><span>DefaultEngine.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[AllMaps]</span></span><br><span class="line">+<span class="attr">Map</span>=/Game/Maps/Login</span><br><span class="line">+<span class="attr">Map</span>=/Game/Maps/LightSpeed</span><br><span class="line">+<span class="attr">Map</span>=/Game/Maps/VFXTest</span><br></pre></td></tr></table></figure>
+
+<p>启动之前会全局编译一遍GlobalShader：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201150932.webp"></p>
+<p>通过GRedirectCollector获取资源：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201151823.webp"></p>
+<h4 id="UI"><a href="#UI" class="headerlink" title="UI"></a>UI</h4><p>默认情况下，UE会将<code>BaseEditor.ini</code>中<code>ContentDirectories</code>下的目录添加到Cook列表中：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Config/BaseEditor.ini#L271">Engine/Config/BaseEditor.ini#L271</a></p>
+<p>引擎中的默认配置如下，也可以修改<code>DefaultEditor.ini</code>添加其他的目录：</p>
+<figure class="highlight ini"><figcaption><span>BaseEditor.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[UI]</span></span><br><span class="line"><span class="comment">; Directories specifying assets needed by Slate UI, assets in these directories are always cooked even if not referenced</span></span><br><span class="line">+<span class="attr">ContentDirectories</span>=/Game/UI</span><br><span class="line">+<span class="attr">ContentDirectories</span>=/Game/Widget</span><br><span class="line">+<span class="attr">ContentDirectories</span>=/Game/Widgets</span><br><span class="line">+<span class="attr">ContentDirectories</span>=/Engine/MobileResources</span><br></pre></td></tr></table></figure>
+<p>这些目录下的资源会被打包：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5519">CookOnTheFlyServer.cpp#L5519</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//@todo SLATE: This is a hack to ensure all slate referenced assets get cooked.</span></span><br><span class="line"><span class="comment">// Slate needs to be refactored to properly identify required assets at cook time.</span></span><br><span class="line"><span class="comment">// Simply jamming everything in a given directory into the cook list is error-prone</span></span><br><span class="line"><span class="comment">// on many levels - assets not required getting cooked/shipped; assets not put under </span></span><br><span class="line"><span class="comment">// the correct folder; etc.</span></span><br><span class="line"><span class="keyword">if</span> ( !(FilesToCookFlags &amp; ECookByTheBookOptions::NoSlatePackages))</span><br><span class="line">&#123;</span><br><span class="line">  TArray&lt;FString&gt; UIContentPaths;</span><br><span class="line">  TSet &lt;FName&gt; ContentDirectoryAssets; </span><br><span class="line">  <span class="keyword">if</span> (GConfig-&gt;<span class="built_in">GetArray</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;UI&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;ContentDirectories&quot;</span>), UIContentPaths, GEditorIni) &gt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">for</span> (int32 DirIdx = <span class="number">0</span>; DirIdx &lt; UIContentPaths.<span class="built_in">Num</span>(); DirIdx++)</span><br><span class="line">    &#123;</span><br><span class="line">      FString ContentPath = FPackageName::<span class="built_in">LongPackageNameToFilename</span>(UIContentPaths[DirIdx]);</span><br><span class="line"></span><br><span class="line">      TArray&lt;FString&gt; Files;</span><br><span class="line">      IFileManager::<span class="built_in">Get</span>().<span class="built_in">FindFilesRecursive</span>(Files, *ContentPath, *(<span class="built_in">FString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;*&quot;</span>)) + FPackageName::<span class="built_in">GetAssetPackageExtension</span>()), <span class="literal">true</span>, <span class="literal">false</span>);</span><br><span class="line">      <span class="keyword">for</span> (int32 Index = <span class="number">0</span>; Index &lt; Files.<span class="built_in">Num</span>(); Index++)</span><br><span class="line">      &#123;</span><br><span class="line">        FString StdFile = Files[Index];</span><br><span class="line">        FName PackageName = <span class="built_in">FName</span>(*FPackageName::<span class="built_in">FilenameToLongPackageName</span>(StdFile));</span><br><span class="line">        ContentDirectoryAssets.<span class="built_in">Add</span>(PackageName);</span><br><span class="line">        FPaths::<span class="built_in">MakeStandardFilename</span>(StdFile);</span><br><span class="line">        <span class="built_in">AddFileToCook</span>( FilesInPath, StdFile);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (CookByTheBookOptions &amp;&amp; CookByTheBookOptions-&gt;bGenerateDependenciesForMaps) </span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; MapDependencyGraph : CookByTheBookOptions-&gt;MapDependencyGraphs)</span><br><span class="line">    &#123;</span><br><span class="line">      MapDependencyGraph.Value.<span class="built_in">Add</span>(<span class="built_in">FName</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ContentDirectoryAssets&quot;</span>)), ContentDirectoryAssets);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果你不想要默认打包时包含<code>/Game/UI</code>目录下的资源，则可以在项目配置文件<code>DefaultEditor.ini</code>中重写：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[UI]</span></span><br><span class="line">!<span class="attr">ContentDirectories</span>=ClearArray</span><br><span class="line">+<span class="attr">ContentDirectories</span>=/Engine/MobileResources</span><br></pre></td></tr></table></figure>
+
+<h4 id="Directory-to-Alway-cook"><a href="#Directory-to-Alway-cook" class="headerlink" title="Directory to Alway cook"></a>Directory to Alway cook</h4><p><code>Project Setgings</code>-<code>Directory to Alway cook</code> <a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5276">DirectoriesToAlwaysCook</a></p>
+<h4 id="Maps"><a href="#Maps" class="headerlink" title="Maps"></a>Maps</h4><ul>
+<li><p>AlwaysCookMaps <a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5223">CookOnTheFlyServer.cpp#L5223</a></p>
+</li>
+<li><p> MapToCook <a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5253">CookOnTheFlyServer.cpp#L5253</a></p>
+</li>
+</ul>
+<figure class="highlight ini"><figcaption><span>DefaultGame.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/UnrealEd.ProjectPackagingSettings]</span></span><br><span class="line">+<span class="attr">MapsToCook</span>=(FilePath=<span class="string">&quot;/Game/HandheldAR/Maps/HandheldARBlankMap&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Never Cook <a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5317">CookOnTheFlyServer.cpp#L5317</a></li>
+</ul>
+<ul>
+<li>AllMaps <a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5266">CookOnTheFlyServer.cpp#L5266</a></li>
+</ul>
+<h4 id="Cultures"><a href="#Cultures" class="headerlink" title="Cultures"></a>Cultures</h4><p>这里代表的并不是多语言，而是针对不同的Culture，可以支持使用不同的资源。<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/Localization/Asset/">Asset Localization</a></p>
+<p>Cultures资源的获取代码：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L6714">CookOnTheFlyServer.cpp#L6714</a></p>
+<p>从项目设置中读取：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201145410.webp"></p>
+<p>会遍历所有的RootPaths，如<code>/Engine</code>、<code>/Game</code>以及插件的资源根目录：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201145945.webp"></p>
+<p>如以下目录下的资源，并会递归子目录：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/Game/L10N/en/</span><br></pre></td></tr></table></figure>
+
+<h4 id="DefaultTouchInterface"><a href="#DefaultTouchInterface" class="headerlink" title="DefaultTouchInterface"></a>DefaultTouchInterface</h4><p>DefaultTouchInterface是引擎中配置的虚拟摇杆类，它可能不会被其他的资源依赖，但也需要被打包，所以在Cook时会单独获取它：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">FConfigFile InputIni;</span><br><span class="line">FString InterfaceFile;</span><br><span class="line">FConfigCacheIni::<span class="built_in">LoadLocalIniFile</span>(InputIni, <span class="built_in">TEXT</span>(<span class="string">&quot;Input&quot;</span>), <span class="literal">true</span>);</span><br><span class="line"><span class="keyword">if</span> (InputIni.<span class="built_in">GetString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Script/Engine.InputSettings&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;DefaultTouchInterface&quot;</span>), InterfaceFile))</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (InterfaceFile != <span class="built_in">TEXT</span>(<span class="string">&quot;None&quot;</span>) &amp;&amp; InterfaceFile != <span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>))</span><br><span class="line">  &#123;</span><br><span class="line">    SoftObjectPaths.<span class="built_in">Emplace</span>(InterfaceFile);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="GetCookModificationDelegate"><a href="#GetCookModificationDelegate" class="headerlink" title="GetCookModificationDelegate"></a>GetCookModificationDelegate</h4><p>绑定代理，可以传递给CookCommandlet，要进行Cook的文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// allow the game to fill out the asset registry, as well as get a list of objects to always cook</span></span><br><span class="line">TArray&lt;FString&gt; FilesInPathStrings;</span><br><span class="line">FGameDelegates::<span class="built_in">Get</span>().<span class="built_in">GetCookModificationDelegate</span>().<span class="built_in">ExecuteIfBound</span>(FilesInPathStrings);</span><br></pre></td></tr></table></figure>
+<p>注意，传递过来的需要是uasset文件的绝对路径，并不是<code>/Game/xxx</code>等资源路径。</p>
+<h4 id="AssetManager"><a href="#AssetManager" class="headerlink" title="AssetManager"></a>AssetManager</h4><p>通过<code>UAssetManager::Get().ModifyCook</code>函数，来访问PrimaryAssetTypeInfo（在项目设置中的配置、PrimaryAssetLabelId等）。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201152838.webp"></p>
+<p>这两个则是新建项目里默认添加的，ModifyCook里会扫描所有的PrimaryAssetId资源，将其中指定的资源添加至PackageToCook，<strong>注意</strong>只有这个资源。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211202201208.webp"></p>
+<p>如果命令行没有显式指定任何资源、以及从<code>FGameDelegates::Get().GetCookModificationDelegate()</code>、<code>UAssetManager::Get().Modify</code>都没有获取到任何资源，则添加插件、项目所有的资源：</p>
+<p>执行条件为：</p>
+<ol>
+<li><code>DefaultEditor.ini</code>中的<code>AlwaysCookMaps</code>为空，<code>AllMaps</code>为空</li>
+<li>项目设置中<code>List of maps to include in a packaged build</code>为空</li>
+<li>项目设置中<code>DirectoriesToAlwaysCook</code>为空</li>
+<li><code>FGameDelegates::Get().GetCookModificationDelegate()</code>获取到的资源为空</li>
+<li><code>UAssetManager::Get().ModifyCook</code>获取到的资源为空</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201153116.webp"></p>
+<p>则会通过<code>NormailizePackageNames</code>获取<code>/Engine</code>、<code>/Game</code>以及所有启用插件的umap、uasset:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// If no packages were explicitly added by command line or game callback, add all maps</span></span><br><span class="line"><span class="keyword">if</span> (FilesInPath.<span class="built_in">Num</span>() == InitialPackages.<span class="built_in">Num</span>() || bCookAll)</span><br><span class="line">&#123;</span><br><span class="line">  TArray&lt;FString&gt; Tokens;</span><br><span class="line">  Tokens.<span class="built_in">Empty</span>(<span class="number">2</span>);</span><br><span class="line">  Tokens.<span class="built_in">Add</span>(<span class="built_in">FString</span>(<span class="string">&quot;*&quot;</span>) + FPackageName::<span class="built_in">GetAssetPackageExtension</span>());</span><br><span class="line">  Tokens.<span class="built_in">Add</span>(<span class="built_in">FString</span>(<span class="string">&quot;*&quot;</span>) + FPackageName::<span class="built_in">GetMapPackageExtension</span>());</span><br><span class="line"></span><br><span class="line">  uint8 PackageFilter = NORMALIZE_DefaultFlags | NORMALIZE_ExcludeEnginePackages | NORMALIZE_ExcludeLocalizedPackages;</span><br><span class="line">  <span class="keyword">if</span> (bMapsOnly)</span><br><span class="line">  &#123;</span><br><span class="line">    PackageFilter |= NORMALIZE_ExcludeContentPackages;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (bNoDev)</span><br><span class="line">  &#123;</span><br><span class="line">    PackageFilter |= NORMALIZE_ExcludeDeveloperPackages;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// assume the first token is the map wildcard/pathname</span></span><br><span class="line">  TArray&lt;FString&gt; Unused;</span><br><span class="line">  <span class="keyword">for</span> (int32 TokenIndex = <span class="number">0</span>; TokenIndex &lt; Tokens.<span class="built_in">Num</span>(); TokenIndex++)</span><br><span class="line">  &#123;</span><br><span class="line">    TArray&lt;FString&gt; TokenFiles;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">NormalizePackageNames</span>(Unused, TokenFiles, Tokens[TokenIndex], PackageFilter))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">UE_LOG</span>(LogCook, Display, <span class="built_in">TEXT</span>(<span class="string">&quot;No packages found for parameter %i: &#x27;%s&#x27;&quot;</span>), TokenIndex, *Tokens[TokenIndex]);</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (int32 TokenFileIndex = <span class="number">0</span>; TokenFileIndex &lt; TokenFiles.<span class="built_in">Num</span>(); ++TokenFileIndex)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">AddFileToCook</span>(FilesInPath, TokenFiles[TokenFileIndex]);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211201153502.webp"></p>
+<p>但默认添加了过滤器，会排除引擎目录的资源（<code>/Engine</code>）以及本地化目录下的资源（<code>/*/L10N/</code>）。</p>
+<p>其实就是会添加项目、插件、除了<code>L10N</code>目录下的所有uasset和umap。</p>
+<p>收集打包的内容主要在<code>UCookOnTheFlyServer::CollectFilesToCook</code>这个函数中：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5200">CookOnTheFlyServer.cpp#L5200</a>中。</p>
+<ul>
+<li><p>每个平台设置的地图、GameMode、GameInstance：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5450">CookOnTheFlyServer.cpp#L5450</a></p>
+</li>
+<li><p>InputIni中的<code>DefaultTouchInterface</code>：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/99b6e203a15d04fc7bbbf554c421a985c1ccb8f1/Engine/Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp#L5499">CookOnTheFlyServer.cpp#L5499</a></p>
+</li>
+</ul>
+<figure class="highlight ini"><figcaption><span>DefaultInput.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/Engine.InputSettings]</span></span><br><span class="line"><span class="attr">DefaultTouchInterface</span>=/Engine/MobileResources/HUD/LeftVirtualJoystickOnly.LeftVirtualJoystickOnly</span><br></pre></td></tr></table></figure>
+
+<h3 id="SkipEditorContent"><a href="#SkipEditorContent" class="headerlink" title="SkipEditorContent"></a>SkipEditorContent</h3><p>在项目设置中可以配置，在Cook时忽略Editor相关的资源：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/image-20220915113313285.webp"></p>
+<p>在CookOnTheFlyServer中会忽略<code>/Engine/Editor*</code>与<code>/Editor/VREditor*</code>中的资源：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// don&#x27;t save Editor resources from the Engine if the target doesn&#x27;t have editoronly data</span></span><br><span class="line"><span class="keyword">if</span> (<span class="built_in">IsCookFlagSet</span>(ECookInitializationFlags::SkipEditorContent) &amp;&amp;</span><br><span class="line">	(PackagePathName.<span class="built_in">StartsWith</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Engine/Editor&quot;</span>)) || PackagePathName.<span class="built_in">StartsWith</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Engine/VREditor&quot;</span>))) &amp;&amp;</span><br><span class="line">	!Target-&gt;<span class="built_in">HasEditorOnlyData</span>())</span><br><span class="line">&#123;</span><br><span class="line">	Result = ESavePackageResult::ContainsEditorOnlyData;</span><br><span class="line">	bCookPackage = <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Cook时的依赖加载"><a href="#Cook时的依赖加载" class="headerlink" title="Cook时的依赖加载"></a>Cook时的依赖加载</h3><p>虽然上面列出了引擎打包时将会包含的资源，<strong>但是</strong>，它们还不是全部，因为它们都还是单个的资源或者单个的目录，并没有包含资源的依赖关系。所以，在UE进行Cook时还会进行实质上的依赖分析。</p>
+<p>考虑以下两个问题：</p>
+<ol>
+<li>如果一个地图中放了一个C++实现的Actor，而在它的构造函数代码中有加载某个资源，怎么将其打包呢？</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">AMyActor::<span class="built_in">AMyActor</span>()</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don&#x27;t need it.</span></span><br><span class="line">  PrimaryActorTick.bCanEverTick = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">  UTexture2D* Texture2D = <span class="built_in">LoadObject</span>&lt;UTexture2D&gt;(<span class="literal">nullptr</span>, <span class="built_in">TEXT</span>(<span class="string">&quot;/Game/TextureResources/T_ImportTexture.T_ImportTexture&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将它放置在场景中，不会有任何依赖：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211231162602.webp"></p>
+<ol start="2">
+<li>没有在AssetRegistry引用关系中的资源依赖，如何打包？如<code>AnimSequence</code>的<code>BoneCompressionSettings</code>和<code>CruveCompressionSettings</code>配置，并不在依赖关系中，从AsssetRegistry获取动画序列的依赖时找不到它们。</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211231101858.webp"></p>
+<p>但是它们在uasset的ImportTable中有记录：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211231144350.webp"></p>
+<p>从Cooked的uasset中也可以看到：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211231145100.webp"></p>
+<p>既然这样，<strong>为什么不能从Asset的ImportTable里直接扫描依赖呢？</strong></p>
+<p>这是因为访问ImportTable需要真正加载资源，当资源量非常大时，这是非常耗费硬件资源和时间的，而从AssetRegistry访问依赖关系则无需将资源加载到内存里，所以速度非常快。</p>
+<p>那么如何解决这些问题呢？首先先从UE默认的实现机制讲起。要明确两个观点：</p>
+<ol>
+<li>引擎启动时会创建CDO，会执行类的构造函数</li>
+<li>UE的资源在加载时会将它依赖的资源也给加载了</li>
+</ol>
+<p>所以，基于这个思路，UE在Cook时实现了一个方案，监听所有创建的UObject，将其添加至Cook列表中，确保在C++的构造函数中加载的资源和通过ImportTable加载的依赖资源也能被Cook。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FPackageTracker</span> : <span class="keyword">public</span> FUObjectArray::FUObjectCreateListener, <span class="keyword">public</span> FUObjectArray::FUObjectDeleteListener</span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">FPackageTracker</span>()</span><br><span class="line">  &#123;</span><br><span class="line">  	<span class="keyword">for</span> (TObjectIterator&lt;UPackage&gt; It; It; ++It)</span><br><span class="line">	&#123;</span><br><span class="line">		UPackage* Package = *It;</span><br><span class="line">	</span><br><span class="line">		<span class="keyword">if</span> (Package-&gt;<span class="built_in">GetOuter</span>() == <span class="literal">nullptr</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			LoadedPackages.<span class="built_in">Add</span>(Package);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">    GUObjectArray.<span class="built_in">AddUObjectDeleteListener</span>(<span class="keyword">this</span>);</span><br><span class="line">    GUObjectArray.<span class="built_in">AddUObjectCreateListener</span>(<span class="keyword">this</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  ~<span class="built_in">FPackageTracker</span>()</span><br><span class="line">  &#123;</span><br><span class="line">    GUObjectArray.<span class="built_in">RemoveUObjectDeleteListener</span>(<span class="keyword">this</span>);</span><br><span class="line">    GUObjectArray.<span class="built_in">RemoveUObjectCreateListener</span>(<span class="keyword">this</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">NotifyUObjectCreated</span><span class="params">(<span class="type">const</span> <span class="keyword">class</span> UObjectBase *Object, int32 Index)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">NotifyUObjectDeleted</span><span class="params">(<span class="type">const</span> <span class="keyword">class</span> UObjectBase *Object, int32 Index)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>所以，基于相同的思路，我们只需要通过<code>AssetRegistry</code>获取资源的依赖关系，存储一个粗略的资源列表，然后在Cook时监听UObject的创建，若不在扫描的资源列表中，就将其添加至Cook队列，从而实现完整的资源打包过程。</p>
+<p>未追踪ImportTable的Cook结果对比（左侧为UE默认的Cook结果，右侧为自定义的Cook）：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211231152017.webp" alt="未追踪ImportTable的Cook结果对比"></p>
+<p>追踪ImportTable的Cook结果对比（左侧为UE默认的Cook结果）：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211231152130.webp" alt="追踪了ImportTable的结果对比"></p>
+<p>可以看到，追踪了ImportTable的Cook的资源与UE默认Cook的一致。</p>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><p>如果自己有在引擎中注册一些可配置项，利用<code>FSoftObjectPath</code>和在UObject上标记存储<code>config</code>的形式。<br>会导致被标记的资源在Cook过程中被带进来，应该避免之间由ini标记<code>FSoftObjectPath</code>资源的情况，可以创建类似<code>PrimaryAssetLabel</code>形式的资源，用与作为资源管理标记。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本篇文章分析了引擎默认打包的资源的分析流程，能够将UE的资源分析从黑盒转为确定性的过程，通过本文的分析结果可以实现出通过依赖分析获取打包资源粗略列表，通过Cook时监听<code>UObject</code>的创建流程，可以分析出不在依赖列表中，但实际又依赖的资源，实现与UE默认的Cook资源保持一致。</p>
+<p>分析出UE的打包资源分析流程，可以实现替换UE默认的Cook流程，实现多进程，甚至跨机器的Cook任务分配，可以极大地提升UE的打包效率，后续我会为HotPatcher实现MultiCook的机制。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/22570/" target="_blank">UE资源管理：引擎打包资源分析</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年12月31日 14时33分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有5k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/22570/" target="_blank" title="UE资源管理：引擎打包资源分析">https://imzlp.com/posts/22570/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/22570/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+              <a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" rel="tag"># 资源管理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/29169/" rel="prev" title="高效调试：命令行参数启动UE Android App">
+      <i class="fa fa-chevron-left"></i> 高效调试：命令行参数启动UE Android App
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/24854/" rel="next" title="循迹研究：我的2021年度总结">
+      循迹研究：我的2021年度总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#CookCommandlet"><span class="nav-number">1.</span> <span class="nav-text">CookCommandlet</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">资源分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#StartupPackages"><span class="nav-number">2.1.</span> <span class="nav-text">StartupPackages</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AllMaps"><span class="nav-number">2.2.</span> <span class="nav-text">AllMaps</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#UI"><span class="nav-number">2.3.</span> <span class="nav-text">UI</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Directory-to-Alway-cook"><span class="nav-number">2.4.</span> <span class="nav-text">Directory to Alway cook</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Maps"><span class="nav-number">2.5.</span> <span class="nav-text">Maps</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Cultures"><span class="nav-number">2.6.</span> <span class="nav-text">Cultures</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DefaultTouchInterface"><span class="nav-number">2.7.</span> <span class="nav-text">DefaultTouchInterface</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GetCookModificationDelegate"><span class="nav-number">2.8.</span> <span class="nav-text">GetCookModificationDelegate</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AssetManager"><span class="nav-number">2.9.</span> <span class="nav-text">AssetManager</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SkipEditorContent"><span class="nav-number">3.</span> <span class="nav-text">SkipEditorContent</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cook%E6%97%B6%E7%9A%84%E4%BE%9D%E8%B5%96%E5%8A%A0%E8%BD%BD"><span class="nav-number">4.</span> <span class="nav-text">Cook时的依赖加载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">5.</span> <span class="nav-text">注意事项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/22570/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

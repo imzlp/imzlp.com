@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="智能指针作为C++11最重要的特性之一，相关的内容本来是辑录在C++11的语法糖中，但是这部分太重要而我最近又比较闲(逃)，就单独列出来详细地总结一下咯。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="动态内存和智能指针">
+<meta property="og:url" content="https://imzlp.com/posts/4280/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="智能指针作为C++11最重要的特性之一，相关的内容本来是辑录在C++11的语法糖中，但是这部分太重要而我最近又比较闲(逃)，就单独列出来详细地总结一下咯。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/4280/01.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/4280/02.webp">
+<meta property="article:published_time" content="2016-08-25T08:18:53.000Z">
+<meta property="article:modified_time" content="2016-08-25T08:18:53.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="编程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/4280/01.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/4280/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>动态内存和智能指针 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/4280/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          动态内存和智能指针<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2016-08-25-4280.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-08-25 08:18 08:18:53:18" itemprop="dateCreated datePublished" datetime="2016-08-25T08:18:53+00:00">2016-08-25 08:18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">编程笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/4280/" class="post-meta-item leancloud_visitors" data-flag-title="动态内存和智能指针" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>11 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>智能指针作为C++11最重要的特性之一，相关的内容本来是辑录在<a href="https://imzlp.com/2016/05/12/cpp11-new-features/">C++11的语法糖</a>中，但是这部分太重要而我最近又比较闲(逃)，就单独列出来详细地总结一下咯。</p>
+<span id="more"></span>
+<p>在C语言中动态的分配/撤销一块内存是通过<code>malloc</code>和<code>free</code>来实现的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span>* <span class="title">malloc</span><span class="params">( <span class="type">size_t</span> size )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以分配一块连续内存供我们使用:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> *p1 = <span class="built_in">malloc</span>(<span class="number">4</span>*<span class="built_in">sizeof</span>(<span class="type">int</span>));</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> n=<span class="number">0</span>; n&lt;<span class="number">4</span>; ++n)&#123; <span class="comment">// populate the array</span></span><br><span class="line">	p1[n] = n*n;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;p1[%d] == %d\n&quot;</span>, n, p1[n]);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 输出结果</span></span><br><span class="line">p1[<span class="number">0</span>] == <span class="number">0</span></span><br><span class="line">p1[<span class="number">1</span>] == <span class="number">1</span></span><br><span class="line">p1[<span class="number">2</span>] == <span class="number">4</span></span><br><span class="line">p1[<span class="number">3</span>] == <span class="number">9</span></span><br></pre></td></tr></table></figure>
+
+<p>而在C++中动态内存管理是通过另一对运算符来完成的：<code>new</code>在动态内存中为对象分配空间并返回一个指向该对象的指针，我们可以选择对对象初始化；<code>delete</code>接受一个动态对象的指针，销毁该对象并释放与之关联的内存。</p>
+<p>以下代码:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用new创建一个string对象并将其赋值给一个string指针</span></span><br><span class="line">string *testNew=<span class="keyword">new</span> <span class="built_in">string</span>(<span class="string">&quot;HelloWorld&quot;</span>);</span><br><span class="line">cout&lt;&lt;testNew&lt;&lt;<span class="string">&quot;\t&quot;</span>&lt;&lt;*testNew&lt;&lt;endl;</span><br><span class="line"><span class="comment">// delete之前创建的对象(testNew指针所指向的对象)</span></span><br><span class="line"><span class="built_in">delete</span>(testNew);</span><br><span class="line">cout&lt;&lt;testNew&lt;&lt;<span class="string">&quot;\t&quot;</span>&lt;&lt;*testNew&lt;&lt;endl;</span><br><span class="line">testNew=<span class="literal">nullptr</span>;</span><br><span class="line"><span class="comment">// 置空动态对象</span></span><br><span class="line">cout&lt;&lt;testNew&lt;&lt;<span class="string">&quot;\t&quot;</span>&lt;&lt;*testNew&lt;&lt;endl;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到输出的结果为delete前后testNew所指向位置存储的数据(windows上)：</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/4280/01.webp"></p>
+<p>使用delete释放后所指向的内存地址(<strong>悬垂指针：指向一块曾经保存数据对象但现在已经无效的内存的指针</strong>)所存储的值是未定义的。</p>
+<p>在Linux上编译和运行会直接显示**段错误(Segmentation fault (core dumped) )**。</p>
+<p> <img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/4280/02.webp"></p>
+<p>所以当我们使用delete释放了动态对象时，最好立即将其置为<a target="_blank" rel="noopener" href="http://en.cppreference.com/w/cpp/language/nullptr">nullptr</a>(空指针)</p>
+<p>正如你所看到的，当使用new/delete来手动管理内存时，一定要记得new/delete成对的出现，防止在某处使用new创建一个动态对象而没有用delete释放它，于是就造成了内存泄露。</p>
+<p>使用new/delete相关的问题还可以看看我这两篇博文：</p>
+<ol>
+<li><a href="https://imzlp.com/2016/06/04/delete-the-void-pointer-memory-leaks/">删除void*指针引发的内存泄露</a></li>
+<li><a href="https://imzlp.com/2016/05/08/STL-release-the-pointer-element-causes-a-memory-leak/">STL释放指针元素时造成的内存泄露</a></li>
+</ol>
+<p>动态内存的使用非常容易出现问题，因为确保内存在正确的时间释放是一个不容易的事情。有时会忘了释放内存，造成<strong>内存泄露</strong>；有时会在仍有指针引用该内存的情况下就释放了它，这种情况下就会产生引用非法内存的指针(<strong>悬垂指针</strong>)。</p>
+<p>所幸，为了更安全地使用动态内存，C++11带来了新特性——**智能指针(smart pointer)**。</p>
+<p>C++11提供了两种<strong>智能指针</strong>类型(<code>shared_ptr</code>和<code>unique_ptr</code>)来管理动态对象。<strong>智能指针</strong>行为类似于常规指针(裸指针)，最重要的区别就是智能指针可以负责<strong>自动释放所指向的对象</strong>。</p>
+<p>C++11提供的两种智能指针的区别在于管理底层指针的方式：</p>
+<p><strong>shared_ptr</strong>允许多个指针指向同一个对象。<br><strong>unique_ptr</strong>则独占所指向的对象。</p>
+<p>标准库还定义了一个<strong>伴随类</strong>——<code>wake_ptr</code>，它是一种弱引用，指向shared_ptr所管理的对象。</p>
+<blockquote>
+<p>注意：这三种类型都定义在memory中。</p>
+</blockquote>
+<h3 id="shared-ptr类"><a href="#shared-ptr类" class="headerlink" title="shared_ptr类"></a>shared_ptr类</h3><p>类似于之前接触到的<code>vector</code>/<code>string</code>/<code>list</code>/<code>deque</code>，智能指针也是模板。因此，当我们创建一个智能指针时，必须提供额外的定义——指针可以指向的类型。与vector一样，我们在尖括号内给出类型，之后是所定义的这种智能指针的名字。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// shared_ptr可以指向string</span></span><br><span class="line">shared_ptr&lt;string&gt; strp;</span><br><span class="line"><span class="comment">// shared_ptr可以指向string的vector</span></span><br><span class="line">shared_ptr&lt;vector&lt;string&gt;&gt; vecStrp;</span><br></pre></td></tr></table></figure>
+
+<p><strong>默认初始化的智能指针中保存着一个空指针(nullptr)</strong></p>
+<p>智能指针的使用方式与普通指针类似。<strong>解引用</strong>一个智能指针返回它指向的对象。如果在一个条件判断中使用智能指针，效果就是检测它是否为空。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;string&gt; strp=<span class="built_in">make_shared</span>&lt;string&gt;();</span><br><span class="line"><span class="comment">// 如果strp不为空，检查它是否指向一个空string</span></span><br><span class="line"><span class="keyword">if</span>(strp&amp;&amp;strp-&gt;<span class="built_in">empty</span>())&#123;</span><br><span class="line">  	<span class="comment">// 如果strp指向一个空string，解引用strp并将一个新值赋值给strp指向的string对象</span></span><br><span class="line">  	*strp=<span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line">cout&lt;&lt;*strp&lt;&lt;endl;</span><br><span class="line"><span class="comment">//执行结果为helloworld</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>shared_ptr和unique_ptr都支持的操作。</strong></p>
+<table>
+<thead>
+<tr>
+<th align="center">操作</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">shared_ptr&lt;T&gt; sp;</p>unique_ptr&lt;T&gt; up;</td>
+<td>空智能指针，可以指向类型为T的对象</td>
+</tr>
+<tr>
+<td align="center">p</td>
+<td>将p用作一个条件判断，若p指向一个对象则为true</td>
+</tr>
+<tr>
+<td align="center">*p</td>
+<td>解引用p，获得它指向的对象</td>
+</tr>
+<tr>
+<td align="center">p-&gt;mem</td>
+<td>等价于(*p).mem</td>
+</tr>
+<tr>
+<td align="center">p.get()</td>
+<td>返回p中保存的指针，要小心使用，若智能指针释放了其对象，返回指针所指向的对象也就消失了(成为悬垂指针)</td>
+</tr>
+<tr>
+<td align="center">swap(p,q)</p>p.swap(q)</td>
+<td>交换p和q中的指针</td>
+</tr>
+</tbody></table>
+<p><strong>shared_ptr独有的操作</strong></p>
+<table>
+<thead>
+<tr>
+<th align="center">操作</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">make_shared&lt;T&gt; (<em>args</em>)</td>
+<td>返回一个shared_ptr，指向一个动态分配的类型为T的对象。使用args初始化此对象。</td>
+</tr>
+<tr>
+<td align="center">shared_ptr&lt;T&gt; p(q)</td>
+<td>p是shared_ptr q的拷贝；此操作会递增q中的计数器。q中的指针必须能转换为T*(详情参考<a href="https://imzlp.com/2016/05/04/type-convert-in-cpp/#%E6%8C%87%E9%92%88%E7%9A%84%E8%BD%AC%E6%8D%A2">详细分析下C++中的类型转换:指针的转换</a>)</td>
+</tr>
+<tr>
+<td align="center">make_shared&lt;T&gt;(<em>args</em>)</td>
+<td>返回一个shared_ptr，指向一个动态分配的类型为T的对象。使用args初始化此对象。</td>
+</tr>
+<tr>
+<td align="center">shared_ptr&lt;T&gt; p(q)</td>
+<td>p是shared_ptr q的拷贝；此操作会递增q中的计数器。q中的指针必须能转换为T*(详情参考<a href="https://imzlp.com/2016/05/04/type-convert-in-cpp/#%E6%8C%87%E9%92%88%E7%9A%84%E8%BD%AC%E6%8D%A2">详细分析下C++中的类型转换:指针的转换</a>)</td>
+</tr>
+<tr>
+<td align="center">p=q</td>
+<td>p和q都是shared_ptr，所爆粗你的指针必须能相互转换。此操作会递减p的引用计数，递增q的引用计数；若p的引用计数变为0，则将其管理的原内存释放。</td>
+</tr>
+<tr>
+<td align="center">p.unique()</td>
+<td>若p.use_count()为1，返回true；否则返回false</td>
+</tr>
+<tr>
+<td align="center">p.use_count()</td>
+<td>返回与p共享对象的智能指针数量，可能比较慢，主要用于调试</td>
+</tr>
+</tbody></table>
+<p>我们也可以自己实现一个简单的类似<code>shared_ptr</code>的类</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">smartPoint</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">smartPoint</span>():<span class="built_in">ObjectPoint</span>(<span class="literal">nullptr</span>),<span class="built_in">use_count</span>(<span class="keyword">new</span> <span class="built_in">size_t</span>(<span class="number">1</span>))&#123;&#125;</span><br><span class="line">	<span class="built_in">smartPoint</span>(T *i):<span class="built_in">ObjectPoint</span>(i),<span class="built_in">use_count</span>(<span class="keyword">new</span> <span class="built_in">size_t</span>(<span class="number">1</span>))&#123;&#125;</span><br><span class="line">	<span class="built_in">smartPoint</span>(<span class="type">const</span> smartPoint &amp;i):<span class="built_in">ObjectPoint</span>(i.ObjectPoint),<span class="built_in">use_count</span>(i.use_count)&#123;++*use_count;&#125;</span><br><span class="line">	~<span class="built_in">smartPoint</span>()&#123;<span class="built_in">decr_use</span>();&#125;</span><br><span class="line"></span><br><span class="line">	smartPoint&amp; <span class="keyword">operator</span>=(<span class="type">const</span> T &amp;rhs)&#123;</span><br><span class="line">		++*rhs.use_count;</span><br><span class="line">		<span class="built_in">decr_use</span>();</span><br><span class="line">		ObjectPoint=rhs.ObjectPoint;</span><br><span class="line">		use_count=rhs.use_count;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="type">const</span> T* <span class="keyword">operator</span>-&gt;() <span class="type">const</span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(ObjectPoint)</span><br><span class="line">			<span class="keyword">return</span> ObjectPoint;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="type">const</span> T&amp; <span class="keyword">operator</span>*() <span class="type">const</span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(ObjectPoint)</span><br><span class="line">			<span class="keyword">return</span> *ObjectPoint;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="type">size_t</span> <span class="title">count</span><span class="params">()</span></span>&#123;</span><br><span class="line">		<span class="keyword">return</span> *use_count;</span><br><span class="line">	&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	T *ObjectPoint;</span><br><span class="line">	<span class="type">size_t</span> *use_count;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">decr_use</span><span class="params">()</span></span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(--*use_count==<span class="number">0</span>)&#123;</span><br><span class="line">			<span class="keyword">delete</span> ObjectPoint;</span><br><span class="line">			<span class="keyword">delete</span> use_count;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>上面只是实现了简单的引用计数，只实现了一个<code>smartPointer::count()</code>成员函数来获取指向对象被引用的个数。</p>
+<p>写一个简单的测试代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">test</span>&#123;</span><br><span class="line">	<span class="built_in">test</span>()&#123;cout&lt;&lt;<span class="string">&quot;construction&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">	~<span class="built_in">test</span>()&#123;cout&lt;&lt;<span class="string">&quot;destruction&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">smartPoint&lt;test&gt; <span class="title">funa</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	smartPoint&lt;test&gt; strp=<span class="keyword">new</span> <span class="built_in">test</span>();</span><br><span class="line">  	<span class="comment">// 使用strp</span></span><br><span class="line">  	<span class="comment">// 当我们返回了strp，引用计数进行了递增操作</span></span><br><span class="line">	<span class="keyword">return</span> strp;</span><br><span class="line">&#125;<span class="comment">// strp离开了作用域但它指向的内存不会被释放掉</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">funb</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	<span class="function">smartPoint&lt;test&gt; <span class="title">strp</span><span class="params">(<span class="keyword">new</span> test())</span></span>;</span><br><span class="line">  	<span class="comment">// 使用strp</span></span><br><span class="line">  	<span class="comment">// strp离开了作用域，因为离开作用域时引用计数会递减，所以会自动释放掉strp</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	<span class="keyword">auto</span> x=<span class="built_in">funa</span>();</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;--------&quot;</span>&lt;&lt;endl;</span><br><span class="line">	<span class="built_in">funb</span>();</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;--------&quot;</span>&lt;&lt;endl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 输出结果</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">construction	(1)</span></span><br><span class="line"><span class="comment">------------</span></span><br><span class="line"><span class="comment">construction	(2)</span></span><br><span class="line"><span class="comment">destruction	(3)</span></span><br><span class="line"><span class="comment">------------</span></span><br><span class="line"><span class="comment">destruction	(4)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="comment">// 1.在funa中创建的对象；4.funa中创建的对象在离开主函数的作用域时(X)被销毁</span></span><br><span class="line"><span class="comment">// 2.在funb中创建的对象；3.funb中创建的对象在离开funb作用域时被销毁</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="make-shared函数"><a href="#make-shared函数" class="headerlink" title="make_shared函数"></a>make_shared函数</h4><p>最安全的分配和使用动态内存方法是调用一个名为<code>make_shared</code>的标准库函数。</p>
+<p>此函数在动态内存中分配一个对象并初始化它，返回一个指向此对象的<code>shared_ptr</code>。与智能指针一样，<code>make_shared</code>也是定义在<code>memory</code>头文件中。</p>
+<p>使用<code>make_shared</code>时，必须指定想要创建的对象的类型。定义方式与模板相同，在函数名之后跟一个尖括号，在其中给出类型。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 指向一个值初始化的int，即值为0</span></span><br><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; ivalp1=<span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;();</span><br><span class="line"><span class="comment">// 指向一个值为42的int的shared_ptr</span></span><br><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; ivalp2=<span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;(<span class="number">42</span>);</span><br><span class="line"><span class="comment">// 指向一个值为&quot;HelloWorld&quot;的string</span></span><br><span class="line">shared_ptr&lt;string&gt; strvalp=<span class="built_in">make_shared</span>&lt;string&gt;(<span class="string">&quot;HelloWorld&quot;</span>);</span><br><span class="line"><span class="comment">// 指向一个值为&quot;9999999999&quot;的string</span></span><br><span class="line">shared_ptr&lt;string&gt; strvalp=<span class="built_in">make_shared</span>&lt;string&gt;(<span class="number">10</span>,<span class="string">&#x27;9&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>类似于<code>顺序容器</code>的<code>emplace</code>成员(直接调用元素类型的构造函数在容器中构造元素，详细参照<a href="https://imzlp.com/2016/05/12/cpp11-new-features/#emplace%E6%93%8D%E4%BD%9C">C++11的语法糖：emplace操作</a>)，<code>make_shared</code>用其参数来构造给定类型的对象。</p>
+<p>例如：</p>
+<ol>
+<li>调用<code>make_shared&lt;string&gt;</code>时传递的参数必须与string的某个构造函数相匹配。</li>
+<li>调用<code>make_shared&lt;int&gt;</code>时传递的参数必须能用来初始化一个int，以此类推。</li>
+<li>如果我们不传递任何参数，对象就会进行<strong>值初始化</strong>。</li>
+</ol>
+<p>我们也可以使用<a href="https://imzlp.com/2016/05/12/cpp11-new-features/#auto%E7%B1%BB%E5%9E%8B%E8%AF%B4%E6%98%8E%E7%AC%A6">auto</a>来定义一个对象保存<code>make_shared</code>的结果(也就是智能指针对象)，这种方式相较于前面的方法比较简单：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// strp指向一个动态分配的空的vector&lt;string&gt;</span></span><br><span class="line"><span class="keyword">auto</span> strp=make_shared&lt;vector&lt;string&gt;&gt;();</span><br></pre></td></tr></table></figure>
+
+<h4 id="shared-ptr的拷贝和赋值"><a href="#shared-ptr的拷贝和赋值" class="headerlink" title="shared_ptr的拷贝和赋值"></a>shared_ptr的拷贝和赋值</h4><p>当进行拷贝或赋值操作时，每个shared_ptr都会记录有多少个其他shared_ptr指向相同的对象。</p>
+<p>前面表格中提到了我们可以调用<code>shared_ptr</code>的use_count成员函数来获取共享对象的智能指针数量。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// p指向的对象只有一个引用者</span></span><br><span class="line"><span class="keyword">auto</span> p=<span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;(<span class="number">42</span>);</span><br><span class="line">cout&lt;&lt;p.<span class="built_in">use_count</span>()&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line"><span class="comment">// p和q指向相同对象，此对象有两个引用者</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">q</span><span class="params">(p)</span></span>;</span><br><span class="line">cout&lt;&lt;p.<span class="built_in">use_count</span>()&lt;&lt;endl;</span><br><span class="line"><span class="comment">// 输出结果为1 2</span></span><br></pre></td></tr></table></figure>
+
+<p>可以认为每个<code>shared_ptr</code>都有一个关联的计数器，通常称其为**引用计数(reference count)**。无论何时我们拷贝了一个shared_ptr，计数器都会递增。</p>
+<p>例如：</p>
+<ol>
+<li><p>当用一个shared_ptr初始化另一个shared_ptr</p>
+</li>
+<li><p>将shared_ptr作为参数传递给一个函数</p>
+</li>
+<li><p>作为函数的返回值</p>
+</li>
+</ol>
+<p>它所关联的计数器就会递增。</p>
+<p>当我们</p>
+<ol>
+<li>给<code>shared_ptr</code>赋予一个新值</li>
+<li><code>shared_ptr</code>被销毁(e.g.局部的<code>shared_ptr</code>离开其作用域)</li>
+</ol>
+<p>计数器就会递减。</p>
+<p><strong>一旦一个shared_ptr</strong>计数器变为0，它就会自动释放自己所管理的对象。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">test</span>&#123;</span><br><span class="line">	<span class="built_in">test</span>()&#123;cout&lt;&lt;<span class="string">&quot;construction&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">	~<span class="built_in">test</span>()&#123;cout&lt;&lt;<span class="string">&quot;destruction&quot;</span>&lt;&lt;endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 以下代码</span></span><br><span class="line"><span class="keyword">auto</span> r=<span class="built_in">make_shared</span>&lt;test&gt;();</span><br><span class="line">r=<span class="built_in">make_shared</span>&lt;test&gt;();</span><br><span class="line"><span class="comment">// 执行结果</span></span><br><span class="line">construction</span><br><span class="line">construction</span><br><span class="line">destruction</span><br><span class="line">destruction</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">其顺序为：</span></span><br><span class="line"><span class="comment">  1.创建一个可以指向test类型的对象(值初始化)并将其shared_ptr赋值给r，假定此时r指向A</span></span><br><span class="line"><span class="comment">  2.新创建一个可以指向test类型的对象(值初始化)并将其shared_ptr重新赋值给r，假定此时r指向B</span></span><br><span class="line"><span class="comment">  3.在将r赋值为指向B之后，调用A(test)的析构函数释放A</span></span><br><span class="line"><span class="comment">  4.程序结束时，调用B(test)的析构函数释放B</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：到底是用一个计数器还是其他的数据结构来记录有多少指针共享对象完全有标准库的具体实现来决定。关键是智能指针能记录多少个shared_ptr指向相同的对象，并能在恰当的时候释放他们。</p>
+</blockquote>
+<h4 id="shared-ptr自动销毁所管理的对象"><a href="#shared-ptr自动销毁所管理的对象" class="headerlink" title="shared_ptr自动销毁所管理的对象"></a>shared_ptr自动销毁所管理的对象</h4><p>同所有定义的局部变量一样，当对象离开其作用域时，局部对象会被销毁。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	<span class="type">int</span> ival;</span><br><span class="line">&#125;<span class="comment">// 离开func作用域时，在其中定义的局部变量就会被销毁</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>智能指针也一样，不过智能指针在离开其作用域或者被赋予一个新值时，会将对象内部的引用计数器递减，当计数器为0时智能指针所指向的对象才会被销毁。<br>可以通过以下这份代码来看智能指针引用计数递减和销毁的次序：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">smartPoint&lt;test&gt; <span class="title">funa</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	smartPoint&lt;test&gt; val=<span class="keyword">new</span> <span class="built_in">test</span>();</span><br><span class="line">	<span class="keyword">return</span> val;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">funb</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;run funa before.&quot;</span>&lt;&lt;endl;</span><br><span class="line">	smartPoint&lt;test&gt; temp=<span class="built_in">funa</span>();</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;run funa after.&quot;</span>&lt;&lt;endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span></span>&#123;</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;run funb before&quot;</span>&lt;&lt;endl;</span><br><span class="line">	<span class="built_in">funb</span>();</span><br><span class="line">	cout&lt;&lt;<span class="string">&quot;run funb after.&quot;</span>&lt;&lt;endl;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 执行结果</span></span><br><span class="line">run funb before</span><br><span class="line">run funa before.</span><br><span class="line">construction</span><br><span class="line">run funa after.</span><br><span class="line">destruction</span><br><span class="line">run funb after.</span><br></pre></td></tr></table></figure>
+<p>可以看到，我们在funb中调用funa，在funa中创建了一个智能指针并让其指向一个test对象实例，并从funa中返回该智能指针至funb函数的调用处，返回时在funa中创建的智能指针的引用计数先递增(返回实际上是拷贝构造了一个新的对象，是值传递。有兴趣的可以试试在funa中返回但在调用处不接收(使用)该返回值的情况，看funa中创建的的动态对象何时被销毁)再递减(离开funa作用域)，所以该智能指针所指向的对象不会在离开funa作用域时被销毁。但是其后在离开funb作用域时智能指针连同其所指向的动态内存对象一并被销毁了(因为离开funb作用域时引用计数递减至0，所以调用了该智能指针指向对象的析构函数(delete操作)释放了该对象)。</p>
+<p>当指向对象的最后一个<code>shared_ptr</code>被销毁时，shared_ptr类就会自动销毁此对象。它是通过另一个特殊的成员函数——**析构函数(destructor)**完成销毁工作的。类似于构造函数，每个类都有一个析构函数。就像构造函数控制初始化一样，析构函数控制此类型的对象销毁时做什么动作。</p>
+<p><strong>shared_ptr的析构函数</strong>会递减它的所指向的对象的引用计数。如果引用计数变为0，shared_ptr会的析构函数就会销毁对象并释放它所占用的内存。</p>
+<p>当动态对象不再被使用时，<code>shared_ptr</code>类会自动释放动态对象，所以会使得<strong>动态内存</strong>的使用变得非常容易，因为我们不是时时刻刻谨记什么时候创建(new)了一个动态对象而没有释放(delete)它。</p>
+<p><strong>shared_ptr的析构函数</strong>会递减它的所指向的对象的引用计数。如果引用计数变为0，shared_ptr会的析构函数就会销毁对象并释放它所占用的内存。</p>
+<blockquote>
+<p>如果你将<code>shared_ptr</code>存放于一个容器中，而后不再需要全部元素，而只使用其中的一部分，要记得用<code>erase</code>删除不需要的那些元素。</p>
+</blockquote>
+<h4 id="使用了动态内存生成期资源的类"><a href="#使用了动态内存生成期资源的类" class="headerlink" title="使用了动态内存生成期资源的类"></a>使用了动态内存生成期资源的类</h4><p>程序使用动态内存出于以下几种原因之一：</p>
+<ol>
+<li>程序不知道需要多少对象</li>
+<li>程序不知道所需对象的准确类型</li>
+<li>程序需要在多个对象间共享数据</li>
+</ol>
+<p><code>容器类</code>是使用第一个原因而使用动态内存的典型例子。</p>
+<p>下面的例子中我们将定义一个类，它使用动态内存是为了让多个对象能共享相同的底层数据。</p>
+<p>我们经常所用到的容器(<code>vector</code>/<code>string</code>/<code>map</code>/<code>set</code>/<code>deque</code>/<code>list</code>)分配的资源与对象对象生存期一致。</p>
+<p>例如每个<code>vector</code>对象都拥有其自己的元素，当我们拷贝一个<code>vector</code>时，原<code>vector</code>和新拷贝的<code>vector</code>中的元素是相互分离的。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;string&gt; v1;</span><br><span class="line">&#123;<span class="comment">// 新的作用域</span></span><br><span class="line">	vector&lt;string&gt; v2=&#123;<span class="string">&quot;a&quot;</span>,<span class="string">&quot;an&quot;</span>,<span class="string">&quot;the&quot;</span>&#125;;</span><br><span class="line">  	v1=v2;</span><br><span class="line">&#125;<span class="comment">// v2被销毁，其中的元素也被销毁</span></span><br><span class="line"><span class="comment">// v1有三个元素，是原来v2中元素的拷贝</span></span><br></pre></td></tr></table></figure>
+
+<p>由一个vector分配的元素也只有当这个vector存在时才存在。当一个vector被销毁时，这个vector中的元素也被销毁。</p>
+<p>但某些类分配资源具有与原对象相独立的生存期。一般而言，如果两个对象共享底层的数据，当某个对象被销毁时，我们不能单方面地销毁底层数据：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Blob&lt;string&gt; b1;</span><br><span class="line">&#123;</span><br><span class="line">  	Blob&lt;string&gt; b2=&#123;<span class="string">&quot;a&quot;</span>,<span class="string">&quot;an&quot;</span>,<span class="string">&quot;the&quot;</span>&#125;;</span><br><span class="line">	b1=b2;</span><br><span class="line">&#125;<span class="comment">// b2被销毁</span></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/4280/" target="_blank">动态内存和智能指针</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2016年08月25日 08时18分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4.3k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/4280/" target="_blank" title="动态内存和智能指针">https://imzlp.com/posts/4280/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/4280/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"># 编程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/33213/" rel="prev" title="读CSAPP：与《现代操作系统》的比较">
+      <i class="fa fa-chevron-left"></i> 读CSAPP：与《现代操作系统》的比较
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/42068/" rel="next" title="Source Insight插件与配置">
+      Source Insight插件与配置 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#shared-ptr%E7%B1%BB"><span class="nav-number">1.</span> <span class="nav-text">shared_ptr类</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#make-shared%E5%87%BD%E6%95%B0"><span class="nav-number">1.1.</span> <span class="nav-text">make_shared函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shared-ptr%E7%9A%84%E6%8B%B7%E8%B4%9D%E5%92%8C%E8%B5%8B%E5%80%BC"><span class="nav-number">1.2.</span> <span class="nav-text">shared_ptr的拷贝和赋值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shared-ptr%E8%87%AA%E5%8A%A8%E9%94%80%E6%AF%81%E6%89%80%E7%AE%A1%E7%90%86%E7%9A%84%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.3.</span> <span class="nav-text">shared_ptr自动销毁所管理的对象</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E4%BA%86%E5%8A%A8%E6%80%81%E5%86%85%E5%AD%98%E7%94%9F%E6%88%90%E6%9C%9F%E8%B5%84%E6%BA%90%E7%9A%84%E7%B1%BB"><span class="nav-number">1.4.</span> <span class="nav-text">使用了动态内存生成期资源的类</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/4280/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

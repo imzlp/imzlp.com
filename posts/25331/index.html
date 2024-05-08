@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在平时的开发和学习中遇到和解决的一些问题以及摘录的一些资料，都随手写在了notes中，UE相关的积攒了不少，其他的混在一起比较混乱，整理到本篇文章中。与UE4和VR开发技术笔记不同的是，这里的内容更偏向于项目中实际的问题记录和资料收集。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE开发的问题笔记和资料辑录">
+<meta property="og:url" content="https://imzlp.com/posts/25331/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在平时的开发和学习中遇到和解决的一些问题以及摘录的一些资料，都随手写在了notes中，UE相关的积攒了不少，其他的混在一起比较混乱，整理到本篇文章中。与UE4和VR开发技术笔记不同的是，这里的内容更偏向于项目中实际的问题记录和资料收集。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230417214106.webp">
+<meta property="article:published_time" content="2019-05-27T22:07:50.000Z">
+<meta property="article:modified_time" content="2019-05-27T22:07:50.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230417214106.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/25331/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE开发的问题笔记和资料辑录 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/25331/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE开发的问题笔记和资料辑录<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2019-05-27-25331.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-05-27 22:07 22:07:50:07" itemprop="dateCreated datePublished" datetime="2019-05-27T22:07:50+00:00">2019-05-27 22:07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/25331/" class="post-meta-item leancloud_visitors" data-flag-title="UE开发的问题笔记和资料辑录" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>19 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在平时的开发和学习中遇到和解决的一些问题以及摘录的一些资料，都随手写在了<a href="https://imzlp.com/notes/">notes</a>中，UE相关的积攒了不少，其他的混在一起比较混乱，整理到本篇文章中。<br>与<a href="https://imzlp.com/posts/3380/">UE4和VR开发技术笔记</a>不同的是，这里的内容更偏向于项目中实际的问题记录和资料收集。</p>
+<span id="more"></span>
+
+<h2 id="UE4-Error-The-game-module-‘xxx’-could-not-be-loaded"><a href="#UE4-Error-The-game-module-‘xxx’-could-not-be-loaded" class="headerlink" title="UE4 Error:The game module ‘xxx’ could not be loaded."></a>UE4 Error:The game module ‘xxx’ could not be loaded.</h2><p>如果项目启动时弹窗以下错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">The game module <span class="string">&#x27;WebBrowserEx&#x27;</span> could not be loaded. There may be an operating system error or the module may not be properly <span class="built_in">set</span> up.</span><br></pre></td></tr></table></figure>
+<p>造成这个问题的<strong>原因之一</strong>是这个模块中引用了外部的Plugin，需要在这个模块的<code>uplugin</code>文件中增加<code>Plugins</code>依赖项。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;FileVersion&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Version&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;VersionName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;FriendlyName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PluginA&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Category&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Other&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;CreatedBy&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;CreatedByURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;DocsURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;MarketplaceURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;SupportURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;CanContainContent&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;IsBetaVersion&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Installed&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Modules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PluginA&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Developer&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;LoadingPhase&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Default&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Plugins&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PluginB&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="UE4-Error-must-include-the-same-precompiled-header-first"><a href="#UE4-Error-must-include-the-same-precompiled-header-first" class="headerlink" title="UE4 Error:must include the same precompiled header first."></a>UE4 Error:must include the same precompiled header first.</h2><p>编译时如果出现这样的错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">1&gt;------ Build started: Project: NetExampleDemo, Configuration: Development_Game x64 ------</span><br><span class="line">1&gt;Performing full C++ include scan (building a new target)</span><br><span class="line">1&gt;Creating makefile <span class="keyword">for</span> NetExampleDemo (changes to module files)</span><br><span class="line">1&gt;EXEC : error : All <span class="built_in">source</span> files <span class="keyword">in</span> module <span class="string">&quot;WebBrowserEx&quot;</span> must include the same precompiled header first.  Currently <span class="string">&quot;C:\Users\visionsmile\Documents\Unreal Projects\Examples\NetExampleDemo\Plugins\WebBrowserEx\Source\WebBrowserEx\Public\WebBrowserEx.h&quot;</span> is included by most of the <span class="built_in">source</span> files.  The following <span class="built_in">source</span> files are not including <span class="string">&quot;C:\Users\visionsmile\Documents\Unreal Projects\Examples\NetExampleDemo\Plugins\WebBrowserEx\Source\WebBrowserEx\Public\WebBrowserEx.h&quot;</span> as their first include:</span><br><span class="line">1&gt;</span><br><span class="line">1&gt;       C:\Users\visionsmile\Documents\Unreal Projects\Examples\NetExampleDemo\Plugins\WebBrowserEx\Source\WebBrowserEx\Private\WebBrowserExWidget.cpp (including C:\Users\visionsmile\Documents\Unreal Projects\Examples\NetExampleDemo\Plugins\WebBrowserEx\Source\WebBrowserEx\Public\WebBrowserExWidget.h)</span><br><span class="line">1&gt;</span><br><span class="line">1&gt;</span><br><span class="line">1&gt;       To compile this module without implicit precompiled headers, add <span class="string">&quot;PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;&quot;</span> to WebBrowserEx.build.cs.</span><br><span class="line">1&gt;C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.MakeFile.Targets(44,5): error MSB3075: The <span class="built_in">command</span> <span class="string">&quot;&quot;</span>C:\Program Files\Epic Games\UE_4.18\Engine\Build\BatchFiles\Build.bat<span class="string">&quot; NetExampleDemo Win64 Development &quot;</span>C:\Users\visionsmile\Documents\Unreal Projects\Examples\NetExampleDemo\NetExampleDemo.uproject<span class="string">&quot; -waitmutex&quot;</span> exited with code 5. Please verify that you have sufficient rights to run this <span class="built_in">command</span>.</span><br><span class="line">1&gt;Done building project <span class="string">&quot;NetExampleDemo.vcxproj&quot;</span> -- FAILED.</span><br><span class="line">========== Build: 0 succeeded, 1 failed, 0 up-to-date, 0 skipped ==========</span><br></pre></td></tr></table></figure>
+<p>则需要在<code>*.build.cs</code>中添加:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE4-UWebBrowser支持中文输入"><a href="#UE4-UWebBrowser支持中文输入" class="headerlink" title="UE4:UWebBrowser支持中文输入"></a>UE4:UWebBrowser支持中文输入</h2><p>UE的<code>UWebBrowser</code>打开的页面不支持中文输入，可以使用以下办法开启。<br>继承<code>UWebBrowser</code>重写<code>RebuildWidget</code>，增加以下代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">TSharedRef&lt;SWidget&gt; <span class="title">UWebBrowserExWidget::RebuildWidget</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">IsDesignTime</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="built_in">SNew</span>(SBox)</span><br><span class="line">			.<span class="built_in">HAlign</span>(HAlign_Center)</span><br><span class="line">			.<span class="built_in">VAlign</span>(VAlign_Center)</span><br><span class="line">			[</span><br><span class="line">				<span class="built_in">SNew</span>(STextBlock)</span><br><span class="line">				.<span class="built_in">Text</span>(<span class="built_in">LOCTEXT</span>(<span class="string">&quot;Web Browser&quot;</span>, <span class="string">&quot;Web Browser&quot;</span>))</span><br><span class="line">			];</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">	&#123;</span><br><span class="line">		WebBrowserWidget = <span class="built_in">SNew</span>(SWebBrowser)</span><br><span class="line">			.<span class="built_in">InitialURL</span>(InitialURL)</span><br><span class="line">			.<span class="built_in">ShowControls</span>(<span class="literal">false</span>)</span><br><span class="line">			.<span class="built_in">SupportsTransparency</span>(bSupportsTransparency)</span><br><span class="line">			.<span class="built_in">OnUrlChanged</span>(<span class="built_in">BIND_UOBJECT_DELEGATE</span>(FOnTextChanged, HandleOnUrlChanged));</span><br><span class="line">		<span class="comment">// support chinese input</span></span><br><span class="line">		<span class="keyword">if</span> (WebBrowserWidget.<span class="built_in">IsValid</span>())</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">class</span> <span class="title class_">ITextInputMethodSystem</span>* <span class="type">const</span> TextInputMethodSystem = FSlateApplication::<span class="built_in">Get</span>().<span class="built_in">GetTextInputMethodSystem</span>();</span><br><span class="line">			WebBrowserWidget-&gt;<span class="built_in">BindInputMethodSystem</span>(TextInputMethodSystem);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> WebBrowserWidget.<span class="built_in">ToSharedRef</span>();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我把它单独做了一个插件，GitHub地址为:<a target="_blank" rel="noopener" href="https://github.com/hxhb/WebBrowserEx418">hxhb/WebBrowserEx418</a>.<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE-WebBrowser-Support-Chinese-Input.webp"></p>
+<h2 id="UE4-UnrealBuildTool-Dependancy-Warning"><a href="#UE4-UnrealBuildTool-Dependancy-Warning" class="headerlink" title="UE4:UnrealBuildTool Dependancy Warning"></a>UE4:UnrealBuildTool Dependancy Warning</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UnrealBuildTool: Warning: Plugin <span class="string">&#x27;A&#x27;</span> does not list plugin <span class="string">&#x27;B&#x27;</span> as a dependency, but module <span class="string">&#x27;A&#x27;</span> depends on <span class="string">&#x27;B&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>在插件A的<code>.uplugin</code>文件中添加<code>Plugins</code>项：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;FileVersion&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Version&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;VersionName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;FriendlyName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PluginA&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Category&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Other&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;CreatedBy&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;CreatedByURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;DocsURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;MarketplaceURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;SupportURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;CanContainContent&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;IsBetaVersion&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Installed&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Modules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PluginA&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Developer&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;LoadingPhase&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Default&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;Plugins&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PluginB&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="UE4-Instanced-Stereo-Rendering"><a href="#UE4-Instanced-Stereo-Rendering" class="headerlink" title="UE4:Instanced Stereo Rendering"></a>UE4:Instanced Stereo Rendering</h2><p>在UE4.11中引入了<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-us/Platforms/VR/VRPerformance">Instanced Stereo Rendering</a>,其原理是通过单次draw call来绘制双眼，进而来缩短渲染线程的时间和提高GPU的性能。</p>
+<div class="video-container"><iframe src="https://www.youtube.com/embed/uTUwKC7GXjo" frameborder="0" loading="lazy" allowfullscreen></iframe></div>
+
+<p>开启方式(<code>ProjectSetting</code>-<code>Engine</code>-<code>Rending</code>)：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4-EnableInstancedStereo.webp"></p>
+<h2 id="UE4-HandleNetworkFailure"><a href="#UE4-HandleNetworkFailure" class="headerlink" title="UE4:HandleNetworkFailure"></a>UE4:HandleNetworkFailure</h2><p>在UE中当网络连接出现错误时会调用<code>UEngine::HandleNetworkFailure</code>来接收错误消息和处理错误，错误的类型为枚举<a target="_blank" rel="noopener" href="https://api.unrealengine.com/INT/API/Runtime/Engine/Engine/ENetworkFailure__Type/index.html">ENetworkFailure::Type</a>,标识了几种网络的错误类型。<br>以Server拒绝玩家的加入为例，在UE的这套网络架构中，使用<code>CreateSession</code>/<code>JoinSession</code>的方式来创建/加入游戏，可以通过<code>AGameModeBase::Prelogin</code>以及<code>overwrite</code>了该成员函数的子类来拒绝玩家的加入，方法为返回的<code>ErrorMessage</code>不为空即为拒绝：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Accept or reject a player attempting to join the server.  Fails login if you set the ErrorMessage to a non-empty string.</span></span><br><span class="line"><span class="comment"> * PreLogin is called before Login.  Significant game time may pass before Login is called</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param	Options			The URL options (e.g. name/spectator) the player has passed</span></span><br><span class="line"><span class="comment"> * @param	Address			The network address of the player</span></span><br><span class="line"><span class="comment"> * @param	UniqueId		The unique id the player has passed to the server</span></span><br><span class="line"><span class="comment"> * @param	ErrorMessage	When set to a non-empty value, the player will be rejected using the error message set</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PreLogin</span><span class="params">(<span class="type">const</span> FString&amp; Options, <span class="type">const</span> FString&amp; Address, <span class="type">const</span> FUniqueNetIdRepl&amp; UniqueId, FString&amp; ErrorMessage)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>GameMode的PreLogin调用栈为：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE-GameMode-PreLogin-Callstack.webp"></p>
+<p>当玩家被拒绝加入游戏时，服务器会发送给当前连接的客户端错误消息：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// call in server send to client</span></span><br><span class="line"><span class="comment">// function is UWorld::NotifyControlMessage</span></span><br><span class="line">FNetControlMessage&lt;NMT_Failure&gt;::<span class="built_in">Send</span>(Connection, ErrorMsg);</span><br></pre></td></tr></table></figure>
+<p>PS：<code>FNetControlMessage&lt;T&gt;::Send</code>的实现是由<code>DEFINE_CONTROL_CHANNEL_MESSAGE_ONEPARAM</code>宏包裹的，其定义在文件<code>DataChannel.h</code>中。<br>该消息会发送到客户端上，通过<code>UEngine::HandleNetworkError</code>来使客户端来处理该错误，在其中会通知到<code>UGameInstance::HandleNetworkError</code>，但是并没有把<code>ErrorMessage</code>传递给GameInstance,我们可以通过继承<code>UGameEngine</code>重写<code>HandleNetworkError</code>来将<code>ErrorMessage</code>传递给外部。</p>
+<p>PS:玩家被拒绝之后会回到项目设置里的<code>Game Default Map</code>中。</p>
+<h2 id="UGameInstance-HandleNetworkError"><a href="#UGameInstance-HandleNetworkError" class="headerlink" title="UGameInstance::HandleNetworkError"></a>UGameInstance::HandleNetworkError</h2><p>当网络链接出现错误时，会调用该函数(服务端拒绝玩家加入时也会调用)。</p>
+<p>调用栈为（可以继承UEngine来替换Engine实现）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UEngine::HandleNetworkError -&gt; UEngine::HandleNetworkFailure_NotifyGameInstance -&gt; GameInstance-&gt;<span class="built_in">HandleNetworkError</span>(FailureType, bIsServer);</span><br></pre></td></tr></table></figure>
+<p>VS断点调用栈：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4-UEngine-HandleNetwokFailure-Callback-in-EditorEngine.webp"></p>
+<p><code>UEngine::HandleNetworkFailure</code>实现为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime\Source\Runtime\Engine\Private\UnrealEngine.cpp</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UEngine::HandleNetworkFailure</span><span class="params">(UWorld *World, UNetDriver *NetDriver, ENetworkFailure::Type FailureType, <span class="type">const</span> FString&amp; ErrorString)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">UE_LOG</span>(LogNet, Log, <span class="built_in">TEXT</span>(<span class="string">&quot;NetworkFailure: %s, Error: &#x27;%s&#x27;&quot;</span>), ENetworkFailure::<span class="built_in">ToString</span>(FailureType), *ErrorString);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!NetDriver)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Only handle failure at this level for game or pending net drivers.</span></span><br><span class="line">  FName NetDriverName = NetDriver-&gt;NetDriverName;</span><br><span class="line">  <span class="keyword">if</span> (NetDriverName == NAME_GameNetDriver || NetDriverName == NAME_PendingNetDriver)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// If this net driver has already been unregistered with this world, then don&#x27;t handle it.</span></span><br><span class="line">    <span class="keyword">if</span> (World)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> (!<span class="built_in">FindNamedNetDriver</span>(World, NetDriverName))</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="comment">// This netdriver has already been destroyed (probably waiting for GC)</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Give the GameInstance a chance to handle the failure.</span></span><br><span class="line">    <span class="built_in">HandleNetworkFailure_NotifyGameInstance</span>(World, NetDriver, FailureType);</span><br><span class="line"></span><br><span class="line">    ENetMode FailureNetMode = NetDriver-&gt;<span class="built_in">GetNetMode</span>();  <span class="comment">// NetMode of the driver that failed</span></span><br><span class="line">    <span class="type">bool</span> bShouldTravel = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (FailureType)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::FailureReceived:</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::PendingConnectionFailure:</span><br><span class="line">      <span class="comment">// TODO stop the connecting movie</span></span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::ConnectionLost:</span><br><span class="line">      <span class="comment">// Hosts don&#x27;t travel when clients disconnect</span></span><br><span class="line">      bShouldTravel = (FailureNetMode == NM_Client);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::ConnectionTimeout:</span><br><span class="line">      <span class="comment">// Hosts don&#x27;t travel when clients disconnect</span></span><br><span class="line">      bShouldTravel = (FailureNetMode == NM_Client);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::NetGuidMismatch:</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::NetChecksumMismatch:</span><br><span class="line">      <span class="comment">// Hosts don&#x27;t travel when clients have actor issues</span></span><br><span class="line">      bShouldTravel = (FailureNetMode == NM_Client);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::NetDriverAlreadyExists:</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::NetDriverCreateFailure:</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::OutdatedClient:</span><br><span class="line">    <span class="keyword">case</span> ENetworkFailure::OutdatedServer:</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (bShouldTravel)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">CallHandleDisconnectForFailure</span>(World, NetDriver);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UEngine::HandleNetworkFailure_NotifyGameInstance</span><span class="params">(UWorld *World, UNetDriver *NetDriver, ENetworkFailure::Type FailureType)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">bool</span> bIsServer = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (NetDriver != <span class="literal">nullptr</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    bIsServer = NetDriver-&gt;<span class="built_in">GetNetMode</span>() != NM_Client;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (World != <span class="literal">nullptr</span> &amp;&amp; World-&gt;<span class="built_in">GetGameInstance</span>() != <span class="literal">nullptr</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    World-&gt;<span class="built_in">GetGameInstance</span>()-&gt;<span class="built_in">HandleNetworkError</span>(FailureType, bIsServer);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// Since the UWorld passed in might be null, as well as the NetDriver&#x27;s UWorld,</span></span><br><span class="line">    <span class="comment">// go through the world contexts until we find the one with this net driver.</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Context : WorldList)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> (Context.PendingNetGame != <span class="literal">nullptr</span> &amp;&amp;</span><br><span class="line">        Context.PendingNetGame-&gt;NetDriver == NetDriver &amp;&amp;</span><br><span class="line">        Context.OwningGameInstance != <span class="literal">nullptr</span>)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="comment">// Use the GameInstance from the current context.</span></span><br><span class="line">        Context.OwningGameInstance-&gt;<span class="built_in">HandleNetworkError</span>(FailureType, bIsServer);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ENetworkFailure的声明：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime\Engine\Classes\Engine\EngineBaseType.h</span></span><br><span class="line"><span class="comment">/** Types of network failures broadcast from the engine */</span></span><br><span class="line"><span class="built_in">UENUM</span>(BlueprintType)</span><br><span class="line"><span class="keyword">namespace</span> ENetworkFailure</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">enum</span> <span class="title class_">Type</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">/** A relevant net driver has already been created for this service */</span></span><br><span class="line">		NetDriverAlreadyExists,</span><br><span class="line">		<span class="comment">/** The net driver creation failed */</span></span><br><span class="line">		NetDriverCreateFailure,</span><br><span class="line">		<span class="comment">/** The net driver failed its Listen() call */</span></span><br><span class="line">		NetDriverListenFailure,</span><br><span class="line">		<span class="comment">/** A connection to the net driver has been lost */</span></span><br><span class="line">		ConnectionLost,</span><br><span class="line">		<span class="comment">/** A connection to the net driver has timed out */</span></span><br><span class="line">		ConnectionTimeout,</span><br><span class="line">		<span class="comment">/** The net driver received an NMT_Failure message */</span></span><br><span class="line">		FailureReceived,</span><br><span class="line">		<span class="comment">/** The client needs to upgrade their game */</span></span><br><span class="line">		OutdatedClient,</span><br><span class="line">		<span class="comment">/** The server needs to upgrade their game */</span></span><br><span class="line">		OutdatedServer,</span><br><span class="line">		<span class="comment">/** There was an error during connection to the game */</span></span><br><span class="line">		PendingConnectionFailure,</span><br><span class="line">		<span class="comment">/** NetGuid mismatch */</span></span><br><span class="line">		NetGuidMismatch,</span><br><span class="line">		<span class="comment">/** Network checksum mismatch */</span></span><br><span class="line">		NetChecksumMismatch</span><br><span class="line">	&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE4-Max-Agent"><a href="#UE4-Max-Agent" class="headerlink" title="UE4:Max Agent"></a>UE4:Max Agent</h2><p>UE对AI支持的数量配置在<code>Project Settings</code>-<code>Engine</code>-<code>Crowd Manager</code>-<code>Config</code>-<code>Max Agents</code>，默认为50，在项目里出现的问题还以为是逻辑有问题，没想到还有这么个配置。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE-Crowd-Manager-Max-Agents.webp"></p>
+<h2 id="MakeRotFromXY"><a href="#MakeRotFromXY" class="headerlink" title="MakeRotFromXY"></a>MakeRotFromXY</h2><p>声明在<code>UKismetMathSystem</code>的<code>MakeRotFrom**</code>函数的作用是，传递轴向(XY/YZ/YX等等)然后计算出从默认轴向(0,0,0)到该轴向的旋转。</p>
+<h2 id="UE4-Errpr-C1853-precompiled-header-file"><a href="#UE4-Errpr-C1853-precompiled-header-file" class="headerlink" title="UE4 Errpr:C1853 precompiled header file"></a>UE4 Errpr:C1853 precompiled header file</h2><p>在编译引擎时遇到以下错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fatal error C1853: <span class="string">&#x27;C:\Program Files\Epic Games\UE_4.19\Engine\Intermediate\Build\Win64\UE4Editor\Development\Engine\SharedPCH.Engine.h.pch&#x27;</span> precompiled header file is from a previous version of the compiler, or the precompiled header is C++ and you are using it from C (or vice versa</span><br></pre></td></tr></table></figure>
+<p>解决办法：删掉该模块在<code>Engine\Intermediate\Build\Win64</code>下生成的文件夹，重新编译即可。</p>
+<h2 id="UE4-Error-C4577-‘noexcept’-used"><a href="#UE4-Error-C4577-‘noexcept’-used" class="headerlink" title="UE4 Error:C4577: ‘noexcept’ used"></a>UE4 Error:C4577: ‘noexcept’ used</h2><p>我在使用VS2017编译UE 4.18.3的时候编译器报了一个错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error C4577: <span class="string">&#x27;noexcept&#x27;</span> used with no exception handling mode specified; termination on exception is not guaranteed. Specify /EHsc</span><br></pre></td></tr></table></figure>
+<p>这个错误是尝试使用异常，因为UE4默认情况下不允许使用异常，所以会产生这个错误。<br>解决的办法为，为报错的Module的<code>build.cs</code>中添加：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bEnableExceptions = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+<p>重新编译即可。</p>
+<h2 id="UE4-Error-error-‘’-Bad-command-or-expression"><a href="#UE4-Error-error-‘’-Bad-command-or-expression" class="headerlink" title="UE4 Error: error : ‘’: Bad command or expression"></a>UE4 Error: error : ‘’: Bad command or expression</h2><p>检查一下报错的文件的编码格式：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/vs-encoding-GB2312.webp"><br>改为UTF-8即可：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/vs-encoding-utf-8-with-signature.webp"></p>
+<h2 id="UE4-Break-a-C-Struct-in-BP"><a href="#UE4-Break-a-C-Struct-in-BP" class="headerlink" title="UE4:Break a C++ Struct in BP"></a>UE4:Break a C++ Struct in BP</h2><p>在C++中新建一个USTRUCT结构，在蓝图中可以Break/Make需要有以下操作：</p>
+<ol>
+<li>将USTRUCT标记为BlueprintType</li>
+<li>对成员变量的UPROPERTY增加<code>BlueprintReadWrite</code>(<code>EditAnyWhere</code>并不控制是否可以Break)</li>
+</ol>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.unrealengine.com/Structs,_USTRUCTS%28%29,_They%27re_Awesome">Structs, USTRUCTS(), They’re Awesome</a></li>
+</ul>
+<h2 id="UE4-Error-C4700-uninitialized-local-variable-‘Parms’-used"><a href="#UE4-Error-C4700-uninitialized-local-variable-‘Parms’-used" class="headerlink" title="UE4 Error:C4700: uninitialized local variable ‘Parms’ used"></a>UE4 Error:C4700: uninitialized local variable ‘Parms’ used</h2><p>我在一个未实现的接口中返回自定义的结构类型会产生下列错误：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">inetplayerstate.gen.<span class="built_in">cpp</span>(<span class="number">36</span>): error C4700: uninitialized local variable <span class="string">&#x27;Parms&#x27;</span> used</span><br></pre></td></tr></table></figure>
+<p>代码如下:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// struct declare</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CoreMinimal.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;FClampData.generated.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FClampData</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line"></span><br><span class="line">	<span class="built_in">UPROPERTY</span>(BlueprintReadWrite)</span><br><span class="line">		<span class="type">bool</span> bUseClamp;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(BlueprintReadWrite)</span><br><span class="line">		<span class="type">int</span> iMin;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(BlueprintReadWrite)</span><br><span class="line">		<span class="type">int</span> iMax;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>使用的接口：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;Data/Struct/FClampData.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CoreMinimal.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;INetPlayerState.generated.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// This class does not need to be modified.</span></span><br><span class="line"><span class="built_in">UINTERFACE</span>(BlueprintType, MinimalAPI)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">UINetPlayerState</span> : <span class="keyword">public</span> UInterface</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_BODY</span>()</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SANGUOWARRIORS_API</span> IINetPlayerState</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_BODY</span>()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add interface functions to this class. This is the class that will be inherited to implement this interface.</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="built_in">UFUNCTION</span>(BlueprintImplementableEvent, BlueprintCallable)</span><br><span class="line">		<span class="function">FClampData <span class="title">GetAssetClampData</span><span class="params">()</span><span class="type">const</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>报错的位置在<code>inetplayerstate.gen.cpp</code>中，其代码为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FClampData <span class="title">IINetPlayerState::GetAssetClampData</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">check</span>(<span class="number">0</span> &amp;&amp; <span class="string">&quot;Do not directly call Event functions in Interfaces. Call Execute_GetAssetClampData instead.&quot;</span>);</span><br><span class="line">	INetPlayerState_eventGetAssetClampData_Parms Parms;</span><br><span class="line">	<span class="keyword">return</span> Parms.ReturnValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>INetPlayerState_eventGetAssetClampData_Parms</code>的定义为包裹返回值的结构：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> SanguoWarriors_Source_SanguoWarriors_Public_Interface_GameFramework_INetPlayerState_h_15_EVENT_PARMS \</span></span><br><span class="line"><span class="meta">	struct INetPlayerState_eventGetAssetClampData_Parms \</span></span><br><span class="line"><span class="meta">	&#123; \</span></span><br><span class="line"><span class="meta">		FClampData ReturnValue; \</span></span><br><span class="line"><span class="meta">	&#125;;</span></span><br></pre></td></tr></table></figure>
+<p>根据之前的文章:<a href="https://imzlp.com/posts/7666/">关于编译器生成默认构造函数的一些误区</a>，如果我们的结构<code>FClampData</code>没有提供默认构造函数，则<code>INetPlayerState_eventGetAssetClampData_Parms</code>这个结构也不会生成默认的构造函数，所以它的对象是没有初始化的。<br>所以，为了解决这个问题，我们对自己定义的<code>USTRUCT</code>结构定义一个默认构造函数就可以了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CoreMinimal.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;FClampData.generated.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FClampData</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line">	<span class="function">FORCEINLINE <span class="title">FClampData</span><span class="params">()</span>:bUseClamp(false),iMin(<span class="number">0</span>),iMax(<span class="number">0</span>)&#123;</span>&#125;;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(BlueprintReadWrite)</span><br><span class="line">		<span class="type">bool</span> bUseClamp;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(BlueprintReadWrite)</span><br><span class="line">		<span class="type">int</span> iMin;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(BlueprintReadWrite)</span><br><span class="line">		<span class="type">int</span> iMax;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>还有另一种更简单的方法是，把接口的返回值使用引用参数（暴露给蓝图的<code>&amp;</code>参数会在蓝图节点的右侧，<code>const&amp;</code>在左侧），不过这种方式对于C++的调用来说必须要传递一个实参：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UFUNCTION</span>(BlueprintImplementableEvent, BlueprintCallable)</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">GetAssetClampData</span><span class="params">(FClampData&amp; rData)</span><span class="type">const</span></span>;</span><br></pre></td></tr></table></figure>
+<p>引用本质也是指针来实现的。</p>
+<h2 id="UE4-GetPlayerController"><a href="#UE4-GetPlayerController" class="headerlink" title="UE4:GetPlayerController"></a>UE4:GetPlayerController</h2><p>UE的Player是以PlayerController为中心的，PlayerCharacter/PlayerPawn/PlayerCameraManager都是从PlayerController上获取的。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// GameplayStatics.cpp</span></span><br><span class="line"><span class="function"><span class="keyword">class</span> APlayerController* <span class="title">UGameplayStatics::GetPlayerController</span><span class="params">(<span class="type">const</span> UObject* WorldContextObject, int32 PlayerIndex )</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (UWorld* World = GEngine-&gt;<span class="built_in">GetWorldFromContextObject</span>(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))</span><br><span class="line">  &#123;</span><br><span class="line">    uint32 Index = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (FConstPlayerControllerIterator Iterator = World-&gt;<span class="built_in">GetPlayerControllerIterator</span>(); Iterator; ++Iterator)</span><br><span class="line">    &#123;</span><br><span class="line">      APlayerController* PlayerController = Iterator-&gt;<span class="built_in">Get</span>();</span><br><span class="line">      <span class="keyword">if</span> (Index == PlayerIndex)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">return</span> PlayerController;</span><br><span class="line">      &#125;</span><br><span class="line">      Index++;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">ACharacter* <span class="title">UGameplayStatics::GetPlayerCharacter</span><span class="params">(<span class="type">const</span> UObject* WorldContextObject, int32 PlayerIndex)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  APlayerController* PC = <span class="built_in">GetPlayerController</span>(WorldContextObject, PlayerIndex);</span><br><span class="line">  <span class="keyword">return</span> PC ? <span class="built_in">Cast</span>&lt;ACharacter&gt;(PC-&gt;<span class="built_in">GetPawn</span>()) : <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">APawn* <span class="title">UGameplayStatics::GetPlayerPawn</span><span class="params">(<span class="type">const</span> UObject* WorldContextObject, int32 PlayerIndex)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  APlayerController* PC = <span class="built_in">GetPlayerController</span>(WorldContextObject, PlayerIndex);</span><br><span class="line">  <span class="keyword">return</span> PC ? PC-&gt;<span class="built_in">GetPawnOrSpectator</span>() : <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">APlayerCameraManager* <span class="title">UGameplayStatics::GetPlayerCameraManager</span><span class="params">(<span class="type">const</span> UObject* WorldContextObject, int32 PlayerIndex)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  APlayerController* <span class="type">const</span> PC = <span class="built_in">GetPlayerController</span>(WorldContextObject, PlayerIndex);</span><br><span class="line">  <span class="keyword">return</span> PC ? PC-&gt;PlayerCameraManager : <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE-编辑器联机模式下退出崩溃"><a href="#UE-编辑器联机模式下退出崩溃" class="headerlink" title="UE:编辑器联机模式下退出崩溃"></a>UE:编辑器联机模式下退出崩溃</h2><p>在编辑器中模拟联机的情况下退出后引擎崩溃，Log如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[2019.04.30-06.43.04:039][512]LogPlayLevel: Error: No PIE world was found when attempting to gather references after GC.</span><br></pre></td></tr></table></figure>
+<p>这是因为在关卡蓝图里调了RPC的事件，去掉即可。</p>
+<h2 id="UE4-联机游戏中AI不在视野被裁剪"><a href="#UE4-联机游戏中AI不在视野被裁剪" class="headerlink" title="UE4:联机游戏中AI不在视野被裁剪"></a>UE4:联机游戏中AI不在视野被裁剪</h2><p>在联机游戏如果怪物不在玩家的视野中，会被裁剪，其碰撞事件不会被触发，解决办法是将SkeletonMeshComponent的update骨架的配置改成always，就不会剪裁了。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/ue-mesh-component-update-flag.webp"></p>
+<h2 id="UE-未包含CoreUObject-h的错误"><a href="#UE-未包含CoreUObject-h的错误" class="headerlink" title="UE:未包含CoreUObject.h的错误"></a>UE:未包含CoreUObject.h的错误</h2><p>相关链接:<a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/590899/how-to-modify-these-errors-in-pluginthanks.html">How to modify these errors in plugin?thanks</a></p>
+<h2 id="UE-C4668-Error-‘’-is-not-defined-as-a-prepeocessor-macro"><a href="#UE-C4668-Error-‘’-is-not-defined-as-a-prepeocessor-macro" class="headerlink" title="UE:C4668 Error ‘’ is not defined as a prepeocessor macro"></a>UE:C4668 Error ‘’ is not defined as a prepeocessor macro</h2><p>如果在UE中出现类似这样的错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error C4668: &#x27;__GUNC__&#x27; is not defined as a prepeocessor macro, replicing with &#x27;0&#x27; for &#x27;#if/#elif&#x27;</span><br></pre></td></tr></table></figure>
+<p>解决方案是在<code>*.Build.cs</code>文件里加上<code>bEnableUndefinedIdentifierWarnings=false;</code>(默认为<code>true</code>).<br>在UBT的代码中：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Source\Programs\UnrealBuildTool\Configuration\ModuleRules.cs</span></span><br><span class="line"><span class="comment">// Enable warnings for using undefined identifiers in #if expressions</span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> bEnableUndefinedIdentifierWarnings = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+<p>通过它来控制是否在编译参数中加入<code>/we4668</code>:</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Source\Programs\UnrealBuildTool\Platform\Windows\VCToolChain.cs</span></span><br><span class="line"><span class="keyword">if</span>(WindowsPlatform.bUseVCCompilerArgs &amp;&amp; CompileEnvironment.bEnableUndefinedIdentifierWarnings)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (CompileEnvironment.bUndefinedIdentifierWarningsAsErrors)</span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.Add(<span class="string">&quot;/we4668&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    Arguments.Add(<span class="string">&quot;/w44668&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE-Detach-Error-in-Net"><a href="#UE-Detach-Error-in-Net" class="headerlink" title="UE:Detach Error in Net"></a>UE:Detach Error in Net</h2><p>这两天同事碰到这样一个同步问题：客户端抓取某样道具，使用<code>AttachToComponent</code>将其抓到手中，在丢弃时使用<code>DetachFromComponent</code>脱离。<br>在单机模式下毫无问题，但是涉及到网络同步时(UE的网络架构)，有下面这样一个问题（为了测试我写了一个最简单的例子，使用最基础的C/S架构，完全由服务端处理（客户端只负责发起RPC调用和接收变量的同步））：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">LogOutputDevice: Error: === Handled ensure: ===</span><br><span class="line">LogOutputDevice: Error: Ensure condition failed: !bRegistered || GetAttachParent()-&gt;GetAttachChildren().Contains(this) [File:D:\Build\++UE4+Release-4.18+Compile\Sync\Engine\Source\Runtime\Engine\Private\Components\SceneComponent.cpp] [Line: 2001]</span><br><span class="line">LogOutputDevice: Error: Attempt to detach SceneComponent <span class="string">&#x27;Cube&#x27;</span> owned by <span class="string">&#x27;Weapon_C_0&#x27;</span> from AttachParent <span class="string">&#x27;Scene&#x27;</span> <span class="keyword">while</span> not attached.</span><br><span class="line">LogOutputDevice: Error: Stack:</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006FB2786 UE4Editor-Core.dll!FWindowsPlatformStackWalk::StackWalkAndDump() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\private\windows\windowsplatformstackwalk.cpp:200]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006D5123A UE4Editor-Core.dll!FDebug::EnsureFailed() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\private\misc\assertionmacros.cpp:298]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006D6B906 UE4Editor-Core.dll!FDebug::OptionallyLogFormattedEnsureMessageReturningFalse() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\private\misc\assertionmacros.cpp:425]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCB09BCF UE4Editor-Engine.dll!USceneComponent::DetachFromComponent() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\components\scenecomponent.cpp:2001]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCB20A19 UE4Editor-Engine.dll!USceneComponent::K2_DetachFromComponent() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\components\scenecomponent.cpp:1987]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DC5615D0 UE4Editor-Engine.dll!USceneComponent::execK2_DetachFromComponent() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\classes\components\scenecomponent.h:105]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006695264 UE4Editor-CoreUObject.dll!UFunction::Invoke() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\class.cpp:4542]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006859B74 UE4Editor-CoreUObject.dll!UObject::CallFunction() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\scriptcore.cpp:732]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x000000000686FA41 UE4Editor-CoreUObject.dll!UObject::ProcessContextOpcode() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\scriptcore.cpp:2167]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006871B72 UE4Editor-CoreUObject.dll!UObject::ProcessInternal() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\scriptcore.cpp:954]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006695264 UE4Editor-CoreUObject.dll!UFunction::Invoke() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\class.cpp:4542]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000006870F66 UE4Editor-CoreUObject.dll!UObject::ProcessEvent() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\scriptcore.cpp:1314]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DC61E64B UE4Editor-Engine.dll!AActor::ProcessEvent() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\actor.cpp:693]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DD35AEDF UE4Editor-Engine.dll!FRepLayout::CallRepNotifies() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\replayout.cpp:2407]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBBE6AB UE4Editor-Engine.dll!FObjectReplicator::CallRepNotifies() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datareplication.cpp:1474]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBE84BF UE4Editor-Engine.dll!FObjectReplicator::PostReceivedBunch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datareplication.cpp:1032]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBEB549 UE4Editor-Engine.dll!UActorChannel::ProcessBunch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datachannel.cpp:2297]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBF902C UE4Editor-Engine.dll!UActorChannel::ReceivedBunch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datachannel.cpp:2139]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBFD75C UE4Editor-Engine.dll!UChannel::ReceivedSequencedBunch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datachannel.cpp:296]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBFC6AE UE4Editor-Engine.dll!UChannel::ReceivedNextBunch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datachannel.cpp:665]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCBFD4C5 UE4Editor-Engine.dll!UChannel::ReceivedRawBunch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\datachannel.cpp:388]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DD0E23A6 UE4Editor-Engine.dll!UNetConnection::ReceivedPacket() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\netconnection.cpp:1319]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DD0E3602 UE4Editor-Engine.dll!UNetConnection::ReceivedRawPacket() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\netconnection.cpp:728]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000D6F1A2E3 UE4Editor-OnlineSubsystemUtils.dll!UIpNetDriver::TickDispatch() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\plugins\online\onlinesubsystemutils\<span class="built_in">source</span>\onlinesubsystemutils\private\ipnetdriver.cpp:232]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DD0C065F UE4Editor-Engine.dll!TBaseUObjectMethodDelegateInstance&lt;0,UNetDriver,void __cdecl(<span class="built_in">float</span>)&gt;::ExecuteIfSafe() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\public\delegates\delegateinstancesimpl.h:858]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DC51CF78 UE4Editor-Engine.dll!TBaseMulticastDelegate&lt;void,<span class="built_in">float</span>&gt;::Broadcast() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\public\delegates\delegatesignatureimpl.inl:937]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000DCF653F8 UE4Editor-Engine.dll!UWorld::Tick() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\engine\private\leveltick.cpp:1296]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000FE7D6BA6 UE4Editor-UnrealEd.dll!UEditorEngine::Tick() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\editorengine.cpp:1659]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000FF084AC6 UE4Editor-UnrealEd.dll!UUnrealEdEngine::Tick() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\unrealedengine.cpp:396]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000035025A26 UE4Editor.exe!FEngineLoop::Tick() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\launchengineloop.cpp:3296]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000035035430 UE4Editor.exe!GuardedMain() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\launch.cpp:166]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x00000000350354AA UE4Editor.exe!GuardedMainWrapper() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\windows\launchwindows.cpp:134]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000035042379 UE4Editor.exe!WinMain() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\windows\launchwindows.cpp:210]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000035043D57 UE4Editor.exe!__scrt_common_main_seh() [f:\<span class="built_in">dd</span>\vctools\crt\vcstartup\src\startup\exe_common.inl:253]</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000045863DC4 KERNEL32.DLL!UnknownFunction []</span><br><span class="line">LogOutputDevice: Error: [Callstack] 0x0000000045D63691 ntdll.dll!UnknownFunction []</span><br></pre></td></tr></table></figure>
+<p>这是由于<code>Attch</code>组件自身和<code>Attach Parent</code>的<code>Component Replication</code>被设置了，然后在从Server收到的变量同步事件<code>OnRep_</code>中再做<code>Detach</code>操作就会触发。<br>其实问题一句话可以概括：将自己从AttachParent上Detach掉，会判断将要Detach父级的<code>AttachChildren</code>列表中判断自己存不存在，这个断言触发的是，自己的父级存在(<code>Parent!=nullptr</code>)，但是父级对象的<code>AttachChildren</code>中不包含自己。<br>其实在C/S架构中，C端应该只做表现，而不处理逻辑，出现上面的问题也是联机模式下的实现思路问题，因为UE的Attach和Detach是会同步的，具体细节先按下不表，后续我会从代码分析一下这个问题。</p>
+<h2 id="UE-Package-Couldn’t-save-package-filename-is-too-long"><a href="#UE-Package-Couldn’t-save-package-filename-is-too-long" class="headerlink" title="UE Package:Couldn’t save package,filename is too long"></a>UE Package:Couldn’t save package,filename is too long</h2><p>在打包的时候遇到这个错误，是因为某些资源在Windows上的绝对路径长度超过了260个字符，这是NTFS的限制。<br>所以，将项目路径移动到磁盘根目录，或者减少目录层级即可。<br>引擎中相关的代码在：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Source/Editor/UnrealEd/Private/CookOnTheFlyServer.cpp(UE4.18.3)</span></span><br><span class="line"><span class="comment">// need to subtract 32 because the SavePackage code creates temporary files with longer file names then the one we provide</span></span><br><span class="line"><span class="comment">// projects may ignore this restriction if desired</span></span><br><span class="line"><span class="type">const</span> int32 CompressedPackageFileLengthRequirement = bConsiderCompressedPackageFileLengthRequirements ? <span class="number">32</span> : <span class="number">0</span>;</span><br><span class="line"><span class="type">const</span> FString FullFilename = FPaths::<span class="built_in">ConvertRelativePathToFull</span>(PlatFilename);</span><br><span class="line"><span class="keyword">if</span> (FullFilename.<span class="built_in">Len</span>() &gt;= (PLATFORM_MAX_FILEPATH_LENGTH - CompressedPackageFileLengthRequirement))</span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">LogCookerMessage</span>(FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Couldn&#x27;t save package, filename is too long: %s&quot;</span>), *PlatFilename), EMessageSeverity::Error);</span><br><span class="line">  <span class="built_in">UE_LOG</span>(LogCook, Error, <span class="built_in">TEXT</span>(<span class="string">&quot;Couldn&#x27;t save package, filename is too long :%s&quot;</span>), *PlatFilename);</span><br><span class="line">  Result = ESavePackageResult::Error;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而各个平台的<code>PLATFORM_MAX_FILEPATH_LENGTH</code>均定义在<code>Runtime/Core/Public</code>相关的平台下。<br>Windows是使用的另一个宏<code>WINDOWS_MAX_PATH</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">D:\UnrealEngine\Offical_Source\<span class="number">4.18</span>\Engine\Source\Runtime\Core\Public\Windows\WIndowsPlatform.h:</span><br><span class="line">   <span class="number">57</span>  <span class="meta">#<span class="keyword">define</span> PLATFORM_HAS_BSD_TIME                0</span></span><br><span class="line">   <span class="number">58</span>  <span class="meta">#<span class="keyword">define</span> PLATFORM_USE_PTHREADS                0</span></span><br><span class="line">   <span class="number">59</span>: <span class="meta">#<span class="keyword">define</span> PLATFORM_MAX_FILEPATH_LENGTH           WINDOWS_MAX_PATH</span></span><br><span class="line">   <span class="number">60</span>  <span class="meta">#<span class="keyword">define</span> PLATFORM_HAS_BSD_SOCKET_FEATURE_WINSOCKETS     1</span></span><br><span class="line">   <span class="number">61</span>  <span class="meta">#<span class="keyword">define</span> PLATFORM_USES_MICROSOFT_LIBC_FUNCTIONS       1</span></span><br></pre></td></tr></table></figure>
+<p><code>WINDOWS_MAX_PATH</code>这个宏定义在<code>Runtime/Core/Private/Windows/MinimalWindowsApi.h</code>中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> WINDOWS_MAX_PATH 260</span></span><br></pre></td></tr></table></figure>
+<p>显然UE并没有使用Windows提供的<code>MAX_PATH</code>宏，硬编码为了260，即在UE中Windows上的文件路径最大长度为260个字符(在启用<code>bConsiderCompressedPackageFileLengthRequirements</code>时还要减去32个字符)，虽然Windows10要[移除260字符的限制](Microsoft removes 260 character limit for NTFS Path in new Windows 10 Insider Preview)，引擎里已经支持，(<a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/unreal-engine-4-22-released">UE4.22 Released</a>支持了长文件名的特性(实验性))。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230414194833.webp"></p>
+<p>导入以下注册表即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Windows Registry Editor Version 5.00</span><br><span class="line"></span><br><span class="line">[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem]</span><br><span class="line">&quot;LongPathsEnabled&quot;=dword:00000001</span><br></pre></td></tr></table></figure>
+<p>外部阅读：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file">Naming Files, Paths, and Namespaces</a></li>
+</ul>
+<h2 id="UE开启多重采样和前向渲染"><a href="#UE开启多重采样和前向渲染" class="headerlink" title="UE开启多重采样和前向渲染"></a>UE开启多重采样和前向渲染</h2><p><code>ProjectSetting</code>-<code>Rendering</code>-<code>ForwardRenderer</code>/<code>DefaultSetting-Anti</code>-<code>Aliasing Method</code><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/Anti-Aliasing-method-and-ForwardShading.webp"></p>
+<h2 id="UE4-Plugin-ModuleType-Required"><a href="#UE4-Plugin-ModuleType-Required" class="headerlink" title="UE4 Plugin:ModuleType(Required)"></a>UE4 Plugin:ModuleType(Required)</h2><p><code>.uplugin</code> Module Type Descriptors.</p>
+<blockquote>
+<p>Sets the type of Module. Valid options are <code>Runtime</code>, <code>RuntimeNoCommandlet</code>, <code>Developer</code>, <code>Editor</code>, <code>EditorNoCommandlet</code>, and <code>Program</code>. This type determines which types of applications this Plugin’s Module is suitable for loading in. For example, some plugins may include modules that are only designed to be loaded when the editor is running. Runtime modules will be loaded in all cases, even in shipped games. Developer modules will only be loaded in development runtime or editor builds, but never in shipping builds. Editor modules will only be loaded when the editor is starting up. Your Plugin can use a combination of modules of different types.</p>
+</blockquote>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Engine\Programs\UnrealBuildTool\System\ModuleDescriptor.cs</span></span><br><span class="line"><span class="comment">// The type of host that can load a module</span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> ModuleHostType</span><br><span class="line">&#123;</span><br><span class="line">  Default,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Any target using the UE4 runtime</span></span><br><span class="line">  Runtime,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Any target except for commandlet</span></span><br><span class="line">  RuntimeNoCommandlet,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Any target or program</span></span><br><span class="line">  RuntimeAndProgram,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only in cooked builds</span></span><br><span class="line">  CookedOnly,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only when the engine has support for developer tools enabled</span></span><br><span class="line">  Developer,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only by the editor</span></span><br><span class="line">  Editor,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only by the editor, except when running commandlets</span></span><br><span class="line">  EditorNoCommandlet,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only by programs</span></span><br><span class="line">  Program,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only by servers</span></span><br><span class="line">  ServerOnly,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded only by clients</span></span><br><span class="line">  ClientOnly,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="UE4-Plugin-LoadingPhase-Optional"><a href="#UE4-Plugin-LoadingPhase-Optional" class="headerlink" title="UE4 Plugin:LoadingPhase(Optional)"></a>UE4 Plugin:LoadingPhase(Optional)</h2><p><code>.uplugin</code> Module LoadingPhase Descriptors.</p>
+<blockquote>
+<p>If specified, controls when the plugin is loaded at start-up. This is an advanced option that should not normally be required. The valid options are <code>Default</code>(which is used when no LoadingPhase is specified), <code>PreDefault</code>, and <code>PostConfigInit</code>. <code>PostConfigInit</code> enables the module to be loaded before the engine has finished starting up key subsystems. <code>PreDefault</code> loads just before the normal phase. Typically, this is only needed if you expect game modules to depend directly on content within your plugin, or types declared within the plugin’s code.</p>
+</blockquote>
+<p>如果<code>.upugin</code>中没有指定<code>LoadingPhase</code>项，则默认是<code>Default</code>:</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Engine\Programs\UnrealBuildTool\System\ModuleDescriptor.cs</span></span><br><span class="line"><span class="comment">// Indicates when the engine should attempt to load this module</span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> ModuleLoadingPhase</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment"><span class="doctag">///</span> Loaded at the default loading point during startup (during engine init, after game modules are loaded.)</span></span><br><span class="line">  Default,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Right after the default phase</span></span><br><span class="line">  PostDefault,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Right before the default phase</span></span><br><span class="line">  PreDefault,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded before the engine is fully initialized, immediately after the config system has been initialized.  Necessary only for very low-level hooks</span></span><br><span class="line">  PostConfigInit,</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// After PostConfigInit and before coreUobject initialized. used for early boot loading screens before the uobjects are initialized</span></span><br><span class="line">  PreEarlyLoadingScreen, <span class="comment">// Since 4.20</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Loaded before the engine is fully initialized for modules that need to hook into the loading screen before it triggers</span></span><br><span class="line">  PreLoadingScreen,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// After the engine has been initialized</span></span><br><span class="line">  PostEngineInit,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Do not automatically load this module</span></span><br><span class="line">  None,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="GENERATED-BODY和GENERATED-UCLASS-BODY的区别"><a href="#GENERATED-BODY和GENERATED-UCLASS-BODY的区别" class="headerlink" title="GENERATED_BODY和GENERATED_UCLASS_BODY的区别"></a>GENERATED_BODY和GENERATED_UCLASS_BODY的区别</h2><p>GENERATED_BODY:</p>
+<ul>
+<li>不包含任何访问标识符，<code>class</code>默认是<code>private</code>；<code>struct</code>默认是<code>public</code>.</li>
+<li><strong>声明并定义</strong>了一个接收 <code>const FObjectInitializer&amp;</code> 的构造函数。</li>
+</ul>
+<p>GENERATED_UCLASS_BODY:</p>
+<ul>
+<li>包含<code>public</code>访问标识符</li>
+<li>具有一个构造函数的声明，其参数为<code>const FObjectInieializer&amp;</code>，需要在代码中提供一个定义。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// .h file</span></span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">     <span class="built_in">GENERATED_BODY</span>()</span><br><span class="line"></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">     <span class="built_in">AFPSGameMode</span>(<span class="type">const</span> <span class="keyword">class</span> FObjectInitializer&amp; ObjectInitializer);</span><br><span class="line"></span><br><span class="line"> <span class="comment">// .cpp file</span></span><br><span class="line"> AFPSGameMode::<span class="built_in">AFPSGameMode</span>(<span class="type">const</span> <span class="keyword">class</span> FObjectInitializer&amp; ObjectInitializer)</span><br><span class="line"> &#123;</span><br><span class="line">        <span class="comment">// constructor functionality</span></span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>参考链接：<a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/245618/generated-body-vs-generated-uclass-body.html">GENERATED_BODY vs GENERATED_UCLASS_BODY</a></p>
+<h2 id="Extensibility-in-UE4"><a href="#Extensibility-in-UE4" class="headerlink" title="Extensibility in UE4"></a>Extensibility in UE4</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4Docs/Extensibility_In_UE4.pdf" data-height="700px"></div>
+
+<h2 id="UE4-Slate-UI-Framedowk"><a href="#UE4-Slate-UI-Framedowk" class="headerlink" title="UE4 Slate UI Framedowk"></a>UE4 Slate UI Framedowk</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4Docs/UE4_Slate_UI_Framedowk.pdf" data-height="700px"></div>
+
+<h2 id="Networking-in-UE4"><a href="#Networking-in-UE4" class="headerlink" title="Networking in UE4"></a>Networking in UE4</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4Docs/UE4_Networking.pdf" data-height="700px"></div>
+
+<h2 id="UE4-Engine-Overview"><a href="#UE4-Engine-Overview" class="headerlink" title="UE4 Engine Overview"></a>UE4 Engine Overview</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4Docs/Engine_Overview_UE4.pdf" data-height="700px"></div>
+
+<h2 id="Epic’s-Build-Tools-amp-Infrastructure"><a href="#Epic’s-Build-Tools-amp-Infrastructure" class="headerlink" title="Epic’s Build Tools &amp; Infrastructure"></a>Epic’s Build Tools &amp; Infrastructure</h2><div class="pdfobject-container" data-target="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE4Docs/Epics_Build_Tools_and_Infrastructure.pdf" data-height="700px"></div>
+
+<h2 id="UHT的宏定义"><a href="#UHT的宏定义" class="headerlink" title="UHT的宏定义"></a>UHT的宏定义</h2><p><code>GENERATED_BODY</code>以及<code>UPROPERTY</code>和<code>UFUNCTION</code>等宏的定义均是在：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Engine\Source\Runtime\CoreUObject\Public\UObject\ObjectMacros.h</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE-Build-MakeShareable-no-matching"><a href="#UE-Build-MakeShareable-no-matching" class="headerlink" title="UE Build:MakeShareable no matching"></a>UE Build:MakeShareable no matching</h2><p>如果我们将一个类为<code>T</code>的C++原生指针通过<code>MakeShareable</code>的方式创建一个<code>FRawPtrProxy&lt;T&gt;</code>然后用来构造一个<code>TSharedPtr&lt;t&gt;</code>，有时会产生下列错误：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Engine\Source\Programs\UE4Launcher\Source\Private\UI\WidgetUELauncher.<span class="built_in">cpp</span>(<span class="number">620</span>): error C2672: <span class="string">&#x27;MakeShareable&#x27;</span>: no matching overloaded function found</span><br><span class="line">Engine\Source\Programs\UE4Launcher\Source\Private\UI\WidgetUELauncher.<span class="built_in">cpp</span>(<span class="number">620</span>): error C2780: <span class="string">&#x27;SharedPointerInternals::FRawPtrProxy&lt;ObjectType&gt; MakeShareable(ObjectType *,DeleterType &amp;&amp;)&#x27;</span>: expects <span class="number">2</span> arguments - <span class="number">1</span> provided</span><br><span class="line">Engine\Source\Runtime\Core\Public\Templates/SharedPointer.<span class="built_in">h</span>(<span class="number">1666</span>): note: see declaration of <span class="string">&#x27;MakeShareable&#x27;</span></span><br><span class="line">Engine\Source\Programs\UE4Launcher\Source\Private\UI\WidgetUELauncher.<span class="built_in">cpp</span>(<span class="number">620</span>): error C2784: <span class="string">&#x27;SharedPointerInternals::FRawPtrProxy&lt;ObjectType&gt; MakeShareable(ObjectType *)&#x27;</span>: could <span class="keyword">not</span> deduce <span class="keyword">template</span> argument <span class="keyword">for</span> <span class="string">&#x27;ObjectType *&#x27;</span> from <span class="string">&#x27;TSharedRef&lt;ObjectType,0&gt;&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>这是因为类型T的析构函数访问权限设置了保护，而这些引用计数的智能指针在计数为0时就会调用该对象的析构函数，所以会出现编译错误。<br>如果必须要创建一个<code>TSharedPtr&lt;T&gt;</code>，如果T为自己创建的<code>SWidget</code>派生类，可以把<code>struct SharedPointerInternals::FRawPtrProxy&lt;T&gt;</code>设置为友元（<code>Makeshareable()</code>就是构造了这个对象）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SEditableBoxWraper is a custom Widget derived by SWidget </span></span><br><span class="line"><span class="keyword">friend</span> <span class="keyword">struct</span> <span class="title class_">SharedPointerInternals</span>::FRawPtrProxy&lt;SEditableBoxWraper&gt;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE在编辑器内点Compile时自动保存资源"><a href="#UE在编辑器内点Compile时自动保存资源" class="headerlink" title="UE在编辑器内点Compile时自动保存资源"></a>UE在编辑器内点Compile时自动保存资源</h2><p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/ue-bp-asset-compiler-time-save.webp"></p>
+<h2 id="UE运行时动态更新寻路"><a href="#UE运行时动态更新寻路" class="headerlink" title="UE运行时动态更新寻路"></a>UE运行时动态更新寻路</h2><p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/ue-runtime-update-navigation.webp"></p>
+<h2 id="UE-EditorModule在Standalone下不会加载"><a href="#UE-EditorModule在Standalone下不会加载" class="headerlink" title="UE EditorModule在Standalone下不会加载"></a>UE EditorModule在Standalone下不会加载</h2><blockquote>
+<p>注意：Module的Type如果为Editor则在Standalone下是不加载的。会出现在编辑器模式下是正常的，但是在Standalone运行时没有任何效果，新建的插件最好以Developer或者Runtime。</p>
+</blockquote>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;FileVersion&quot;: 3,</span><br><span class="line">  &quot;Version&quot;: 1,</span><br><span class="line">  &quot;VersionName&quot;: &quot;1.0&quot;,</span><br><span class="line">  &quot;FriendlyName&quot;: &quot;TaskTools&quot;,</span><br><span class="line">  &quot;Description&quot;: &quot;&quot;,</span><br><span class="line">  &quot;Category&quot;: &quot;Other&quot;,</span><br><span class="line">  &quot;CreatedBy&quot;: &quot;&quot;,</span><br><span class="line">  &quot;CreatedByURL&quot;: &quot;&quot;,</span><br><span class="line">  &quot;DocsURL&quot;: &quot;&quot;,</span><br><span class="line">  &quot;MarketplaceURL&quot;: &quot;&quot;,</span><br><span class="line">  &quot;SupportURL&quot;: &quot;&quot;,</span><br><span class="line">  &quot;CanContainContent&quot;: true,</span><br><span class="line">  &quot;IsBetaVersion&quot;: false,</span><br><span class="line">  &quot;Installed&quot;: false,</span><br><span class="line">  &quot;Modules&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">      &quot;Name&quot;: &quot;TaskTools&quot;,</span><br><span class="line">      &quot;Type&quot;: &quot;Developer&quot;,</span><br><span class="line">      &quot;LoadingPhase&quot;: &quot;Default&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="UE版本号的宏定义"><a href="#UE版本号的宏定义" class="headerlink" title="UE版本号的宏定义"></a>UE版本号的宏定义</h2><p>引擎中标记引擎版本的宏：</p>
+<ul>
+<li>ENGINE_MAJOR_VERSION</li>
+<li>ENGINE_MINOR_VERSION</li>
+<li>ENGINE_PATCH_VERSION</li>
+</ul>
+<p>等，是在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Resources/Version.h">Engine/Source/Runtime/Launch/Resources/Version.h</a>中定义：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// These numbers define the banner UE4 version, and are the most significant numbers when ordering two engine versions (that is, a 4.12.* version is always </span></span><br><span class="line"><span class="comment">// newer than a 4.11.* version, regardless of the changelist that it was built with)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ENGINE_MAJOR_VERSION  4</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ENGINE_MINOR_VERSION  19</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ENGINE_PATCH_VERSION  0</span></span><br></pre></td></tr></table></figure>
+<p>引擎的版本信息也记录在<code>Engine\Build\Build.version</code>文件中：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">	<span class="attr">&quot;MajorVersion&quot;</span><span class="punctuation">:</span> <span class="number">4</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;MinorVersion&quot;</span><span class="punctuation">:</span> <span class="number">18</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;PatchVersion&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;Changelist&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;CompatibleChangelist&quot;</span><span class="punctuation">:</span> <span class="number">3709383</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;IsLicenseeVersion&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;IsPromotedBuild&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;BranchName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="UE蓝图的循环迭代最大计数"><a href="#UE蓝图的循环迭代最大计数" class="headerlink" title="UE蓝图的循环迭代最大计数"></a>UE蓝图的循环迭代最大计数</h2><p>UE蓝图里面的循环上限是需要在<code>ProjectSetting</code>-<code>Engine</code>-<code>Blueprints</code>里设置(默认是1000000)：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/ue-project-setting-maximum-loop-iteration-count.webp"></p>
+<h2 id="UE-Primary-Asset-Id"><a href="#UE-Primary-Asset-Id" class="headerlink" title="UE:Primary Asset Id"></a>UE:Primary Asset Id</h2><p>先在<code>Project Setting</code>-<code>Game</code>-<code>Asset Manager</code>里添加资源路径：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/add-ue-primary-asset-id.webp"><br>然后就可以在蓝图的<code>PrimaryAssetId</code>中选择了：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/ue-primary-asset-id-Instance.webp"></p>
+<h2 id="UE-Package-Error-noexcept"><a href="#UE-Package-Error-noexcept" class="headerlink" title="UE Package Error: noexcept"></a>UE Package Error: noexcept</h2><p>如果打包时遇到下列错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C4577: &#x27;noexcept&#x27; used with no exception handling mode specified; termination on exception is not guaranteed. Specify /EHsc</span><br></pre></td></tr></table></figure>
+<p>在<code>*.target.cs</code>中添加：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bForceEnableExceptions = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+<p>即可。</p>
+<h2 id="UE-Package-Create-Compressed-Cooked-Packages"><a href="#UE-Package-Create-Compressed-Cooked-Packages" class="headerlink" title="UE Package: Create Compressed Cooked Packages"></a>UE Package: Create Compressed Cooked Packages</h2><p>打包时压缩pak:<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/ue-create-compressed-cooked-packages.webp"></p>
+<h2 id="UE-Package-Use-Log-in-Shipping"><a href="#UE-Package-Use-Log-in-Shipping" class="headerlink" title="UE Package:Use Log in Shipping"></a>UE Package:Use Log in Shipping</h2><p>在我之前的文章<a href="https://imzlp.com/posts/5214/#USE-LOGGING-IN-SHIPPING">Macro defined by UBT in UE4#USE_LOGGING_IN_SHIPPING</a>中写道，可以在Module的<code>*.target.cs</code>中使用<code>bUseLoggingInShipping</code>来控制打包模式为Shipping的包是否启用日志。<br>注意：目前<strong>只支持源码版引擎</strong>，如果在Launcher安装的Engine会报链接错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error LNK2001: unresolved external symbol &quot;struct FLogCategoryLogSerialization LogSerialization&quot; (?LogSerialization@@3UFLogCategoryLogSerialization@@A)</span><br></pre></td></tr></table></figure>
+
+<p>同时，如果出现下列错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C4577: &#x27;noexcept&#x27; used with no exception handling mode specified; termination on exception is not guaranteed. Specify /EHsc</span><br></pre></td></tr></table></figure>
+<p>则在<code>*.target.cs</code>中添加：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bForceEnableExceptions = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+<p>即可。</p>
+<h2 id="UE4-Package-LogLinker-Error-xxxx-has-an-inappropriate-outermos"><a href="#UE4-Package-LogLinker-Error-xxxx-has-an-inappropriate-outermos" class="headerlink" title="UE4 Package: LogLinker  Error: xxxx has an inappropriate outermos"></a>UE4 Package: LogLinker  Error: xxxx has an inappropriate outermos</h2><p>在打包时遇到以下错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogLinker: Error: HOTRELOADED_INetGameMode_1 has an inappropriate outermost, it was probably saved with a deprecated outer (file: ../../../../../../SanguoWarriors/Content/CoreBP/GamePlayFramework/GameMode/Net_GameMode_VR_Ex.uasset)</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogLinker: Error: HOTRELOADED_INetGameMode_1 has an inappropriate outermost, it was probably saved with a deprecated outer (file: ../../../../../../SanguoWarriors/Content/CoreBP/GamePlayFramework/GameMode/Net_GameMode_VR_Ex.uasset)</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogLinker: Error: HOTRELOADED_INetGameMode_1 has an inappropriate outermost, it was probably saved with a deprecated outer (file: ../../../../../../SanguoWarriors/Content/CoreBP/GamePlayFramework/GameMode/Net_GameMode_VR_Ex.uasset)</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogLinker: Error: HOTRELOADED_INetGameMode_1 has an inappropriate outermost, it was probably saved with a deprecated outer (file: ../../../../../../SanguoWarriors/Content/CoreBP/GamePlayFramework/GameMode/Net_GameMode_VR_Ex.uasset)</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogLinker: Error: HOTRELOADED_INetGameMode_1 has an inappropriate outermost, it was probably saved with a deprecated outer (file: ../../../../../../SanguoWarriors/Content/CoreBP/GamePlayFramework/GameMode/Net_GameMode_VR_Ex.uasset)</span><br></pre></td></tr></table></figure>
+<p>这是该资源引用了一些无效的资源：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/25331/UE-Package-Error-XXX-Has-an-inappropriate-outermost-asset-reference-view.webp"><br>解决办法是，随便在蓝图内修改一点东西，点保存编译即可。<br>最后再打开它的<code>Reference Viewer</code>确定没有无效资源即可。</p>
+<h2 id="UE4-Package-FMemoryWriter-does-not-support-data-larger-than-2GB-Archive-name-None"><a href="#UE4-Package-FMemoryWriter-does-not-support-data-larger-than-2GB-Archive-name-None" class="headerlink" title="UE4 Package:FMemoryWriter does not support data larger than 2GB. Archive name: None."></a>UE4 Package:FMemoryWriter does not support data larger than 2GB. Archive name: None.</h2><p>打包时出现了这个错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: begin: stack <span class="keyword">for</span> UAT</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: === Critical error: ===</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error:</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: Fatal error: [File:D:\Build\++UE4+Release-4.18+Compile\Sync\Engine\Source\Runtime\Core\Public\Serialization/MemoryWriter.h] [Line: 42]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: FMemoryWriter does not support data larger than 2GB. Archive name: None.</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error:</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error:</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000EB1AA388 KERNELBASE.dll!UnknownFunction []</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000D87676D4 UE4Editor-ApplicationCore.dll!FWindowsErrorOutputDevice::Serialize() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\applicationcore\private\windows\windowserroroutputdevice.cpp:65]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C1BA330B UE4Editor-Core.dll!FOutputDevice::Logf__VA() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\private\misc\outputdevice.cpp:70]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C1B347F9 UE4Editor-Core.dll!FDebug::AssertFailed() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\private\misc\assertionmacros.cpp:414]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000BD417374 UE4Editor-CoreUObject.dll!FMemoryWriter::Serialize() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\core\public\serialization\memorywriter.h:42]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000BD510857 UE4Editor-CoreUObject.dll!FUntypedBulkData::SerializeBulkData() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\serialization\bulkdata.cpp:1253]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000BD647A5C UE4Editor-CoreUObject.dll!UPackage::Save() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\coreuobject\private\uobject\savepackage.cpp:5122]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000B5F0EB8D UE4Editor-UnrealEd.dll!UEditorEngine::Save() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\editorengine.cpp:4220]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000B5DD112E UE4Editor-UnrealEd.dll!UCookOnTheFlyServer::SaveCookedPackage() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\cookontheflyserver.cpp:3229]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000B5DD2473 UE4Editor-UnrealEd.dll!UCookOnTheFlyServer::SaveCookedPackages() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\cookontheflyserver.cpp:2300]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000B5DDE3B7 UE4Editor-UnrealEd.dll!UCookOnTheFlyServer::TickCookOnTheSide() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\cookontheflyserver.cpp:1763]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000B5C77D61 UE4Editor-UnrealEd.dll!UCookCommandlet::CookByTheBook() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\commandlets\cookcommandlet.cpp:902]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000B5C9F391 UE4Editor-UnrealEd.dll!UCookCommandlet::Main() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\editor\unrealed\private\commandlets\cookcommandlet.cpp:583]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C5E0D25F UE4Editor-Cmd.exe!FEngineLoop::PreInit() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\launchengineloop.cpp:2167]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C5E0525A UE4Editor-Cmd.exe!GuardedMain() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\launch.cpp:127]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C5E054AA UE4Editor-Cmd.exe!GuardedMainWrapper() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\windows\launchwindows.cpp:134]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C5E12379 UE4Editor-Cmd.exe!WinMain() [d:\build\++ue4+release-4.18+compile\<span class="built_in">sync</span>\engine\<span class="built_in">source</span>\runtime\launch\private\windows\launchwindows.cpp:210]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000C5E13193 UE4Editor-Cmd.exe!__scrt_common_main_seh() [f:\<span class="built_in">dd</span>\vctools\crt\vcstartup\src\startup\exe_common.inl:253]</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000EB954034 KERNEL32.DLL!UnknownFunction []</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000EE083691 ntdll.dll!UnknownFunction []</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: [Callstack] 0x00000000EE083691 ntdll.dll!UnknownFunction []</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error:</span><br><span class="line">UATHelper: Packaging (Windows (64-bit)):   LogWindows: Error: end: stack <span class="keyword">for</span> UAT</span><br></pre></td></tr></table></figure>
+<p>这是因为场景的烘培文件大于了2G，而UE的FMemoryWriter最大支持2G的文件，所以需要更改场景的光照参数(<code>PackedLightAndShadowMapTextureSize</code>或者将场景拆分为多个子关卡，保证烘焙之后每个子关卡的<code>*_BuildData.uasset</code>小于2G)。</p>
+<h2 id="UE-Crash-破碎组件-DestructibleMesh-导致的崩溃"><a href="#UE-Crash-破碎组件-DestructibleMesh-导致的崩溃" class="headerlink" title="UE Crash:破碎组件(DestructibleMesh)导致的崩溃"></a>UE Crash:破碎组件(DestructibleMesh)导致的崩溃</h2><p>在最近的使用中，在服务端创建出来的DestructibleMesh，破碎之后再服务端销毁，在客户端会崩溃，不销毁只是破碎后隐藏就不会Crash，这在UE4.18.3上存在这个问题，先记录一下，有时间再深度研究一下。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                未完待续。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/25331/" target="_blank">UE开发的问题笔记和资料辑录</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2019年05月27日 22时07分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有7.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/25331/" target="_blank" title="UE开发的问题笔记和资料辑录">https://imzlp.com/posts/25331/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/25331/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/2386/" rel="prev" title="UE代码分析:GConfig的加载">
+      <i class="fa fa-chevron-left"></i> UE代码分析:GConfig的加载
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/2125/" rel="next" title="HTC Vive Tracker Developer Guide">
+      HTC Vive Tracker Developer Guide <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Error-The-game-module-%E2%80%98xxx%E2%80%99-could-not-be-loaded"><span class="nav-number">1.</span> <span class="nav-text">UE4 Error:The game module ‘xxx’ could not be loaded.</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Error-must-include-the-same-precompiled-header-first"><span class="nav-number">2.</span> <span class="nav-text">UE4 Error:must include the same precompiled header first.</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-UWebBrowser%E6%94%AF%E6%8C%81%E4%B8%AD%E6%96%87%E8%BE%93%E5%85%A5"><span class="nav-number">3.</span> <span class="nav-text">UE4:UWebBrowser支持中文输入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-UnrealBuildTool-Dependancy-Warning"><span class="nav-number">4.</span> <span class="nav-text">UE4:UnrealBuildTool Dependancy Warning</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Instanced-Stereo-Rendering"><span class="nav-number">5.</span> <span class="nav-text">UE4:Instanced Stereo Rendering</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-HandleNetworkFailure"><span class="nav-number">6.</span> <span class="nav-text">UE4:HandleNetworkFailure</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UGameInstance-HandleNetworkError"><span class="nav-number">7.</span> <span class="nav-text">UGameInstance::HandleNetworkError</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Max-Agent"><span class="nav-number">8.</span> <span class="nav-text">UE4:Max Agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MakeRotFromXY"><span class="nav-number">9.</span> <span class="nav-text">MakeRotFromXY</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Errpr-C1853-precompiled-header-file"><span class="nav-number">10.</span> <span class="nav-text">UE4 Errpr:C1853 precompiled header file</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Error-C4577-%E2%80%98noexcept%E2%80%99-used"><span class="nav-number">11.</span> <span class="nav-text">UE4 Error:C4577: ‘noexcept’ used</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Error-error-%E2%80%98%E2%80%99-Bad-command-or-expression"><span class="nav-number">12.</span> <span class="nav-text">UE4 Error: error : ‘’: Bad command or expression</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Break-a-C-Struct-in-BP"><span class="nav-number">13.</span> <span class="nav-text">UE4:Break a C++ Struct in BP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Error-C4700-uninitialized-local-variable-%E2%80%98Parms%E2%80%99-used"><span class="nav-number">14.</span> <span class="nav-text">UE4 Error:C4700: uninitialized local variable ‘Parms’ used</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-GetPlayerController"><span class="nav-number">15.</span> <span class="nav-text">UE4:GetPlayerController</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-%E7%BC%96%E8%BE%91%E5%99%A8%E8%81%94%E6%9C%BA%E6%A8%A1%E5%BC%8F%E4%B8%8B%E9%80%80%E5%87%BA%E5%B4%A9%E6%BA%83"><span class="nav-number">16.</span> <span class="nav-text">UE:编辑器联机模式下退出崩溃</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-%E8%81%94%E6%9C%BA%E6%B8%B8%E6%88%8F%E4%B8%ADAI%E4%B8%8D%E5%9C%A8%E8%A7%86%E9%87%8E%E8%A2%AB%E8%A3%81%E5%89%AA"><span class="nav-number">17.</span> <span class="nav-text">UE4:联机游戏中AI不在视野被裁剪</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-%E6%9C%AA%E5%8C%85%E5%90%ABCoreUObject-h%E7%9A%84%E9%94%99%E8%AF%AF"><span class="nav-number">18.</span> <span class="nav-text">UE:未包含CoreUObject.h的错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-C4668-Error-%E2%80%98%E2%80%99-is-not-defined-as-a-prepeocessor-macro"><span class="nav-number">19.</span> <span class="nav-text">UE:C4668 Error ‘’ is not defined as a prepeocessor macro</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Detach-Error-in-Net"><span class="nav-number">20.</span> <span class="nav-text">UE:Detach Error in Net</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Package-Couldn%E2%80%99t-save-package-filename-is-too-long"><span class="nav-number">21.</span> <span class="nav-text">UE Package:Couldn’t save package,filename is too long</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E5%BC%80%E5%90%AF%E5%A4%9A%E9%87%8D%E9%87%87%E6%A0%B7%E5%92%8C%E5%89%8D%E5%90%91%E6%B8%B2%E6%9F%93"><span class="nav-number">22.</span> <span class="nav-text">UE开启多重采样和前向渲染</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Plugin-ModuleType-Required"><span class="nav-number">23.</span> <span class="nav-text">UE4 Plugin:ModuleType(Required)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Plugin-LoadingPhase-Optional"><span class="nav-number">24.</span> <span class="nav-text">UE4 Plugin:LoadingPhase(Optional)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GENERATED-BODY%E5%92%8CGENERATED-UCLASS-BODY%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">25.</span> <span class="nav-text">GENERATED_BODY和GENERATED_UCLASS_BODY的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Extensibility-in-UE4"><span class="nav-number">26.</span> <span class="nav-text">Extensibility in UE4</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Slate-UI-Framedowk"><span class="nav-number">27.</span> <span class="nav-text">UE4 Slate UI Framedowk</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Networking-in-UE4"><span class="nav-number">28.</span> <span class="nav-text">Networking in UE4</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Engine-Overview"><span class="nav-number">29.</span> <span class="nav-text">UE4 Engine Overview</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Epic%E2%80%99s-Build-Tools-amp-Infrastructure"><span class="nav-number">30.</span> <span class="nav-text">Epic’s Build Tools &amp; Infrastructure</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UHT%E7%9A%84%E5%AE%8F%E5%AE%9A%E4%B9%89"><span class="nav-number">31.</span> <span class="nav-text">UHT的宏定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Build-MakeShareable-no-matching"><span class="nav-number">32.</span> <span class="nav-text">UE Build:MakeShareable no matching</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E5%9C%A8%E7%BC%96%E8%BE%91%E5%99%A8%E5%86%85%E7%82%B9Compile%E6%97%B6%E8%87%AA%E5%8A%A8%E4%BF%9D%E5%AD%98%E8%B5%84%E6%BA%90"><span class="nav-number">33.</span> <span class="nav-text">UE在编辑器内点Compile时自动保存资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E8%BF%90%E8%A1%8C%E6%97%B6%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0%E5%AF%BB%E8%B7%AF"><span class="nav-number">34.</span> <span class="nav-text">UE运行时动态更新寻路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-EditorModule%E5%9C%A8Standalone%E4%B8%8B%E4%B8%8D%E4%BC%9A%E5%8A%A0%E8%BD%BD"><span class="nav-number">35.</span> <span class="nav-text">UE EditorModule在Standalone下不会加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E7%89%88%E6%9C%AC%E5%8F%B7%E7%9A%84%E5%AE%8F%E5%AE%9A%E4%B9%89"><span class="nav-number">36.</span> <span class="nav-text">UE版本号的宏定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E8%93%9D%E5%9B%BE%E7%9A%84%E5%BE%AA%E7%8E%AF%E8%BF%AD%E4%BB%A3%E6%9C%80%E5%A4%A7%E8%AE%A1%E6%95%B0"><span class="nav-number">37.</span> <span class="nav-text">UE蓝图的循环迭代最大计数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Primary-Asset-Id"><span class="nav-number">38.</span> <span class="nav-text">UE:Primary Asset Id</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Package-Error-noexcept"><span class="nav-number">39.</span> <span class="nav-text">UE Package Error: noexcept</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Package-Create-Compressed-Cooked-Packages"><span class="nav-number">40.</span> <span class="nav-text">UE Package: Create Compressed Cooked Packages</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Package-Use-Log-in-Shipping"><span class="nav-number">41.</span> <span class="nav-text">UE Package:Use Log in Shipping</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Package-LogLinker-Error-xxxx-has-an-inappropriate-outermos"><span class="nav-number">42.</span> <span class="nav-text">UE4 Package: LogLinker  Error: xxxx has an inappropriate outermos</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Package-FMemoryWriter-does-not-support-data-larger-than-2GB-Archive-name-None"><span class="nav-number">43.</span> <span class="nav-text">UE4 Package:FMemoryWriter does not support data larger than 2GB. Archive name: None.</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Crash-%E7%A0%B4%E7%A2%8E%E7%BB%84%E4%BB%B6-DestructibleMesh-%E5%AF%BC%E8%87%B4%E7%9A%84%E5%B4%A9%E6%BA%83"><span class="nav-number">44.</span> <span class="nav-text">UE Crash:破碎组件(DestructibleMesh)导致的崩溃</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/25331/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

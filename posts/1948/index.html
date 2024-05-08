@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本篇文章的主要内容是介绍UE在Mac上的开发环境部署、配置iOS远程出包、UPL在iOS上的应用（介入ipa出包过程）、工具和开发技巧、以及分析相关的引擎代码等内容，记录了一些在项目中遇到的坑，主要从我之前的笔记中整理而来，后续Mac和iOS相关的内容也都会更新到这篇文章里。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE开发笔记：Mac&#x2F;iOS篇">
+<meta property="og:url" content="https://imzlp.com/posts/1948/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="本篇文章的主要内容是介绍UE在Mac上的开发环境部署、配置iOS远程出包、UPL在iOS上的应用（介入ipa出包过程）、工具和开发技巧、以及分析相关的引擎代码等内容，记录了一些在项目中遇到的坑，主要从我之前的笔记中整理而来，后续Mac和iOS相关的内容也都会更新到这篇文章里。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323184158.webp">
+<meta property="article:published_time" content="2020-09-01T21:45:03.000Z">
+<meta property="article:modified_time" content="2023-09-08T09:47:17.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="iOS">
+<meta property="article:tag" content="Mac">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323184158.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/1948/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE开发笔记：Mac/iOS篇 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/1948/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE开发笔记：Mac/iOS篇<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-09-01-1948.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-09-01 21:45 21:45:03:45" itemprop="dateCreated datePublished" datetime="2020-09-01T21:45:03+00:00">2020-09-01 21:45</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-09-08 09:47 09:47:17:47" itemprop="dateModified" datetime="2023-09-08T09:47:17+00:00">2023-09-08 09:47</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/Apple/" itemprop="url" rel="index"><span itemprop="name">Apple</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/1948/" class="post-meta-item leancloud_visitors" data-flag-title="UE开发笔记：Mac/iOS篇" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>21 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本篇文章的主要内容是介绍UE在Mac上的开发环境部署、配置iOS远程出包、UPL在iOS上的应用（介入ipa出包过程）、工具和开发技巧、以及分析相关的引擎代码等内容，记录了一些在项目中遇到的坑，主要从我之前的<a href="https://imzlp.com/notes">笔记</a>中整理而来，后续Mac和iOS相关的内容也都会更新到这篇文章里。</p>
+<span id="more"></span>
+
+<h2 id="远程构建iOS"><a href="#远程构建iOS" class="headerlink" title="远程构建iOS"></a>远程构建iOS</h2><p>UE可以在Windows可以直接出Android和Win的包（Android需要配置JDK/SDK/NDK/Gradle等环境）。打包iOS则需要一台Mac，如果是每次打包iOS都要在Mac上进行操作，其实就是与Win上完全相同的操作，但是流程上不能复用就显得很繁琐，尤其是在修改了引擎的情况下，需要先更新引擎代码并编译，然后再更新项目、执行打包。好在UE提供了远程构建iOS，可以把Win/Android/iOS三端的包在相同的构建流程里出完。</p>
+<p>前置需求：</p>
+<ol>
+<li>内网搭载MacOS的电脑一台（白黑都可）</li>
+<li>申请p12证书和mobileprovision</li>
+<li>PC和Mac需要在网络内可以相互访问（在相同网段）</li>
+</ol>
+<h3 id="IOS证书申请"><a href="#IOS证书申请" class="headerlink" title="IOS证书申请"></a>IOS证书申请</h3><p>打包iOS之前需要申请iOS的开发者账号来创建证书，可以在<a target="_blank" rel="noopener" href="https://developer.apple.com/">developer.apple.com</a>申请。需要得到p12证书和mobileprovision，然后在UE的项目设置中导入它们。需要注意创建的证书是<code>Developer</code>还是<code>Distribution</code>证书，在出包的时候要匹配，否则会打包失败。</p>
+<p>申请证书的流程网上有很多文章，我这里是简单记录了下我申请证书的流程，步骤不是最详细的，仅供参考。</p>
+<p>首先在Mac上导出一个证书：<br>打开软件<code>钥匙串访问</code>-<code>证书助理</code>-<code>从证书颁发机构请求证书</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/AppleDev/mac-os-export-ca.webp"><br>选择存储到磁盘，会生成一个<code>CertificateSigningRequest.certSigningRequest</code>的文件。<br>然后登录<a target="_blank" rel="noopener" href="https://developer.apple.com/">Apple Developer</a>，进入<code>Account</code>-<code>Certificates</code>：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/AppleDev/apple-developer-certification-ids-profiles.webp"></p>
+<p>进去之后创建<code>Apple Development</code>或者<code>iOS App Development</code>，创建过程中需要把上面生成的<code>CertificateSigningRequest.certSigningRequest</code>文件上传。</p>
+<p>添加设备：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/AppleDev/apple-developer-add-device.webp"></p>
+<p>可以使用UE的<code>IPhonePackager.exe</code>来查看ios设备的uuid：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/AppleDev/ue-iphonepackagetool-device-uuid.webp"></p>
+<p>生成Provision：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/AppleDev/apple-developer-generated-provisioning-profile.webp"></p>
+<p>生成之后要下载<code>provision</code>文件：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/AppleDev/apple-developer-download-provisioning-profile.webp"></p>
+<h3 id="配置远程构建"><a href="#配置远程构建" class="headerlink" title="配置远程构建"></a>配置远程构建</h3><p>UE打包iOS需要在项目设置中导入证书和<code>provision</code>，以及把<code>BundleName</code>和<code>Bundle Identifier</code>设置为在Apple开发者网站上设置的Bundle ID，格式为<code>com.xxxxx.yyyyyy</code>。</p>
+<p>p12证书和mobileprovision导入之后如图：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-project-settings-ios-import-mobileprevision-ce.webp"></p>
+<p>导入证书之后就可以开始远程打包的配置了。</p>
+<p>首先在MAC的<code>系统偏好设置</code>-<code>共享</code>中启用远程登录：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/mac-setting-sharing.webp"></p>
+<p>然后在Windows上对项目添导入<code>mobileproversion</code>和设置<code>BundleName</code>和<code>Bundle Identifier</code>。<br>之后继续往下拉找到<code>IOS</code>-<code>Build</code>下的<code>Remote Build Options</code>:<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue-project-settings-IOS-remote-build.webp"><br>填入目标MAC机器的IP地址（如果不指定端口则默认为22，如果指定端口则使用<code>xx.xx.xx.xx:2222</code>这种形式，以冒号分隔）和用户名。</p>
+<p>然后点击<code>Generated SSH Key</code>会弹出一个窗口：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-remote-build-generated-sshkey-01.webp"><br>按任意键继续。<br>会提示你输入一个密码，按照提示输入，之后会提示你输入<code>MAC</code>电脑的密码，输入之后会提示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Enter passphrase (empty <span class="keyword">for</span> no passphrase):</span><br></pre></td></tr></table></figure>
+
+<p>这是让你输入生成的ssh Key的密码，默认情况下可以不输，直接Enter就好。<br>按照提示一直<code>Enter</code>会提示你ssh key生成成功：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-remote-build-generated-sshkey-02.webp"><br>再继续会提示让你输入第一次设置的密码，和目标MAC机器的密码，执行完毕之后就会提示没有错误，就ok了：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-remote-build-generated-sshkey-03.webp"></p>
+<p>生成的SSH Key的存放路径为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\imzlp\AppData\Roaming/Unreal Engine/UnrealBuildTool/SSHKeys/192.168.2.89/imzlp/RemoteToolChainPrivate.key</span><br></pre></td></tr></table></figure>
+
+<p>如果要将其共享给组内的其他成员，则把这个<code>RemoteToolChainPrivate.key</code>共享，然后让他们把<code>IOS</code>-<code>Build</code>-<code>RemoteBuildOptions</code>下的<code>Override existing SSH Permissions file</code>设置为<code>RemoteToolChainPrivate.key</code>的路径即可。</p>
+<p>之后就可以像打包Windows或者在Win上打包IOS一样了：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-package-ios-in-windows.webp"></p>
+<p>远程到Mac打包分了几个阶段：</p>
+<ol>
+<li>把本机的引擎和工程代码上传至Mac</li>
+<li>在Mac上执行编译</li>
+<li>编译完毕之后在Mac上生成ipa包（但不包含Cook资源）</li>
+<li>把生成的ipa包拉回本地，解包，Cook美术资源，再合并为ipa</li>
+</ol>
+<p>其中第一步，把本机引擎和工程的代码上传至Mac是通过rsync来实现的，引擎中的<code>Engine\Build\Rsync</code>目录下包含了远程构建时需要上传至目标机器的过滤器。<br>对于项目，可以在工程目录的<code>&lt;ProjectDir&gt;/Build/Rsync/RsyncProject.txt</code>创建该文件，添加自己想要上传至Mac的文件过滤器，可以解决执行远程打包时有些文件被遗漏掉的问题。<br>UE上传时默认使用的RsyncProject.txt过滤器有引擎和项目目录的，具体的代码看：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Programs/UnrealBuildTool/ToolChain/RemoteMac.cs#L927">UnrealBuildTool/ToolChain/RemoteMac.cs#L927</a></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Platforms/Mobile/iOS/Windows/index.html">Building for iOS on Windows</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.audiokinetic.com/zh/library/edge/?source=UE4&id=using_faq.html">WWise常见问题解答</a></li>
+</ul>
+<h3 id="SSH使用key登录失败"><a href="#SSH使用key登录失败" class="headerlink" title="SSH使用key登录失败"></a>SSH使用key登录失败</h3><p>如果SSH连接时提示以下错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lipengzha@192.168.31.55: Permission denied (publickey,password,keyboard-interactive).</span><br></pre></td></tr></table></figure>
+
+<p>可以修改Mac的SSH配置（<code>/etc/ssh/sshd_config</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">RSAAuthentication yes</span><br><span class="line">PubkeyAuthentication yes</span><br></pre></td></tr></table></figure>
+
+<p>然后重载配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist</span><br><span class="line">sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/205842/unable-to-login-with-ssh-rsa-key">Unable to login with SSH-RSA key</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/daly2008/p/5030795.html">linux下sshd_config的StrictModes参数</a></li>
+</ul>
+<h3 id="iOS打包证书配置报错问题"><a href="#iOS打包证书配置报错问题" class="headerlink" title="iOS打包证书配置报错问题"></a>iOS打包证书配置报错问题</h3><p>在UE的项目设置中添加<code>Provision</code>和<code>Certificate</code>，<code>Bundle Identifier</code>要和证书能对应上，但是在设置完之后选择打包还是会提示以下错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Provision not found. A provision is required for deploying your app to the device.  </span><br><span class="line">Signing key not found. The app could not be digitally signed, because the signing key is not configured.  </span><br></pre></td></tr></table></figure>
+
+<p>配置完证书和<code>Provision</code>之后出现这种情况需要检查下证书是<strong>开发(Development)**还是</strong>发行(Distribution)<strong>，默认情况下项目设置中是不勾选</strong>发行(Distribution)<strong>的，如果导入的证书是发行证书则</strong>只能打包Shipping<strong>并且</strong>需要勾上发行(Distribution)**。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-package-project-for-distribution.webp"></p>
+<p>如果使用发行证书不勾选**发行(For Distribution)**则打包时会有以下错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Check dependencies</span><br><span class="line">Code Signing Error: Provisioning profile &quot;com.tencent.tmgp.zyhx_Production_SignProvision&quot; doesn&#x27;t match the entitlements file&#x27;s value for the get-task-allow entitlement.</span><br><span class="line">Code Signing Error: Code signing is required for product type &#x27;Application&#x27; in SDK &#x27;iOS 13.6&#x27;</span><br></pre></td></tr></table></figure>
+
+<h3 id="SSHKey路径查找的bug"><a href="#SSHKey路径查找的bug" class="headerlink" title="SSHKey路径查找的bug"></a>SSHKey路径查找的bug</h3><p>前面提到了在<code>Project Settings</code>-<code>Platforms</code>-<code>iOS</code>中可以在<code>Override Existing SSH Permissions file</code>中指定SSHKey，如果不指定会默认使用引擎查找路径，默认情况下会从以下路径中查找：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> FString DefaultKeyFilename = <span class="built_in">TEXT</span>(<span class="string">&quot;RemoteToolChainPrivate.key&quot;</span>);</span><br><span class="line"><span class="type">const</span> FString RelativeFilePathLocation = FPaths::<span class="built_in">Combine</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;SSHKeys&quot;</span>), *RemoteServerName, *RSyncUsername, *DefaultKeyFilename);</span><br><span class="line">TArray&lt;FString&gt; PossibleKeyLocations;</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">ProjectDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NotForLicensees&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">ProjectDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NoRedist&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">ProjectDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">EngineDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NotForLicensees&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">EngineDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NoRedist&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">EngineDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*Path, <span class="built_in">TEXT</span>(<span class="string">&quot;Unreal Engine&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;UnrealBuildTool&quot;</span>), *RelativeFilePathLocation));</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-project--ios-found-existing-ssh.webp"></p>
+<p>但是在RemoveServerName包含端口的情况下，希望使用引擎查找路径时，UE的实现有Bug。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UIOSRuntimeSettings::PostInitProperties</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	Super::<span class="built_in">PostInitProperties</span>();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// We can have a look for potential keys</span></span><br><span class="line">	<span class="keyword">if</span> (!RemoteServerName.<span class="built_in">IsEmpty</span>() &amp;&amp; !RSyncUsername.<span class="built_in">IsEmpty</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		SSHPrivateKeyLocation = <span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>);</span><br><span class="line">		</span><br><span class="line">		<span class="type">const</span> FString DefaultKeyFilename = <span class="built_in">TEXT</span>(<span class="string">&quot;RemoteToolChainPrivate.key&quot;</span>);</span><br><span class="line">		<span class="type">const</span> FString RelativeFilePathLocation = FPaths::<span class="built_in">Combine</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;SSHKeys&quot;</span>), *RemoteServerName, *RSyncUsername, *DefaultKeyFilename);</span><br><span class="line"></span><br><span class="line">		FString Path = FPlatformMisc::<span class="built_in">GetEnvironmentVariable</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;APPDATA&quot;</span>));</span><br><span class="line"></span><br><span class="line">		TArray&lt;FString&gt; PossibleKeyLocations;</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">ProjectDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NotForLicensees&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">ProjectDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NoRedist&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">ProjectDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">EngineDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NotForLicensees&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">EngineDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;NoRedist&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*FPaths::<span class="built_in">EngineDir</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;Build&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line">		PossibleKeyLocations.<span class="built_in">Add</span>(FPaths::<span class="built_in">Combine</span>(*Path, <span class="built_in">TEXT</span>(<span class="string">&quot;Unreal Engine&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;UnrealBuildTool&quot;</span>), *RelativeFilePathLocation));</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Find a potential path that we will use if the user hasn&#x27;t overridden.</span></span><br><span class="line">		<span class="comment">// For information purposes only</span></span><br><span class="line">		<span class="keyword">for</span> (<span class="type">const</span> FString&amp; NextLocation : PossibleKeyLocations)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">if</span> (IFileManager::<span class="built_in">Get</span>().<span class="built_in">FileSize</span>(*NextLocation) &gt; <span class="number">0</span>)</span><br><span class="line">			&#123;</span><br><span class="line">				SSHPrivateKeyLocation = NextLocation;</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个代码在Windows上有bug，因为当<code>RemoteServerName</code>具有指定端口时，在Windows上就会找不到SSHKey，因为Windows上路径中不能包含冒号，所以在查找Key路径的时候会有问题，这个问题需要修改引擎才能解决。<br>修改上面的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">SSHPrivateKeyLocation = <span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>);</span><br><span class="line">FString RealRemoteServerName = RemoteServerName;</span><br><span class="line"><span class="keyword">if</span>(RemoteServerName.<span class="built_in">Contains</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;:&quot;</span>)))</span><br><span class="line">&#123;</span><br><span class="line">    FString RemoteServerPort;</span><br><span class="line">    RemoteServerName.<span class="built_in">Split</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;:&quot;</span>),&amp;RealRemoteServerName,&amp;RemoteServerPort);</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">const</span> FString DefaultKeyFilename = <span class="built_in">TEXT</span>(<span class="string">&quot;RemoteToolChainPrivate.key&quot;</span>);</span><br><span class="line"><span class="type">const</span> FString RelativeFilePathLocation = FPaths::<span class="built_in">Combine</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;SSHKeys&quot;</span>), *RealRemoteServerName, *RSyncUsername, *DefaultKeyFilename);</span><br></pre></td></tr></table></figure>
+
+<p>重新编译引擎即可。</p>
+<h3 id="远程编译Shader的Key查找bug"><a href="#远程编译Shader的Key查找bug" class="headerlink" title="远程编译Shader的Key查找bug"></a>远程编译Shader的Key查找bug</h3><blockquote>
+<p>注意：在4.26及之后的引擎版本支持在Windows上编译metal的Shader了，详情见文档：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/5.1/en-US/using-the-windows-metal-shader-compiler-for-ios-in-unreal-engine/">Using the Windows Metal Shader Compiler for iOS</a>。</li>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/download/all/?q=metal">Metal Developer Tools for Windows</a></li>
+</ul>
+</blockquote>
+<p>在<code>Project Settings</code>-<code>Platforms</code>-<code>IOS</code>中开启<code>Enable Remote Shader Compile</code>后，如果填入的构建机地址具有指定端口，在查找SSHkey时会有问题：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Developer/Apple/MetalShaderFormat/Private/MetalShaderCompiler.cpp</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">IsRemoteBuildingConfigured</span><span class="params">(<span class="type">const</span> FShaderCompilerEnvironment* InEnvironment)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    GRemoteBuildServerSSHKey = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="keyword">if</span> (InEnvironment != <span class="literal">nullptr</span> &amp;&amp; InEnvironment-&gt;RemoteServerData.<span class="built_in">Contains</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;SSHPrivateKeyOverridePath&quot;</span>)))</span><br><span class="line">    &#123;</span><br><span class="line">        GRemoteBuildServerSSHKey = InEnvironment-&gt;RemoteServerData[<span class="built_in">TEXT</span>(<span class="string">&quot;SSHPrivateKeyOverridePath&quot;</span>)];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (GRemoteBuildServerSSHKey.<span class="built_in">Len</span>() == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        GConfig-&gt;<span class="built_in">GetString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Script/IOSRuntimeSettings.IOSRuntimeSettings&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;SSHPrivateKeyOverridePath&quot;</span>), GRemoteBuildServerSSHKey, GEngineIni);</span><br><span class="line"></span><br><span class="line">        GConfig-&gt;<span class="built_in">GetString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Script/IOSRuntimeSettings.IOSRuntimeSettings&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;SSHPrivateKeyOverridePath&quot;</span>), GRemoteBuildServerSSHKey, GEngineIni);</span><br><span class="line">        <span class="keyword">if</span> (GRemoteBuildServerSSHKey.<span class="built_in">Len</span>() == <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (!FParse::<span class="built_in">Value</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;serverkey&quot;</span>), GRemoteBuildServerSSHKey) &amp;&amp; GRemoteBuildServerSSHKey.<span class="built_in">Len</span>() == <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">if</span> (GRemoteBuildServerSSHKey.<span class="built_in">Len</span>() == <span class="number">0</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">// RemoteToolChain.cs in UBT looks in a few more places but the code in FIOSTargetSettingsCustomization::OnGenerateSSHKey() only puts the key in this location so just going with that to keep things simple</span></span><br><span class="line">                    FString Path = FPlatformMisc::<span class="built_in">GetEnvironmentVariable</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;APPDATA&quot;</span>));</span><br><span class="line">                    GRemoteBuildServerSSHKey = FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;%s\\Unreal Engine\\UnrealBuildTool\\SSHKeys\\%s\\%s\\RemoteToolChainPrivate.key&quot;</span>), *Path, *GRemoteBuildServerHost, *GRemoteBuildServerUser);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ...    </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到这里查找的Key路径时直接通过<code>GRemoteBuildServerHost</code>拼接的，但是如果在配置中指定了端口，那么<code>GRemoteBuildServerHost</code>的值为这种格式<code>xxx.xx.xx.xx:1234</code>，但是Win上目录名不能带<code>:</code>，就会导致Key查找失败。</p>
+<p>还有在同文件的<code>ExecRemoteProcess</code>函数中，没有针对具有指定端口的情况做处理：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ExecRemoteProcess</span><span class="params">(<span class="type">const</span> TCHAR* Command, <span class="type">const</span> TCHAR* Params, int32* OutReturnCode, FString* OutStdOut, FString* OutStdErr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_MAC &amp;&amp; !UNIXLIKE_TO_MAC_REMOTE_BUILDING</span></span><br><span class="line">	<span class="keyword">return</span> FPlatformProcess::<span class="built_in">ExecProcess</span>(Command, Params, OutReturnCode, OutStdOut, OutStdErr);</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="keyword">if</span> (GRemoteBuildServerHost.<span class="built_in">IsEmpty</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	FString CmdLine = <span class="built_in">FString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;-i \&quot;&quot;</span>)) + GRemoteBuildServerSSHKey + <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot; \&quot;&quot;</span>) + GRemoteBuildServerUser + <span class="string">&#x27;@&#x27;</span> + GRemoteBuildServerHost + <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot; &quot;</span>) + Command + <span class="built_in">TEXT</span>(<span class="string">&quot; &quot;</span>) + (Params != <span class="literal">nullptr</span> ? Params : <span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>));</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">ExecProcess</span>(*GSSHPath, *CmdLine, OutReturnCode, OutStdOut, OutStdErr);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要做一些处理：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ExecRemoteProcess</span><span class="params">(<span class="type">const</span> TCHAR* Command, <span class="type">const</span> TCHAR* Params, int32* OutReturnCode, FString* OutStdOut, FString* OutStdErr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> PLATFORM_MAC &amp;&amp; !UNIXLIKE_TO_MAC_REMOTE_BUILDING</span></span><br><span class="line">	<span class="keyword">return</span> FPlatformProcess::<span class="built_in">ExecProcess</span>(Command, Params, OutReturnCode, OutStdOut, OutStdErr);</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="keyword">if</span> (GRemoteBuildServerHost.<span class="built_in">IsEmpty</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	FString RemoteBuildServerIP = GRemoteBuildServerHost;</span><br><span class="line">	FString RemoteBuildServerPort = <span class="built_in">TEXT</span>(<span class="string">&quot;22&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span>(GRemoteBuildServerHost.<span class="built_in">Contains</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;:&quot;</span>)))</span><br><span class="line">	&#123;</span><br><span class="line">		GRemoteBuildServerHost.<span class="built_in">Split</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;:&quot;</span>),&amp;RemoteBuildServerIP,&amp;RemoteBuildServerPort);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	FString CmdLine = <span class="built_in">FString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;-i \&quot;&quot;</span>)) + GRemoteBuildServerSSHKey + <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot; \&quot;&quot;</span>) + GRemoteBuildServerUser + <span class="string">&#x27;@&#x27;</span> + RemoteBuildServerIP + <span class="built_in">TEXT</span>(<span class="string">&quot;\&quot; &quot;</span>) <span class="built_in">TEXT</span>(<span class="string">&quot;-p &quot;</span>) + RemoteBuildServerPort +<span class="built_in">TEXT</span>(<span class="string">&quot; &quot;</span>)+ Command + <span class="built_in">TEXT</span>(<span class="string">&quot; &quot;</span>) + (Params != <span class="literal">nullptr</span> ? Params : <span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>));</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">ExecProcess</span>(*GSSHPath, *CmdLine, OutReturnCode, OutStdOut, OutStdErr);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="签名错误"><a href="#签名错误" class="headerlink" title="签名错误"></a>签名错误</h3><h4 id="开发者签名到期"><a href="#开发者签名到期" class="headerlink" title="开发者签名到期"></a>开发者签名到期</h4><p>如果在打包时输出下列日志，则是因为IOS证书过期了导致的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/Users/buildmachine/UE4/Builds/lipengzha-PCb/C/BuildAgent/workspace/FGameEngine/Client/Intermediate/ProjectFilesIOS/FGame.xcodeproj: error: No certificate for team &#x27;6H9S4KQ3C9&#x27; matching &#x27;iPhone Developer: Created via API (7ZQD4FUW73)&#x27; found: Select a different signing certificate for CODE_SIGN_IDENTITY, a team that matches your selected certificate, or switch to automatic provisioning. (in target &#x27;FGame&#x27; from project &#x27;FGame&#x27;)</span><br><span class="line">warning: Run script build phase &#x27;Sign Manual Frameworks&#x27; will be run during every build because it does not specify any outputs. To address this warning, either add output dependencies to the script phase, or configure it to run in every build by unchecking &quot;Based on dependency analysis&quot; in the script phase. (in target &#x27;FGame&#x27; from project &#x27;FGame&#x27;)</span><br><span class="line">** BUILD FAILED **</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230906095818.png"></p>
+<p>只需要更新证书就好。</p>
+<h4 id="苹果中级证书到期"><a href="#苹果中级证书到期" class="headerlink" title="苹果中级证书到期"></a>苹果中级证书到期</h4><p>如果在Windows上打包时提示下面错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">IPP ERROR: Application exception: System.Security.Cryptography.CryptographicException</span><br><span class="line">A certificate chain could not be built to a trusted root authority.</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202309080942174.png"></p>
+<p>同样也是苹果中级证书过期了导致的，更新即可。详见：<a href="https://imzlp.com/posts/11956/#%E6%96%B9%E6%B3%95%E4%BA%8C">BuildGraph：构建支持多平台打包的二进制引擎</a></p>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><p>在Windows上远程构建IOS，有几个约束：</p>
+<ol>
+<li>IPA内单个文件大小不能超过2G，如Pak文件</li>
+<li>IPA总大小不能超过4G</li>
+</ol>
+<p>不然会有下面这种错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">IPP ERROR: Application exception: Ionic.Zip.ZipException: Compressed or Uncompressed size, or offset exceeds the maximum value. Consider setting the UseZip64WhenSaving property on the ZipFile instance.</span><br><span class="line">       Ionic.Zip.ZipEntry.SetZip64Flags()</span><br><span class="line">       Ionic.Zip.ZipEntry.PostProcessOutput(Stream s)</span><br><span class="line">       Ionic.Zip.ZipEntry._WriteEntryData(Stream s)</span><br><span class="line">       Ionic.Zip.ZipEntry.Write(Stream s)</span><br><span class="line">       Ionic.Zip.ZipFile.Save()</span><br><span class="line">       iPhonePackager.FileOperations.ZipFileSystem.Close()</span><br><span class="line">       iPhonePackager.CookTime.RepackageIPAFromStub()</span><br><span class="line">       iPhonePackager.Program.Main(String[] args)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Mac开发环境"><a href="#Mac开发环境" class="headerlink" title="Mac开发环境"></a>Mac开发环境</h2><h3 id="MacOS安装UE"><a href="#MacOS安装UE" class="headerlink" title="MacOS安装UE"></a>MacOS安装UE</h3><p>UE要求MacOS的分区格式为<strong>不区分大小写</strong>（不然EpicLauncher也无法安装），而且安装引擎的要求是系统版本大于<code>10.13.5</code>，否则会出现引擎崩溃和一些不支持的情况(尝试忽略错误无法安装成功)。<br>编译依赖xcode，就像依赖VS一样，需要安装编译环境。<br>如果安装完UE和Xcode之后创建项目提示下列错误：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">An error occurred <span class="keyword">while</span> trying to generate project files.</span><br><span class="line">Running Mono...</span><br><span class="line">Setting up Mono</span><br><span class="line">/Users/Shared/UnrealEngine/<span class="number">4.22</span>/Engine /Users/Shared/UnrealEngine/<span class="number">4.22</span>/Engine/Binaries/Mac</span><br><span class="line">Discovering modules, targets <span class="keyword">and</span> source code <span class="keyword">for</span> project...</span><br><span class="line">Compiling with non-<span class="function">standard <span class="title">Xcode</span> <span class="params">(xcode-select)</span>: /Library/Developer/CommandLineTools/</span></span><br><span class="line"><span class="function">Triggered an exception while looking for SDK directory in Xcode.app</span></span><br><span class="line"><span class="function">System.IO.DirectoryNotFoundException: Directory <span class="string">&#x27;/Library/Developer/CommandLineTools/Platforms/MacOSX.platform/Developer/SDKs&#x27;</span> not found.</span></span><br><span class="line"><span class="function">  at System.IO.Directory.ValidateDirectoryListing (System.String path, System.String searchPattern, System.Boolean&amp; stop) [<span class="number">0x00000</span>] in &lt;filename unknown&gt;:<span class="number">0</span> </span></span><br><span class="line"><span class="function">  at System.IO.Directory.GetFileSystemEntries (System.String path, System.String searchPattern, FileAttributes mask, FileAttributes attrs) [<span class="number">0x00000</span>] in &lt;filename unknown&gt;:<span class="number">0</span> </span></span><br><span class="line"><span class="function">  at System.IO.Directory.GetDirectories (System.String path, System.String searchPattern) [<span class="number">0x00000</span>] in &lt;filename unknown&gt;:<span class="number">0</span> </span></span><br><span class="line"><span class="function">  at System.IO.Directory.GetDirectories (System.String path) [<span class="number">0x00000</span>] in &lt;filename unknown&gt;:<span class="number">0</span> </span></span><br><span class="line"><span class="function">  at UnrealBuildTool.AppleToolChain.SelectSDK (System.String BaseSDKDir, System.String OSPrefix, System.String&amp; PlatformSDKVersion, Boolean bVerbose) [<span class="number">0x00000</span>] in &lt;filename unknown&gt;:<span class="number">0</span> </span></span><br><span class="line"><span class="function">ERROR: Invalid SDK MacOSX.sdk, not found in /Library/Developer/CommandLineTools/Platforms/MacOSX.platform/Developer/SDKs</span></span><br></pre></td></tr></table></figure>
+
+<p>则安装<a target="_blank" rel="noopener" href="https://download.developer.apple.com/Developer_Tools/Command_Line_Tools_macOS_10.13_for_Xcode_9.3/Command_Line_Tools_macOS_10.13_for_Xcode_9.3.dmg">Xcode Command Line Tools</a>，然后执行以下命令即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo <span class="built_in">ln</span> -s /Applications/Xcode.app/Contents/Developer/Platforms /Library/Developer/CommandLineTools/</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="https://forums.unrealengine.com/development-discussion/c-gameplay-programming/102037-os-x-can-t-create-new-project">OS X: Can’t create new project</a></li>
+<li><a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/777184/i-cant-build-a-c-program-on-my-mac-with-xcode.html">I can’t build a c++ program on my Mac with Xcode</a></li>
+</ul>
+<h3 id="Mac修改SSHD默认端口"><a href="#Mac修改SSHD默认端口" class="headerlink" title="Mac修改SSHD默认端口"></a>Mac修改SSHD默认端口</h3><p>有些内网有端口限制，低于xxxx的端口默认不开放，所以在22端口被限制的情况下如何进行远程构建？修改SSH的默认端口！</p>
+<p>编辑<code>/etc/services</code>文件中的ssh的端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ vim /etc/services</span><br></pre></td></tr></table></figure>
+
+<p>把SSH的端口改为其他的：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssh              22/udp     # SSH Remote Login Protocol</span><br><span class="line">ssh              22/tcp     # SSH Remote Login Protocol</span><br></pre></td></tr></table></figure>
+
+<p>修改为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssh              2222/udp     # SSH Remote Login Protocol</span><br><span class="line">ssh              2222/tcp     # SSH Remote Login Protocol</span><br></pre></td></tr></table></figure>
+
+<p>保存退出。<br>还需要重新加载配置使端口生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist</span><br><span class="line">sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist</span><br></pre></td></tr></table></figure>
+
+<p>然后测试端口是否可以连接:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh localhost -p 2222</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="https://superuser.com/questions/1398824/cant-change-port-listen-on-macos-x-mojave-for-built-in-ssh">Can’t change PORT listen on macOS X Mojave for built-in SSH</a></li>
+</ul>
+<h3 id="为xcode开启多线程编译"><a href="#为xcode开启多线程编译" class="headerlink" title="为xcode开启多线程编译"></a>为xcode开启多线程编译</h3><p>首先看一下Mac的硬件配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl machdep.cpu</span><br></pre></td></tr></table></figure>
+
+<p>找到<code>machdep.cpu.core_count</code>字段，其中的数值就是Mac的核心数。</p>
+<p>然后可以给xcode开启多线程，数量数为核心数*2，如我的是8核，就可以开启16线程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">defaults write com.apple.Xcode PBXNumberOfParallelBuildSubtasks 16</span><br></pre></td></tr></table></figure>
+
+<h3 id="Mac系统内置的Framework"><a href="#Mac系统内置的Framework" class="headerlink" title="Mac系统内置的Framework"></a>Mac系统内置的Framework</h3><p>有时候需要在UE的模块中引入系统的Framework，那么Mac默认包含哪些Framework呢？可以通过以下方式查看。<br>我使用的系统版本为<code>10.15.2</code>，可以通过<code>sw_vers</code>查看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">buildmachine@LIPENGZHA-MC0 ~ % sw_vers</span><br><span class="line">ProductName:    Mac OS X</span><br><span class="line">ProductVersion: 10.15.2</span><br><span class="line">BuildVersion:   19C57</span><br></pre></td></tr></table></figure>
+
+<p>系统内置的Framework在以下目录中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/System/Library/Frameworks</span><br></pre></td></tr></table></figure>
+
+<p>在<code>10.15.2</code>版本中包含以下framework：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">AGL.framework                           ColorSync.framework                     CoreVideo.framework                    GameKit.framework</span><br><span class="line">LinkPresentation.framework              OpenGL.framework                        SoundAnalysis.framework</span><br><span class="line">AVFoundation.framework                  Combine.framework                       CoreWLAN.framework                     GameplayKit.framework</span><br><span class="line">LocalAuthentication.framework           PCSC.framework                          Speech.framework</span><br><span class="line">AVKit.framework                         Contacts.framework                      CryptoKit.framework                    HIDDriverKit.framework</span><br><span class="line">MapKit.framework                        PDFKit.framework                        SpriteKit.framework</span><br><span class="line">Accelerate.framework                    ContactsUI.framework                    CryptoTokenKit.framework               Hypervisor.framework</span><br><span class="line">MediaAccessibility.framework            PencilKit.framework                     StoreKit.framework</span><br><span class="line">Accounts.framework                      CoreAudio.framework                     DVDPlayback.framework                  ICADevices.framework</span><br><span class="line">MediaLibrary.framework                  Photos.framework                        SwiftUI.framework</span><br><span class="line">AdSupport.framework                     CoreAudioKit.framework                  DeviceCheck.framework                  IMServicePlugIn.framework</span><br><span class="line">MediaPlayer.framework                   PhotosUI.framework                      SyncServices.framework</span><br><span class="line">AddressBook.framework                   CoreAudioTypes.framework                DirectoryService.framework             IOBluetooth.framework</span><br><span class="line">MediaToolbox.framework                  PreferencePanes.framework               System.framework</span><br><span class="line">AppKit.framework                        CoreBluetooth.framework                 DiscRecording.framework                IOBluetoothUI.framework</span><br><span class="line">Message.framework                       PushKit.framework                       SystemConfiguration.framework</span><br><span class="line">AppleScriptKit.framework                CoreData.framework                      DiscRecordingUI.framework              IOKit.framework</span><br><span class="line">Metal.framework                         Python.framework                        SystemExtensions.framework</span><br><span class="line">AppleScriptObjC.framework               CoreDisplay.framework                   DiskArbitration.framework              IOSurface.framework</span><br><span class="line">MetalKit.framework                      QTKit.framework                         TWAIN.framework</span><br><span class="line">ApplicationServices.framework           CoreFoundation.framework                DriverKit.framework                    IOUSBHost.framework</span><br><span class="line">MetalPerformanceShaders.framework       Quartz.framework                        Tcl.framework</span><br><span class="line">AudioToolbox.framework                  CoreGraphics.framework                  EventKit.framework                     IdentityLookup.framework</span><br><span class="line">MetricKit.framework                     QuartzCore.framework                    Tk.framework</span><br><span class="line">AudioUnit.framework                     CoreHaptics.framework                   ExceptionHandling.framework            ImageCaptureCore.framework</span><br><span class="line">ModelIO.framework                       QuickLook.framework                     USBDriverKit.framework</span><br><span class="line">AudioVideoBridging.framework            CoreImage.framework                     ExecutionPolicy.framework              ImageIO.framework</span><br><span class="line">MultipeerConnectivity.framework         QuickLookThumbnailing.framework         UserNotifications.framework</span><br><span class="line">AuthenticationServices.framework        CoreLocation.framework                  ExternalAccessory.framework            InputMethodKit.framework</span><br><span class="line">NaturalLanguage.framework               RealityKit.framework                    VideoDecodeAcceleration.framework</span><br><span class="line">Automator.framework                     CoreMIDI.framework                      FWAUserLib.framework                   InstallerPlugins.framework</span><br><span class="line">NetFS.framework                         Ruby.framework                          VideoSubscriberAccount.framework</span><br><span class="line">BackgroundTasks.framework               CoreMIDIServer.framework                FileProvider.framework                 InstantMessage.framework</span><br><span class="line">Network.framework                       SafariServices.framework                VideoToolbox.framework</span><br><span class="line">BusinessChat.framework                  CoreML.framework                        FileProviderUI.framework               Intents.framework</span><br><span class="line">NetworkExtension.framework              SceneKit.framework                      Vision.framework</span><br><span class="line">CFNetwork.framework                     CoreMedia.framework                     FinderSync.framework                   JavaFrameEmbedding.framework</span><br><span class="line">NetworkingDriverKit.framework           ScreenSaver.framework                   WebKit.framework</span><br><span class="line">CalendarStore.framework                 CoreMediaIO.framework                   ForceFeedback.framework                JavaScriptCore.framework</span><br><span class="line">NotificationCenter.framework            ScriptingBridge.framework               iTunesLibrary.framework</span><br><span class="line">CallKit.framework                       CoreMotion.framework                    Foundation.framework                   JavaVM.framework</span><br><span class="line">OSAKit.framework                        Security.framework                      vecLib.framework</span><br><span class="line">Carbon.framework                        CoreServices.framework                  GLKit.framework                        Kerberos.framework</span><br><span class="line">OSLog.framework                         SecurityFoundation.framework            vmnet.framework</span><br><span class="line">CloudKit.framework                      CoreSpotlight.framework                 GLUT.framework                         Kernel.framework</span><br><span class="line">OpenAL.framework                        SecurityInterface.framework</span><br><span class="line">Cocoa.framework                         CoreTelephony.framework                 GSS.framework                          LDAP.framework</span><br><span class="line">OpenCL.framework                        ServiceManagement.framework</span><br><span class="line">Collaboration.framework                 CoreText.framework                      GameController.framework               LatentSemanticMapping.framework</span><br><span class="line">OpenDirectory.framework                 Social.framework</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装CommandLineTool"><a href="#安装CommandLineTool" class="headerlink" title="安装CommandLineTool"></a>安装CommandLineTool</h3><blockquote>
+<p>Xcode’s metal shader compiler was not found, verify Xcode has been installed on this Mac and that it has been selected in Xcode &gt; Preferences &gt; Locations &gt; Command-line Tools.</p>
+</blockquote>
+<p>相关问题：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://answers.unrealengine.com/questions/723143/unreal-engine-inaccurately-reports-xcode-is-too-ol-1.html">Unreal Engine inaccurately reports “XCode is too old” when CommandLineTools installed</a></li>
+</ul>
+<p>离线安装<code>XCode</code>和<code>Command Line Tools for Xcode</code>可以从苹果的开发者网站下载：<a target="_blank" rel="noopener" href="https://developer.apple.com/download/more/">More Downloads for Apple Developers</a></p>
+<p>在安装完<code>Command Line Tools</code>之后，如果cook时还是提示这个错误，则需要执行下列命令(当然要首先确保<code>/Library/Developer/CommandLineTools</code>路径存在，一般<code>Command Line Tools</code>的默认安装路径是这个)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo xcode-select -s /Library/Developer/CommandLineTools</span><br></pre></td></tr></table></figure>
+
+<p>当设置<code>CommandLineTools</code>之后打包时可能会提示:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ERROR: Invalid SDK MacOSX.sdk, <span class="keyword">not</span> found in /Library/Developer/CommandLineTools/Platforms/MacOSX.platform/Developer/SDKs</span><br></pre></td></tr></table></figure>
+
+<p>这是因为通过<code>xcode-select</code>设置为<code>CommandLineTools</code>之后，打包时找不到Xcode里的库了。<br>解决的办法是在<code>CommandLineTools</code>的目录下创建一个Xcode中的<code>Platforms</code>目录的软连接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">ln</span> -s /Applications/Xcode.app/Contents/Developer/Platforms /Library/Developer/CommandLineTools/Platforms</span><br></pre></td></tr></table></figure>
+
+<h3 id="actool错误"><a href="#actool错误" class="headerlink" title="actool错误"></a>actool错误</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UATHelper: Packaging (iOS):   xcrun: error: unable to find utility &quot;actool&quot;, not a developer tool or in PATH</span><br><span class="line">PackagingResults: Error: unable to find utility &quot;actool&quot;, not a developer tool or in PATH</span><br></pre></td></tr></table></figure>
+
+<p>这是因为把<code>CommandLinTool</code>设置为默认的命令行工具之后，<code>CommandLinTool/use/bin</code>下并没有<code>actool</code>等工具。<br>这是个十分坑爹的问题，用xcode作为默认的命令行工具导致Cook不过，用CommandLineTool又在编译时有问题。<br>我的解办法是把<code>/Applications/Xcode.app/Contents/Developer/usr/bin</code>通过软连接方式链接到<code>/Library/Developer/CommandLineTools/usr</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 当然要先备份CommandLineTool/usr/bin</span></span><br><span class="line">$ <span class="built_in">mv</span> /Library/Developer/CommandLineTools/usr/bin /Library/Developer/CommandLineTools/usr/Command_bin</span><br><span class="line"><span class="comment"># 创建xcode的bin目录的软连接</span></span><br><span class="line">$ sudo <span class="built_in">ln</span> -s /Applications/Xcode.app/Contents/Developer/usr/bin /Library/Developer/CommandLineTools/usr/bin</span><br></pre></td></tr></table></figure>
+
+<h3 id="解除MacOS安装软件的限制"><a href="#解除MacOS安装软件的限制" class="headerlink" title="解除MacOS安装软件的限制"></a>解除MacOS安装软件的限制</h3><ul>
+<li>允许任何来源，运行第三方应用</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo spctl --master-disable</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>安装灰色的dmg</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hdiutil attach <span class="comment">#dmg文件名#</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="http://16bing.com/2017/04/06/mac-security-anywhere/">打开 macOS Sierra 允许“任何来源”选项，运行第三方应用</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.voidcn.com/article/p-gtvyrrux-bau.html">Mac dmg文件灰色无法安装</a></li>
+</ul>
+<h3 id="MacOS读写NTFS"><a href="#MacOS读写NTFS" class="headerlink" title="MacOS读写NTFS"></a>MacOS读写NTFS</h3><p>装上macOS之后发现，macOS可以读取ntfs的文件，但是不可以写入，这十分蛋疼。<br>查了一下说是因为微软的限制，但是macOS本身是做了读写的功能的，只是被关闭了，可以通过以下方法开启。</p>
+<p>首先，在终端下执行<code>diskutil list</code>查看磁盘信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">visionsmile$ diskutil list</span><br><span class="line">/dev/disk0 (internal, physical):</span><br><span class="line">   <span class="comment">#:                       TYPE NAME                    SIZE       IDENTIFIER</span></span><br><span class="line">   0:      GUID_partition_scheme                        *240.1 GB   disk0</span><br><span class="line">   1:                        EFI                         312.5 MB   disk0s1</span><br><span class="line">   2:         Microsoft Reserved                         134.2 MB   disk0s2</span><br><span class="line">   3:       Microsoft Basic Data Windows                 164.3 GB   disk0s3</span><br><span class="line">   4:                 Apple_APFS Container disk1         75.3 GB    disk0s4</span><br><span class="line"></span><br><span class="line">/dev/disk1 (synthesized):</span><br><span class="line">   <span class="comment">#:                       TYPE NAME                    SIZE       IDENTIFIER</span></span><br><span class="line">   0:      APFS Container Scheme -                      +75.3 GB    disk1</span><br><span class="line">                                 Physical Store disk0s4</span><br><span class="line">   1:                APFS Volume OSX                     34.2 GB    disk1s1</span><br><span class="line">   2:                APFS Volume Preboot                 21.1 MB    disk1s2</span><br><span class="line">   3:                APFS Volume Recovery                509.8 MB   disk1s3</span><br><span class="line">   4:                APFS Volume VM                      2.1 GB     disk1s4</span><br><span class="line"></span><br><span class="line">/dev/disk2 (external, physical):</span><br><span class="line">   <span class="comment">#:                       TYPE NAME                    SIZE       IDENTIFIER</span></span><br><span class="line">   0:      GUID_partition_scheme                        *4.0 TB     disk2</span><br><span class="line">   1:         Microsoft Reserved                         134.2 MB   disk2s1</span><br><span class="line">   2:       Microsoft Basic Data Document                4.0 TB     disk2s2</span><br><span class="line"></span><br><span class="line">/dev/disk3 (internal, physical):</span><br><span class="line">   <span class="comment">#:                       TYPE NAME                    SIZE       IDENTIFIER</span></span><br><span class="line">   0:     FDisk_partition_scheme                        *1.0 TB     disk3</span><br><span class="line">   1:               Windows_NTFS Documents2              1.0 TB     disk3s1</span><br></pre></td></tr></table></figure>
+
+<p>需要记录的是ntfs磁盘的NAME信息，我这里有三个ntfs分区<code>windows</code>/<code>Documents</code>/<code>Documents2</code>.</p>
+<p>然后继续执行命令，更新fatab文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /etc/fstab</span><br></pre></td></tr></table></figure>
+
+<p>输入下列内容，并把<code>LABEL=</code>之后的内容替换为上面记录的分区的名字：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LABEL=Windows none ntfs rw,auto,nobrowse</span><br><span class="line">LABEL=Documents none ntfs rw,auto,nobrowse</span><br><span class="line">LABEL=Documents2 none ntfs rw,auto,nobrowse</span><br></pre></td></tr></table></figure>
+
+<p>重启之后即可。<br>注意：重启之后的移动磁盘不会在桌面上显示，必须要打开Finder才可以看到。</p>
+<h2 id="UE4项目在Mac上遇到的问题"><a href="#UE4项目在Mac上遇到的问题" class="headerlink" title="UE4项目在Mac上遇到的问题"></a>UE4项目在Mac上遇到的问题</h2><h3 id="Cook错误"><a href="#Cook错误" class="headerlink" title="Cook错误"></a>Cook错误</h3><p>Cook时出现错误，报错信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CookResults: Error: Package Native Shader Library failed for MacNoEditor.</span><br></pre></td></tr></table></figure>
+
+<p>这是因为<code>Project Settings</code>-<code>Packing</code>-<code>Shared Material Native Library</code>，关掉之后就可以了。</p>
+<blockquote>
+<p>PS：我在UE的issus里看到了类似的bug提交，但是标记在4.18时就修复了：<a target="_blank" rel="noopener" href="https://issues.unrealengine.com/issue/UE-49105">UE-49105</a>，不知道为什么还有这个问题。</p>
+</blockquote>
+<h2 id="UPL在iOS中的应用"><a href="#UPL在iOS中的应用" class="headerlink" title="UPL在iOS中的应用"></a>UPL在iOS中的应用</h2><p><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Platforms/Mobile/UnrealPluginLanguage/index.html">Unreal Plugin Language</a>是UE提供的以XML语法为基础的语言，用来可以控制构建Apk以及ipa的过程，如实现修改<code>AndroidManifest.xml</code>或者<code>info.plist</code>等。</p>
+<h3 id="分析plist的生成流程"><a href="#分析plist的生成流程" class="headerlink" title="分析plist的生成流程"></a>分析plist的生成流程</h3><p>在<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/d9d435c9c280b99a6c679b517adedd3f4b02cfd7/Engine/Source/Programs/UnrealBuildTool/Platform/IOS/UEDeployIOS.cs">UEDeployIOS.cs</a>的<code>GeneratePList</code>函数中通过传入进来的<code>UPLScripts</code>来构造出UPL对象：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">virtual</span> <span class="built_in">bool</span> <span class="title">GeneratePList</span>(<span class="params">FileReference ProjectFile, UnrealTargetConfiguration Config, <span class="built_in">string</span> ProjectDirectory, <span class="built_in">bool</span> bIsUE4Game, <span class="built_in">string</span> GameName, <span class="built_in">bool</span> bIsClient, <span class="built_in">string</span> ProjectName, <span class="built_in">string</span> InEngineDir, <span class="built_in">string</span> AppDirectory, List&lt;<span class="built_in">string</span>&gt; UPLScripts, VersionNumber SdkVersion, <span class="built_in">string</span> BundleID, <span class="built_in">bool</span> bBuildAsFramework, <span class="keyword">out</span> <span class="built_in">bool</span> bSupportsPortrait, <span class="keyword">out</span> <span class="built_in">bool</span> bSupportsLandscape, <span class="keyword">out</span> <span class="built_in">bool</span> bSkipIcons</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// remember name with -IOS-Shipping, etc</span></span><br><span class="line">	<span class="comment">// string ExeName = GameName;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// strip out the markup</span></span><br><span class="line">	GameName = GameName.Split(<span class="string">&quot;-&quot;</span>.ToCharArray())[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line">	List&lt;<span class="built_in">string</span>&gt; ProjectArches = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line">	ProjectArches.Add(<span class="string">&quot;None&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="built_in">string</span> BundlePath;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get the receipt</span></span><br><span class="line">	<span class="keyword">if</span> (bIsUE4Game)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// ReceiptFilename = TargetReceipt.GetDefaultPath(UnrealBuildTool.EngineDirectory, &quot;UE4Game&quot;, UnrealTargetPlatform.IOS, Config, &quot;&quot;);</span></span><br><span class="line">		BundlePath = Path.Combine(UnrealBuildTool.EngineDirectory.ToString(), <span class="string">&quot;Intermediate&quot;</span>, <span class="string">&quot;IOS-Deploy&quot;</span>, <span class="string">&quot;UE4Game&quot;</span>, Config.ToString(), <span class="string">&quot;Payload&quot;</span>, <span class="string">&quot;UE4Game.app&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// ReceiptFilename = TargetReceipt.GetDefaultPath(new DirectoryReference(ProjectDirectory), GameName, UnrealTargetPlatform.IOS, Config, &quot;&quot;);</span></span><br><span class="line">		BundlePath = AppDirectory;<span class="comment">//Path.Combine(ProjectDirectory, &quot;Binaries&quot;, &quot;IOS&quot;, &quot;Payload&quot;, ProjectName + &quot;.app&quot;);</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">string</span> RelativeEnginePath = UnrealBuildTool.EngineDirectory.MakeRelativeTo(DirectoryReference.GetCurrentDirectory());</span><br><span class="line"></span><br><span class="line">	UnrealPluginLanguage UPL = <span class="keyword">new</span> UnrealPluginLanguage(ProjectFile, UPLScripts, ProjectArches, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, UnrealTargetPlatform.IOS);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Passing in true for distribution is not ideal here but given the way that ios packaging happens and this call chain it seems unavoidable for now, maybe there is a way to correctly pass it in that I can&#x27;t find?</span></span><br><span class="line">	UPL.Init(ProjectArches, <span class="literal">true</span>, RelativeEnginePath, BundlePath, ProjectDirectory, Config.ToString(), <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> GenerateIOSPList(ProjectFile, Config, ProjectDirectory, bIsUE4Game, GameName, bIsClient, ProjectName, InEngineDir, AppDirectory, SdkVersion, UPL, BundleID, bBuildAsFramework, <span class="keyword">out</span> bSupportsPortrait, <span class="keyword">out</span> bSupportsLandscape, <span class="keyword">out</span> bSkipIcons);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在最后调用的<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/283e412aa843210f2d6e9ed0236861cf749b3429/Engine/Source/Programs/UnrealBuildTool/Platform/IOS/UEDeployIOS.cs#L198">GeneratedIOSList</a>中，构造出默认的pliat内容、从<code>Additional Plist Data</code>中读取的内容、以及调用UPL来处理plist的内容，UPL的过程是最后处理的。</p>
+<p>而且需要注意的是，在<code>GeneratedPList</code>函数中，通过<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/283e412aa843210f2d6e9ed0236861cf749b3429/Engine/Source/Programs/UnrealBuildTool/Platform/IOS/UEDeployIOS.cs#L760">GeneratedIOSList</a>获取所有模块中添加的UPL.xml文件，然后把这些xml文件合并成一个，注意合并的顺序是<code>AdditionalProperties</code>的顺序，最后添加的UPL会放在最后执行，在一个项目中如果有多个使用UPL的操作要注意顺序问题。</p>
+<h3 id="介入ipa生成过程：操作plist"><a href="#介入ipa生成过程：操作plist" class="headerlink" title="介入ipa生成过程：操作plist"></a>介入ipa生成过程：操作plist</h3><p>ios的ipa包中都会有plist文件，可以用来配置app的一些属性，apple的开发者文档里对每个支持的key有详细的描述：<a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW10">iOS Keys</a></p>
+<p>UE 4.25.1 默认打包会产生下面这样一个plist文件：<a href="info.plist">info.plist</a>，在一些特殊的需求中，需要往这个plist中添加元素或者修改以及删除。</p>
+<p>在UE的项目设置中，可以给plist添加元素，在<code>Project Settings</code>-<code>Platform</code>-<code>iOS</code>-<code>Additional Plist data</code>中可以填入一个字符串，它会被插入到plist文件中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">key</span>&gt;</span>AdditionalElementAAA<span class="tag">&lt;/<span class="name">key</span>&gt;</span>\n<span class="tag">&lt;<span class="name">string</span>&gt;</span>this key is a test element.<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>中间的<code>\n</code>是格式化代码，用于另起一行。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-project-ios-additional-plist-data.webp"></p>
+<p>如果想要修改或者删除plist的元素，需要通过UPL来写逻辑（当然也可以使用UPL来添加元素，建议使用这种做法）。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">root</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">init</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;UPL Exalpme adding element to plist...&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">init</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">trace</span> <span class="attr">enable</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">iosPListUpdates</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">addElements</span> <span class="attr">tag</span>=<span class="string">&quot;dict&quot;</span> <span class="attr">once</span>=<span class="string">&quot;true&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">key</span>&gt;</span>AdditionalElementAAA<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">string</span>&gt;</span>this key is a test element.<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">addElements</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">iosPListUpdates</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">root</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>上面是用来添加元素的，上面的内容和直接写到<code>Additional Plist data</code>是一样的。</p>
+<p>遍历plist中的key：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">root</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">init</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;UPL Exalpme...&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">init</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">trace</span> <span class="attr">enable</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">iosPListUpdates</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">loopElements</span> <span class="attr">tag</span>=<span class="string">&quot;dict&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">loopElements</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">setStringFromTag</span> <span class="attr">result</span>=<span class="string">&quot;TagName&quot;</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>/&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">setBoolIsEqual</span> <span class="attr">result</span>=<span class="string">&quot;bIsKey&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$S(TagName)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;key&quot;</span>/&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">if</span> <span class="attr">condition</span>=<span class="string">&quot;bIsKey&quot;</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">true</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;$S(TagName):$S(TagValue)&quot;</span>/&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">true</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">loopElements</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">loopElements</span>&gt;</span></span><br><span class="line">        </span><br><span class="line">    <span class="tag">&lt;/<span class="name">iosPListUpdates</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">root</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：当前元素以<code>tag = &quot;$&quot;</code>方式引用。</p>
+<p>编译时就会有以下log：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">UPL: /Users/buildmachine/UE4/Builds/lipengzha-PC1/C/BuildAgent/workspace/PackageFGameClient/FGame/Plugins/UPLExample/Source/UPLExample/ThirdParty/IOS/IOS_UPL.xml</span><br><span class="line">UPL Init: None</span><br><span class="line">UPLExalpme adding element to plist...</span><br><span class="line">key : CFBundleURLTypes</span><br><span class="line">key : CFBundleDevelopmentRegion</span><br><span class="line">key : CFBundleDisplayName</span><br><span class="line">key : CFBundleExecutable</span><br><span class="line">key : CFBundleIdentifier</span><br><span class="line">key : CFBundleInfoDictionaryVersion</span><br><span class="line">key : CFBundleName</span><br><span class="line">key : CFBundlePackageType</span><br><span class="line">key : CFBundleSignature</span><br><span class="line">key : CFBundleVersion</span><br><span class="line">key : CFBundleShortVersionString</span><br><span class="line">key : LSRequiresIPhoneOS</span><br><span class="line">key : UIStatusBarHidden</span><br><span class="line">key : UIFileSharingEnabled</span><br><span class="line">key : UIRequiresFullScreen</span><br><span class="line">key : UIViewControllerBasedStatusBarAppearance</span><br><span class="line">key : UIInterfaceOrientation</span><br><span class="line">key : UISupportedInterfaceOrientations</span><br><span class="line">key : UIRequiredDeviceCapabilities</span><br><span class="line">key : CFBundleIcons</span><br><span class="line">key : CFBundleIcons~ipad</span><br><span class="line">key : UILaunchStoryboardName</span><br><span class="line">key : CFBundleSupportedPlatforms</span><br><span class="line">key : MinimumOSVersion</span><br><span class="line">key : ITSAppUsesNonExemptEncryption</span><br><span class="line">key : NSLocationAlwaysAndWhenInUseUsageDescription</span><br><span class="line">key : NSLocationWhenInUseUsageDescription</span><br><span class="line">key : CFBundleURLName</span><br><span class="line">key : CFBundleURLSchemes</span><br><span class="line">key : CFBundlePrimaryIcon</span><br><span class="line">key : CFBundleIconFiles</span><br><span class="line">key : CFBundleIconName</span><br><span class="line">key : UIPrerenderedIcon</span><br><span class="line">key : CFBundlePrimaryIcon</span><br><span class="line">key : CFBundleIconFiles</span><br><span class="line">key : CFBundleIconName</span><br><span class="line">key : UIPrerenderedIcon</span><br></pre></td></tr></table></figure>
+
+<p>对于新增比较简单，但是对于删除和修改就比较麻烦了，需要遍历一遍所有的节点，然后根据匹配来删掉当前的元素（注意plist的是键值对的，一个<code>&lt;key&gt;&lt;/key&gt;</code>下面还对应着一个value元素，这两个都要删掉，不然会打包不过）：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">key</span>&gt;</span>BuildMachineOSBuild<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">string</span>&gt;</span>19C57<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我写了个方便删除plist中元素的流程，可以方便删除多组元素：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">root</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">init</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;UPLExalpme adding element to plist...&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">init</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">trace</span> <span class="attr">enable</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">iosPListUpdates</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">addElements</span> <span class="attr">tag</span>=<span class="string">&quot;dict&quot;</span> <span class="attr">once</span>=<span class="string">&quot;true&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">key</span>&gt;</span>AdditionalElementA<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">string</span>&gt;</span>this key is a AdditionalElementA element.<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">key</span>&gt;</span>AdditionalElementB<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">string</span>&gt;</span>this key is a AdditionalElementB element.<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">addElements</span>&gt;</span></span><br><span class="line">        </span><br><span class="line">        <span class="tag">&lt;<span class="name">setString</span> <span class="attr">result</span>=<span class="string">&quot;NeedDeleteKey_1&quot;</span> <span class="attr">value</span>=<span class="string">&quot;AdditionalElementA&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">setString</span> <span class="attr">result</span>=<span class="string">&quot;NeedDeleteKey_2&quot;</span> <span class="attr">value</span>=<span class="string">&quot;AdditionalElementB&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">setInt</span> <span class="attr">result</span>=<span class="string">&quot;loopSumNum&quot;</span> <span class="attr">value</span>=<span class="string">&quot;2&quot;</span>/&gt;</span></span><br><span class="line">        </span><br><span class="line">        <span class="tag">&lt;<span class="name">setInt</span> <span class="attr">result</span>=<span class="string">&quot;loopCount&quot;</span> <span class="attr">value</span>=<span class="string">&quot;1&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">setBoolIsLessEqual</span> <span class="attr">result</span>=<span class="string">&quot;loopRun&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$I(loopCount)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;$I(loopSumNum)&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">while</span> <span class="attr">condition</span>=<span class="string">&quot;loopRun&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;count:$I(loopCount) SearchKey:$S(NeedDeleteKey_$I(loopCount))&quot;</span>/&gt;</span></span><br><span class="line">            </span><br><span class="line">            <span class="tag">&lt;<span class="name">setBool</span> <span class="attr">result</span>=<span class="string">&quot;bIsDeleteElement&quot;</span> <span class="attr">value</span>=<span class="string">&quot;false&quot;</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">loopElements</span> <span class="attr">tag</span>=<span class="string">&quot;dict&quot;</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">loopElements</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>&gt;</span></span><br><span class="line">                    <span class="comment">&lt;!-- delete value --&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">if</span> <span class="attr">condition</span>=<span class="string">&quot;bIsDeleteElement&quot;</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">true</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">setBool</span> <span class="attr">result</span>=<span class="string">&quot;bIsDeleteElement&quot;</span> <span class="attr">value</span>=<span class="string">&quot;false&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;bIsDeleteElement is true!!!&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">setStringFromTag</span> <span class="attr">result</span>=<span class="string">&quot;TagName&quot;</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">setStringFromTagText</span> <span class="attr">result</span>=<span class="string">&quot;TagValue&quot;</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;Delete element value,tagname:$S(TagName) value:$S(TagValue)&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">removeElement</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span> <span class="attr">once</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">true</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line"></span><br><span class="line">                    <span class="comment">&lt;!-- delete key --&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">setStringFromTag</span> <span class="attr">result</span>=<span class="string">&quot;TagName&quot;</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>/&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">setBoolIsEqual</span> <span class="attr">result</span>=<span class="string">&quot;bIsKey&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$S(TagName)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;key&quot;</span>/&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">if</span> <span class="attr">condition</span>=<span class="string">&quot;bIsKey&quot;</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;<span class="name">true</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">setStringFromTagText</span> <span class="attr">result</span>=<span class="string">&quot;TagValue&quot;</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;tagname:$S(TagName) tagvalue:$S(TagValue)&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">setBoolIsEqual</span> <span class="attr">result</span>=<span class="string">&quot;bIs_NeedDeleteKey_$I(loopCount)&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$S(TagValue)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;$S(NeedDeleteKey_$I(loopCount))&quot;</span>/&gt;</span></span><br><span class="line">                            <span class="tag">&lt;<span class="name">if</span> <span class="attr">condition</span>=<span class="string">&quot;bIs_NeedDeleteKey_$I(loopCount)&quot;</span>&gt;</span></span><br><span class="line">                                <span class="tag">&lt;<span class="name">true</span>&gt;</span></span><br><span class="line">                                    <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;Match key $S(NeedDeleteKey_$I(loopCount)).&quot;</span>/&gt;</span></span><br><span class="line">                                    <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;Delete element key,tagname:$S(TagName) value:$S(TagValue).&quot;</span>/&gt;</span></span><br><span class="line">                                    <span class="tag">&lt;<span class="name">removeElement</span> <span class="attr">tag</span>=<span class="string">&quot;$&quot;</span> <span class="attr">once</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">                                    <span class="tag">&lt;<span class="name">setBool</span> <span class="attr">result</span>=<span class="string">&quot;bIsDeleteElement&quot;</span> <span class="attr">value</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">                                <span class="tag">&lt;/<span class="name">true</span>&gt;</span></span><br><span class="line">                            <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">                        <span class="tag">&lt;/<span class="name">true</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">loopElements</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">loopElements</span>&gt;</span></span><br><span class="line">            </span><br><span class="line">            <span class="comment">&lt;!--control loop end--&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">setIntAdd</span> <span class="attr">result</span>=<span class="string">&quot;loopCount&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$I(loopCount)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;1&quot;</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">setBoolIsLessEqual</span> <span class="attr">result</span>=<span class="string">&quot;loopRun&quot;</span> <span class="attr">arg1</span>=<span class="string">&quot;$I(loopCount)&quot;</span> <span class="attr">arg2</span>=<span class="string">&quot;$I(loopSumNum)&quot;</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">if</span> <span class="attr">condition</span>=<span class="string">&quot;loopRun&quot;</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">true</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;add loopCount to $I(loopCount)&quot;</span>/&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">true</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">false</span>&gt;</span></span><br><span class="line">                    <span class="tag">&lt;<span class="name">log</span> <span class="attr">text</span>=<span class="string">&quot;the loop is finished!&quot;</span>/&gt;</span></span><br><span class="line">                <span class="tag">&lt;/<span class="name">false</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">while</span>&gt;</span></span><br><span class="line">        </span><br><span class="line">    <span class="tag">&lt;/<span class="name">iosPListUpdates</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">root</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>脚本最开始Add了两个元素对，后面则是删除的代码，使用时需要关注的是下面三行：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">setString</span> <span class="attr">result</span>=<span class="string">&quot;NeedDeleteKey_1&quot;</span> <span class="attr">value</span>=<span class="string">&quot;AdditionalElementA&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">setString</span> <span class="attr">result</span>=<span class="string">&quot;NeedDeleteKey_2&quot;</span> <span class="attr">value</span>=<span class="string">&quot;AdditionalElementB&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">setInt</span> <span class="attr">result</span>=<span class="string">&quot;loopSumNum&quot;</span> <span class="attr">value</span>=<span class="string">&quot;2&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>头两行是要删除的元素的变量，值是要删除的key的字符串，注意命名规则都是以<code>NeedDeleteKey_</code>开头，要遵守这个命名规则。<br>第三行是创建了一个<code>loopSumNum</code>的变量，用于记录有多少个需要删除的元素对，这里我测试删除两个，它的值就是2。</p>
+<p>当打包构建的时候，这个脚本执行起来就会有下面的输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line">UPL: /Users/buildmachine/UE4/Builds/lipengzha-PC1/C/BuildAgent/workspace/PackageFGameClient/FGame/Plugins/UPLExample/Source/UPLExample/ThirdParty/IOS/IOS_UPL.xml</span><br><span class="line">UPL Init: None</span><br><span class="line">UPLExalpme adding element to plist...</span><br><span class="line">count:1 SearchKey:AdditionalElementA</span><br><span class="line">tagname:key tagvalue:CFBundleURLTypes</span><br><span class="line">tagname:key tagvalue:CFBundleDevelopmentRegion</span><br><span class="line">tagname:key tagvalue:CFBundleDisplayName</span><br><span class="line">tagname:key tagvalue:CFBundleExecutable</span><br><span class="line">tagname:key tagvalue:CFBundleIdentifier</span><br><span class="line">tagname:key tagvalue:CFBundleInfoDictionaryVersion</span><br><span class="line">tagname:key tagvalue:CFBundleName</span><br><span class="line">tagname:key tagvalue:CFBundlePackageType</span><br><span class="line">tagname:key tagvalue:CFBundleSignature</span><br><span class="line">tagname:key tagvalue:CFBundleVersion</span><br><span class="line">tagname:key tagvalue:CFBundleShortVersionString</span><br><span class="line">tagname:key tagvalue:LSRequiresIPhoneOS</span><br><span class="line">tagname:key tagvalue:UIStatusBarHidden</span><br><span class="line">tagname:key tagvalue:UIFileSharingEnabled</span><br><span class="line">tagname:key tagvalue:UIRequiresFullScreen</span><br><span class="line">tagname:key tagvalue:UIViewControllerBasedStatusBarAppearance</span><br><span class="line">tagname:key tagvalue:UIInterfaceOrientation</span><br><span class="line">tagname:key tagvalue:UISupportedInterfaceOrientations</span><br><span class="line">tagname:key tagvalue:UIRequiredDeviceCapabilities</span><br><span class="line">tagname:key tagvalue:CFBundleIcons</span><br><span class="line">tagname:key tagvalue:CFBundleIcons~ipad</span><br><span class="line">tagname:key tagvalue:UILaunchStoryboardName</span><br><span class="line">tagname:key tagvalue:CFBundleSupportedPlatforms</span><br><span class="line">tagname:key tagvalue:MinimumOSVersion</span><br><span class="line">tagname:key tagvalue:ITSAppUsesNonExemptEncryption</span><br><span class="line">tagname:key tagvalue:NSLocationAlwaysAndWhenInUseUsageDescription</span><br><span class="line">tagname:key tagvalue:NSLocationWhenInUseUsageDescription</span><br><span class="line">tagname:key tagvalue:AdditionalElementA</span><br><span class="line">Match key AdditionalElementA.</span><br><span class="line">Delete element key,tagname:key value:AdditionalElementA.</span><br><span class="line">bIsDeleteElement is true!!!</span><br><span class="line">Delete element value,tagname:string value:this key is a AdditionalElementA element.</span><br><span class="line">tagname:key tagvalue:AdditionalElementB</span><br><span class="line">tagname:key tagvalue:CFBundleURLName</span><br><span class="line">tagname:key tagvalue:CFBundleURLSchemes</span><br><span class="line">tagname:key tagvalue:CFBundlePrimaryIcon</span><br><span class="line">tagname:key tagvalue:CFBundleIconFiles</span><br><span class="line">tagname:key tagvalue:CFBundleIconName</span><br><span class="line">tagname:key tagvalue:UIPrerenderedIcon</span><br><span class="line">tagname:key tagvalue:CFBundlePrimaryIcon</span><br><span class="line">tagname:key tagvalue:CFBundleIconFiles</span><br><span class="line">tagname:key tagvalue:CFBundleIconName</span><br><span class="line">tagname:key tagvalue:UIPrerenderedIcon</span><br><span class="line">add loopCount to 2</span><br><span class="line">count:2 SearchKey:AdditionalElementB</span><br><span class="line">tagname:key tagvalue:CFBundleURLTypes</span><br><span class="line">tagname:key tagvalue:CFBundleDevelopmentRegion</span><br><span class="line">tagname:key tagvalue:CFBundleDisplayName</span><br><span class="line">tagname:key tagvalue:CFBundleExecutable</span><br><span class="line">tagname:key tagvalue:CFBundleIdentifier</span><br><span class="line">tagname:key tagvalue:CFBundleInfoDictionaryVersion</span><br><span class="line">tagname:key tagvalue:CFBundleName</span><br><span class="line">tagname:key tagvalue:CFBundlePackageType</span><br><span class="line">tagname:key tagvalue:CFBundleSignature</span><br><span class="line">tagname:key tagvalue:CFBundleVersion</span><br><span class="line">tagname:key tagvalue:CFBundleShortVersionString</span><br><span class="line">tagname:key tagvalue:LSRequiresIPhoneOS</span><br><span class="line">tagname:key tagvalue:UIStatusBarHidden</span><br><span class="line">tagname:key tagvalue:UIFileSharingEnabled</span><br><span class="line">tagname:key tagvalue:UIRequiresFullScreen</span><br><span class="line">tagname:key tagvalue:UIViewControllerBasedStatusBarAppearance</span><br><span class="line">tagname:key tagvalue:UIInterfaceOrientation</span><br><span class="line">tagname:key tagvalue:UISupportedInterfaceOrientations</span><br><span class="line">tagname:key tagvalue:UIRequiredDeviceCapabilities</span><br><span class="line">tagname:key tagvalue:CFBundleIcons</span><br><span class="line">tagname:key tagvalue:CFBundleIcons~ipad</span><br><span class="line">tagname:key tagvalue:UILaunchStoryboardName</span><br><span class="line">tagname:key tagvalue:CFBundleSupportedPlatforms</span><br><span class="line">tagname:key tagvalue:MinimumOSVersion</span><br><span class="line">tagname:key tagvalue:ITSAppUsesNonExemptEncryption</span><br><span class="line">tagname:key tagvalue:NSLocationAlwaysAndWhenInUseUsageDescription</span><br><span class="line">tagname:key tagvalue:NSLocationWhenInUseUsageDescription</span><br><span class="line">tagname:key tagvalue:AdditionalElementAAA</span><br><span class="line">tagname:key tagvalue:AdditionalElementB</span><br><span class="line">Match key AdditionalElementB.</span><br><span class="line">Delete element key,tagname:key value:AdditionalElementB.</span><br><span class="line">bIsDeleteElement is true!!!</span><br><span class="line">Delete element value,tagname:string value:this key is a AdditionalElementB element.</span><br><span class="line">tagname:key tagvalue:CFBundleURLName</span><br><span class="line">tagname:key tagvalue:CFBundleURLSchemes</span><br><span class="line">tagname:key tagvalue:CFBundlePrimaryIcon</span><br><span class="line">tagname:key tagvalue:CFBundleIconFiles</span><br><span class="line">tagname:key tagvalue:CFBundleIconName</span><br><span class="line">tagname:key tagvalue:UIPrerenderedIcon</span><br><span class="line">tagname:key tagvalue:CFBundlePrimaryIcon</span><br><span class="line">tagname:key tagvalue:CFBundleIconFiles</span><br><span class="line">tagname:key tagvalue:CFBundleIconName</span><br><span class="line">tagname:key tagvalue:UIPrerenderedIcon</span><br><span class="line">the loop is finished!</span><br></pre></td></tr></table></figure>
+
+<p>其实只要可以删除，就可以在删除之后自己通过<code>addElements</code>来再把已删除的元素添加一遍了，从而实现要修改的目的。</p>
+<h3 id="为IOS添加Framawork"><a href="#为IOS添加Framawork" class="headerlink" title="为IOS添加Framawork"></a>为IOS添加Framawork</h3><p>IOS上的<code>Framework</code>有点类似于静态链接库的意思，相当于把<code>.a</code>+<code>.h</code>+资源打包到一块的集合体。更具体的区别描述请看：<a target="_blank" rel="noopener" href="https://blog.csdn.net/lvxiangan/article/details/43115131">iOS库 .a与.framework区别</a></p>
+<p>在UE中以集成IOS上操作Keycahin的<code>SSKeychain</code>为例，在Module的<code>build.cs</code>中使用<code>PublicAdditionalFrameworks</code>来添加：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">PublicAdditionalFrameworks.Add(</span><br><span class="line">    <span class="keyword">new</span> Framework(</span><br><span class="line">        <span class="string">&quot;SSKeychain&quot;</span>,</span><br><span class="line">        <span class="string">&quot;ThirdParty/IOS/SSKeychain.embeddedframework.zip&quot;</span>,</span><br><span class="line">        <span class="string">&quot;SSKeychain.framework/SSKeychain.bundle&quot;</span></span><br><span class="line">        )</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>构造Framework的第一个参数是名字，第二个是framework的路径（相对于Module），第三个则是解压之后的Framework的<code>bundle</code>路径（如果framework没有bundle则可以忽略这个参数，而且就算有bundle，但是不写这第三个参数貌似也没什么问题）。</p>
+<p>这个可以打开<code>SSKeychain.embeddedframework.zip</code>文件看：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">SSKeychain.embeddedframework</span><br><span class="line">    └─SSKeychain.framework</span><br><span class="line">        │  Info.plist</span><br><span class="line">        │  SSKeychain</span><br><span class="line">        │</span><br><span class="line">        ├─Headers</span><br><span class="line">        │      SSKeychain.h</span><br><span class="line">        │      SSKeychainQuery.h</span><br><span class="line">        │</span><br><span class="line">        ├─Modules</span><br><span class="line">        │      <span class="keyword">module</span>.modulemap</span><br><span class="line">        │</span><br><span class="line">        ├─SSKeychain.bundle</span><br><span class="line">        │  └─en.lproj</span><br><span class="line">        │          SSKeychain.strings</span><br><span class="line">        │</span><br><span class="line">        └─_CodeSignature</span><br><span class="line">                CodeDirectory</span><br><span class="line">                CodeRequirements</span><br><span class="line">                CodeRequirements<span class="number">-1</span></span><br><span class="line">                CodeResources</span><br><span class="line">                CodeSignature</span><br></pre></td></tr></table></figure>
+
+<p>相对于<code>.framework</code>的路径，这个路径一定要填正确，不然是不能用的，因为打包时会把这个zip解压出来，然后拷贝到包体中，路径指定错了就无法拷贝了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="number">2020.05</span><span class="number">.14</span><span class="number">-11.04</span><span class="number">.48</span>:<span class="number">324</span>][<span class="number">988</span>]UATHelper: <span class="built_in">Packaging</span> (iOS):     [<span class="number">2</span>/<span class="number">183</span>] sh Unzipping : /Users/zyhmac/UE4/Builds/ZHALIPENG/C/Users/imzlp/Documents/UnrealProjectSSD/MicroEnd_423/Plugins/PlatformUtils/Source/PlatformUtils/ThirdParty/IOS/SSKeychain.embeddedframework.zip -&gt; /Users/zyhmac/UE4/Builds/ZHALIPENG/D/UnrealEngine/Epic/UE_4<span class="number">.23</span>/Engine/Intermediate/UnzippedFrameworks/SSKeychain/SSKeychain.embeddedframework</span><br></pre></td></tr></table></figure>
+
+<p>注意：不要在两个不同的模块里同时引入一个相同的第三方framework文件，不然会有以下错误（如我在插件A中引入了<code>SSKeychain.embeddedframework.zip</code>然后在相同工程的另一个插件B中也引入了它）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Unable to merge actions producing SSKeychain.embeddedframework.extracted: prerequisites are different.</span><br></pre></td></tr></table></figure>
+
+<h2 id="测试iOS包的常见问题"><a href="#测试iOS包的常见问题" class="headerlink" title="测试iOS包的常见问题"></a>测试iOS包的常见问题</h2><h3 id="iOS-UE4App的数据目录"><a href="#iOS-UE4App的数据目录" class="headerlink" title="iOS UE4App的数据目录"></a>iOS UE4App的数据目录</h3><p>访问iOS程序的文稿目录需要App开启文件共享(File Sharing)，需要在UE的<code>Project Settings</code>-<code>Platform</code>-<code>IOS</code>-<code>File System</code>里开启：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-ios-support-file-sharing.webp"></p>
+<p>这样打包之后才可以访问应用程序的文稿目录。</p>
+<p>可以使用<a target="_blank" rel="noopener" href="https://imazing.com/zh">iMaZing</a>这个工具来访问ios App的文稿目录，可以创建文件夹、拷贝文件等等，还是比较方便的。</p>
+<p>UE在Win和Android平台都有这样的目录结构：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+---Engine</span><br><span class="line">|   +---Content</span><br><span class="line">\---FGame</span><br><span class="line">    +---Content</span><br><span class="line">    |   +---Movies</span><br><span class="line">    |   \---Paks</span><br><span class="line">    \---Saved</span><br><span class="line">        +---Logs</span><br><span class="line">        \---Paks</span><br></pre></td></tr></table></figure>
+
+<p>在Win上是相对于打包目录，在Android上默认是<code>&lt;Sdcard&gt;/UE4Game/PROJECT_NAME/</code>的。</p>
+<p>而在iOS上这个结构是相对于App的文稿目录的（这几个文件夹都是我手动创建的，Shipping时也没有log）：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/ue4-assess-ios-app-document-folder.webp"></p>
+<p>如果想要mount pak就按照这个目录结构把pak放到相关目录即可，在程序中就可以通过<code>FPaths</code>的API来访问了。</p>
+<h3 id="在Windows上查看iOS设备log"><a href="#在Windows上查看iOS设备log" class="headerlink" title="在Windows上查看iOS设备log"></a>在Windows上查看iOS设备log</h3><p>Andorid的设备可以使用<code>adb logcat</code>来捕获log，在想要看iOS的log却十分麻烦，还要Mac。</p>
+<p>但是经过一番查找，找到了一个工具，可以在Windows上实时地查看当前设备log：<a target="_blank" rel="noopener" href="https://www.blackberry.com/blackberrytraining/web/KB_Resources/KB36986_iOSLogInfo_4.3.4.zip">IOSLogInfo</a></p>
+<p>下载之后解压，执行<code>sdsiosloginfo.exe</code>就可以看到类似<code>logcat</code>的日志输出了，如果装了<code>Git bash</code>环境也可以使用<code>|</code>来进行过滤。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/1948/iOSLogInfo-for-windows.webp"></p>
+<h3 id="UE项目在MAC上的Log位置"><a href="#UE项目在MAC上的Log位置" class="headerlink" title="UE项目在MAC上的Log位置"></a>UE项目在MAC上的Log位置</h3><blockquote>
+<p>MacOS上打开UE项目的Log位置为<code>~/Library/Logs/Unreal Engine/ProjectName</code>，<a target="_blank" rel="noopener" href="https://wiki.unrealengine.com/Locating_Project_Logs">Locating Project Logs</a></p>
+</blockquote>
+<h3 id="Mac打包的Paklist位置"><a href="#Mac打包的Paklist位置" class="headerlink" title="Mac打包的Paklist位置"></a>Mac打包的Paklist位置</h3><p>Mac上打包IPA生成的Paklist的位置为<code>~/Library/Logs/Unreal Engine/LocalBuildLogs/BuildCookRun</code>，与Windows上打包有区别。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210910142449.webp"></p>
+<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.unrealengine.com/Mobile_Development_Troubleshooting_Guide">UE4移动设备开发指南</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Platforms/Mobile/iOS/Windows/index.html">Building for iOS on Windows</a></li>
+<li>ios上类似logcat的工具<a target="_blank" rel="noopener" href="https://lemonjar.com/iosconsole/">iOS Console</a></li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/1948/" target="_blank">UE开发笔记：Mac/iOS篇</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年09月01日 21时45分<br/>
+             
+              <span>更新时间:</span>2023年09月08日 09时47分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有8.3k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/1948/" target="_blank" title="UE开发笔记：Mac/iOS篇">https://imzlp.com/posts/1948/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/1948/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/iOS/" rel="tag"># iOS</a>
+              <a href="/tags/Mac/" rel="tag"># Mac</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/28513/" rel="prev" title="UE导入图集：TexturePacker">
+      <i class="fa fa-chevron-left"></i> UE导入图集：TexturePacker
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/17371/" rel="next" title="UE热更新：需求分析与方案设计">
+      UE热更新：需求分析与方案设计 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BAiOS"><span class="nav-number">1.</span> <span class="nav-text">远程构建iOS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IOS%E8%AF%81%E4%B9%A6%E7%94%B3%E8%AF%B7"><span class="nav-number">1.1.</span> <span class="nav-text">IOS证书申请</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BA"><span class="nav-number">1.2.</span> <span class="nav-text">配置远程构建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SSH%E4%BD%BF%E7%94%A8key%E7%99%BB%E5%BD%95%E5%A4%B1%E8%B4%A5"><span class="nav-number">1.3.</span> <span class="nav-text">SSH使用key登录失败</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#iOS%E6%89%93%E5%8C%85%E8%AF%81%E4%B9%A6%E9%85%8D%E7%BD%AE%E6%8A%A5%E9%94%99%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.</span> <span class="nav-text">iOS打包证书配置报错问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SSHKey%E8%B7%AF%E5%BE%84%E6%9F%A5%E6%89%BE%E7%9A%84bug"><span class="nav-number">1.5.</span> <span class="nav-text">SSHKey路径查找的bug</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E7%BC%96%E8%AF%91Shader%E7%9A%84Key%E6%9F%A5%E6%89%BEbug"><span class="nav-number">1.6.</span> <span class="nav-text">远程编译Shader的Key查找bug</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%BE%E5%90%8D%E9%94%99%E8%AF%AF"><span class="nav-number">1.7.</span> <span class="nav-text">签名错误</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E8%80%85%E7%AD%BE%E5%90%8D%E5%88%B0%E6%9C%9F"><span class="nav-number">1.7.1.</span> <span class="nav-text">开发者签名到期</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8B%B9%E6%9E%9C%E4%B8%AD%E7%BA%A7%E8%AF%81%E4%B9%A6%E5%88%B0%E6%9C%9F"><span class="nav-number">1.7.2.</span> <span class="nav-text">苹果中级证书到期</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">1.8.</span> <span class="nav-text">注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mac%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">Mac开发环境</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MacOS%E5%AE%89%E8%A3%85UE"><span class="nav-number">2.1.</span> <span class="nav-text">MacOS安装UE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Mac%E4%BF%AE%E6%94%B9SSHD%E9%BB%98%E8%AE%A4%E7%AB%AF%E5%8F%A3"><span class="nav-number">2.2.</span> <span class="nav-text">Mac修改SSHD默认端口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BAxcode%E5%BC%80%E5%90%AF%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E8%AF%91"><span class="nav-number">2.3.</span> <span class="nav-text">为xcode开启多线程编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Mac%E7%B3%BB%E7%BB%9F%E5%86%85%E7%BD%AE%E7%9A%84Framework"><span class="nav-number">2.4.</span> <span class="nav-text">Mac系统内置的Framework</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85CommandLineTool"><span class="nav-number">2.5.</span> <span class="nav-text">安装CommandLineTool</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#actool%E9%94%99%E8%AF%AF"><span class="nav-number">2.6.</span> <span class="nav-text">actool错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%99%A4MacOS%E5%AE%89%E8%A3%85%E8%BD%AF%E4%BB%B6%E7%9A%84%E9%99%90%E5%88%B6"><span class="nav-number">2.7.</span> <span class="nav-text">解除MacOS安装软件的限制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MacOS%E8%AF%BB%E5%86%99NTFS"><span class="nav-number">2.8.</span> <span class="nav-text">MacOS读写NTFS</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4%E9%A1%B9%E7%9B%AE%E5%9C%A8Mac%E4%B8%8A%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">3.</span> <span class="nav-text">UE4项目在Mac上遇到的问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Cook%E9%94%99%E8%AF%AF"><span class="nav-number">3.1.</span> <span class="nav-text">Cook错误</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UPL%E5%9C%A8iOS%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">UPL在iOS中的应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90plist%E7%9A%84%E7%94%9F%E6%88%90%E6%B5%81%E7%A8%8B"><span class="nav-number">4.1.</span> <span class="nav-text">分析plist的生成流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8B%E5%85%A5ipa%E7%94%9F%E6%88%90%E8%BF%87%E7%A8%8B%EF%BC%9A%E6%93%8D%E4%BD%9Cplist"><span class="nav-number">4.2.</span> <span class="nav-text">介入ipa生成过程：操作plist</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BAIOS%E6%B7%BB%E5%8A%A0Framawork"><span class="nav-number">4.3.</span> <span class="nav-text">为IOS添加Framawork</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95iOS%E5%8C%85%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">测试iOS包的常见问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#iOS-UE4App%E7%9A%84%E6%95%B0%E6%8D%AE%E7%9B%AE%E5%BD%95"><span class="nav-number">5.1.</span> <span class="nav-text">iOS UE4App的数据目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8Windows%E4%B8%8A%E6%9F%A5%E7%9C%8BiOS%E8%AE%BE%E5%A4%87log"><span class="nav-number">5.2.</span> <span class="nav-text">在Windows上查看iOS设备log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UE%E9%A1%B9%E7%9B%AE%E5%9C%A8MAC%E4%B8%8A%E7%9A%84Log%E4%BD%8D%E7%BD%AE"><span class="nav-number">5.3.</span> <span class="nav-text">UE项目在MAC上的Log位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Mac%E6%89%93%E5%8C%85%E7%9A%84Paklist%E4%BD%8D%E7%BD%AE"><span class="nav-number">5.4.</span> <span class="nav-text">Mac打包的Paklist位置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="nav-number">6.</span> <span class="nav-text">相关链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/1948/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

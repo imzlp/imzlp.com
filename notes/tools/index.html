@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="工欲善其事，必先利其器！">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tools">
+<meta property="og:url" content="https://imzlp.com/notes/tools/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="工欲善其事，必先利其器！">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310121954047.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310122044487.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310091554426.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310091557591.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310091600155.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/20221011155747.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/20220908191308.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/20220906152910.png">
+<meta property="article:published_time" content="2021-09-06T17:12:33.000Z">
+<meta property="article:modified_time" content="2021-09-06T17:12:33.000Z">
+<meta property="article:author" content="查利鹏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202310121954047.png">
+
+<link rel="canonical" href="https://imzlp.com/notes/tools/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : false,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Tools | 循迹研究室
+</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+  
+
+      
+
+        
+        <ul id="sub-menu" class="sub-menu menu">
+          
+            
+          
+          
+              
+  <li class="menu-item menu-item-ue5">
+
+    <a href="/notes/ue5/" rel="section"><i class="fas fa-cubes fa-fw"></i>UE5</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-gamedev">
+
+    <a href="/notes/gamedev/" rel="section"><i class="fab fa-steam-square fa-fw"></i>GameDev</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-cpp">
+
+    <a href="/notes/cpp/" rel="section"><i class="fas fa-keyboard fa-fw"></i>C++</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-rust">
+
+    <a href="/notes/rust/" rel="section"><i class="fab fa-rust fa-fw"></i>Rust</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-graphics">
+
+    <a href="/notes/graphics/" rel="section"><i class="fas fa-magic fa-fw"></i>Graphics</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-vr">
+
+    <a href="/notes/vr/" rel="section"><i class="fas fa-vr-cardboard fa-fw"></i>VR</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-computerscience">
+
+    <a href="/notes/computerscience/" rel="section"><i class="fas fa-satellite fa-fw"></i>Computer Science</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-linux">
+
+    <a href="/notes/linux/" rel="section"><i class="fab fa-brands fa-linux fa-fw"></i>Linux</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-tools">
+
+    <a href="/notes/tools/" rel="section"><i class="fa fa-solid fa-hammer fa-fw"></i>Tools</a>
+
+  </li>
+
+
+          
+          
+              
+  <li class="menu-item menu-item-tips">
+
+    <a href="/notes/tips/" rel="section"><i class="fa fa-rocket fa-fw"></i>Tips</a>
+
+  </li>
+
+
+          
+        </ul>
+        
+
+        
+
+                
+                
+        
+      
+
+      
+      
+
+      
+      
+
+      
+      
+  
+
+          <div class="content page posts-expand">
+            
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN">
+      <header class="post-header">
+	<h1 class="post-title" itemprop="name headline">Tools<a href="https://github.com/imzlp/blog-md/blob/master/notes/tools/index.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+	</h1>
+	<div class="post-meta">
+	    <div class="post-description">工欲善其事，必先利其器！</div>
+	  
+  <ul class="breadcrumb">
+          
+            <li><a href="/notes/">NOTES</a></li>
+          <li>TOOLS</li>
+        
+  </ul>
+
+	</div>
+
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+          <script src="https://gist.github.com/imzlp/dff7314767e535c0f9939ec0329fb329.js"></script>
+<h2 id="curl获取网络请求缓解耗时"><a href="#curl获取网络请求缓解耗时" class="headerlink" title="curl获取网络请求缓解耗时"></a>curl获取网络请求缓解耗时</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -so /dev/null  -w <span class="string">&#x27;time_connect: %&#123;time_connect&#125;\ntime_starttransfer: %&#123;time_starttransfer&#125;\ntime_total: %&#123;time_total&#125;\ntime_namelookup: %&#123;time_namelookup&#125;\n&#x27;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>time_connect：建连时间，包括DNS解析时间</li>
+<li>time_starttransfer：从建立TCP连接，到WEB服务器返回第一个字节数据所用的时间，包括建连、包括DNS解析时间</li>
+<li>time_total：请求所用总时间。从client发出请求，到WEB服务器发送所有响应数据的时间</li>
+<li>time_namelookup：DNS解析时间，从请求开始到DNS解析完毕所用时间</li>
+</ul>
+<h2 id="查看进程中的线程CPU占用"><a href="#查看进程中的线程CPU占用" class="headerlink" title="查看进程中的线程CPU占用"></a>查看进程中的线程CPU占用</h2><p>使用<code>ProcessExplorer</code>找到进程打开<code>Properties</code>-<code>Threads</code>，就能看到每个线程的PID的CPU占用了。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310121954047.png"></p>
+<p>使用VS Attatch到进程上就能看到PID对应的线程实际名字了：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310122044487.png"></p>
+<h2 id="Chrome加载本地crx插件"><a href="#Chrome加载本地crx插件" class="headerlink" title="Chrome加载本地crx插件"></a>Chrome加载本地crx插件</h2><p>最新版本的Chrome默认无法加载crx插件，会提示非Chrome Store的版本，无法启用。</p>
+<p>可以导入chromium的组策略进行控制：<a target="_blank" rel="noopener" href="https://www.chromium.org/administrators/policy-templates/">Policy Templates</a><br>下载其中的<a target="_blank" rel="noopener" href="https://dl.google.com/dl/edgedl/chrome/policy/policy_templates.zip">ZIP file of ADM/ADMX/JSON templates and documentation</a>，并解压。</p>
+<p>然后打开组策略，在<code>计算机配置</code>-<code>管理模板</code>上右键，添加/删除模板：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310091554426.png"></p>
+<p>选择上一步下载的<code>policy_templates\windows\adm\zh-CN\chrome.adm</code>文件即可完成导入。</p>
+<p>然后在<code>经典管理模板(ADM)</code>下就能看到Chrome的相关选项了：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310091557591.png"></p>
+<p>在<code>Google</code>-<code>Google Chrome</code>-<code>扩展程序</code>下找到<code>配置扩展程序安装许可名单</code>。</p>
+<p>启用并显示<code>从屏蔽名单中排除的扩展程序ID</code>，在其中填入要安装的crx的ID即可：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310091600155.png"></p>
+<p>重新启动chrome就能够启用插件了。</p>
+<h2 id="ipynb文件"><a href="#ipynb文件" class="headerlink" title="ipynb文件"></a>ipynb文件</h2><p>需要安装<a target="_blank" rel="noopener" href="https://jupyter.org/">jupyter</a>。</p>
+<h2 id="DB-Browser-of-SQLite"><a href="#DB-Browser-of-SQLite" class="headerlink" title="DB Browser of SQLite"></a>DB Browser of SQLite</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://sqlitebrowser.org/">DB Browser of SQLite</a></li>
+</ul>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20221011155747.png"></p>
+<h2 id="Process-Explorer"><a href="#Process-Explorer" class="headerlink" title="Process Explorer"></a>Process Explorer</h2><p><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/sysinternals/downloads/process-explorer">Process Explorer</a>是微软推出的任务管理器的增强版：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220908191308.png"></p>
+<h2 id="UE-Delegates-Helper"><a href="#UE-Delegates-Helper" class="headerlink" title="UE Delegates Helper"></a>UE Delegates Helper</h2><blockquote>
+<p>Powered by <a target="_blank" rel="noopener" href="https://benui.ca/">benui</a>.</p>
+</blockquote>
+<script src="https://img.imzlp.com/imgs/zlp/picgo/2022/delegates.js"></script>
+<form class="delegate-tool" style="max-width:1000px;margin-left: auto;margin-right: auto;display: block;">
+  <table>
+  <tbody><tr>
+  <td class="labels"> <label for="dynamic" class="dynamic" style="color: #a6e22e;">Dynamic</label>
+  </td>
+  <td colspan="3"> <input type="checkbox" name="dynamic" id="dynamic" value="dynamic" onchange="refreshDelegateForm();" data-enpassusermodified="yes">
+  </td>
+  </tr>
+  <tr>
+  <td class="labels"> <label for="multicast" class="multicast" style="color: #f92672;">Multicast</label>
+  </td>
+  <td colspan="3"> <input type="checkbox" name="multicast" id="multicast" value="multicast" onchange="refreshDelegateForm();" data-enpassusermodified="yes">
+  </td>
+  </tr>
+  <tr>
+  <td class="labels"> <label for="delegate_name" class="delegatename" style="color: #fd971f;">Delegate Name</label>
+  </td>
+  <td colspan="3"> <input type="text" id="delegate_name" name="delegate_name" oninput="refreshDelegateForm();" value="OnScoreChanged" class="code" data-enpassusermodified="yes">
+  </td>
+  </tr>
+  <tr>
+  <td class="labels"> <label for="returntype" class="retval" style="color: #ae81ff;">Return Type</label>
+  </td>
+  <td colspan="3"> <input type="text" id="returntype" name="returntype" oninput="refreshDelegateForm();" placeholder="(Multicast delegates cannot have return types)" class="code" disabled="">
+  </td>
+  </tr>
+  <tr id="row0">
+  <td class="labels"> <label for="param0_type" class="params" style="color: #66d9ef;">Parameter 1</label>
+  </td>
+  <td> <input type="text" id="param0_type" name="param0_type" value="int32" placeholder="type" oninput="refreshDelegateForm();" required="" class="code">
+  </td>
+  <td> <input type="text" id="param0_name" name="param0_name" value="NewScore" placeholder="name" oninput="refreshDelegateForm();" required="" class="code">
+  </td>
+  <td> <input type="button" id="param0_button" name="param0_button" value="X" onclick="deleteParameter(0);">
+  </td>
+  </tr>
+  <tr id="lastrow">
+  <td class="labels"></td>
+  <td colspan="3"> <input type="button" id="add_param_button" name="add_param_button" value="+ Add Parameter" onclick="addParameter();" class="major">
+  </td>
+  </tr>
+  </tbody>
+  </table>
+  <div class="code-output highlight" style="font-family: Monaco,Consolas,monospace;font-size: 0.8em;margin: 0;background-color: #333;border-radius: 4px;padding: 0.5em;color: #fff;"> 
+    <span class="c" style="color: #a59f85;">// Delegate signature</span>
+    <p id="delegate_signature">DECLARE_<span class="dynamic" style="color: #a6e22e;">DYNAMIC</span>_<span class="multicast">MULTICAST</span>_DELEGATE_<span class="params" style="color: #ae81ff;">OneParam</span>(F<span class="delegatename">OnScoreChanged</span>Signature, <span class="params">int32, NewScore</span>)</p>
+  <span class="c" style="color: #a59f85;">// Function signature</span><p id="function_signature"><span class="retval" style="color: #ae81ff;">void</span> <span class="delegatename">OnScoreChanged</span>(int32 NewScore);</p>
+  </div>
+</form>
+
+<h2 id="Chrome网页全屏截图"><a href="#Chrome网页全屏截图" class="headerlink" title="Chrome网页全屏截图"></a>Chrome网页全屏截图</h2><p>按下F12进入Console界面，再按下<code>Ctrl+Shift+P</code>弹出<code>Run</code>面板，输入<code>Capture</code>，选择<code>Capture full size screenshot</code>即可。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2022/20220906152910.png"></p>
+<h2 id="全球飞机实时位置"><a href="#全球飞机实时位置" class="headerlink" title="全球飞机实时位置"></a>全球飞机实时位置</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.flightradar24.com/27.74,118.77/8">Flightradar24: Live Flight Tracker - Real-Time Flight Tracker Map</a></li>
+</ul>
+<h2 id="Windows使用AirPods"><a href="#Windows使用AirPods" class="headerlink" title="Windows使用AirPods"></a>Windows使用AirPods</h2><p><a target="_blank" rel="noopener" href="https://apps.microsoft.com/store/detail/magicpods/9P6SKKFKSHKM?hl=zh-cn&gl=CN">MagicPods</a>支持在Windows上管理和使用AirPods。</p>
+<h2 id="视频补帧：DAIN-App"><a href="#视频补帧：DAIN-App" class="headerlink" title="视频补帧：DAIN App"></a>视频补帧：DAIN App</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://grisk.itch.io/dain-app">dain app</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/BurguerJohn/Dain-App">BurguerJohn/Dain-App</a></li>
+</ul>
+<h2 id="视频画质增强"><a href="#视频画质增强" class="headerlink" title="视频画质增强"></a>视频画质增强</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://videoai.topazlabs.com/beta">Gigapixel for Video Beta</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1V7411A7Th?p=2&spm_id_from=pageDriver">用AI把24帧动画补到超清60帧，突破次元壁！丝滑流畅……</a></li>
+</ul>
+<h2 id="Mac安装homebrew"><a href="#Mac安装homebrew" class="headerlink" title="Mac安装homebrew"></a>Mac安装homebrew</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://brew.sh/index_zh-tw">Homebrew</a></li>
+</ul>
+<p>在Bash中执行以下命令即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/bin/bash -c <span class="string">&quot;<span class="subst">$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+<p>安装之后就可以使用以下命令安装软件了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install git-lfs</span><br></pre></td></tr></table></figure>
+
+<h2 id="高效便捷工具"><a href="#高效便捷工具" class="headerlink" title="高效便捷工具"></a>高效便捷工具</h2><ul>
+<li>电子书管理工具：<a target="_blank" rel="noopener" href="https://calibre-ebook.com/zh_CN">Calibre</a></li>
+<li>图片外链：<a target="_blank" rel="noopener" href="https://github.com/Molunerfinn/PicGo">PicGO</a></li>
+<li>截图：<a target="_blank" rel="noopener" href="https://docs.snipaste.com/zh-cn/">Snipaste</a></li>
+<li>文件搜索：<a target="_blank" rel="noopener" href="https://www.voidtools.com/zh-cn/">Everything</a></li>
+</ul>
+
+      </div>
+      
+      
+      
+    </div>
+    
+  <ul class="breadcrumb">
+          
+            <li><a href="/notes/">NOTES</a></li>
+          <li>TOOLS</li>
+        
+  </ul>
+
+    
+    
+    
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#curl%E8%8E%B7%E5%8F%96%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E7%BC%93%E8%A7%A3%E8%80%97%E6%97%B6"><span class="nav-number">1.</span> <span class="nav-text">curl获取网络请求缓解耗时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E8%BF%9B%E7%A8%8B%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8BCPU%E5%8D%A0%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">查看进程中的线程CPU占用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chrome%E5%8A%A0%E8%BD%BD%E6%9C%AC%E5%9C%B0crx%E6%8F%92%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">Chrome加载本地crx插件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ipynb%E6%96%87%E4%BB%B6"><span class="nav-number">4.</span> <span class="nav-text">ipynb文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DB-Browser-of-SQLite"><span class="nav-number">5.</span> <span class="nav-text">DB Browser of SQLite</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Process-Explorer"><span class="nav-number">6.</span> <span class="nav-text">Process Explorer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Delegates-Helper"><span class="nav-number">7.</span> <span class="nav-text">UE Delegates Helper</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chrome%E7%BD%91%E9%A1%B5%E5%85%A8%E5%B1%8F%E6%88%AA%E5%9B%BE"><span class="nav-number">8.</span> <span class="nav-text">Chrome网页全屏截图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%A8%E7%90%83%E9%A3%9E%E6%9C%BA%E5%AE%9E%E6%97%B6%E4%BD%8D%E7%BD%AE"><span class="nav-number">9.</span> <span class="nav-text">全球飞机实时位置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Windows%E4%BD%BF%E7%94%A8AirPods"><span class="nav-number">10.</span> <span class="nav-text">Windows使用AirPods</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%86%E9%A2%91%E8%A1%A5%E5%B8%A7%EF%BC%9ADAIN-App"><span class="nav-number">11.</span> <span class="nav-text">视频补帧：DAIN App</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%86%E9%A2%91%E7%94%BB%E8%B4%A8%E5%A2%9E%E5%BC%BA"><span class="nav-number">12.</span> <span class="nav-text">视频画质增强</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mac%E5%AE%89%E8%A3%85homebrew"><span class="nav-number">13.</span> <span class="nav-text">Mac安装homebrew</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AB%98%E6%95%88%E4%BE%BF%E6%8D%B7%E5%B7%A5%E5%85%B7"><span class="nav-number">14.</span> <span class="nav-text">高效便捷工具</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.1.2/es5/tex-mml-chtml.min.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/notes/tools/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

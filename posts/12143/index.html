@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="工欲善其事，必先利其器！掌握好的工具会使开发效率上一个层次。本文是我平时记录在notes中关于UE工具链以及一些组合UE使用的工具配置和使用技巧的笔记整理，后续这方面的内容也会收录到这篇文章中。下面是我之前写的关于UE工具链或扩展相关的单独的文章：  分析UBT中EULA的内容分发限制 Create A Standalone Application in UE4 Build flow of the">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE工具链配置与开发技巧">
+<meta property="og:url" content="https://imzlp.com/posts/12143/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="工欲善其事，必先利其器！掌握好的工具会使开发效率上一个层次。本文是我平时记录在notes中关于UE工具链以及一些组合UE使用的工具配置和使用技巧的笔记整理，后续这方面的内容也会收录到这篇文章中。下面是我之前写的关于UE工具链或扩展相关的单独的文章：  分析UBT中EULA的内容分发限制 Create A Standalone Application in UE4 Build flow of the">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323191514.webp">
+<meta property="article:published_time" content="2019-09-09T23:32:08.000Z">
+<meta property="article:modified_time" content="2019-09-09T23:32:08.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323191514.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/12143/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE工具链配置与开发技巧 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/12143/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE工具链配置与开发技巧<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2019-09-09-12143.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-09-09 23:32 23:32:08:32" itemprop="dateCreated datePublished" datetime="2019-09-09T23:32:08+00:00">2019-09-09 23:32</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/12143/" class="post-meta-item leancloud_visitors" data-flag-title="UE工具链配置与开发技巧" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>工欲善其事，必先利其器！掌握好的工具会使开发效率上一个层次。<br>本文是我平时记录在<a href="https://imzlp.com/notes">notes</a>中关于UE工具链以及一些组合UE使用的工具配置和使用技巧的笔记整理，后续这方面的内容也会收录到这篇文章中。<br>下面是我之前写的关于UE工具链或扩展相关的单独的文章：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/9050/">分析UBT中EULA的内容分发限制</a></li>
+<li><a href="https://imzlp.com/posts/31962/">Create A Standalone Application in UE4</a></li>
+<li><a href="https://imzlp.com/posts/6362/">Build flow of the Unreal Engine4 project</a></li>
+<li><a href="https://imzlp.com/posts/11515/">抓取UE4 API并生成带索引的Dash文档</a></li>
+</ul>
+<span id="more"></span>
+
+<h2 id="使用Doxygen从UE代码生成文档"><a href="#使用Doxygen从UE代码生成文档" class="headerlink" title="使用Doxygen从UE代码生成文档"></a>使用Doxygen从UE代码生成文档</h2><p>最近使用<a target="_blank" rel="noopener" href="http://www.stack.nl/~dimitri/doxygen/index.html">doxygen</a>从UnrealEngine源码生成了<a target="_blank" rel="noopener" href="http://api.unrealengine.com/INT/API/Runtime/Engine/index.html">Runtime/Engine</a>模块文档，导出的chm都700M了(主要是各种grahp大)，好大。<br>注意，使用<a target="_blank" rel="noopener" href="http://www.stack.nl/~dimitri/doxygen/index.html">doxygen</a>从UE源码生成文档之前，记得删除源码中所有的.h/.hpp中的UE的宏(我自己写了个简单的程序来处理这个事情)，不然生成出来的会有问题(比如函数名不见了，显示出来的时UFUNCTION，或者成员变量不见了，显示出来的是UPROPERTY)。主要删除以下这几个MACRO就可以。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;UFUNCTION&quot;</span>,</span><br><span class="line"><span class="string">&quot;DEPRECATED&quot;</span>,</span><br><span class="line"><span class="string">&quot;UCLASS&quot;</span>,</span><br><span class="line"><span class="string">&quot;UINTERFACE&quot;</span>,</span><br><span class="line"><span class="string">&quot;UPROPERTY&quot;</span>,</span><br><span class="line"><span class="string">&quot;GENERATED_BODY()&quot;</span>,</span><br><span class="line"><span class="string">&quot;GENERATED_UCLASS_BODY()&quot;</span>,</span><br><span class="line"><span class="string">&quot;GENERATED_INTERFACE_BODY()&quot;</span></span><br></pre></td></tr></table></figure>
+<p>使用<code>sed</code>就是如下的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删除源文件中的宏并保存</span></span><br><span class="line">$ sed -i -e /UFUNCTION/d -e /DEPRECATED/d -e /UCLASS/d -e /UINTERFACE/d -e /UPROPERTY/d -e /GENERATED_BODY/d -e /GENERATED_UCLASS_BODY/d -e /GENERATED_INTERFACE_BODY/d <span class="variable">$&#123;filename&#125;</span></span><br><span class="line"><span class="comment"># Example Actor.h</span></span><br><span class="line">$ sed -i -e /UFUNCTION/d -e /DEPRECATED/d -e /UCLASS/d -e /UINTERFACE/d -e /UPROPERTY/d -e /GENERATED_BODY/d -e /GENERATED_UCLASS_BODY/d -e /GENERATED_INTERFACE_BODY/d Actor.h</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="UnrealVersionSelector的参数"><a href="#UnrealVersionSelector的参数" class="headerlink" title="UnrealVersionSelector的参数"></a>UnrealVersionSelector的参数</h2><ul>
+<li><code>-register</code>：Add the current directory to the list of installations</li>
+<li><code>-fileassociations</code>：Update all the settings.</li>
+<li><code>-switchversion</code>：Associate with an engine label</li>
+<li><code>-switchversionsilent</code>：Associate with a specific engine label</li>
+<li><code>-editor</code>：Open a project with the editor</li>
+<li><code>-projectlist</code>：Open the editor</li>
+<li><code>-game</code>：Play a game using the editor executable</li>
+<li><code>-projectfiles</code>：Generate Visual Studio project files</li>
+</ul>
+<h2 id="UnrealPak的参数"><a href="#UnrealPak的参数" class="headerlink" title="UnrealPak的参数"></a>UnrealPak的参数</h2><p>UE4.22.3UnrealPak支持的参数:</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">Usage:</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -Test</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -List [-ExcludeDeleted]</span><br><span class="line">UnrealPak &lt;PakFilename&gt; &lt;GameUProjectName&gt; &lt;GameFolderName&gt; -ExportDependencies=&lt;OutputFileBase&gt; -NoAssetRegistryCache -ForceDependsGathering</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -Extract &lt;ExtractDir&gt; [-Filter=&lt;filename&gt;]</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -Create=&lt;ResponseFile&gt; [Options]</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -Dest=&lt;MountPoint&gt;</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -Repack [-Output=Path] [-ExcludeDeleted] [Options]</span><br><span class="line">UnrealPak &lt;PakFilename1&gt; &lt;PakFilename2&gt; -diff</span><br><span class="line">UnrealPak &lt;PakFolder&gt; -AuditFiles [-OnlyDeleted] [-CSV=&lt;filename&gt;] [-order=&lt;OrderingFile&gt;] [-SortByOrdering]</span><br><span class="line">UnrealPak &lt;PakFilename&gt; -WhatsAtOffset [offset1] [offset2] [offset3] [...]</span><br><span class="line">UnrealPak &lt;PakFolder&gt; -GeneratePIXMappingFile -OutputPath=&lt;Path&gt;</span><br><span class="line">UnrealPak -TestEncryption</span><br><span class="line">Options:</span><br><span class="line">  -blocksize=&lt;BlockSize&gt;</span><br><span class="line">  -bitwindow=&lt;BitWindow&gt;</span><br><span class="line">  -compress</span><br><span class="line">  -encrypt</span><br><span class="line">  -order=&lt;OrderingFile&gt;</span><br><span class="line">  -diff (requires 2 filenames first)</span><br><span class="line">  -enginedir (specify engine dir for when using ini encryption configs)</span><br><span class="line">  -projectdir (specify project dir for when using ini encryption configs)</span><br><span class="line">  -encryptionini (specify ini base name to gather encryption settings from)</span><br><span class="line">  -extracttomountpoint (Extract to mount point path of pak file)</span><br><span class="line">  -encryptindex (encrypt the pak file index, making it unusable in unrealpak without supplying the key)</span><br><span class="line">  -compressionformat[s]=&lt;Format[,format2,...]&gt; (set the format(s) to compress with, falling back on failures)</span><br></pre></td></tr></table></figure>
+<p>直接在编辑器中执行打包的命令(UE4.22.3，这里在指定了加密)：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&quot;D:\UnrealEngine\UE_4.22\Engine\Binaries\Win64\UnrealPak.exe&quot; &quot;C:\Users\Administrator\Documents\Unreal Projects\Mobile422\Saved\StagedBuilds\WindowsNoEditor\Mobile422\Content\Paks\Mobile422-WindowsNoEditor.pak&quot;</span><br><span class="line"> -create=&quot;C:\Users\Administrator\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_4.22\PakList_Mobile422-WindowsNoEditor.txt&quot;</span><br><span class="line"> -cryptokeys=&quot;C:\Users\Administrator\Documents\Unreal Projects\Mobile422\Saved\Cooked\WindowsNoEditor\Mobile422\Metadata\Crypto.json&quot;</span><br><span class="line"> -order=&quot;C:\Users\Administrator\Documents\Unreal Projects\Mobile422\Build\WindowsNoEditor\FileOpenOrder\CookerOpenOrder.log&quot;</span><br><span class="line"> -encryptindex</span><br><span class="line"> -patchpaddingalign=2048</span><br><span class="line"> -compressionformats=  &quot;C:\Users\Administrator\Documents\Unreal Projects\Mobile422\Mobile422.uproject&quot;</span><br><span class="line"> -multiprocess</span><br><span class="line"> -abslog=&quot;C:\Users\Administrator\AppData\Roaming\Unreal Engine\AutomationTool\Logs\C+Program+Files+Epic+Games+UE_4.22\UnrealPak-Mobile422-WindowsNoEditor-2020.02.11-18.48.15.txt&quot;</span><br></pre></td></tr></table></figure>
+<p>cryptokeys指定参数的结构：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">   <span class="attr">&quot;$types&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+CryptoSettings, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+EncryptionKey, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+SigningKeyPair, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+SigningKey, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;EncryptionKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span><span class="string">&quot;Embedded&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Guid&quot;</span><span class="punctuation">:</span><span class="string">&quot;00000000-0000-0000-0000-000000000000&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Key&quot;</span><span class="punctuation">:</span><span class="string">&quot;+c0unLTPVpJ8E2MAs3SrUh/bRHasFOvq1kKXnmZBZcw=&quot;</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;SigningKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;PublicKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">         <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Exponent&quot;</span><span class="punctuation">:</span><span class="string">&quot;AQAB&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Modulus&quot;</span><span class="punctuation">:</span><span class="string">&quot;m48Hq1rQKqljGUBCVku+qxFoa1oVBXghOWKSPArwl9uixba6pxlgqyV/BINWRYQMzgcdKPvGgusRIlalPqEEQB9XibCqJahUpxszoNkhH33cWSpMKZ8XWNmnvAZvtebpqtJYVP1ebqNGvCEm+e54dsxvRJJGmcOB6Wi36/l4c9/+zgNF5BZQItOlDc8OCYlttAvDhgExDow4leNuU/nBh12rcKD4P0KmIYdPzFBYgTe18DyJ12GKf2rStFF9VDlTsp+Gl7ZejPzQ7/CsX0eSHHplsZjjCB6mlmBStFOY7OWMLS/pnYAQ6Ywnaf+tBNz4Fd9eBBxwD0Vn+dU4YDxEJYvZuVkOqyio581jHn5U7rjTofzTyHvy5tzWuYF52R2dGkcTBgjkbmE0Z6nkZ2TdPEog15eZClsHHMseyzhBa3LCC2nmnvZqppV4+Ijj5e1XKEobPOgVZMejXNukW1dzfX9gMf1NrOD2KX2cnyPT6IvP6zu5Cztiy3rVtBiDtQIaQnaCsix8t0+oh5aqzhj6GrblcYs1JX/uy0OYO+hO/yTLET378TehhRjYbnHQsS2PBqBVM6i7hK7xT1TxuUE5oJYJULDWmOn9AZKmnzkx+VyQgmqmNA/L0vJqOhsDvvA29UGNEn5junydqkQlLP4OovlZcoic2R/tYPFcwMKPp68=&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;PrivateKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">         <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Exponent&quot;</span><span class="punctuation">:</span><span class="string">&quot;URhnOOSPQp7VG5FxGq2wLQ+k3FJUQEy+GWOYxbk8KKNwtbt/Fy+agBMtuZOuLKmhjWrIpU0+i78rM7cFur3qXI5TUFZ1Jj2eIhxrphoKnu99FmcLEIICtFp0Y/rbyv1RmBSvh9E+kMebvw2KGlVVl8JNhRnyZtdHEoWN7YV+zeSNuGDh8h6pJkN8b15PuXZhQw9RKa3WRsNy/3PCVkNILsOI7L+VZTQ3Zl0q3DghlaHNZlkeyLp/uSnArayUdWlTBq8H0ZtyaAlgBhFNnh/CkQFenpnz2EKSO4aMGo6NkIjbYEYoK5t119z0S56JbzGA71iDqW3VxK5KxZcDLItU8yGp7zi6SPAJXvUxg/8rnXRZ/nm+8KVLwi3Itog8DWYR7zx4weNd2Tx4JvHx+FatLnM3ut6yiUiaW6uL0Zg+yLg1PXy5bEwlAlke/9c/Z7gyY+cLQVMv525LgMQQDje/wNaQT2QosN5Cum+5jPq/0BYB4kXeotvASS2FLRJyo43JjmyfP6oQLOtSNDqbf1jl4JtjoCXBFAZKz6cR4RP1CWst4mMLUJqgOjQeSdd5ihdYZErKPzlLpghQixC/dx3W0ISzkp9b22Ee302bHQHwio+4Gc8B2e/Iabd8TQZuq8LY9BSrllHda8NsG3TFt3hEC+fjdhbz5ur4nd1xgtPtP00=&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Modulus&quot;</span><span class="punctuation">:</span><span class="string">&quot;m48Hq1rQKqljGUBCVku+qxFoa1oVBXghOWKSPArwl9uixba6pxlgqyV/BINWRYQMzgcdKPvGgusRIlalPqEEQB9XibCqJahUpxszoNkhH33cWSpMKZ8XWNmnvAZvtebpqtJYVP1ebqNGvCEm+e54dsxvRJJGmcOB6Wi36/l4c9/+zgNF5BZQItOlDc8OCYlttAvDhgExDow4leNuU/nBh12rcKD4P0KmIYdPzFBYgTe18DyJ12GKf2rStFF9VDlTsp+Gl7ZejPzQ7/CsX0eSHHplsZjjCB6mlmBStFOY7OWMLS/pnYAQ6Ywnaf+tBNz4Fd9eBBxwD0Vn+dU4YDxEJYvZuVkOqyio581jHn5U7rjTofzTyHvy5tzWuYF52R2dGkcTBgjkbmE0Z6nkZ2TdPEog15eZClsHHMseyzhBa3LCC2nmnvZqppV4+Ijj5e1XKEobPOgVZMejXNukW1dzfX9gMf1NrOD2KX2cnyPT6IvP6zu5Cztiy3rVtBiDtQIaQnaCsix8t0+oh5aqzhj6GrblcYs1JX/uy0OYO+hO/yTLET378TehhRjYbnHQsS2PBqBVM6i7hK7xT1TxuUE5oJYJULDWmOn9AZKmnzkx+VyQgmqmNA/L0vJqOhsDvvA29UGNEn5junydqkQlLP4OovlZcoic2R/tYPFcwMKPp68=&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakSigning&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakIndexEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakIniEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakUAssetEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakFullAssetEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bDataCryptoRequired&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;PakEncryptionRequired&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;PakSigningRequired&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;SecondaryEncryptionKeys&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">&#123;</span></span><br><span class="line">         <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span><span class="string">&quot;Key1&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Guid&quot;</span><span class="punctuation">:</span><span class="string">&quot;757096074E55F5FCA962949C55209CCB&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Key&quot;</span><span class="punctuation">:</span><span class="string">&quot;SsukCy4DShNsMi5e9jUpMWJi5qtTA+rLeIoTHRtjM0o=&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">   <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>它是根据<code>Project Setting</code>-<code>Crypto</code>中的设置生成的。</p>
+<p>UnrealPak比较常用的命令组合：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 将COOCKED_ASSET_FOLDER路径下所有cookedd的资源打包到一个pak里面，并执行压缩</span><br><span class="line">unrealpak.exe NEW_PAK_FILE_NAME.pak -create=COOCKED_ASSET_FOLDER -compress</span><br><span class="line"># 加密pak，需要指定<span class="number">32</span>位的AES key，要执行加密-encrypt/-encrtptindex/-aes缺一不可。</span><br><span class="line">unrealpak.exe NEW_PAK_FILE_NAME.pak -create=COOCKED_ASSET_FOLDER -compress -encrypt -encryptindex -aes=<span class="number">32B</span>IT_AES_KEY</span><br><span class="line"># 查看pak中的资源列表</span><br><span class="line">unrealpak.exe PAK_FILE_NAME.pak -list</span><br><span class="line"># 查看加密的pak中的资源列表</span><br><span class="line">unrealpak.exe NEW_PAK_FILE_NAME.pak -list -aes=<span class="number">32B</span>IT_AES_KEY</span><br></pre></td></tr></table></figure>
+<p>相关工具：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.sojson.com/encrypt_aes.html">AES的在线加解密工具</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hxhb/UnrealPakViewer">UnrealPakViewer</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.gildor.org/en/projects/umodel">umodel</a></li>
+</ul>
+<p>在<code>Project Setting</code>-<code>Project</code>-<code>Crypto</code>中可以选择加密项目并且直接生成<code>EncryptionKey</code>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/ue-encrypt-project.webp"></p>
+<p>UnrealPak是一个StandaloneApplication程序，它的启动代码在：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/6c20d9831a968ad3cb156442bebb41a883e62152/Engine/Source/Programs/UnrealPak/Private/UnrealPak.cpp">Engine/Source/Programs/UnrealPak/Private/UnrealPak.cpp</a>.<br>但是它只是一个转发函数，真正的实现代码是在引擎中的<code>ExecuteUnrealPak</code>函数，其在引擎中的位置为<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/6c20d9831a968ad3cb156442bebb41a883e62152/Engine/Source/Developer/PakFileUtilities/Private/PakFileUtilities.cpp">Engine/Source/Developer/PakFileUtilities/Private/PakFileUtilities.cpp</a></p>
+<p>UnrealPak为pak生成sig:</p>
+<blockquote>
+<p>注意：在UE4.23+引擎版本中，在指定<code>cryptokeys</code>参数时，需要同时指定<code>-sign</code>。</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ UnrealPak.exe D:\TEST_SIG.pak -create=<span class="string">&quot;XXXXXXX.txt&quot;</span> -cryptokeys=<span class="string">&quot;Crypto.json&quot;</span></span><br></pre></td></tr></table></figure>
+<p>其中Crypto.json文件在你使用编辑器打包的时候会生成，它是根据<code>Project Setting</code>-<code>Crypto</code>中的设置生成的，保存在路径：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PROJECT_DIRECTORY\Saved\Cooked\WindowsNoEditor\PROJECT_NAME\Metadata\Crypto.json</span><br></pre></td></tr></table></figure>
+<p>注意<code>PROJECT_DIRECTORY</code>和<code>PROJECT_NAME</code>都换成你自己的。</p>
+<p><code>Crypto.json</code>这个文件的生成是在<code>AutomationTool</code>这个工具里面的，相关的代码在：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Source\Programs\AutomationTool\Scripts\CopyBuildToStagingDirectory.Automation.cs</span></span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Creates a pak file using staging context (single manifest)</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;Params&quot;&gt;</span><span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;SC&quot;&gt;</span><span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">CreatePakUsingStagingManifest</span>(<span class="params">ProjectParams Params, DeploymentContext SC</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  LogInformation(<span class="string">&quot;Creating pak using staging manifest.&quot;</span>);</span><br><span class="line"></span><br><span class="line">  DumpManifest(SC, CombinePaths(CmdEnv.LogFolder, <span class="string">&quot;PrePak&quot;</span> + (SC.DedicatedServer ? <span class="string">&quot;_Server&quot;</span> : <span class="string">&quot;&quot;</span>)));</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> UnrealPakResponseFile = CreatePakResponseFileFromStagingManifest(SC, SC.FilesToStage.UFSFiles);</span><br><span class="line"></span><br><span class="line">  List&lt;PakFileRules&gt; PakRulesList = GetPakFileRules(Params, SC);</span><br><span class="line"></span><br><span class="line">  List&lt;<span class="built_in">string</span>&gt; PakList = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line">  List&lt;<span class="built_in">string</span>&gt; FilesToRemove = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Apply the pak file rules, this can remove things but will not override the pak file name</span></span><br><span class="line">  <span class="keyword">foreach</span> (<span class="keyword">var</span> StagingFile <span class="keyword">in</span> UnrealPakResponseFile)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">bool</span> bExcludeFromPaks = <span class="literal">false</span>;</span><br><span class="line">    ApplyPakFileRules(PakRulesList, StagingFile, PakList, <span class="keyword">out</span> bExcludeFromPaks);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (bExcludeFromPaks)</span><br><span class="line">    &#123;</span><br><span class="line">      FilesToRemove.Add(StagingFile.Key);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">foreach</span> (<span class="keyword">var</span> FileToRemove <span class="keyword">in</span> FilesToRemove)</span><br><span class="line">  &#123;</span><br><span class="line">    UnrealPakResponseFile.Remove(FileToRemove);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  EncryptionAndSigning.CryptoSettings PakCryptoSettings = EncryptionAndSigning.ParseCryptoSettings(DirectoryReference.FromFile(Params.RawProjectPath), SC.StageTargetPlatform.IniPlatformType);</span><br><span class="line">  FileReference CryptoKeysCacheFilename = FileReference.Combine(SC.MetadataDir, <span class="string">&quot;Crypto.json&quot;</span>);</span><br><span class="line">  PakCryptoSettings.Save(CryptoKeysCacheFilename);</span><br><span class="line"></span><br><span class="line">  List&lt;CreatePakParams&gt; PakInputs = <span class="keyword">new</span> List&lt;CreatePakParams&gt;();</span><br><span class="line">  PakInputs.Add(<span class="keyword">new</span> CreatePakParams(SC.ShortProjectName, UnrealPakResponseFile, Params.Compressed, <span class="literal">null</span>));</span><br><span class="line">  CreatePaks(Params, SC, PakInputs, PakCryptoSettings, CryptoKeysCacheFilename);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>EncryptionAndSigning</code>这个类是定义在<code>UnrealBuildTool\System\EncryptionAndSigning</code>，在里面可以看到对DefaultCrypto.ini文件的解析。</p>
+<h2 id="UE4-修改Setup-bat使用的线程数加速下载"><a href="#UE4-修改Setup-bat使用的线程数加速下载" class="headerlink" title="UE4:修改Setup.bat使用的线程数加速下载"></a>UE4:修改Setup.bat使用的线程数加速下载</h2><p>在下载UE4的源码之后，需要先执行<code>Setup.bat</code>下载依赖才可以开始生成VS项目文件以及编译。</p>
+<p>但是国内的网络环境又极差，默认的<code>Setup.bat</code>是没有指定线程数量的（<code>Setup.bat</code>只给<code>GitDenpencies</code>传递了<code>--prompt</code>参数）。</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">@<span class="built_in">echo</span> off</span><br><span class="line"><span class="built_in">setlocal</span></span><br><span class="line"><span class="built_in">pushd</span> %~dp0</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Figure out if we should append the -prompt argument</span></span><br><span class="line"><span class="built_in">set</span> PROMPT_ARGUMENT=</span><br><span class="line"><span class="keyword">for</span> <span class="variable">%%P</span> <span class="keyword">in</span> (%*) <span class="keyword">do</span> <span class="keyword">if</span> /I &quot;<span class="variable">%%P</span>&quot; == &quot;--prompt&quot; <span class="keyword">goto</span> no_prompt_argument</span><br><span class="line"><span class="keyword">for</span> <span class="variable">%%P</span> <span class="keyword">in</span> (%*) <span class="keyword">do</span> <span class="keyword">if</span> /I &quot;<span class="variable">%%P</span>&quot; == &quot;--force&quot; <span class="keyword">goto</span> no_prompt_argument</span><br><span class="line"><span class="built_in">set</span> PROMPT_ARGUMENT=--prompt</span><br><span class="line">:no_prompt_argument</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Sync the dependencies...</span></span><br><span class="line">.\Engine\Binaries\DotNET\GitDependencies.exe <span class="variable">%PROMPT_ARGUMENT%</span> %*</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">ERRORLEVEL</span> <span class="number">1</span> <span class="keyword">goto</span> error</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Setup the git hooks...</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> <span class="keyword">exist</span> .git\hooks <span class="keyword">goto</span> no_git_hooks_directory</span><br><span class="line"><span class="built_in">echo</span> Registering git hooks...</span><br><span class="line"><span class="built_in">echo</span> #!/bin/sh &gt;.git\hooks\post-checkout</span><br><span class="line"><span class="built_in">echo</span> Engine/Binaries/DotNET/GitDependencies.exe %* &gt;&gt;.git\hooks\post-checkout</span><br><span class="line"><span class="built_in">echo</span> #!/bin/sh &gt;.git\hooks\post-merge</span><br><span class="line"><span class="built_in">echo</span> Engine/Binaries/DotNET/GitDependencies.exe %* &gt;&gt;.git\hooks\post-merge</span><br><span class="line">:no_git_hooks_directory</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Install prerequisites...</span></span><br><span class="line"><span class="built_in">echo</span> Installing prerequisites...</span><br><span class="line"><span class="built_in">start</span> /wait Engine\Extras\Redist\en-us\UE4PrereqSetup_x64.exe /quiet</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Register the engine installation...</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> <span class="keyword">exist</span> .\Engine\Binaries\Win64\UnrealVersionSelector-Win64-Shipping.exe <span class="keyword">goto</span> :no_unreal_version_selector</span><br><span class="line">.\Engine\Binaries\Win64\UnrealVersionSelector-Win64-Shipping.exe /register</span><br><span class="line">:no_unreal_version_selector</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Done!</span></span><br><span class="line"><span class="keyword">goto</span> :EOF</span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">rem Error happened. Wait for a keypress before quitting.</span></span><br><span class="line">:error</span><br><span class="line"><span class="built_in">pause</span></span><br></pre></td></tr></table></figure>
+
+<p><code>GitDependencies.exe</code>支持的参数为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">Usage:</span><br><span class="line">   GitDependencies [options]</span><br><span class="line"></span><br><span class="line">Options:</span><br><span class="line">   --all                         Sync all folders</span><br><span class="line">   --include=&lt;X&gt;                 Include binaries in folders called &lt;X&gt;</span><br><span class="line">   --exclude=&lt;X&gt;                 Exclude binaries in folders called &lt;X&gt;</span><br><span class="line">   --prompt                      Prompt before overwriting modified files</span><br><span class="line">   --force                       Always overwrite modified files</span><br><span class="line">   --root=&lt;PATH&gt;                 Set the repository directory to be sync</span><br><span class="line">   --threads=&lt;N&gt;                 Use N threads when downloading <span class="keyword">new</span> files</span><br><span class="line">   --dry-run                     Print a list of outdated files <span class="keyword">and</span> exit</span><br><span class="line">   --max-retries                 Override maximum number of retries per file</span><br><span class="line">   --proxy=&lt;user:password@url&gt;   Sets the HTTP proxy address <span class="keyword">and</span> credentials</span><br><span class="line">   --cache=&lt;PATH&gt;                Specifies a custom path <span class="keyword">for</span> the download cache</span><br><span class="line">   --cache-size-multiplier=&lt;N&gt;   Cache size as multiplier of current download</span><br><span class="line">   --cache-days=&lt;N&gt;              Number of days to keep entries in the cache</span><br><span class="line">   --no-cache                    Disable caching of downloaded files</span><br><span class="line"></span><br><span class="line">Detected settings:</span><br><span class="line">   Excluded folders: Mac, Android, Linux</span><br><span class="line">   Proxy server: none</span><br><span class="line">   Download cache: E:\UnrealEngine\EngineSource\UE_4<span class="number">.21</span>_Source\.git\ue4-gitdeps</span><br><span class="line"></span><br><span class="line">Default arguments can be set through the UE4_GITDEPS_ARGS environment variable.</span><br></pre></td></tr></table></figure>
+
+<p>所以我们可以将<code>Setup.bat</code>中的变量<code>PROMPT_ARGUMENT</code>增加上指定的线程数即可（N替换为数字）：</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> PROMPT_ARGUMENT=--prompt --threads=N</span><br></pre></td></tr></table></figure>
+
+<p>我一般开8个线程，基本可以跑2-3M/s…</p>
+<h2 id="UE4-Clion-debug-project-on-MacOS"><a href="#UE4-Clion-debug-project-on-MacOS" class="headerlink" title="UE4:Clion debug project on MacOS"></a>UE4:Clion debug project on MacOS</h2><p>使用Clion打开项目之后设置debug（<code>Run-Edit Configuration</code>）：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/clion-debug-project-build-setting-on-macos.webp"><br>将<code>Executable</code>选择为项目目录下的<code>Binaries</code>中编译出来的可执行文件，然后加上参数<code>-game -log</code>即可。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/clion-debug-ue-project-on-mac-os.webp"></p>
+<h2 id="使用VSC编写代码-UE-4-18"><a href="#使用VSC编写代码-UE-4-18" class="headerlink" title="使用VSC编写代码(UE_4.18+)"></a>使用VSC编写代码(UE_4.18+)</h2><p>下面是UE的官方介绍:<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Support/Builds/ReleaseNotes/4_18/index.html">New: Visual Studio Code Supported on Windows, Mac and Linux</a></p>
+<p>You can now use Visual Studio Code to write code on all UE4 host platforms. To use it, select “Visual Studio Code” as your preferred IDE from the editor preferences dialog, or add the -vscode argument when generating project files on the command line. All platforms are also required to have the .NET Core 2.0 runtimes installed, which can be obtained from <a target="_blank" rel="noopener" href="https://www.microsoft.com/net/core">the Microsoft .NET Core website</a>.<br>To use Visual Studio Code to build and debug all project types, some additional extensions are required. On all platforms, make sure the Microsoft C/C++ extension, and the C# extension are installed. On Linux and Mac, the “Mono Debug” extension is required to debug C# projects, and the “LLDB Debugger” extension is required to debug C++ projects. Also, in order to debug C# projects, the mono runtime must be installed:</p>
+<ul>
+<li>On OS X: <code>brew install mono</code></li>
+<li>On Linux:<code> sudo apt-get install mono-complete</code></li>
+</ul>
+<h2 id="UE蓝图的Paste工具"><a href="#UE蓝图的Paste工具" class="headerlink" title="UE蓝图的Paste工具"></a>UE蓝图的Paste工具</h2><p>可以把蓝图的代码复制到<a target="_blank" rel="noopener" href="https://blueprintue.com/">blueprintue.com</a>（在国内可以用陶任贤的国内站<a target="_blank" rel="noopener" href="http://blueprintue.cn/">blueprintue.cn</a>，但不支持https），把网址发给别人，就能够让别人看到蓝图里的节点，就像在UE的编辑器里一样。</p>
+<!-- <iframe width="100%" scrolling=no height="500" src="https://blueprintue.com/render/-ryx9fs_" scrolling="no"></iframe> -->
+
+<!-- <iframe src="http://blueprintue.cn/render/riztzv9g" scrolling="no" allowfullscreen></iframe> -->
+
+<h2 id="UE4-添加UE的Code-Snippet到VS"><a href="#UE4-添加UE的Code-Snippet到VS" class="headerlink" title="UE4:添加UE的Code Snippet到VS"></a>UE4:添加UE的Code Snippet到VS</h2><p>首先，打开源码版UE以下目录(从EpicGameLauncher安装的没有，若没有源码版引擎可以点<a href="VisualStudioSnippets_421.7z">这里下载</a>)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Engine\Extras\VisualStudioSnippets</span><br></pre></td></tr></table></figure>
+
+<p>这个目录下有很多的<code>*.snippet</code>文件，就是VS中的代码片段，主要是对UE的各种宏的封装，这样在VS中写UE的代码时就不用每次都敲一遍了。</p>
+<p>导入VS的方法为：在VS中打开<code>Tools</code>-<code>Code Snippets Manager</code>：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/vs-add-ue-code-snippets.webp"></p>
+<p>点击<code>Import</code>，选择上面找到的引擎中的目录<code>Engine\Extras\VisualStudioSnippets</code>，全选导入即可。</p>
+<p>在VS里触发的方式为依此按下组合键<code>Ctrl+K</code>与<code>Ctrl+X</code>，然后选择<code>My Code Snippets</code>，就可以看到导入进来的所有UE的<code>Code Snippets</code>了。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/vs-usage-code-snippets.webp"></p>
+<h2 id="UE4-在VS中调试时显示对象值"><a href="#UE4-在VS中调试时显示对象值" class="headerlink" title="UE4:在VS中调试时显示对象值"></a>UE4:在VS中调试时显示对象值</h2><p>打开引擎路径:</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Engine\Extras\VisualStudioDebugging</span><br></pre></td></tr></table></figure>
+
+<p>该路径下会有一个<a target="_blank" rel="noopener" href="https://img.imzlp.com/imgs/zlp/blog/posts/12143/UE4_native.7z">UE4.natvis.zip</a>文件，将其拷贝到VS的下列路径中：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Packages\Debugger\Visualizers</span><br></pre></td></tr></table></figure>
+
+<p>然后重启启动调试，就可以在调试窗口看到对象值了。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/ue4-debug-in-vs-show-object-value.webp"></p>
+<h2 id="VS调试独立运行的UE项目"><a href="#VS调试独立运行的UE项目" class="headerlink" title="VS调试独立运行的UE项目"></a>VS调试独立运行的UE项目</h2><p>在UE的编辑器模式下以<code>Standalone</code>方式运行，在VS中是没办法及时<code>Attach to process</code>上的。<br>比如我们想要在standalone模式下调试引擎和项目，在editor下直接启动会创建一个新的进程，在VS中手动点<code>Attach to process</code>是很不方便的，也没有那么及时(因为点完启动在等我们在VS中attach到进程上有可能引擎都已经启动完毕了)。<br>幸好UE提供了一个插件：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/Development/VisualStudioSetup/UnrealVS">UnrealVS</a>，该插件的VS安装程序在引擎的<code>Engine\Extras\UnrealVS</code>目录下，根据你的VS版本选择安装。<br>安装完之后启动VS，在<code>View-&gt;Toolbars-&gt;UnrealVS</code>启用，就会在VS的工具栏看到了。在这里选择你的项目：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/UnrealVS-Plugins-Toolbar.webp"></p>
+<p>后面的框是命令行框，填入的参数会在启动时传递给程序(具体介绍看<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/Development/VisualStudioSetup/UnrealVS">UnrealVS</a>里面的描述)，所以我们可以在后面填参数使其以独立模式启动(可以从<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-us/Programming/Basics/CommandLineArguments">Command-Line Arguments</a>查看支持的参数)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;<span class="subst">$(SolutionDir)</span><span class="subst">$(ProjectName)</span>.uproject&quot;</span> -game -windowed -<span class="built_in">log</span> -verbose</span><br></pre></td></tr></table></figure>
+<p>这样就会在VS中使用F5启动项目时自动attach的到进程上的。</p>
+<h2 id="UE-Package-Create-a-patch"><a href="#UE-Package-Create-a-patch" class="headerlink" title="UE Package:Create a patch"></a>UE Package:Create a patch</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-us/Engine/Deployment/HowToCreatePatch">How To Create a Patch (Platform-Agnostic)</a></li>
+</ul>
+<p>最需要注意的是下面三点：<br>You can patch a project you have previously released using a versioned release. Some things to keep in mind are:</p>
+<ul>
+<li>Lock down the serialization code paths at the time of release.</li>
+<li>Keep the released cooked content, as the UnrealPak tool uses this to determine which content should be in the patch package file.</li>
+<li>At runtime, mount both pak files, with a higher priority for the patch file so any content within it is loaded first.</li>
+</ul>
+<p>总结来说就是，要保证与上次打包的资源路径不变/保留上次打包版本的<code>Saved/Cooked</code>目录(因为创建的Patch是通过UnrealPak来检测当前项目里的资源与上次Cooked的差异)，程序运行时优先加载Patch的文件<code>*0_P.pak</code>，其中数字越大加载的优先级越高。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/ue-create-patch-pak.webp"></p>
+<p>蓝图的功能实现也是<code>uasset</code>的，所以也会打包在pak里面，而不会在<code>.exe</code>里。蓝图是运行在虚拟机上的(详见<a target="_blank" rel="noopener" href="https://wiki.unrealengine.com/Blueprint_FAQ_and_Tips">Blueprint FAQ and Tips</a>)，并不是类似C++的直接编译成二进制文件，即蓝图也是资源，所以会打包在pak里面，这意味着如果纯用蓝图实现的项目可以不用变动<code>.exe</code>只增加patch就可以达到游戏更新。</p>
+<blockquote>
+<p>注：UnrealFrontend创建的配置是存储在<code>Engine/Programs/UnrealFrontend/Profiles</code>下的<code>*.ulp2</code>文件。</p>
+</blockquote>
+<h2 id="UE4-修改UnrealForntend的语言"><a href="#UE4-修改UnrealForntend的语言" class="headerlink" title="UE4: 修改UnrealForntend的语言"></a>UE4: 修改UnrealForntend的语言</h2><p>编辑<code>Engine/Programs/UnrealFrontend/Config/DefaultEngine.ini</code>，加入以下配置：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Internationalization]</span></span><br><span class="line"><span class="attr">Culture</span>=en</span><br></pre></td></tr></table></figure>
+
+<p>改成<code>zh-CN</code>是中文，不过不建议改成中文的，看着中文的词有歧义，都不知道是什么。</p>
+<h2 id="UE创建StandaloneApplication"><a href="#UE创建StandaloneApplication" class="headerlink" title="UE创建StandaloneApplication"></a>UE创建StandaloneApplication</h2><p>使用UE也可以写应用程序(StandaloneApplication: Target is Program)，可以把UE当作一个超大的ThridParty.<br>我写了一个模板：<a target="_blank" rel="noopener" href="https://github.com/hxhb/UEProgramTemplate">hxhb/UEProgramTemplate</a>.<br>运行效果：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/12143/UEStandaloneApplication.webp"></p>
+<p>但是想要创建新的StandaloneApplication太麻烦了，我写了一个小工具可以直接创建：<a target="_blank" rel="noopener" href="https://github.com/hxhb/UECreateProgramTemplateTool">hxhb/UECreateProgramTemplateTool</a>.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Usage</span></span><br><span class="line">$ create_program.exe <span class="variable">$ProgramName</span></span><br><span class="line">Create Standalone Program Successed!</span><br></pre></td></tr></table></figure>
+<ol>
+<li>move $ProgramName Folder to Engine\Source\Programs (version of source code)</li>
+<li>run GenerateProgramProject.bat</li>
+<li>OpenProgramProject.bat</li>
+</ol>
+<p>用起来相当酸爽。</p>
+<p><strong>注意</strong>：<br>*.target.cs中的配置会影响UBT生成的一些宏定义，比如：</p>
+<ul>
+<li><code>bBuildWithEditorOnlyData</code>控制的是<code>WITH_EDITORONLY_DATA</code>。</li>
+<li><code>bCompileAgainstEngine</code>控制的是<code>WITH_ENGINE</code></li>
+</ul>
+<p>开发Program类型的程序时需要注意这些配置。可以在<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-us/Programming/UnrealBuildSystem/TargetFiles">UnrealBuildSystem/Targets</a>查看<code>*.target.cs</code>支持的全部参数。<br>UBT的代码里解析<code>*.Target.cs</code>里的配置在<code>Programs\UnrealBuildTools\Configuration\URBuildTarget.cs</code>的<code>SetupGlobalEnvironment</code>函数。</p>
+<h2 id="注册UnrealVersionSelector"><a href="#注册UnrealVersionSelector" class="headerlink" title="注册UnrealVersionSelector"></a>注册UnrealVersionSelector</h2><p>如果遇到<code>uproject</code>没有文件关联的情况可以使用下列注册表修复文件关联。</p>
+<p>保存为<code>.reg</code>，双击合并即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">Windows Registry Editor Version 5.00</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\.uproject]</span><br><span class="line">@=&quot;Unreal.ProjectFile&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile]</span><br><span class="line">@=&quot;Unreal Engine Project File&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\DefaultIcon]</span><br><span class="line">@=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell]</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\open]</span><br><span class="line">@=&quot;Open&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\open\command]</span><br><span class="line">@=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot; /editor \&quot;%1\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\run]</span><br><span class="line">@=&quot;Launch game&quot;</span><br><span class="line">&quot;Icon&quot;=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\run\command]</span><br><span class="line">@=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot; /game \&quot;%1\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\rungenproj]</span><br><span class="line">@=&quot;Generate Visual Studio project files&quot;</span><br><span class="line">&quot;Icon&quot;=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\rungenproj\command]</span><br><span class="line">@=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot; /projectfiles \&quot;%1\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\switchversion]</span><br><span class="line">@=&quot;Switch Unreal Engine version...&quot;</span><br><span class="line">&quot;Icon&quot;=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot;&quot;</span><br><span class="line"></span><br><span class="line">[HKEY_CLASSES_ROOT\Unreal.ProjectFile\shell\switchversion\command]</span><br><span class="line">@=&quot;\&quot;C:\\Program Files (x86)\\Epic Games\\Launcher\\Engine\\Binaries\\Win64\\UnrealVersionSelector.exe\&quot; /switchversion \&quot;%1\&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/12143/" target="_blank">UE工具链配置与开发技巧</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2019年09月09日 23时32分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有5.5k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/12143/" target="_blank" title="UE工具链配置与开发技巧">https://imzlp.com/posts/12143/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/12143/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/16643/" rel="prev" title="UE Build System：Target and Module">
+      <i class="fa fa-chevron-left"></i> UE Build System：Target and Module
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/9050/" rel="next" title="分析UBT中EULA的内容分发限制">
+      分析UBT中EULA的内容分发限制 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8Doxygen%E4%BB%8EUE%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90%E6%96%87%E6%A1%A3"><span class="nav-number">1.</span> <span class="nav-text">使用Doxygen从UE代码生成文档</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UnrealVersionSelector%E7%9A%84%E5%8F%82%E6%95%B0"><span class="nav-number">2.</span> <span class="nav-text">UnrealVersionSelector的参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UnrealPak%E7%9A%84%E5%8F%82%E6%95%B0"><span class="nav-number">3.</span> <span class="nav-text">UnrealPak的参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-%E4%BF%AE%E6%94%B9Setup-bat%E4%BD%BF%E7%94%A8%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%95%B0%E5%8A%A0%E9%80%9F%E4%B8%8B%E8%BD%BD"><span class="nav-number">4.</span> <span class="nav-text">UE4:修改Setup.bat使用的线程数加速下载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-Clion-debug-project-on-MacOS"><span class="nav-number">5.</span> <span class="nav-text">UE4:Clion debug project on MacOS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8VSC%E7%BC%96%E5%86%99%E4%BB%A3%E7%A0%81-UE-4-18"><span class="nav-number">6.</span> <span class="nav-text">使用VSC编写代码(UE_4.18+)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E8%93%9D%E5%9B%BE%E7%9A%84Paste%E5%B7%A5%E5%85%B7"><span class="nav-number">7.</span> <span class="nav-text">UE蓝图的Paste工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-%E6%B7%BB%E5%8A%A0UE%E7%9A%84Code-Snippet%E5%88%B0VS"><span class="nav-number">8.</span> <span class="nav-text">UE4:添加UE的Code Snippet到VS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-%E5%9C%A8VS%E4%B8%AD%E8%B0%83%E8%AF%95%E6%97%B6%E6%98%BE%E7%A4%BA%E5%AF%B9%E8%B1%A1%E5%80%BC"><span class="nav-number">9.</span> <span class="nav-text">UE4:在VS中调试时显示对象值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VS%E8%B0%83%E8%AF%95%E7%8B%AC%E7%AB%8B%E8%BF%90%E8%A1%8C%E7%9A%84UE%E9%A1%B9%E7%9B%AE"><span class="nav-number">10.</span> <span class="nav-text">VS调试独立运行的UE项目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE-Package-Create-a-patch"><span class="nav-number">11.</span> <span class="nav-text">UE Package:Create a patch</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE4-%E4%BF%AE%E6%94%B9UnrealForntend%E7%9A%84%E8%AF%AD%E8%A8%80"><span class="nav-number">12.</span> <span class="nav-text">UE4: 修改UnrealForntend的语言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UE%E5%88%9B%E5%BB%BAStandaloneApplication"><span class="nav-number">13.</span> <span class="nav-text">UE创建StandaloneApplication</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E5%86%8CUnrealVersionSelector"><span class="nav-number">14.</span> <span class="nav-text">注册UnrealVersionSelector</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/12143/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

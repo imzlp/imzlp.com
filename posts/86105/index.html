@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="如果让我挑一个近期在工作当中使用UE感觉最无意义和折磨的事情，那一定是根据一大串字符串路径，在ContentBrowser里找到它。 由于无法快速地直接跳转到目录和资源，每次逐级点开一个深层目录都给我带来一种浪费人生的感觉。  基于这种痛点，我写了一个小工具，可以极大地缓解这种手动焦虑。我把它命名为j2（jump to），是一个极简的ContentBrowser跳转工具，开源在github上：hx">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE插件与工具开发：j2的设计思路与实现">
+<meta property="og:url" content="https://imzlp.com/posts/86105/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="如果让我挑一个近期在工作当中使用UE感觉最无意义和折磨的事情，那一定是根据一大串字符串路径，在ContentBrowser里找到它。 由于无法快速地直接跳转到目录和资源，每次逐级点开一个深层目录都给我带来一种浪费人生的感觉。  基于这种痛点，我写了一个小工具，可以极大地缓解这种手动焦虑。我把它命名为j2（jump to），是一个极简的ContentBrowser跳转工具，开源在github上：hx">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/22354963652866.webp">
+<meta property="article:published_time" content="2023-10-14T20:23:37.000Z">
+<meta property="article:modified_time" content="2023-10-14T20:23:37.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="插件开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/22354963652866.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/86105/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE插件与工具开发：j2的设计思路与实现 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/86105/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE插件与工具开发：j2的设计思路与实现<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2023-10-14-86105.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">UE plug-in and tool development:j2 design ideas and implementation</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-14 20:23 20:23:37:23" itemprop="dateCreated datePublished" datetime="2023-10-14T20:23:37+00:00">2023-10-14 20:23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">插件开发</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/86105/" class="post-meta-item leancloud_visitors" data-flag-title="UE插件与工具开发：j2的设计思路与实现" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>如果让我挑一个近期在工作当中使用UE感觉最无意义和折磨的事情，那一定是根据一大串字符串路径，在ContentBrowser里找到它。</p>
+<p>由于无法快速地直接跳转到目录和资源，每次逐级点开一个深层目录都给我带来一种浪费人生的感觉。 </p>
+<p>基于这种痛点，我写了一个小工具，可以极大地缓解这种手动焦虑。我把它命名为<code>j2</code>（jump to），是一个极简的ContentBrowser跳转工具，开源在github上：<a target="_blank" rel="noopener" href="https://github.com/hxhb/JumpTo">hxhb/JumpTo</a>。</p>
+<p>本片文章会介绍该项目的用法，以及构想解决方法的思考过程和逐步的代码实现。虽然功能本身是一个极简的插件，但对于实际痛点的发现、分析和解决过程值得记录。</p>
+<span id="more"></span>
+
+<h2 id="j2"><a href="#j2" class="headerlink" title="j2"></a>j2</h2><h3 id="What-is-j2"><a href="#What-is-j2" class="headerlink" title="What is j2?"></a>What is j2?</h3><p>j2是一个UE中可以通过Console快速定位到ContentBrower中目录或资源的工具，无需逐级手动点选目录，通过命令直接跳转。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310141101261.gif"></p>
+<h3 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h3><p>插件提供了一个名为<code>j2</code>(jump to)的命令，利用Console唤起（`键）：</p>
+<p>参数可以传递目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">j2 /Game/StarterContent/Maps</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310141046188.png"></p>
+<p>或者资源路径：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">j2 /Game/StarterContent/Textures/T_Concrete_Panels_N</span><br></pre></td></tr></table></figure>
+<p>并且能够支持ContentBrowser中对资源进行Copy Reference的路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">j2 /Script/Engine.Texture2D<span class="string">&#x27;/Game/StarterContent/Textures/T_Concrete_Panels_N.T_Concrete_Panels_N&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>当检测到传递的参数是资源路径，就会跳转到它所在目录下，并选中该资源。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310141047884.png"></p>
+<h3 id="History"><a href="#History" class="headerlink" title="History"></a>History</h3><p>由于是基于Console实现的，所以它天然能够保存执行的历史，实现在历史记录中快速切换：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310141053939.png"></p>
+<p>注：Console的执行历史记录在<code>[PROJECT_DIR]/Saved/Config/ConsoleHistory.ini</code>中。</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[ConsoleHistory]</span></span><br><span class="line"><span class="attr">History</span>=j2 /Game/StarterContent/Maps</span><br><span class="line"><span class="attr">History</span>=j2 /Game/StarterContent/Textures/T_Concrete_Panels_N</span><br><span class="line"><span class="attr">History</span>=j2 /Script/Engine.Texture2D<span class="string">&#x27;/Game/StarterContent/Textures/T_Concrete_Panels_N.T_Concrete_Panels_N&#x27;</span></span><br><span class="line"><span class="attr">History</span>=j2 /Game</span><br></pre></td></tr></table></figure>
+
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><h3 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h3><p>J2的代码很简单，我花了半个小时就把代码写完了。虽然功能很简单，但还是要进行需求分析，了解究竟都是要实现什么样的功能，以及需要引擎如何支持，从而记录我实现工具的思考过程。</p>
+<ol start="0">
+<li>仅在Editor下运行，无需Runtime模块</li>
+<li>通过Console唤起命令，执行函数、传递参数</li>
+<li>从Console命令里提取参数</li>
+<li>检测参数是否是有效的路径或资源</li>
+<li>检测传入的路径类型，是目录还是资源（PackageName或Copy Refernce）</li>
+<li>在当前ContentBrowser窗口内定位目录或资源路径</li>
+</ol>
+<h3 id="唤起命令"><a href="#唤起命令" class="headerlink" title="唤起命令"></a>唤起命令</h3><p>可以使用FAutoConsoleCommand定义一个Command，并且传递一个回调函数进去：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> FAutoConsoleCommand <span class="title">J2Cmd</span><span class="params">(  </span></span></span><br><span class="line"><span class="params"><span class="function">    TEXT(<span class="string">&quot;j2&quot;</span>),  </span></span></span><br><span class="line"><span class="params"><span class="function">    TEXT(<span class="string">&quot;jump to directory or asset.&quot;</span>),  </span></span></span><br><span class="line"><span class="params"><span class="function">    FConsoleCommandWithArgsDelegate::CreateStatic(&amp;UFlibJumpToHelper::J2)  </span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>回调是一个接受原型为<code>void(const TArray&lt; FString &gt;&amp;)</code>的函数，可以获取Console传递进来的参数。</p>
+<p>然后在Console中就能识别：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310142041052.png"></p>
+<h3 id="接受参数"><a href="#接受参数" class="headerlink" title="接受参数"></a>接受参数</h3><p>从<code>FAutoConsoleCommand</code>对象绑定的回调函数的参数中即可获得：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">J2</span><span class="params">(<span class="type">const</span> TArray&lt;FString&gt;&amp; Args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span>(Args.<span class="built_in">Num</span>())  </span><br><span class="line">	&#123;</span><br><span class="line">	    FString JumpTo = Args[<span class="number">0</span>];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为只需要跳转到一个路径，所以只取第一个参数即可。</p>
+<h3 id="检查参数是否为有效"><a href="#检查参数是否为有效" class="headerlink" title="检查参数是否为有效"></a>检查参数是否为有效</h3><p>对于传递进来的参数，需要检测是否为有效的资源或路径。</p>
+<h4 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h4><p>对于资源而言，为了同时支持LongPackageName和Copy Reference的两种形式，需要进行两次检测。</p>
+<p>如果传递的是LongPackageName，则路径形式为<code>/Game/XXXX/YYYY</code>，则可以直接使用<code>FPackageName</code>的<code>DoesPackageExist</code>函数进行检查：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> bPackageExist = FPackageName::<span class="built_in">DoesPackageExist</span>(JumpTo);</span><br></pre></td></tr></table></figure>
+
+<p>如果是<code>Copy Reference</code>的资源形式，其表达形式为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Class&#x27;/Game/XXX/YYY.YYYY&#x27;</span><br><span class="line">/Script/Engine.Texture2D&#x27;/Game/StarterContent/Textures/T_Concrete_Panels_N.T_Concrete_Panels_N&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>对它的检测可以通过正则表达式来进行，其正则模式为<code>&#39;[^&#39;]*/[^&#39;]*&#39;</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">TArray&lt;FString&gt; OutRegStrings;</span><br><span class="line"><span class="type">bool</span> bIsCopyRef = UFlibJumpToHelper::<span class="built_in">IsMatchRegExp</span>(JumpTo,REF_REGEX_TEXT,OutRegStrings) &amp;&amp; OutRegStrings.<span class="built_in">Num</span>();</span><br></pre></td></tr></table></figure>
+
+<p><code>IsMatchRegExp</code>是我在插件内基于引擎内的<code>FRegexMatcher</code>实现的，用于检查字符串是否匹配某个正则的函数，并会输出匹配正则的子串，借此也可以提取出来CopyReference的实际资源路径。</p>
+<p>并且它也可以用在所有需要匹配正则表达式的逻辑中，我在ResScanner的命名与路径的正则匹配都使用了它。完整代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">UFlibJumpToHelper::IsMatchRegExp</span><span class="params">(<span class="type">const</span> FString&amp; Str, <span class="type">const</span> FString&amp; RegExp,TArray&lt;FString&gt;&amp; OutMatchStrs)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="function">FRegexPattern <span class="title">Pattern</span><span class="params">(RegExp)</span></span>;</span><br><span class="line">	<span class="function">FRegexMatcher <span class="title">PattenMatcher</span><span class="params">(Pattern,Str)</span></span>;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">FRegexMatchResult</span>&#123; int32 Begin,End; &#125;;</span><br><span class="line">	TArray&lt;FRegexMatchResult&gt; Results;</span><br><span class="line">	<span class="keyword">while</span>(PattenMatcher.<span class="built_in">FindNext</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		FRegexMatchResult MatchStrInfo;</span><br><span class="line">		MatchStrInfo.Begin = PattenMatcher.<span class="built_in">GetMatchBeginning</span>();</span><br><span class="line">		MatchStrInfo.End = PattenMatcher.<span class="built_in">GetMatchEnding</span>();</span><br><span class="line">		<span class="keyword">if</span>(MatchStrInfo.End &gt; MatchStrInfo.Begin)</span><br><span class="line">		&#123;</span><br><span class="line">			Results.<span class="built_in">Add</span>(MatchStrInfo);</span><br><span class="line">			FString MidStr = Str.<span class="built_in">Mid</span>(MatchStrInfo.Begin,MatchStrInfo.End - MatchStrInfo.Begin);</span><br><span class="line">			OutMatchStrs.<span class="built_in">AddUnique</span>(MidStr);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> !!Results.<span class="built_in">Num</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="路径"><a href="#路径" class="headerlink" title="路径"></a>路径</h4><p>对于传进来的参数是路径，就需要检查该路径是否为有效的资源目录，来决定是否执行跳转。</p>
+<p>至于什么是有效的资源目录，首先要牵扯出来一个RootPaths的概念，当引擎项目和插件注册时，会添加模块目录的Content到RootPaths里，可以识别不同的模块中的资源。</p>
+<p>如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/Engine/xxx</span><br><span class="line">/Game/XXX</span><br><span class="line">/Paper2D/XXX</span><br><span class="line">/HotPatcher/XXX</span><br><span class="line">/ResScanner/xxx</span><br></pre></td></tr></table></figure>
+<p>等等形式都是基于所属模块的RootPath。当然，我需要j2执行跳转任何模块中的资源，而不局限于<code>/Game</code>或者<code>/Engine</code>。<br>这就需要有一个通用的检查资源目录是否存在的方式，但我没查到能够直接使用的函数，于是想了一个变通的方法。</p>
+<p>在UE中，<code>FPackageName</code>有一个<code>TryConvertLongPackageNameToFilename</code>函数，可以把资源的LongPackagName转换为磁盘的uasset路径。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FString AssetAbsPath;  </span><br><span class="line">FPackageName::<span class="built_in">TryConvertLongPackageNameToFilename</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Game/StarterContent/Textures/T_Burst_M&quot;</span>),AssetAbsPath,FPackageName::<span class="built_in">GetAssetPackageExtension</span>());</span><br></pre></td></tr></table></figure>
+<p>将会获取到：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">E:\UnrealProjects\BlankUE5\Content\StarterContent\Textures\T_Burst_M.uasset</span><br></pre></td></tr></table></figure>
+
+<p>它的作用就是把引擎中的资产路径转换为磁盘上的uasset路径，但并不绝对。通过控制参数也能够实现对目录的转换。</p>
+<p>如，想要获取<code>/Game/StarterContent</code>的磁盘目录路径：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FString StarterContentAbsPath;  </span><br><span class="line">FPackageName::<span class="built_in">TryConvertLongPackageNameToFilename</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/Game/StarterContent&quot;</span>),StarterContentAbsPath,<span class="built_in">TEXT</span>(<span class="string">&quot;&quot;</span>));</span><br></pre></td></tr></table></figure>
+<p>即把目录也当作资源，只是传递空的<code>Extension</code>参数。它就能转换为绝对路径了：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">E:\UnrealProjects\BlankUE5\Content\StarterContent</span><br></pre></td></tr></table></figure>
+
+<p>然后再使用<code>FPaths::DirectoryExists</code>检查绝对路径是否存在即可，这样就能实现对引擎中所有RootPath目录的检查了。</p>
+<h3 id="跳转到路径"><a href="#跳转到路径" class="headerlink" title="跳转到路径"></a>跳转到路径</h3><p>其实在Content Browser中，对目录右键，就有一个<code>Show In New Content Browser</code>的选项：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/202310141820873.png"></p>
+<p>我想要的就是这样的功能，但是打开的路径由代码控制。</p>
+<p>查看了引擎中的代码，该功能的代码为：</p>
+<figure class="highlight cpp"><figcaption><span>Engine\Source\Editor\ContentBrowser\Private\SContentBrowser.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">SContentBrowser::OpenNewContentBrowser</span><span class="params">()</span>  </span></span><br><span class="line"><span class="function"></span>&#123;  </span><br><span class="line">    <span class="type">const</span> TArray&lt;FContentBrowserItem&gt; SelectedFolders = PathContextMenu-&gt;<span class="built_in">GetSelectedFolders</span>();  </span><br><span class="line">    FContentBrowserSingleton::<span class="built_in">Get</span>().<span class="built_in">SyncBrowserToItems</span>(SelectedFolders, <span class="literal">false</span>, <span class="literal">true</span>, NAME_None, <span class="literal">true</span>);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中的<code>SyncBrowserToItems</code>就是我们需要的函数啦。</p>
+<p>顺便查看所属类<code>FContentBrowserSingleton</code>的定义，发现还有一个<code>SyncBrowserToFolders</code>函数，只传递字符串就可以了，更能够符合需要。原型如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">SyncBrowserToFolders</span><span class="params">(<span class="type">const</span> TArray&lt;FString&gt;&amp; FolderList, <span class="type">bool</span> bAllowLockedBrowsers = <span class="literal">false</span>, <span class="type">bool</span> bFocusContentBrowser = <span class="literal">true</span>, <span class="type">const</span> FName&amp; InstanceName = FName(), <span class="type">bool</span> bNewSpawnBrowser = <span class="literal">false</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>在J2函数中直接调用，根据Console传递进来的路径传递给FolderList即可。</p>
+<blockquote>
+<p>注意，需要删除路径结尾多余的<code>/</code>，如<code>/Game/XXXX/</code>。</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(JumpTo.<span class="built_in">RemoveFromEnd</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;/&quot;</span>)))&#123;&#125;;  </span><br><span class="line">ContentBrowserModule.<span class="built_in">Get</span>().<span class="built_in">SyncBrowserToFolders</span>(TArray&lt;FString&gt;&#123;JumpTo&#125;,<span class="literal">true</span>, <span class="literal">true</span>, NAME_None, <span class="literal">false</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这样就能够实现在当前ContentBrower里定位到指定目录了，如果当前编辑器Layout不存在ContentBrowser，会自动创建一个。<br>如果还想要在新的ContentBrowser面板里打开，可以给<code>bNewSpawnBrowser</code>参数传递<code>true</code>。</p>
+<h3 id="跳转到资源"><a href="#跳转到资源" class="headerlink" title="跳转到资源"></a>跳转到资源</h3><p>跳转到资源与跳转到路径有些区别，本质上是先跳转到资源所在路径，再在当前路径下定位到资源。</p>
+<p>在类<code>FContentBrowserSingleton</code>的定义中也有如下接口：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">SyncBrowserToAssets</span><span class="params">(<span class="type">const</span> TArray&lt;<span class="keyword">struct</span> FAssetData&gt;&amp; AssetDataList, <span class="type">bool</span> bAllowLockedBrowsers = <span class="literal">false</span>, <span class="type">bool</span> bFocusContentBrowser = <span class="literal">true</span>, <span class="type">const</span> FName&amp; InstanceName = FName(), <span class="type">bool</span> bNewSpawnBrowser = <span class="literal">false</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>与打开目录的形式类似，但需要传递资源的<code>AssetData</code>。</p>
+<p>因为我们传递资源的LongPackageName和Copy Reference都是资源全路径，所以能够从AssetRegistry中获取传递资源的<code>FAssetData</code>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FAssetData <span class="title">GetAssetDataByLongPackageName</span><span class="params">(FName LongPackageNames)</span>  </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	UAssetManager&amp; AssetManager = UAssetManager::<span class="built_in">Get</span>();  </span><br><span class="line">	FAssetData AssetDataForPath;  </span><br><span class="line">	FSoftObjectPath PackageObjectPath = <span class="built_in">LongPackageNameToPackagePath</span>(LongPackageNames.<span class="built_in">ToString</span>());  </span><br><span class="line">	AssetManager.<span class="built_in">GetAssetDataForPath</span>(PackageObjectPath, AssetDataForPath);  </span><br><span class="line">	<span class="keyword">return</span> AssetDataForPath;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意，如果传递的是LongPackageName，则需要转换为<code>ObjectPath</code>的形式。</p>
+</blockquote>
+<p>然后调用<code>SyncBrowserToAssets</code>即可（注意需要检查获取到的<code>FAssetData</code>是否有效）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FAssetData AssetData = <span class="built_in">GetAssetDataByLongPackageName</span>(*JumpTo);  </span><br><span class="line"><span class="keyword">if</span>(AssetData.<span class="built_in">IsValid</span>())  </span><br><span class="line">&#123;  </span><br><span class="line">    ContentBrowserModule.<span class="built_in">Get</span>().<span class="built_in">SyncBrowserToAssets</span>(TArray&lt;FAssetData&gt;&#123;AssetData&#125;,<span class="literal">true</span>, <span class="literal">true</span>, NAME_None, <span class="literal">false</span>);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就能够实现在ContentBrowser里跳转到资源的效果了。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>通过该插件，我再也不担心从路径中找资源了。就算别人发来一长串路径，复制粘贴文本就能跳转，心情非常舒畅。</p>
+<p>顺便将其作为一个插件开发的案例，梳理了从<strong>发现需求</strong>，到<strong>构想解决</strong>，再到<strong>实际实现</strong>的全过程。作为我日常开发中处理问题的一个缩影。</p>
+<p>只有真正的发现问题，分析问题。那么解决问题则就是处理一个个具体点的过程，再充分利用引擎已有的特性，自然就很顺畅了。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/86105/" target="_blank">UE插件与工具开发：j2的设计思路与实现</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2023年10月14日 20时23分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/86105/" target="_blank" title="UE插件与工具开发：j2的设计思路与实现">https://imzlp.com/posts/86105/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/86105/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" rel="tag"># 插件开发</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/19901/" rel="prev" title="UE中资源自修正的设计与实现方案">
+      <i class="fa fa-chevron-left"></i> UE中资源自修正的设计与实现方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/30911/" rel="next" title="基于Obsidian构建知识管理体系">
+      基于Obsidian构建知识管理体系 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#j2"><span class="nav-number">1.</span> <span class="nav-text">j2</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#What-is-j2"><span class="nav-number">1.1.</span> <span class="nav-text">What is j2?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Usage"><span class="nav-number">1.2.</span> <span class="nav-text">Usage</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#History"><span class="nav-number">1.3.</span> <span class="nav-text">History</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90"><span class="nav-number">2.1.</span> <span class="nav-text">需求分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%94%A4%E8%B5%B7%E5%91%BD%E4%BB%A4"><span class="nav-number">2.2.</span> <span class="nav-text">唤起命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A5%E5%8F%97%E5%8F%82%E6%95%B0"><span class="nav-number">2.3.</span> <span class="nav-text">接受参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E5%8F%82%E6%95%B0%E6%98%AF%E5%90%A6%E4%B8%BA%E6%9C%89%E6%95%88"><span class="nav-number">2.4.</span> <span class="nav-text">检查参数是否为有效</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B5%84%E6%BA%90"><span class="nav-number">2.4.1.</span> <span class="nav-text">资源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B7%AF%E5%BE%84"><span class="nav-number">2.4.2.</span> <span class="nav-text">路径</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%B3%E8%BD%AC%E5%88%B0%E8%B7%AF%E5%BE%84"><span class="nav-number">2.5.</span> <span class="nav-text">跳转到路径</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%B3%E8%BD%AC%E5%88%B0%E8%B5%84%E6%BA%90"><span class="nav-number">2.6.</span> <span class="nav-text">跳转到资源</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">3.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/86105/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

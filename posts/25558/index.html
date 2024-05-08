@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="C++是一门支持面向对象编程(object-oriented Programming)的语言，继承和多态(Polymorphic)是其最重要的特性。关于C++的继承和类内成员的各种内容在之前的文章中已经有了不少介绍，本篇文章主要是研究一下编译器对C++多态的一个实现方式：虚函数表。C++标准([IOS&#x2F;IEC 14882:2014])中写道：  Virtual functions support">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++多态与虚函数表">
+<meta property="og:url" content="https://imzlp.com/posts/25558/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="C++是一门支持面向对象编程(object-oriented Programming)的语言，继承和多态(Polymorphic)是其最重要的特性。关于C++的继承和类内成员的各种内容在之前的文章中已经有了不少介绍，本篇文章主要是研究一下编译器对C++多态的一个实现方式：虚函数表。C++标准([IOS&#x2F;IEC 14882:2014])中写道：  Virtual functions support">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-02-26T13:36:47.000Z">
+<meta property="article:modified_time" content="2019-02-27T11:47:32.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="多态">
+<meta property="article:tag" content="polymorphic">
+<meta property="article:tag" content="虚函数表">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://imzlp.com/posts/25558/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>C++多态与虚函数表 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/25558/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++多态与虚函数表<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2019-02-26-25558.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-02-26 13:36 13:36:47:36" itemprop="dateCreated datePublished" datetime="2019-02-26T13:36:47+00:00">2019-02-26 13:36</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-02-27 11:47 11:47:32:47" itemprop="dateModified" datetime="2019-02-27T11:47:32+00:00">2019-02-27 11:47</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">技术笔记</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/25558/" class="post-meta-item leancloud_visitors" data-flag-title="C++多态与虚函数表" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>C++是一门支持面向对象编程(object-oriented Programming)的语言，继承和多态(Polymorphic)是其最重要的特性。<br>关于C++的继承和类内成员的各种内容在之前的文章中已经有了不少介绍，本篇文章主要是研究一下编译器对C++多态的一个实现方式：<strong>虚函数表</strong>。<br>C++标准(<strong>[IOS/IEC 14882:2014]</strong>)中写道：</p>
+<blockquote>
+<p>Virtual functions support dynamic binding and object-oriented programming. A class that declares or inherits a virtual function is called a polymorphic class.</p>
+</blockquote>
+<p>注意：<strong>C++标准并没有规定如何实现多态</strong>，所以编译器对多态的实现是<code>Implementation-defined Behavior</code>，意思就是不同的编译器可能对多态的实现是不一样的，在<strong>不同的平台可能会无法得到相同的实验结果</strong>。</p>
+<span id="more"></span>
+<p>所以有必要列出本篇文章中代码的编译环境，代码编译使用C++14标准(<code>-std=c++14</code>)：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\imzlp\Desktop&gt;clang -v</span><br><span class="line">clang version 7.0.0 (tags/RELEASE_700/final)</span><br><span class="line">Target: x86_64-w64-windows-gnu</span><br><span class="line">Thread model: posix</span><br><span class="line"></span><br><span class="line">gcc version 6.2.0 (x86_64-posix-seh-rev1, Built by MinGW-W64 project)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>再次强调一遍：<strong>C++中多态是Implementation-defined Behavior.</strong></p>
+</blockquote>
+<p>本文会使用Clang生成IR和汇编代码来分析编译器的实现行为。<br>相关命令为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 生成LLVM-IR代码</span></span><br><span class="line">$ clang++ -S -emit-llvm source.cpp</span><br><span class="line"><span class="comment"># 生成汇编代码</span></span><br><span class="line">$ clang++ -c -S source.cpp -o source.s</span><br><span class="line"><span class="comment"># 执行预处理</span></span><br><span class="line">$ clang++ -E source.cpp -o source_pp.cpp</span><br><span class="line"><span class="comment"># 查看类的对象布局，从预处理之后的代码进行分析</span></span><br><span class="line">$ clang++ -cc1 -fdump-record-layouts source_pp.cpp</span><br></pre></td></tr></table></figure>
+<p>之前的文章：<a href="https://imzlp.com/posts/20479/">通过IR代码来分析C++代码语义</a>.</p>
+<p>虽然一些文章说C++多态是虚函数表实现的balabala，但是没有看到能详细说清楚，到底虚函数表是怎么被初始化塞到类里面去的，这里先探讨这样一个问题：虚函数表是何时初始化的？</p>
+<h3 id="虚函数表是在何时初始化的？"><a href="#虚函数表是在何时初始化的？" class="headerlink" title="虚函数表是在何时初始化的？"></a>虚函数表是在何时初始化的？</h3><p>虚函数表是什么时候放进类实例内的？从LLVM-IR分析一下下面这个简单的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">vfunc_one</span><span class="params">(<span class="type">int</span>)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    std::cout&lt;&lt;<span class="string">&quot;A::vfunc_one&quot;</span>&lt;&lt;std::endl;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">vfunc_two</span><span class="params">(<span class="type">int</span>)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    std::cout&lt;&lt;<span class="string">&quot;A::vfunc_two&quot;</span>&lt;&lt;std::endl;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="type">int</span> ival;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span>:<span class="keyword">public</span> A&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">vfunc_one</span><span class="params">(<span class="type">int</span>)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    std::cout&lt;&lt;<span class="string">&quot;B::vfunc_one&quot;</span>&lt;&lt;std::endl;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">vfunc_two</span><span class="params">(<span class="type">int</span>)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    std::cout&lt;&lt;<span class="string">&quot;B::vfunc_two&quot;</span>&lt;&lt;std::endl;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="type">char</span> cval;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  B bobj;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>来看一下A和B类型的对象布局：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// class object layout</span></span><br><span class="line">*** Dumping AST Record Layout</span><br><span class="line">         <span class="number">0</span> | <span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">         <span class="number">0</span> |   (A vtable pointer)</span><br><span class="line">         <span class="number">8</span> |   <span class="type">int</span> ival</span><br><span class="line">           | [<span class="keyword">sizeof</span>=<span class="number">16</span>, dsize=<span class="number">12</span>, align=<span class="number">8</span>,</span><br><span class="line">           |  nvsize=<span class="number">12</span>, nvalign=<span class="number">8</span>]</span><br><span class="line"></span><br><span class="line">*** Dumping AST Record Layout</span><br><span class="line">         <span class="number">0</span> | <span class="keyword">class</span> B</span><br><span class="line">         <span class="number">0</span> |   <span class="keyword">class</span> <span class="built_in">A</span> (primary base)</span><br><span class="line">         <span class="number">0</span> |     (A vtable pointer)</span><br><span class="line">         <span class="number">8</span> |     <span class="type">int</span> ival</span><br><span class="line">        <span class="number">12</span> |   <span class="type">char</span> cval</span><br><span class="line">           | [<span class="keyword">sizeof</span>=<span class="number">16</span>, dsize=<span class="number">13</span>, align=<span class="number">8</span>,</span><br><span class="line">           |  nvsize=<span class="number">13</span>, nvalign=<span class="number">8</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">// class memory align</span></span><br><span class="line">%<span class="keyword">class</span>.B = type &#123; %<span class="keyword">class</span>.A.base, i8, [<span class="number">3</span> x i8] &#125;</span><br><span class="line">%<span class="keyword">class</span>.A.base = type &lt;&#123; <span class="built_in">i32</span> (...)**, i32 &#125;&gt;</span><br><span class="line">%<span class="keyword">class</span>.A = type &lt;&#123; <span class="built_in">i32</span> (...)**, i32, [<span class="number">4</span> x i8] &#125;&gt;</span><br></pre></td></tr></table></figure>
+<p>可以看到，在Clang的实现中，vptr是在对象空间的首部，是一个指针对象(在我的编译环境是8字节)。<br>A的内存布局是vptr(<code>sizeof(void*)</code>)+ival(<code>sizeof(int)</code>)+paading 4byte = 16byte.<br>B的内存布局为：A的基类子对象(vptr(<code>sizeof(void*)</code>)+ival(<code>sizeof(int)</code>))+cval(<code>sizeof(char)</code>)+padding 3byte = 16byte.<br>关于内存对齐的内容可以看我之前的文章：<a href="https://imzlp.com/posts/61962/">结构体成员内存对齐问题</a>.</p>
+<p>上面的C++代码main函数内相关的LLVM-IR代码为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">; Function Attrs: noinline norecurse nounwind optnone uwtable</span><br><span class="line">define dso_local i32 @<span class="built_in">main</span>() #<span class="number">4</span> &#123;</span><br><span class="line">  %<span class="number">1</span> = alloca i32, align <span class="number">4</span></span><br><span class="line">  %<span class="number">2</span> = alloca %<span class="keyword">class</span>.B, align <span class="number">8</span></span><br><span class="line">  store i32 <span class="number">0</span>, i32* %<span class="number">1</span>, align <span class="number">4</span></span><br><span class="line">  call <span class="type">void</span> @_ZN1BC2Ev(%<span class="keyword">class</span>.B* %<span class="number">2</span>) #<span class="number">3</span></span><br><span class="line">  ret i32 <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// B::B()</span></span><br><span class="line">; Function Attrs: noinline nounwind optnone uwtable</span><br><span class="line">define linkonce_odr <span class="type">void</span> @_ZN1BC2Ev(%<span class="keyword">class</span>.B*) unnamed_addr #<span class="number">5</span> comdat align <span class="number">2</span> &#123;</span><br><span class="line">  %<span class="number">2</span> = alloca %<span class="keyword">class</span>.B*, align <span class="number">8</span></span><br><span class="line">  store %<span class="keyword">class</span>.B* %<span class="number">0</span>, %<span class="keyword">class</span>.B** %<span class="number">2</span>, align <span class="number">8</span></span><br><span class="line">  %<span class="number">3</span> = load %<span class="keyword">class</span>.B*, %<span class="keyword">class</span>.B** %<span class="number">2</span>, align <span class="number">8</span></span><br><span class="line">  %<span class="number">4</span> = bitcast %<span class="keyword">class</span>.B* %<span class="number">3</span> to %<span class="keyword">class</span>.A*</span><br><span class="line">  call <span class="type">void</span> @_ZN1AC2Ev(%<span class="keyword">class</span>.A* %<span class="number">4</span>) #<span class="number">3</span></span><br><span class="line">  %<span class="number">5</span> = bitcast %<span class="keyword">class</span>.B* %<span class="number">3</span> to <span class="built_in">i32</span> (...)***</span><br><span class="line">  <span class="comment">// set vptr</span></span><br><span class="line">  store <span class="built_in">i32</span> (...)** <span class="built_in">bitcast</span> (i8** getelementptr <span class="built_in">inbounds</span> (&#123; [<span class="number">4</span> x i8*] &#125;, &#123; [<span class="number">4</span> x i8*] &#125;* @_ZTV1B, i32 <span class="number">0</span>, inrange i32 <span class="number">0</span>, i32 <span class="number">2</span>) to <span class="built_in">i32</span> (...)**), <span class="built_in">i32</span> (...)*** %<span class="number">5</span>, align <span class="number">8</span></span><br><span class="line">  ret <span class="type">void</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">; Function Attrs: noinline nounwind optnone uwtable</span><br><span class="line">define linkonce_odr dso_local <span class="type">void</span> @_ZN1AC2Ev(%<span class="keyword">class</span>.A*) unnamed_addr #<span class="number">5</span> comdat align <span class="number">2</span> &#123;</span><br><span class="line">  %<span class="number">2</span> = alloca %<span class="keyword">class</span>.A*, align <span class="number">8</span></span><br><span class="line">  store %<span class="keyword">class</span>.A* %<span class="number">0</span>, %<span class="keyword">class</span>.A** %<span class="number">2</span>, align <span class="number">8</span></span><br><span class="line">  %<span class="number">3</span> = load %<span class="keyword">class</span>.A*, %<span class="keyword">class</span>.A** %<span class="number">2</span>, align <span class="number">8</span></span><br><span class="line">  %<span class="number">4</span> = bitcast %<span class="keyword">class</span>.A* %<span class="number">3</span> to <span class="built_in">i32</span> (...)***</span><br><span class="line">  store <span class="built_in">i32</span> (...)** <span class="built_in">bitcast</span> (i8** getelementptr <span class="built_in">inbounds</span> (&#123; [<span class="number">4</span> x i8*] &#125;, &#123; [<span class="number">4</span> x i8*] &#125;* @_ZTV1A, i32 <span class="number">0</span>, inrange i32 <span class="number">0</span>, i32 <span class="number">2</span>) to <span class="built_in">i32</span> (...)**), <span class="built_in">i32</span> (...)*** %<span class="number">4</span>, align <span class="number">8</span></span><br><span class="line">  ret <span class="type">void</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>对vptr进行赋值的是这一行：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// set vptr in _ZN1BC2Ev</span></span><br><span class="line"><span class="function">store <span class="title">i32</span> <span class="params">(...)</span>** <span class="title">bitcast</span> <span class="params">(i8** getelementptr inbounds (&#123; [<span class="number">4</span> x i8*] &#125;, &#123; [<span class="number">4</span> x i8*] &#125;* @_ZTV1B, i32 <span class="number">0</span>, inrange i32 <span class="number">0</span>, i32 <span class="number">2</span>) to i32 (...)**)</span>, <span class="title">i32</span> <span class="params">(...)</span>*** %5, align 8</span></span><br></pre></td></tr></table></figure>
+<p>把_ZTV1B的地址赋值给vptr，_ZTV1B是vptr经过Name Mangling后的符号，可以通过<code>c++filt</code>看到：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ c++filt _ZTV1B</span><br><span class="line">vtable <span class="keyword">for</span> B</span><br></pre></td></tr></table></figure>
+<p>综上，编译器是从构造函数里面(在对基类的构造函数调用之后，基类构造函数内也会对自己的vptr赋值)才对vptr执行初始化的，所以在基类的构造函数中调用虚函数，是没有多态行为的…</p>
+<h3 id="虚函数表的存储位置及从汇编分析其初始化"><a href="#虚函数表的存储位置及从汇编分析其初始化" class="headerlink" title="虚函数表的存储位置及从汇编分析其初始化"></a>虚函数表的存储位置及从汇编分析其初始化</h3><p>此部分是上一部分分析的拓展和扩充：</p>
+<ol>
+<li>虚表指针是如何初始化的？</li>
+<li>虚函数表是每个实例都有一份吗？</li>
+<li>在基类的构造函数内调用虚函数会有多态行为吗？</li>
+</ol>
+<p>带着上面的几个问题，来看下面这个简单的例子:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// vtable.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">A</span>()&#123;<span class="built_in">func</span>();&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;A::func\n&quot;</span>);&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func2</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;A::func2\n&quot;</span>);&#125;</span><br><span class="line">  <span class="type">char</span> pad20[<span class="number">20</span>];</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span>:<span class="keyword">public</span> A&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">B</span>()&#123;<span class="built_in">func</span>();&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;B::func\n&quot;</span>);&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func2</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;B::func2\n&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  A *aobj=<span class="keyword">new</span> <span class="built_in">A</span>();</span><br><span class="line">  aobj-&gt;<span class="built_in">func</span>();</span><br><span class="line"></span><br><span class="line">  std::cout&lt;&lt;std::endl;</span><br><span class="line"></span><br><span class="line">  A *bobj = <span class="keyword">new</span> <span class="built_in">B</span>();</span><br><span class="line">  bobj-&gt;<span class="built_in">func</span>();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="keyword">delete</span> aobj;</span><br><span class="line">  <span class="keyword">delete</span> bobj;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>先来看一下这个类的内存布局(我使用的是Clang(x64)):</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ clang++ -E vtable.cpp -o vtable_pp.cpp</span><br><span class="line">$ clang++ -cc1 -fdump-record-layouts vtable_pp.cpp</span><br><span class="line"><span class="comment"># 忽略多余的输出...</span></span><br><span class="line">*** Dumping AST Record Layout</span><br><span class="line">         0 | class A</span><br><span class="line">         0 |   (A vtable pointer)</span><br><span class="line">         8 |   char [20] pad20</span><br><span class="line">           | [sizeof=32, dsize=28, align=8,</span><br><span class="line">           |  nvsize=28, nvalign=8]</span><br><span class="line"></span><br><span class="line">*** Dumping AST Record Layout</span><br><span class="line">         0 | class B</span><br><span class="line">         0 |   class A (primary base)</span><br><span class="line">         0 |     (A vtable pointer)</span><br><span class="line">         8 |     char [20] pad20</span><br><span class="line">           | [sizeof=32, dsize=28, align=8,</span><br><span class="line">           |  nvsize=28, nvalign=8]</span><br></pre></td></tr></table></figure>
+<p>可以看到，类A的sizeof为32，因为其尾部内存对齐了4字节。<br>然后我们来将其编译为汇编代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ clang++ -S vtable.cpp -o vtable.s</span><br></pre></td></tr></table></figure>
+<p>找到类A和B的构造函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"># constructor of class B</span><br><span class="line">_ZN1BC2Ev:                              # @_ZN1BC2Ev</span><br><span class="line">.seh_proc _ZN1BC2Ev</span><br><span class="line"># %bb.0:</span><br><span class="line">  subq  $56, %rsp</span><br><span class="line">  .seh_stackalloc 56</span><br><span class="line">  .seh_endprologue</span><br><span class="line">  movq  %rcx, 48(%rsp)</span><br><span class="line">  movq  48(%rsp), %rcx</span><br><span class="line">  movq  %rcx, %rax</span><br><span class="line">  movq  %rcx, 40(%rsp)          # 8-byte Spill</span><br><span class="line">  movq  %rax, %rcx</span><br><span class="line">  callq _ZN1AC2Ev               # 调用基类A子对象的构造函数</span><br><span class="line">  leaq  _ZTV1B(%rip), %rax      # 取出虚函数表的地址</span><br><span class="line">  addq  $16, %rax</span><br><span class="line">  movq  40(%rsp), %rcx          # 8-byte Reload</span><br><span class="line">  movq  %rax, (%rcx)</span><br><span class="line">  movq  (%rcx), %rax</span><br><span class="line">  callq *(%rax)</span><br><span class="line">  nop</span><br><span class="line">  addq  $56, %rsp</span><br><span class="line">  retq</span><br><span class="line"></span><br><span class="line"># constructor of class A</span><br><span class="line">_ZN1AC2Ev:                              # @_ZN1AC2Ev</span><br><span class="line">.seh_proc _ZN1AC2Ev</span><br><span class="line"># %bb.0:</span><br><span class="line">  subq  $40, %rsp</span><br><span class="line">  .seh_stackalloc 40</span><br><span class="line">  .seh_endprologue</span><br><span class="line">  leaq  _ZTV1A(%rip), %rax</span><br><span class="line">  addq  $16, %rax</span><br><span class="line">  movq  %rcx, 32(%rsp)</span><br><span class="line">  movq  32(%rsp), %rcx</span><br><span class="line">  movq  %rax, (%rcx)</span><br><span class="line">  movq  (%rcx), %rax</span><br><span class="line">  callq *(%rax)</span><br><span class="line">  nop</span><br><span class="line">  addq  $40, %rsp</span><br><span class="line">  retq</span><br><span class="line"></span><br><span class="line"># 类B的虚函数表</span><br><span class="line">  .lcomm  _ZStL8__ioinit,1        # @_ZStL8__ioinit</span><br><span class="line">  .section  .rdata$_ZTV1B,&quot;dr&quot;,discard,_ZTV1B</span><br><span class="line">  .globl  _ZTV1B                  # @_ZTV1B</span><br><span class="line">  .p2align  3</span><br><span class="line">_ZTV1B:</span><br><span class="line">  .quad 0</span><br><span class="line">  .quad _ZTI1B</span><br><span class="line">  .quad _ZN1B4funcEv</span><br><span class="line">  .quad _ZN1B5func2Ev</span><br><span class="line"></span><br><span class="line"># 类A的虚函数表</span><br><span class="line">  .section  .rdata$_ZTV1A,&quot;dr&quot;,discard,_ZTV1A</span><br><span class="line">  .globl  _ZTV1A                  # @_ZTV1A</span><br><span class="line">  .p2align  3</span><br><span class="line">_ZTV1A:</span><br><span class="line">  .quad 0</span><br><span class="line">  .quad _ZTI1A</span><br><span class="line">  .quad _ZN1A4funcEv</span><br><span class="line">  .quad _ZN1A5func2Ev</span><br></pre></td></tr></table></figure>
+<p>可以看到，类A和类B的虚函数表都是存放在<code>_ZTV1B</code>/<code>_ZTV1A</code>，其中存储的为虚函数的函数指针，在<code>.data</code>区的，所以全局只有一份。而且他们的布局为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># LLVM-IR</span><br><span class="line">B:</span><br><span class="line">[4 x i8*]</span><br><span class="line">[</span><br><span class="line">  i8* null,</span><br><span class="line">  i8* bitcast (&#123; i8*, i8*, i8* &#125;* @_ZTI1B to i8*),</span><br><span class="line">  i8* bitcast (void (%class.B*)* @_ZN1B4funcEv to i8*),</span><br><span class="line">  i8* bitcast (void (%class.B*)* @_ZN1B5func2Ev to i8*)</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">A:</span><br><span class="line">[4 x i8*]</span><br><span class="line">[</span><br><span class="line"> i8* null,</span><br><span class="line"> i8* bitcast (&#123; i8*, i8* &#125;* @_ZTI1A to i8*),</span><br><span class="line"> i8* bitcast (void (%class.A*)* @_ZN1A4funcEv to i8*),</span><br><span class="line"> i8* bitcast (void (%class.A*)* @_ZN1A5func2Ev to i8*)</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>类的构造函数会从<code>.data</code>区得到虚函数表的地址，并赋值给该实例的<code>vptr</code>，需要注意的是，虚函数表的结构中具有this的偏移(第一个元素)和类的类型信息。<br>在赋值给实例的vptr时做了偏移：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">leaq  _ZTV1A(%rip), %rax</span><br><span class="line">addq  $16, %rax</span><br></pre></td></tr></table></figure>
+<p>这里是跳过了虚表结构的前两个元素，直接指向了第一个存储虚函数的地址的指针。</p>
+<p>而且，更需要说明的是，在B类的构造过程中，会调用A的构造函数，这时B构造函数内的vptr操作还并未执行，所以如果在类A内调用虚函数，则不会有多态行为——因为在此时类实例的vptr指向的是A的虚函数表。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">A</span>()&#123;<span class="built_in">func</span>();&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;A::func\n&quot;</span>);&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func2</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;A::func2\n&quot;</span>);&#125;</span><br><span class="line">  <span class="type">char</span> pad20[<span class="number">20</span>];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span>:<span class="keyword">public</span> A&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">B</span>()&#123;<span class="built_in">func</span>();&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;B::func\n&quot;</span>);&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func2</span><span class="params">()</span></span>&#123;<span class="built_in">printf</span>(<span class="string">&quot;B::func2\n&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  A* aobj=<span class="keyword">new</span> <span class="built_in">B</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">delete</span> aobj;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ouput</span></span><br><span class="line">A::func</span><br><span class="line">B::func</span><br></pre></td></tr></table></figure>
+
+<p>对象模型相关的其他资料推荐阅读<a target="_blank" rel="noopener" href="https://book.douban.com/subject/1091086/">《深度探索C++对象模型(inside the c++ object model)》</a>。其实这本书里有的地方写的有点过时了，有些特性现在一些编译器实现不大一样了(都没规定过要怎么实现)，不过毕竟是1996年出的还是C++荒古时代呢，有实现思想上的参考价值，目前也没有其他同类的书籍可以替代。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/25558/" target="_blank">C++多态与虚函数表</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2019年02月26日 13时36分<br/>
+             
+              <span>更新时间:</span>2019年02月27日 11时47分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有1.8k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/25558/" target="_blank" title="C++多态与虚函数表">https://imzlp.com/posts/25558/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/25558/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E5%A4%9A%E6%80%81/" rel="tag"># 多态</a>
+              <a href="/tags/polymorphic/" rel="tag"># polymorphic</a>
+              <a href="/tags/%E8%99%9A%E5%87%BD%E6%95%B0%E8%A1%A8/" rel="tag"># 虚函数表</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/6362/" rel="prev" title="Build flow of the Unreal Engine4 project">
+      <i class="fa fa-chevron-left"></i> Build flow of the Unreal Engine4 project
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/359/" rel="next" title="UE Package Error:ObservedKeyNames.Num()>0">
+      UE Package Error:ObservedKeyNames.Num()>0 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E5%87%BD%E6%95%B0%E8%A1%A8%E6%98%AF%E5%9C%A8%E4%BD%95%E6%97%B6%E5%88%9D%E5%A7%8B%E5%8C%96%E7%9A%84%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">虚函数表是在何时初始化的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E5%87%BD%E6%95%B0%E8%A1%A8%E7%9A%84%E5%AD%98%E5%82%A8%E4%BD%8D%E7%BD%AE%E5%8F%8A%E4%BB%8E%E6%B1%87%E7%BC%96%E5%88%86%E6%9E%90%E5%85%B6%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">虚函数表的存储位置及从汇编分析其初始化</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/25558/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

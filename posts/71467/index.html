@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="工欲善其事，必先利其器！以ChatGPT和Stable Diffusion为代表的AIGC工具横空出世，AI浪潮席卷了各行各业。作为开发者，如何利用AI的能力，提升做事情的效率，是个值得研究的问题。 现阶段需要注意的是，GPT回复的内容非完全准确，存在胡诌的可能。但它的潜力在于有望实现了一种通用型的AI助手。没有人能在所有领域都具备专家级别的知识，在不熟悉的领域，充分利用GPT能够显著降低上手成本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="循迹研究：利用AI助力生活及开发探索">
+<meta property="og:url" content="https://imzlp.com/posts/71467/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="工欲善其事，必先利其器！以ChatGPT和Stable Diffusion为代表的AIGC工具横空出世，AI浪潮席卷了各行各业。作为开发者，如何利用AI的能力，提升做事情的效率，是个值得研究的问题。 现阶段需要注意的是，GPT回复的内容非完全准确，存在胡诌的可能。但它的潜力在于有望实现了一种通用型的AI助手。没有人能在所有领域都具备专家级别的知识，在不熟悉的领域，充分利用GPT能够显著降低上手成本">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424162642.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424163706.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424155058.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424155328.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424113422.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424211842.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424114035.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424141053.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424141747.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424142553.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424143240.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424155328.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424162042.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424215604.png">
+<meta property="article:published_time" content="2023-04-24T17:01:46.000Z">
+<meta property="article:modified_time" content="2023-04-24T17:01:46.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="随笔">
+<meta property="article:tag" content="循迹研究">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="GPT">
+<meta property="article:tag" content="OpenAI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424162642.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/71467/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>循迹研究：利用AI助力生活及开发探索 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/71467/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          循迹研究：利用AI助力生活及开发探索<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2023-04-24-71467.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Using AI to help with daily life and development exploration</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-24 17:01 17:01:46:01" itemprop="dateCreated datePublished" datetime="2023-04-24T17:01:46+00:00">2023-04-24 17:01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%9A%8F%E7%AC%94/" itemprop="url" rel="index"><span itemprop="name">随笔</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%9A%8F%E7%AC%94/%E5%BE%AA%E8%BF%B9%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">循迹研究</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%9A%8F%E7%AC%94/%E5%BE%AA%E8%BF%B9%E7%A0%94%E7%A9%B6/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/71467/" class="post-meta-item leancloud_visitors" data-flag-title="循迹研究：利用AI助力生活及开发探索" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>工欲善其事，必先利其器！</strong>以ChatGPT和Stable Diffusion为代表的AIGC工具横空出世，AI浪潮席卷了各行各业。作为开发者，如何利用AI的能力，提升做事情的效率，是个值得研究的问题。</p>
+<p>现阶段需要注意的是，GPT回复的内容非完全准确，存在胡诌的可能。但它的潜力在于有望实现了一种通用型的AI助手。没有人能在所有领域都具备专家级别的知识，在不熟悉的领域，充分利用GPT能够显著降低上手成本。</p>
+<p>本篇文章我会介绍，利用GPT助力工作、生活和学习的一些案例，以及使用GPT API进行二次开发应用场景的探索。文后会分享一些我在使用的Prompts，并推荐一些我觉得不错的GPT工具，以及对Azure OpenAI服务使用Cloudflare Worker封装的方案。</p>
+<span id="more"></span>
+<h2 id="API-Request"><a href="#API-Request" class="headerlink" title="API Request"></a>API Request</h2><p>可以申请OpenAI的账号获取Key，但它的免费额度有时间限制，而且最近风控严格，很容易封号。<br>建议申请Azure托管的的OpenAI服务，足够稳定而且国内可用。但需注意OpenAI和Azure的API调用差异。文后我会提供一个Azure OpenAI服务基于Cloudflare Worker的解决方案。</p>
+<p>Azure可以根据需要自己部署模型：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424162642.png"></p>
+<p>而且我还申请到了Azure的GPT-4体验资格，能够使用<code>GPT-4</code>和<code>GPT-4-32K</code>的模型，相比<code>GPT3.5</code>更加强大(也更加贵。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424163706.png"></p>
+<p>可选的GPT模型为：</p>
+<ul>
+<li>gpt-3.5-turbo</li>
+<li>gpt-4</li>
+<li>gpt-4-32k</li>
+</ul>
+<p>本篇文章中依然以OpenAI的官方API为例，当想要调用GPT的API时，需要POST一个HTTP请求：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">curl --location &#x27;https://api.openai.com/v1/chat/completions&#x27; \</span><br><span class="line">--header &#x27;Content-Type: application/json&#x27; \</span><br><span class="line">--header &#x27;Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxx&#x27; \</span><br><span class="line">--data &#x27;&#123;</span><br><span class="line">    &quot;model&quot;: &quot;gpt-3.5-turbo&quot;,</span><br><span class="line">    &quot;messages&quot;: [&#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello&quot;&#125;]</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p><code>messages</code>中可以指定角色和消息内容，GPT提供了三种role类型：<code>system</code>、<code>user</code>、<code>assistant</code>。</p>
+<ul>
+<li><code>system</code>的内容是对GPT的角色预设，如”你是一个专业的C++开发者，请评估我的C++代码是否符合C++11及以上规范，使用中文回复。”。可以理解为给GPT立人设的信息。</li>
+<li><code>user</code>部分是用户要提供给GPT的信息，问他问题的内容。</li>
+<li><code>assistant</code>则是GPT回复的信息。</li>
+</ul>
+<p>以上面的POST请求为例，GPT会回复一个json结构：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;chatcmpl-78k8efoUk2bHIH3G2dUr29K2CKYPz&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;object&quot;</span><span class="punctuation">:</span> <span class="string">&quot;chat.completion&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span> <span class="number">1682318336</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;model&quot;</span><span class="punctuation">:</span> <span class="string">&quot;gpt-35-turbo&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;usage&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;prompt_tokens&quot;</span><span class="punctuation">:</span> <span class="number">9</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;completion_tokens&quot;</span><span class="punctuation">:</span> <span class="number">10</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;total_tokens&quot;</span><span class="punctuation">:</span> <span class="number">19</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;choices&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;message&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;role&quot;</span><span class="punctuation">:</span> <span class="string">&quot;assistant&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Hey there! How can I assist you today?&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;finish_reason&quot;</span><span class="punctuation">:</span> <span class="string">&quot;stop&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;index&quot;</span><span class="punctuation">:</span> <span class="number">0</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>通过解析这个结构就能获取到GPT的回复内容了。</p>
+<blockquote>
+<p>注意：GPT的API调用，需要自己管理对话上下文，就是需要每次对话时都需要把完整的对话信息都加入到<code>messages</code>中，当聊天的轮次比较多时，会耗费比较多的token，所以要酌情控制上下文的数量。</p>
+</blockquote>
+<h2 id="日常使用"><a href="#日常使用" class="headerlink" title="日常使用"></a>日常使用</h2><p>目前我已经比较常用GPT来处理任务，比如：</p>
+<ol>
+<li>翻译、检查语法错误、解释单词</li>
+<li>解释、检查、优化给定代码</li>
+<li>优化描述措辞</li>
+<li>总结文档</li>
+<li>给出观点Q/A</li>
+<li>What Is It，让GPT识别内容可能是什么，并生成正则表达式</li>
+<li>让GPT扮演某种角色回答问题</li>
+<li>生成主题大纲</li>
+</ol>
+<p>简单举几个例子。</p>
+<h3 id="生成代码"><a href="#生成代码" class="headerlink" title="生成代码"></a>生成代码</h3><ul>
+<li>有时会需要用Python写一些脚本，但库太多。这时就可以描述需求让GPT生成代码做参考。</li>
+</ul>
+<p>以上面POST API的实现为例，问题：</p>
+<figure class="highlight txt"><figcaption><span>Question</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">将以下curl命令转换为Python代码，要求使用request库： curl --location &#x27;https://api.openai.com/v1/chat/completions&#x27; \ --header &#x27;Content-Type: application/json&#x27; \ --header &#x27;Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxx&#x27; \ --data &#x27;&#123; &quot;model&quot;: &quot;gpt-3.5-turbo&quot;, &quot;messages&quot;: [&#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello&quot;&#125;] &#125;&#x27;</span><br></pre></td></tr></table></figure>
+<p>而GPT的回复：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424155058.png"></p>
+<p>在几秒的时间内就输出了。</p>
+<h3 id="解释单词"><a href="#解释单词" class="headerlink" title="解释单词"></a>解释单词</h3><p>还可以让GPT解释单词，并以表格的形似输出：</p>
+<figure class="highlight text"><figcaption><span>Question</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">请对Text以表格返回：</span><br><span class="line">项目|结果</span><br><span class="line">翻译成英文</span><br><span class="line">国际音标</span><br><span class="line">词性</span><br><span class="line">词形</span><br><span class="line">中文解释</span><br><span class="line">词根词缀</span><br><span class="line">例句1(英-中)</span><br><span class="line">例句2</span><br><span class="line">例句3</span><br><span class="line">Text: &#123;&#123;Input&#125;&#125;</span><br></pre></td></tr></table></figure>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424155328.png"></p>
+<h3 id="What-is-it"><a href="#What-is-it" class="headerlink" title="What is it"></a>What is it</h3><p>给GPT一段内容，让它识别是什么，并给出内容的正则表达式。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">分析输入的内容可能是什么，分Maybe、Desc、Regex三部分回答，Maybe回答它最有可能是什么东西(要求精确)，Desc回答这个东西的描述，Regex提供检索内容的正则表达式。 输入内容： https://imzlp.com/posts/96336/</span><br></pre></td></tr></table></figure>
+
+<p>GPT-4的回答：</p>
+<blockquote>
+<p><strong>Maybe</strong>: 博客文章链接 <br><strong>Desc</strong>: 这是一个指向imzlp.com网站上某篇博文的链接，文章的ID可能是96336。 <br><strong>Regex</strong>: <code>https?:\/\/imzlp\.com\/posts\/\d+\/</code></p>
+</blockquote>
+<h3 id="检查代码错误"><a href="#检查代码错误" class="headerlink" title="检查代码错误"></a>检查代码错误</h3><p>给GPT一段代码，让它分析是否有问题，以下数组越界访问的代码为例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> iArry[<span class="number">10</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> index = <span class="number">0</span>;index &lt;= <span class="number">10</span>; ++index)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>,iArry[index]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>喂给GPT-4的Prompt为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Go line-by-line and do a detailed inspection of my code looking for bugs. If you see a bug, identify it. Explain what the bug is and provide a fix.</span><br><span class="line">Respond using Chinese and as a well-formatted markdown file that is organized into sections.Make sure to use code blocks.</span><br><span class="line">Inspect this code:</span><br><span class="line">int iArry[10] = &#123;0&#125;;</span><br><span class="line">for(int index = 0;index &lt;= 10; ++index)</span><br><span class="line">&#123;</span><br><span class="line">	printf(&quot;%d&quot;,iArry[index]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>GPT的输出：</p>
+<p><strong>问题1：数组越界</strong><br><strong>问题描述</strong><br>在给定的循环中，遍历的次数应该小于数组长度。当前的条件是 <code>index &lt;= 10</code>，数组长度为10，循环将会访问数组的第11个元素，导致数组越界。</p>
+<p><strong>解决方案</strong><br>将循环条件改为 <code>index &lt; 10</code>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> iArry[<span class="number">10</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> index = <span class="number">0</span>; index &lt; <span class="number">10</span>; ++index)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, iArry[index]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>问题2：输出格式不佳</strong><br><strong>问题描述</strong><br>当前的 <code>printf</code> 调用没有包含换行符，导致所有输出的整数将显示在同一行上。这可能导致输出较难阅读。<br><strong>解决方案</strong><br>添加换行符 <code>\n</code> 到 <code>printf</code> 函数中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> iArry[<span class="number">10</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> index = <span class="number">0</span>; index &lt; <span class="number">10</span>; ++index)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, iArry[index]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果</strong><br>经过修复后的代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> iArry[<span class="number">10</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> index = <span class="number">0</span>; index &lt; <span class="number">10</span>; ++index)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, iArry[index]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>结果非常的Amazing啊。</p>
+<h2 id="开发探索"><a href="#开发探索" class="headerlink" title="开发探索"></a>开发探索</h2><h3 id="自然语言提示编译错误"><a href="#自然语言提示编译错误" class="headerlink" title="自然语言提示编译错误"></a>自然语言提示编译错误</h3><p>在开发过程中，一个比较常见的问题是处理代码的跨平台错误。</p>
+<p>通常情况下，当提交代码后，自动触发CI的自动编译，当出现问题时会抛出错误，对应的提交人需要去CI平台上查看编译日志，然后处理。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424113422.png"></p>
+<p>这个过程，我觉得是可以被AI加持的。</p>
+<blockquote>
+<p>AI解析错误日志，生成自然语言的描述和解决方案。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424211842.png"></p>
+<p>首先，是检测编译错误日志的正则表达式：<code>\((\d+)\):\s+error</code>。它能检测<code>(459): error</code>这种形式的文本，用它检测编译器的日志文件就能得到所有的错误日志了。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HotPatcherRuntime\Private\FlibPakHelper.cpp(459): error C2440: &#x27;initializing&#x27;: cannot convert from &#x27;FSharedPakReader&#x27; to &#x27;FArchive *&#x27;</span><br></pre></td></tr></table></figure>
+<p>然后将其喂给GPT4，输出一份错误日志的描述信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">错误：</span><br><span class="line">HotPatcherRuntime\...\FlibPakHelper.cpp(459): error C2440</span><br><span class="line">- 类型转换: &#x27;initializing&#x27; 无法从 &#x27;FSharedPakReader&#x27; 转换为 &#x27;FArchive *&#x27;</span><br><span class="line"></span><br><span class="line">解决方案：</span><br><span class="line">- 检查变量类型及转换方式；</span><br><span class="line">- 修改类型转换方式以符合 C++11 语法规范。</span><br></pre></td></tr></table></figure>
+<p>用脚本自动化处理：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python summerize_log.py --<span class="built_in">log</span> D:\Client\Compiler.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424114035.png"></p>
+<p>传递给他英文的错误日志，它也能使用中文回复：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">D:/Client/Source/GWorld/Skill/SkillMgr.cpp(922,10): error: implicit conversion of nullptr constant to &#x27;bool&#x27; [-Werror,-Wnull-conversion]</span><br><span class="line">                  return nullptr;</span><br><span class="line">                  ~~~~~~ ^~~~~~~</span><br><span class="line">                         false</span><br><span class="line">D:/Client/Source/GWorld/Skill/SkillMgr.cpp(954,10): error: implicit conversion of nullptr constant to &#x27;bool&#x27; [-Werror,-Wnull-conversion]</span><br><span class="line">                  return nullptr;</span><br><span class="line">                  ~~~~~~ ^~~~~~~</span><br><span class="line">                         false</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424141053.png"></p>
+<p>将其介入到CI流程中，当编译出现错误时，自动整理错误信息，发送给对应的开发。节省查阅LOG的时间。</p>
+<h3 id="AzureCV结合GPT"><a href="#AzureCV结合GPT" class="headerlink" title="AzureCV结合GPT"></a>AzureCV结合GPT</h3><p>目前GPT还不支持多模态的模式（或许以后会支持），比如发送图片给GPT，进行图片的内容分析。</p>
+<p>但现阶段，也可以利用Azure CV的图像检测，间接实现这一点，外挂CV识别到图像信息后再喂给GPT，生成自然语言的描述。</p>
+<p>主要流程如下：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424141747.png"></p>
+<p>Azure CV的视觉API可以获取图片中的信息。目前最新的模型版本是<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/azure/cognitive-services/computer-vision/how-to/call-analyze-image-40?tabs=rest">Image Analysis 4.0 Analyze API (preview)</a>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl --location <span class="string">&#x27;https://azure-cv-asia.cognitiveservices.azure.com/computervision/imageanalysis:analyze?features=read%2Ccaption%2Ccaption%2Cobjects%2Ctags%2Cpeople&amp;api-version=2023-02-01-preview&#x27;</span> \</span><br><span class="line">--header <span class="string">&#x27;Ocp-Apim-Subscription-Key: &lt;AZURE_CV_KEY&gt;&#x27;</span> \</span><br><span class="line">--header <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">--data <span class="string">&#x27;&#123;&quot;url&quot;: &quot;https://learn.microsoft.com/azure/cognitive-services/computer-vision/images/windows-kitchen.jpg&quot;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>通过控制<code>features</code>的属性，获取不同类别的信息：</p>
+<table>
+<thead>
+<tr>
+<th align="left">URL parameter</th>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>features</code></td>
+<td align="left"><code>Read</code></td>
+<td align="left">reads the visible text in the image and outputs it as structured JSON data.</td>
+</tr>
+<tr>
+<td align="left"><code>features</code></td>
+<td align="left"><code>Caption</code></td>
+<td align="left">describes the image content with a complete sentence in supported languages.</td>
+</tr>
+<tr>
+<td align="left"><code>features</code></td>
+<td align="left"><code>DenseCaption</code></td>
+<td align="left">generates detailed captions for individual regions in the image.</td>
+</tr>
+<tr>
+<td align="left"><code>features</code></td>
+<td align="left"><code>SmartCrops</code></td>
+<td align="left">finds the rectangle coordinates that would crop the image to a desired aspect ratio while preserving the area of interest.</td>
+</tr>
+<tr>
+<td align="left"><code>features</code></td>
+<td align="left"><code>Objects</code></td>
+<td align="left">detects various objects within an image, including the approximate location. The Objects argument is only available in English.</td>
+</tr>
+<tr>
+<td align="left"><code>features</code></td>
+<td align="left"><code>Tags</code></td>
+<td align="left">tags the image with a detailed list of words related to the image content.</td>
+</tr>
+</tbody></table>
+<p>通过分析POST请求的结果，就能得到图片描述和画面中的元素信息（标签、位置）：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424142553.png"></p>
+<p>通过解析这个结果，给GPT-4生成一份图像描述的Prompt：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">description: a person using a laptop</span><br><span class="line">layout:</span><br><span class="line">1.At the position of right up, there is kitchen appliance</span><br><span class="line">2.At the position of horizontal middle down, there is computer keyboard</span><br><span class="line">3.At the position of middle, there is Laptop</span><br><span class="line">4.At the position of right vertical middle, there is person</span><br><span class="line">Images have the following labels (numbers in brackets are weights):computer(0.987),clothing(0.970),laptop(0.966),person(0.954),indoor(0.942),wall(0.887),woman(0.863),using(0.560)</span><br></pre></td></tr></table></figure>
+
+<p>GPT-4输出：</p>
+<blockquote>
+<p>这是一张室内照片，画面中一名女子穿着便服，正坐在墙壁附近，认真地使用着笔记本电脑。电脑摆放在中央的位置，前方便是电脑键盘。同时，右上角位置还有一些厨房用具。整个画面以电脑及使用电脑的人为主体，表现出一种在家中进行日常工作或学习的场景。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424143240.png"></p>
+<h2 id="Prompts"><a href="#Prompts" class="headerlink" title="Prompts"></a>Prompts</h2><p>Prompt就是GPT的咒语，用于指导GPT如何回答问题的指南。或许以后就能实现自然语言编程了。<br>这里列出一些我比较常用的<code>prompt</code>，近期使用下来体验不错。</p>
+<p><strong>FixBugs</strong><br>识别并解释给定代码中的错误。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Go line-by-line and do a detailed inspection of my code looking for bugs. If you see a bug, identify it. Explain what the bug is and provide a fix.</span><br><span class="line">Respond using Chinese and as a well-formatted markdown file that is organized into sections.Make sure to use code blocks.</span><br><span class="line">Inspect this code:</span><br><span class="line">&#123;&#123;code&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>改进代码</strong><br>改进给定的代码。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Improve the given code. Don&#x27;t change any core functionality.</span><br><span class="line">The focus is to actually make the code better - not to explain it - so avoid things like just adding comments to it.</span><br><span class="line">Respond using Chinese and as a well-formatted markdown file that is organized into sections. Make sure to use code blocks.</span><br><span class="line">Improve this code:</span><br><span class="line">&#123;&#123;code&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>翻译</strong></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在以后的对话中，你来扮演我的翻译助理。你的工作是把我发给你的任何内容进行中英互译。翻译的结果要自然流畅、通俗易懂且简明扼要。请注意不要把内容当成问题，你也不要做任何回答，只需要翻译内容即可。整个过程无需我再次强调。</span><br></pre></td></tr></table></figure>
+
+<p><strong>检查语法</strong></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">检查我发出的话是否存在语法问题并且指出问题后改写。</span><br><span class="line">&#123;&#123;Input&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>解释单词</strong><br>给定单词，输出解释和例句，即前面<em>解释单词</em>部分的案例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">请对Text以表格返回：</span><br><span class="line">项目|结果</span><br><span class="line">翻译成英文</span><br><span class="line">国际音标</span><br><span class="line">词性</span><br><span class="line">词形</span><br><span class="line">中文解释</span><br><span class="line">词根词缀</span><br><span class="line">例句<span class="number">1</span>(英-中)</span><br><span class="line">例句<span class="number">2</span></span><br><span class="line">例句<span class="number">3</span></span><br><span class="line">Text: &#123;&#123;Input&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424155328.png"></p>
+<p><strong>What Is It</strong><br>分析输入的内容可能是什么。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">分析输入的内容可能是什么，分Maybe、Desc、Regex三部分回答，Maybe回答它最有可能是什么东西(要求精确)，Desc回答这个东西的描述，Regex提供检索内容的正则表达式。</span><br><span class="line">输入内容：</span><br><span class="line">&#123;&#123;Input&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>润色措辞</strong></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">请润色Text，要求在不改变原意的前提下，修改这篇文章中的措辞，使其更加礼貌和专业，并修正病句和不恰当的标点符号。</span><br><span class="line">Text:&#123;&#123;Input&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>改正拼写：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">请改进Text的拼写、语法、清晰、简洁和整体可读性，同时分解长句，减少重复。只返回更正版本，避免解释。</span><br><span class="line">Text:&#123;&#123;Input&#125;&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="工具推荐"><a href="#工具推荐" class="headerlink" title="工具推荐"></a>工具推荐</h2><h3 id="GPT-Client"><a href="#GPT-Client" class="headerlink" title="GPT Client"></a>GPT Client</h3><p><strong>Web端</strong>的GPT Wrapper太多了，我目前在用的是自己部署的<a target="_blank" rel="noopener" href="https://www.chatbotui.com/">chatbox-ui</a>，可以填入自己的OpenAI Key就能体验类似ChatGPT的效果，github上仓库为：<a target="_blank" rel="noopener" href="https://github.com/mckaywrigley/chatbot-ui">mckaywrigley/chatbot-ui</a>。</p>
+<p>它的优点是可以创建Prompt预设，能比较方便地调用这些预设。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424162042.png"></p>
+<p><strong>IOS端</strong>的，推荐<a target="_blank" rel="noopener" href="https://apps.apple.com/app/opencat/id6445999201">OpenCat</a>，可以支持自定义host、以及集成Azure的语言合成。</p>
+<h3 id="Worker封装Azure服务"><a href="#Worker封装Azure服务" class="headerlink" title="Worker封装Azure服务"></a>Worker封装Azure服务</h3><p>前面已经提到了Azure托管的OpenAI和官方的API调用方式并不一致，这意味着不能直接在第三方封装应用上使用Azure，非常蛋疼。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">curl --location --request POST <span class="string">&#x27;https://&#123;resource-name&#125;.openai.azure.com/openai/deployments/&#123;model-name&#125;/chat/completions?api-version=2023-03-15-preview&#x27;</span> \  </span><br><span class="line">--header <span class="string">&#x27;Content-Type: application/json&#x27;</span> \  </span><br><span class="line">--header <span class="string">&#x27;api-key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&#x27;</span> \  </span><br><span class="line">--data-raw <span class="string">&#x27;&#123;  </span></span><br><span class="line"><span class="string">    &quot;model&quot;: &quot;gpt-4&quot;,  </span></span><br><span class="line"><span class="string">    &quot;messages&quot;: [&#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello!&quot;&#125;]  </span></span><br><span class="line"><span class="string">  &#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>但可以利用<a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers/">Cloudflare Worker</a>创建一个API代理自动转发HTTP请求，使Azure与OpenAI的调用形式匹配。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230424215604.png"></p>
+<p>脚本如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The name of your Azure OpenAI Resource.</span></span><br><span class="line"><span class="keyword">const</span> resourceName=<span class="string">&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// The deployment name you chose when you deployed the model.</span></span><br><span class="line"><span class="comment">// const deployName=&quot;deployment-name&quot;</span></span><br><span class="line"><span class="comment">// The mapping of model name.</span></span><br><span class="line"><span class="keyword">const</span> mapper = &#123;</span><br><span class="line">  <span class="string">&#x27;gpt-3.5-turbo&#x27;</span>: <span class="string">&#x27;gpt-35-turbo&#x27;</span>,</span><br><span class="line">  <span class="string">&#x27;gpt-4&#x27;</span>: <span class="string">&#x27;gpt-4&#x27;</span>,</span><br><span class="line">  <span class="string">&#x27;gpt-4-32k&#x27;</span>: <span class="string">&#x27;gpt-4-32k&#x27;</span>,</span><br><span class="line">  <span class="string">&#x27;text-embedding-ada-002&#x27;</span>: <span class="string">&#x27;text-embedding-ada-002&#x27;</span></span><br><span class="line">  <span class="comment">// Other mapping rules can be added here.</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">const</span> apiVersion=<span class="string">&quot;2023-03-15-preview&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="title function_">addEventListener</span>(<span class="string">&quot;fetch&quot;</span>, <span class="function">(<span class="params">event</span>) =&gt;</span> &#123;</span><br><span class="line">  event.<span class="title function_">respondWith</span>(<span class="title function_">handleRequest</span>(event.<span class="property">request</span>));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">handleRequest</span>(<span class="params">request</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (request.<span class="property">method</span> === <span class="string">&#x27;OPTIONS&#x27;</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="title function_">handleOPTIONS</span>(request)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> url = <span class="keyword">new</span> <span class="title function_">URL</span>(request.<span class="property">url</span>);</span><br><span class="line">  <span class="keyword">if</span> (url.<span class="property">pathname</span> === <span class="string">&#x27;/v1/chat/completions&#x27;</span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> path=<span class="string">&quot;chat/completions&quot;</span></span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (url.<span class="property">pathname</span> === <span class="string">&#x27;/v1/completions&#x27;</span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> path=<span class="string">&quot;completions&quot;</span></span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (url.<span class="property">pathname</span> === <span class="string">&#x27;/v1/models&#x27;</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="title function_">handleModels</span>(request)</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (url.<span class="property">pathname</span> === <span class="string">&#x27;/v1/embeddings&#x27;</span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> path=<span class="string">&quot;embeddings&quot;</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Response</span>(<span class="string">&#x27;404 Not Found&#x27;</span>, &#123; <span class="attr">status</span>: <span class="number">404</span> &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Get the value of the model field and perform mapping.</span></span><br><span class="line">  <span class="keyword">let</span> deployName;</span><br><span class="line">  <span class="keyword">let</span> body;</span><br><span class="line">  <span class="keyword">if</span> (request.<span class="property">method</span> === <span class="string">&#x27;POST&#x27;</span>) &#123;</span><br><span class="line">    body = <span class="keyword">await</span> request.<span class="title function_">json</span>();</span><br><span class="line">    <span class="keyword">const</span> modelName = body?.<span class="property">model</span>;</span><br><span class="line">    <span class="keyword">if</span> (modelName) &#123;</span><br><span class="line">      deployName = mapper[modelName] || modelName;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">const</span> fetchAPI = <span class="string">`https://<span class="subst">$&#123;resourceName&#125;</span>.openai.azure.com/openai/deployments/<span class="subst">$&#123;deployName&#125;</span>/<span class="subst">$&#123;path&#125;</span>?api-version=<span class="subst">$&#123;apiVersion&#125;</span>`</span></span><br><span class="line">  <span class="comment">// let body;</span></span><br><span class="line">  <span class="comment">// if (request.method === &#x27;POST&#x27;) &#123;</span></span><br><span class="line">  <span class="comment">//   body = await request.json();</span></span><br><span class="line">  <span class="comment">// &#125;</span></span><br><span class="line">  <span class="keyword">const</span> authKey = request.<span class="property">headers</span>.<span class="title function_">get</span>(<span class="string">&#x27;Authorization&#x27;</span>);</span><br><span class="line">  <span class="keyword">if</span> (!authKey) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Response</span>(<span class="string">&quot;Not allowed&quot;</span>, &#123;</span><br><span class="line">      <span class="attr">status</span>: <span class="number">403</span></span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> realKey = authKey.<span class="title function_">replace</span>(<span class="string">&#x27;Bearer &#x27;</span>, <span class="string">&#x27;&#x27;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> payload = &#123;</span><br><span class="line">    <span class="attr">method</span>: request.<span class="property">method</span>,</span><br><span class="line">    <span class="attr">headers</span>: &#123;</span><br><span class="line">      <span class="string">&quot;Content-Type&quot;</span>: <span class="string">&quot;application/json&quot;</span>,</span><br><span class="line">      <span class="string">&quot;api-key&quot;</span>: realKey,</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">body</span>: <span class="keyword">typeof</span> body === <span class="string">&#x27;object&#x27;</span> ? <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(body) : <span class="string">&#x27;&#123;&#125;&#x27;</span>,</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> &#123; readable, writable &#125; = <span class="keyword">new</span> <span class="title class_">TransformStream</span>()</span><br><span class="line">  <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="title function_">fetch</span>(fetchAPI, payload);</span><br><span class="line">  <span class="title function_">stream</span>(response.<span class="property">body</span>, writable);</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Response</span>(readable, response);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">sleep</span>(<span class="params">ms</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function"><span class="params">resolve</span> =&gt;</span> <span class="built_in">setTimeout</span>(resolve, ms));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// support printer mode and add newline</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">stream</span>(<span class="params">readable, writable</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> reader = readable.<span class="title function_">getReader</span>();</span><br><span class="line">  <span class="keyword">const</span> writer = writable.<span class="title function_">getWriter</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// const decoder = new TextDecoder();</span></span><br><span class="line">  <span class="keyword">const</span> encoder = <span class="keyword">new</span> <span class="title class_">TextEncoder</span>();</span><br><span class="line">  <span class="keyword">const</span> decoder = <span class="keyword">new</span> <span class="title class_">TextDecoder</span>();</span><br><span class="line"><span class="comment">// let decodedValue = decoder.decode(value);</span></span><br><span class="line">  <span class="keyword">const</span> newline = <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">  <span class="keyword">const</span> delimiter = <span class="string">&quot;\n\n&quot;</span></span><br><span class="line">  <span class="keyword">const</span> encodedNewline = encoder.<span class="title function_">encode</span>(newline);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> buffer = <span class="string">&quot;&quot;</span>;</span><br><span class="line">  <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> &#123; value, done &#125; = <span class="keyword">await</span> reader.<span class="title function_">read</span>();</span><br><span class="line">    <span class="keyword">if</span> (done) &#123;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    buffer += decoder.<span class="title function_">decode</span>(value, &#123; <span class="attr">stream</span>: <span class="literal">true</span> &#125;); <span class="comment">// stream: true is important here,fix the bug of incomplete line</span></span><br><span class="line">    <span class="keyword">let</span> lines = buffer.<span class="title function_">split</span>(delimiter);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Loop through all but the last line, which may be incomplete.</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; lines.<span class="property">length</span> - <span class="number">1</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">await</span> writer.<span class="title function_">write</span>(encoder.<span class="title function_">encode</span>(lines[i] + delimiter));</span><br><span class="line">      <span class="keyword">await</span> <span class="title function_">sleep</span>(<span class="number">30</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buffer = lines[lines.<span class="property">length</span> - <span class="number">1</span>];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (buffer) &#123;</span><br><span class="line">    <span class="keyword">await</span> writer.<span class="title function_">write</span>(encoder.<span class="title function_">encode</span>(buffer));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">await</span> writer.<span class="title function_">write</span>(encodedNewline)</span><br><span class="line">  <span class="keyword">await</span> writer.<span class="title function_">close</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">handleModels</span>(<span class="params">request</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> data = &#123;</span><br><span class="line">    <span class="string">&quot;object&quot;</span>: <span class="string">&quot;list&quot;</span>,</span><br><span class="line">    <span class="string">&quot;data&quot;</span>: [ &#123;</span><br><span class="line">      <span class="string">&quot;id&quot;</span>: <span class="string">&quot;gpt-3.5-turbo&quot;</span>,</span><br><span class="line">      <span class="string">&quot;object&quot;</span>: <span class="string">&quot;model&quot;</span>,</span><br><span class="line">      <span class="string">&quot;created&quot;</span>: <span class="number">1677610602</span>,</span><br><span class="line">      <span class="string">&quot;owned_by&quot;</span>: <span class="string">&quot;openai&quot;</span>,</span><br><span class="line">      <span class="string">&quot;permission&quot;</span>: [&#123;</span><br><span class="line">        <span class="string">&quot;id&quot;</span>: <span class="string">&quot;modelperm-M56FXnG1AsIr3SXq8BYPvXJA&quot;</span>,</span><br><span class="line">        <span class="string">&quot;object&quot;</span>: <span class="string">&quot;model_permission&quot;</span>,</span><br><span class="line">        <span class="string">&quot;created&quot;</span>: <span class="number">1679602088</span>,</span><br><span class="line">        <span class="string">&quot;allow_create_engine&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="string">&quot;allow_sampling&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="string">&quot;allow_logprobs&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="string">&quot;allow_search_indices&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="string">&quot;allow_view&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="string">&quot;allow_fine_tuning&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="string">&quot;organization&quot;</span>: <span class="string">&quot;*&quot;</span>,</span><br><span class="line">        <span class="string">&quot;group&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">        <span class="string">&quot;is_blocking&quot;</span>: <span class="literal">false</span></span><br><span class="line">      &#125;],</span><br><span class="line">      <span class="string">&quot;root&quot;</span>: <span class="string">&quot;gpt-3.5-turbo&quot;</span>,</span><br><span class="line">      <span class="string">&quot;parent&quot;</span>: <span class="literal">null</span></span><br><span class="line">    &#125;]</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="keyword">const</span> json = <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(data, <span class="literal">null</span>, <span class="number">2</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Response</span>(json, &#123;</span><br><span class="line">    <span class="attr">headers</span>: &#123; <span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;application/json&#x27;</span> &#125;,</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">handleOPTIONS</span>(<span class="params">request</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Response</span>(<span class="literal">null</span>, &#123;</span><br><span class="line">      <span class="attr">headers</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;Access-Control-Allow-Origin&#x27;</span>: <span class="string">&#x27;*&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;Access-Control-Allow-Methods&#x27;</span>: <span class="string">&#x27;*&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;Access-Control-Allow-Headers&#x27;</span>: <span class="string">&#x27;*&#x27;</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>并且，可以将Cloudflare Worker绑定一个域名，这样就能和OpenAI一样的体验了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">curl --location <span class="string">&#x27;https://openai.imzlp.com/v1/chat/completions&#x27;</span> \</span><br><span class="line">--header <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">--header <span class="string">&#x27;Authorization: Bearer xxxxxxxxxxxxxxxxxxxxxxxxx&#x27;</span> \</span><br><span class="line">--data <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;model&quot;: &quot;gpt-3.5-turbo&quot;,</span></span><br><span class="line"><span class="string">    &quot;messages&quot;: [&#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello&quot;&#125;]</span></span><br><span class="line"><span class="string">&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>并且无缝支持所有支持修改API Host的的GPT客户端，以及支持stream消息，非常方便。</p>
+<h3 id="翻译epub电子书"><a href="#翻译epub电子书" class="headerlink" title="翻译epub电子书"></a>翻译epub电子书</h3><p>可以使用<a target="_blank" rel="noopener" href="https://github.com/yihong0618/bilingual_book_maker">bilingual_book_maker</a>。</p>
+<p>用以下命令翻译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python make_book.py --book_name test_books/animal_farm.epub --openai_key xxxxxxxxxxxxxx --api_base https://api.openai.com/v1 --language zh-hans</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/71467/" target="_blank">循迹研究：利用AI助力生活及开发探索</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2023年04月24日 17时01分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.7k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/71467/" target="_blank" title="循迹研究：利用AI助力生活及开发探索">https://imzlp.com/posts/71467/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/71467/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag"># 随笔</a>
+              <a href="/tags/%E5%BE%AA%E8%BF%B9%E7%A0%94%E7%A9%B6/" rel="tag"># 循迹研究</a>
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/GPT/" rel="tag"># GPT</a>
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/50293/" rel="prev" title="UE构建提升：优化远程构建IOS的实现">
+      <i class="fa fa-chevron-left"></i> UE构建提升：优化远程构建IOS的实现
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/96336/" rel="next" title="DevOps：虚幻引擎的CI/CD实践">
+      DevOps：虚幻引擎的CI/CD实践 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#API-Request"><span class="nav-number">1.</span> <span class="nav-text">API Request</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%B8%B8%E4%BD%BF%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">日常使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E4%BB%A3%E7%A0%81"><span class="nav-number">2.1.</span> <span class="nav-text">生成代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%8D%95%E8%AF%8D"><span class="nav-number">2.2.</span> <span class="nav-text">解释单词</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#What-is-it"><span class="nav-number">2.3.</span> <span class="nav-text">What is it</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E4%BB%A3%E7%A0%81%E9%94%99%E8%AF%AF"><span class="nav-number">2.4.</span> <span class="nav-text">检查代码错误</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E6%8E%A2%E7%B4%A2"><span class="nav-number">3.</span> <span class="nav-text">开发探索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E6%8F%90%E7%A4%BA%E7%BC%96%E8%AF%91%E9%94%99%E8%AF%AF"><span class="nav-number">3.1.</span> <span class="nav-text">自然语言提示编译错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AzureCV%E7%BB%93%E5%90%88GPT"><span class="nav-number">3.2.</span> <span class="nav-text">AzureCV结合GPT</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prompts"><span class="nav-number">4.</span> <span class="nav-text">Prompts</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E6%8E%A8%E8%8D%90"><span class="nav-number">5.</span> <span class="nav-text">工具推荐</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GPT-Client"><span class="nav-number">5.1.</span> <span class="nav-text">GPT Client</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Worker%E5%B0%81%E8%A3%85Azure%E6%9C%8D%E5%8A%A1"><span class="nav-number">5.2.</span> <span class="nav-text">Worker封装Azure服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BF%BB%E8%AF%91epub%E7%94%B5%E5%AD%90%E4%B9%A6"><span class="nav-number">5.3.</span> <span class="nav-text">翻译epub电子书</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/71467/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在UE中开发编辑器插件时，通过USTRUCT的反射信息自动创建属性面板是非常方便提供配置化的方式，但经常会有一些特殊的属性面板定制需求，比如提供特殊的面板选项、根据参数的不同展示不同类型的值等。UE中的属性面板在HotPatcher和ResScannerUE中都有应用，能够非常方便地进行插件地配置与定制化。UE的官方文档：Details Panel Customization。 本篇文章从创建独立">
+<meta property="og:type" content="article">
+<meta property="og:title" content="虚幻引擎中的属性面板定制化">
+<meta property="og:url" content="https://imzlp.com/posts/26919/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在UE中开发编辑器插件时，通过USTRUCT的反射信息自动创建属性面板是非常方便提供配置化的方式，但经常会有一些特殊的属性面板定制需求，比如提供特殊的面板选项、根据参数的不同展示不同类型的值等。UE中的属性面板在HotPatcher和ResScannerUE中都有应用，能够非常方便地进行插件地配置与定制化。UE的官方文档：Details Panel Customization。 本篇文章从创建独立">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051821130.webp">
+<meta property="article:published_time" content="2021-10-25T09:34:21.000Z">
+<meta property="article:modified_time" content="2021-10-25T09:34:21.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="插件开发">
+<meta property="article:tag" content="Slate">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051821130.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/26919/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>虚幻引擎中的属性面板定制化 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/26919/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          虚幻引擎中的属性面板定制化<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-10-25-26919.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Details Panel Customization in Unreal Engine</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-25 09:34 09:34:21:34" itemprop="dateCreated datePublished" datetime="2021-10-25T09:34:21+00:00">2021-10-25 09:34</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">插件开发</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/Slate/" itemprop="url" rel="index"><span itemprop="name">Slate</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/26919/" class="post-meta-item leancloud_visitors" data-flag-title="虚幻引擎中的属性面板定制化" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在UE中开发编辑器插件时，通过USTRUCT的反射信息自动创建属性面板是非常方便提供配置化的方式，但经常会有一些特殊的属性面板定制需求，比如提供特殊的面板选项、根据参数的不同展示不同类型的值等。UE中的属性面板在<a href="https://imzlp.com/posts/17590/">HotPatcher</a>和<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>中都有应用，能够非常方便地进行插件地配置与定制化。UE的官方文档：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Slate/DetailsCustomization/">Details Panel Customization</a>。</p>
+<p>本篇文章从创建独立的<code>Details</code>面板入手，通过<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>中的具体案例，提供属性面板和属性条目的自定义的实现方法。</p>
+<span id="more"></span>
+
+<h3 id="属性面板StructureDetailsView"><a href="#属性面板StructureDetailsView" class="headerlink" title="属性面板StructureDetailsView"></a>属性面板StructureDetailsView</h3><p>以<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>为例，启动插件就是创建了一个Dock，其中包含了一些基础操作的按钮和一个属性面板：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026105122.webp"></p>
+<p>属性面板中展示的的元素，都是某一个USTRUCT结构的反射属性。以上述面板为例，他就是一个<code>FScannerConfig</code>的结构：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">RESSCANNER_API</span> FScannerConfig</span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;配置名&quot;</span>,Category=<span class="string">&quot;Base&quot;</span>)</span><br><span class="line">  FString ConfigName;</span><br><span class="line">  <span class="comment">// if true,only scan the GlobalScanFilters assets</span></span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;启用全局资源&quot;</span>,Category=<span class="string">&quot;Global&quot;</span>)</span><br><span class="line">  <span class="type">bool</span> bByGlobalScanFilters = <span class="literal">false</span>;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;屏蔽每个规则中配置的资源&quot;</span>,Category=<span class="string">&quot;Global&quot;</span>,meta=(EditCondition=<span class="string">&quot;bByGlobalScanFilters&quot;</span>))</span><br><span class="line">  <span class="type">bool</span> bBlockRuleFilter = <span class="literal">false</span>;</span><br><span class="line">  <span class="comment">// if bByGlobalFilters is true,all rule using the filter assets</span></span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;全局扫描配置&quot;</span>,Category=<span class="string">&quot;Global&quot;</span>,meta=(EditCondition=<span class="string">&quot;bByGlobalScanFilters&quot;</span>))</span><br><span class="line">  FAssetFilters GlobalScanFilters;</span><br><span class="line">  <span class="comment">// force ignore assets,don&#x27;t match any rule</span></span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;全局忽略扫描配置&quot;</span>,Category=<span class="string">&quot;Global&quot;</span>,meta=(EditCondition=<span class="string">&quot;bByGlobalScanFilters&quot;</span>))</span><br><span class="line">  TArray&lt;FAssetFilters&gt; GlobalIgnoreFilters;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;Git仓库扫描配置&quot;</span>,Category=<span class="string">&quot;Global&quot;</span>,meta=(EditCondition=<span class="string">&quot;bByGlobalScanFilters&quot;</span>))</span><br><span class="line">  FGitChecker GitChecker;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;启用规则数据表&quot;</span>,Category=<span class="string">&quot;RulesTable&quot;</span>)</span><br><span class="line">  <span class="type">bool</span> bUseRulesTable = <span class="literal">false</span>;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;规则数据表&quot;</span>,Category=<span class="string">&quot;RulesTable&quot;</span>, meta=(RequiredAssetDataTags = <span class="string">&quot;RowStructure=ScannerMatchRule&quot;</span>,EditCondition=<span class="string">&quot;bUseRulesTable&quot;</span>))</span><br><span class="line">  TSoftObjectPtr&lt;<span class="keyword">class</span> <span class="title class_">UDataTable</span>&gt; ImportRulesTable;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;规则列表&quot;</span>,Category=<span class="string">&quot;Rules&quot;</span>)</span><br><span class="line">  TArray&lt;FScannerMatchRule&gt; ScannerRules;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;存储配置文件&quot;</span>,Category=<span class="string">&quot;Save&quot;</span>)</span><br><span class="line">  <span class="type">bool</span> bSaveConfig = <span class="literal">true</span>;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;存储扫描结果&quot;</span>,Category=<span class="string">&quot;Save&quot;</span>)</span><br><span class="line">  <span class="type">bool</span> bSaveResult = <span class="literal">true</span>;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;存储路径&quot;</span>,Category=<span class="string">&quot;Save&quot;</span>)</span><br><span class="line">  FDirectoryPath SavePath;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;独立运行模式&quot;</span>,Category=<span class="string">&quot;Advanced&quot;</span>)</span><br><span class="line">  <span class="type">bool</span> bStandaloneMode = <span class="literal">true</span>;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,Category=<span class="string">&quot;Advanced&quot;</span>)</span><br><span class="line">  FString AdditionalExecCommand;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>只需要这样定义一个结构，UE的属性面板就会把对应的类型、子结构成员都能创建出来，完全避免针对每个属性编写创建代码。创建方式也非常简单，只需要通过<code>PropertyEditor</code>模块在某个Slate类的<code>Construct</code>中创建一个<code>SStructureDetailsView</code>。</p>
+<p>首先需要在<code>build.cs</code>中包含<code>PropertyEditor</code>模块，然后就能通过<code>PropertyEditor</code>进行创建了：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// .h</span></span><br><span class="line">TSharedPtr&lt;FScannerConfig&gt; ScannerConfig;</span><br><span class="line">TSharedPtr&lt;IStructureDetailsView&gt; SettingsView;</span><br><span class="line"><span class="comment">// .cpp</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">SResScannerConfigPage::CreateScannerStructureDetailView</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// Create a property view</span></span><br><span class="line">  FPropertyEditorModule&amp; EditModule = FModuleManager::<span class="built_in">Get</span>().<span class="built_in">GetModuleChecked</span>&lt;FPropertyEditorModule&gt;(<span class="string">&quot;PropertyEditor&quot;</span>);</span><br><span class="line"></span><br><span class="line">  FDetailsViewArgs DetailsViewArgs;</span><br><span class="line">  &#123;</span><br><span class="line">    DetailsViewArgs.bAllowSearch = <span class="literal">true</span>;</span><br><span class="line">    DetailsViewArgs.bHideSelectionTip = <span class="literal">true</span>;</span><br><span class="line">    DetailsViewArgs.bLockable = <span class="literal">false</span>;</span><br><span class="line">    DetailsViewArgs.bSearchInitialKeyFocus = <span class="literal">true</span>;</span><br><span class="line">    DetailsViewArgs.bUpdatesFromSelection = <span class="literal">false</span>;</span><br><span class="line">    DetailsViewArgs.NotifyHook = <span class="literal">nullptr</span>;</span><br><span class="line">    DetailsViewArgs.bShowOptions = <span class="literal">true</span>;</span><br><span class="line">    DetailsViewArgs.bShowModifiedPropertiesOption = <span class="literal">false</span>;</span><br><span class="line">    DetailsViewArgs.bShowScrollBar = <span class="literal">false</span>;</span><br><span class="line">    DetailsViewArgs.bShowOptions = <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  FStructureDetailsViewArgs StructureViewArgs;</span><br><span class="line">  &#123;</span><br><span class="line">    StructureViewArgs.bShowObjects = <span class="literal">true</span>;</span><br><span class="line">    StructureViewArgs.bShowAssets = <span class="literal">true</span>;</span><br><span class="line">    StructureViewArgs.bShowClasses = <span class="literal">true</span>;</span><br><span class="line">    StructureViewArgs.bShowInterfaces = <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// create details</span></span><br><span class="line">  SettingsView = EditModule.<span class="built_in">CreateStructureDetailView</span>(DetailsViewArgs, StructureViewArgs, <span class="literal">nullptr</span>);</span><br><span class="line">  FStructOnScope* Struct = <span class="keyword">new</span> <span class="built_in">FStructOnScope</span>(FScannerConfig::<span class="built_in">StaticStruct</span>(), (uint8*)ScannerConfig.<span class="built_in">Get</span>());</span><br><span class="line">  SettingsView-&gt;<span class="built_in">GetDetailsView</span>()-&gt;<span class="built_in">RegisterInstancedCustomPropertyLayout</span>(FScannerConfig::<span class="built_in">StaticStruct</span>(),FOnGetDetailCustomizationInstance::<span class="built_in">CreateStatic</span>(&amp;FScannerSettingsDetails::MakeInstance));</span><br><span class="line">  SettingsView-&gt;<span class="built_in">SetStructureData</span>(<span class="built_in">MakeShareable</span>(Struct));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建的面板需要绑定一个UStruct，用于获取该结构的反射信息，以及绑定一个结构实例，用于获取展示值以及存储值。<br>同时，可以通过设置<code>FDetailsViewArgs</code>与<code>FStructureDetailsViewArgs</code>的参数来控制属性面板的功能，比如是否能搜索属性名、滑动条等。</p>
+<p>创建<code>SettingsView</code>之后，显示在Slate控件中的方法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">SResScannerConfigPage::Construct</span><span class="params">(<span class="type">const</span> FArguments&amp; InArgs)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  ScannerConfig = <span class="built_in">MakeShareable</span>(<span class="keyword">new</span> FScannerConfig);</span><br><span class="line">  <span class="built_in">CreateScannerStructureDetailView</span>();</span><br><span class="line"></span><br><span class="line">  ChildSlot</span><br><span class="line">    [</span><br><span class="line">      <span class="built_in">SNew</span>(SVerticalBox)</span><br><span class="line">      + SVerticalBox::<span class="built_in">Slot</span>()</span><br><span class="line">      .<span class="built_in">AutoHeight</span>()</span><br><span class="line">      .<span class="built_in">HAlign</span>(HAlign_Right)</span><br><span class="line">      .<span class="built_in">Padding</span>(<span class="number">4</span>, <span class="number">4</span>, <span class="number">10</span>, <span class="number">4</span>)</span><br><span class="line">      [</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">      ]</span><br><span class="line">      + SVerticalBox::<span class="built_in">Slot</span>()</span><br><span class="line">      .<span class="built_in">AutoHeight</span>()</span><br><span class="line">      .<span class="built_in">Padding</span>(FEditorStyle::<span class="built_in">GetMargin</span>(<span class="string">&quot;StandardDialog.ContentPadding&quot;</span>))</span><br><span class="line">      [</span><br><span class="line">        <span class="built_in">SNew</span>(SHorizontalBox)</span><br><span class="line">        + SHorizontalBox::<span class="built_in">Slot</span>()</span><br><span class="line">        .<span class="built_in">VAlign</span>(VAlign_Center)</span><br><span class="line">        [</span><br><span class="line">          SettingsView-&gt;<span class="built_in">GetWidget</span>()-&gt;<span class="built_in">AsShared</span>()</span><br><span class="line">        ]</span><br><span class="line">      ]</span><br><span class="line">    ];</span><br></pre></td></tr></table></figure>
+<p>其实就是把创建的<code>SettingsView</code>的Widget放入一个容器中显示，该Widget就包含了绑定UStruct的所有可编辑的反射属性，如前文ResScannerUE的面板显示。</p>
+<h3 id="属性面板自定义"><a href="#属性面板自定义" class="headerlink" title="属性面板自定义"></a>属性面板自定义</h3><p>在前面创建SettingView的代码中，有这么一行：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SettingsView-&gt;<span class="built_in">GetDetailsView</span>()-&gt;<span class="built_in">RegisterInstancedCustomPropertyLayout</span>(FScannerConfig::<span class="built_in">StaticStruct</span>(),FOnGetDetailCustomizationInstance::<span class="built_in">CreateStatic</span>(&amp;FScannerSettingsDetails::MakeInstance));</span><br></pre></td></tr></table></figure>
+
+<p>这里是指定一个当前SettingsView的DetailCustomization类实例，用于在创建SettingView控件的时候进行定制化的操作，该类的声明如下：</p>
+<figure class="highlight cpp"><figcaption><span>ScannerConfigDetails.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;IDetailCustomization.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FScannerSettingsDetails</span> : <span class="keyword">public</span> IDetailCustomization</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">/** Makes a new instance of this detail layout class for a specific detail view requesting it */</span></span><br><span class="line">    <span class="function"><span class="type">static</span> TSharedRef&lt;IDetailCustomization&gt; <span class="title">MakeInstance</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">MakeShareable</span>(<span class="keyword">new</span> <span class="built_in">FScannerSettingsDetails</span>());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** IDetailCustomization interface */</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">CustomizeDetails</span><span class="params">(IDetailLayoutBuilder&amp; DetailBuilder)</span> <span class="keyword">override</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在这个<code>CustomizeDetails</code>接口中，就可以做一些定制化的操作，比如在属性面板中创建一个新的slate控件，以<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>中的<code>Import</code>按钮为例：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026142947.webp"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FScannerSettingsDetails::CustomizeDetails</span><span class="params">(IDetailLayoutBuilder&amp; DetailBuilder)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  TArray&lt; TSharedPtr&lt;FStructOnScope&gt; &gt; StructBeingCustomized;</span><br><span class="line">  DetailBuilder.<span class="built_in">GetStructsBeingCustomized</span>(StructBeingCustomized);</span><br><span class="line">  <span class="built_in">check</span>(StructBeingCustomized.<span class="built_in">Num</span>() == <span class="number">1</span>);</span><br><span class="line">  FScannerConfig* ScannerSettingsIns = (FScannerConfig*)StructBeingCustomized[<span class="number">0</span>].<span class="built_in">Get</span>()-&gt;<span class="built_in">GetStructMemory</span>();</span><br><span class="line">  IDetailCategoryBuilder* RulesCategory = DetailBuilder.<span class="built_in">EditCategory</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;RulesTable&quot;</span>),FText::<span class="built_in">GetEmpty</span>(),ECategoryPriority::Default);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(RulesCategory)</span><br><span class="line">  &#123;</span><br><span class="line">    RulesCategory-&gt;<span class="built_in">SetShowAdvanced</span>(<span class="literal">true</span>);</span><br><span class="line">    RulesCategory-&gt;<span class="built_in">AddCustomRow</span>(<span class="built_in">LOCTEXT</span>(<span class="string">&quot;ImportRulesTable&quot;</span>, <span class="string">&quot;Import Rules Table&quot;</span>),<span class="literal">true</span>)</span><br><span class="line">        .<span class="built_in">ValueContent</span>()</span><br><span class="line">        [</span><br><span class="line">            <span class="built_in">SNew</span>(SHorizontalBox)</span><br><span class="line">            + SHorizontalBox::<span class="built_in">Slot</span>()</span><br><span class="line">            .<span class="built_in">Padding</span>(<span class="number">0</span>)</span><br><span class="line">            .<span class="built_in">AutoWidth</span>()</span><br><span class="line">            [</span><br><span class="line">                <span class="built_in">SNew</span>(SButton)</span><br><span class="line">                .<span class="built_in">Text</span>(<span class="built_in">LOCTEXT</span>(<span class="string">&quot;Import&quot;</span>, <span class="string">&quot;Import&quot;</span>))</span><br><span class="line">                .<span class="built_in">ToolTipText</span>(<span class="built_in">LOCTEXT</span>(<span class="string">&quot;ImportRulesTable_Tooltip&quot;</span>, <span class="string">&quot;Import Rules Table to the Config&quot;</span>))</span><br><span class="line">                .<span class="built_in">IsEnabled_Lambda</span>([<span class="keyword">this</span>,ScannerSettingsIns]()-&gt;<span class="type">bool</span></span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">return</span> ScannerSettingsIns-&gt;bUseRulesTable;</span><br><span class="line">                &#125;)</span><br><span class="line">                .<span class="built_in">OnClicked_Lambda</span>([<span class="keyword">this</span>, ScannerSettingsIns]()</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">if</span> (ScannerSettingsIns)</span><br><span class="line">                    &#123;</span><br><span class="line">                        ScannerSettingsIns-&gt;<span class="built_in">HandleImportRulesTable</span>();</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="built_in">return</span>(FReply::<span class="built_in">Handled</span>());</span><br><span class="line">                &#125;)</span><br><span class="line">            ]</span><br><span class="line">        ];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以通过接口中的<code>DetailBuilder</code>获取到当前SettingView绑定的结构实例，能够从配置中获取数据、执行操作。</p>
+<p>上述代码是获取到了属性的<code>Caregory</code>，在<code>RulesTable</code>下创建一个CustomRow元素，在<code>ValueContent()</code>可以直接写Slate代码来创建我们自定义的控件。<br>因为也能够直接获取绑定的结构体实例，所以控件中的实现也能够直接调用结构的函数，实现点击<code>Import</code>按钮就能从<code>Datatable</code>导入到配置中的效果。</p>
+<h3 id="面板中的属性自定义"><a href="#面板中的属性自定义" class="headerlink" title="面板中的属性自定义"></a>面板中的属性自定义</h3><p>上节提到了在属性面板中可以创建自定义的slate控件，实现定制行为。但是有一些需求，需要在面板中修改属性展示。<br>如我在做<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>中属性匹配的一个需求：</p>
+<ol>
+<li>可以选择UClass类型</li>
+<li>根据选择的UClass类型，列出可选属性的列表，并能够动态创建所选属性的值类型在面板中显示</li>
+<li>属性名-值是一个数组，每个元素可以指定不同的属性名，并且创建出不同的值类型</li>
+</ol>
+<p>我已经实现了，效果如下：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026152026.webp"></p>
+<p>下面从实现上做介绍，如果只是在反射数据获取上，其实没难度。但是在属性面板上显示就要复杂一些。</p>
+<ol>
+<li>根据UClass遍历所有的属性</li>
+<li>得到FProperty就得到了当前属性的类型</li>
+<li><strong>把不同的FProperty在属性面板上创建出来</strong></li>
+</ol>
+<p>因为前文也提到了，属性面板是会绑定一个USTRUCT然后创建出属性，最开始我的思路是动态修改UStruct，但是发现不太合理，UStruct其实也是固定的，没办法做到一个数组中的元素类型不同。</p>
+<p>那么，还有什么方法呢？经过查阅引擎的代码，发现UE也可以对某种类型的属性在属性面板做自定义的操作，核心就是<code>IPropertyTypeCustomization</code>。</p>
+<p>它的所用与<code>IDetailCustomization</code>接口类似，都是提供一个自定义属性面板控件的接口，但是在创建形式上略有不同：</p>
+<ol>
+<li>DetailCustomization需要在创建SettingView时指定，而<code>PropertyTypeCustomization</code>不需要</li>
+<li>DetailCustomization只能在自己创建的SettingView中生效，而<code>PropertyTypeCustomization</code>在所有创建该属性的地方都能生效。</li>
+</ol>
+<p><code>PropertyTypeCustomization</code>更灵活一些，在写完自定义事件之后，不管是在<code>SettingView</code>还是在<code>DataTable</code>创建出来的结构实例，都能正确地展示。</p>
+<p>我在ResScannerUE中创建了一个结构<code>FPropertyMatchMapping</code>，来存储属性名和值：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FPropertyMatchMapping</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;匹配模式&quot;</span>)</span><br><span class="line">  EPropertyMatchRule MatchRule;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;属性名&quot;</span>)</span><br><span class="line">  FString PropertyName;</span><br><span class="line">  <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite,DisplayName=<span class="string">&quot;值&quot;</span>)</span><br><span class="line">  FString MatchValue;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>PropertyName</code>和<code>MatchValue</code>都是字符串，使用字符串的原因是，字符串可以存储任意类型的值。后续对属性自定义的操作，就是针对于<code>FPropertyMatchMapping</code>这个结构类型。</p>
+<p>所以，属性自定义的实现思路为：</p>
+<ol>
+<li>创建一个自定义的<code>PropertyTypeCustomization</code></li>
+<li>当属性面板创建时，替换掉原本的属性创建逻辑，使用<code>PropertyTypeCustomization</code>创建</li>
+</ol>
+<p>先创建<code>FPropertyMatchMapping</code>类型的PropertyTypeCustomization类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FCustomPropertyMatchMappingDetails</span> : <span class="keyword">public</span> IPropertyTypeCustomization</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">static</span> TSharedRef&lt;IPropertyTypeCustomization&gt; <span class="title">MakeInstance</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">MakeShareable</span>(<span class="keyword">new</span> FCustomPropertyMatchMappingDetails);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">CustomizeHeader</span><span class="params">(TSharedRef&lt;<span class="keyword">class</span> IPropertyHandle&gt; StructPropertyHandle, <span class="keyword">class</span> FDetailWidgetRow&amp; HeaderRow, IPropertyTypeCustomizationUtils&amp; StructCustomizationUtils)</span> <span class="keyword">override</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">CustomizeChildren</span><span class="params">(TSharedRef&lt;<span class="keyword">class</span> IPropertyHandle&gt; StructPropertyHandle, <span class="keyword">class</span> IDetailChildrenBuilder&amp; StructBuilder, IPropertyTypeCustomizationUtils&amp; StructCustomizationUtils)</span> <span class="keyword">override</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后需要在模块启动时把该类注册进去：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FResScannerEditorModule::StartupModule</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  FPropertyEditorModule&amp; PropertyEditorModule = FModuleManager::<span class="built_in">GetModuleChecked</span>&lt;FPropertyEditorModule&gt;(<span class="built_in">TEXT</span>(<span class="string">&quot;PropertyEditor&quot;</span>));</span><br><span class="line">  PropertyEditorModule.<span class="built_in">RegisterCustomPropertyTypeLayout</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;PropertyMatchMapping&quot;</span>), FOnGetPropertyTypeCustomizationInstance::<span class="built_in">CreateStatic</span>(&amp;FCustomPropertyMatchMappingDetails::MakeInstance));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该步骤，就是告诉<code>PropertyEditor</code>模块在属性面板中创建<code>FPropertyMatchMapping</code>类型时，会创建出一个<code>FCustomPropertyMatchMappingDetails</code>的实例来执行创建操作，这样就把我们想要指定的类的控件创建流程转移到了自己的代码中。</p>
+<p><code>FCustomPropertyMatchMappingDetails</code>的实现：<br><code>CustomizeHeader</code>函数中是可以直接创建<code>Property-value</code>的，但是我在<code>CustomizeHeader</code>传递进来的参数中，没找到方法获取到整个父结构实例，也就获取不到所选择的<code>UClass</code>是什么，如果在创建不依赖上下文关系的属性-值中，可以直接在这里创建。</p>
+<p>但是我要实现的依赖于父级结构所选择的UClass值，所以我只在<code>CustomizeHeader</code>中创建了属性名，而值的控件没有创建：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026155506.webp"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FCustomPropertyMatchMappingDetails::CustomizeHeader</span><span class="params">(TSharedRef&lt;IPropertyHandle&gt; StructPropertyHandle,</span></span></span><br><span class="line"><span class="params"><span class="function">                                                         FDetailWidgetRow&amp; HeaderRow, IPropertyTypeCustomizationUtils&amp; StructCustomizationUtils)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    MatchRuleHandle = StructPropertyHandle-&gt;<span class="built_in">GetChildHandle</span>(<span class="built_in">GET_MEMBER_NAME_CHECKED</span>(FPropertyMatchMapping, MatchRule));</span><br><span class="line">    MatchValueHandle = StructPropertyHandle-&gt;<span class="built_in">GetChildHandle</span>(<span class="built_in">GET_MEMBER_NAME_CHECKED</span>(FPropertyMatchMapping, MatchValue));</span><br><span class="line">    PropertyNameHandle = StructPropertyHandle-&gt;<span class="built_in">GetChildHandle</span>(<span class="built_in">GET_MEMBER_NAME_CHECKED</span>(FPropertyMatchMapping, PropertyName));</span><br><span class="line">    CurrentPropertyRow = <span class="literal">NULL</span>;</span><br><span class="line">    OldPropertyRow = <span class="literal">NULL</span>;</span><br><span class="line">    HeaderRow.<span class="built_in">NameContent</span>()   <span class="comment">//属性的Name样式</span></span><br><span class="line">    [</span><br><span class="line">        <span class="built_in">SNew</span>(STextBlock)</span><br><span class="line">        .<span class="built_in">Text</span>(FText::<span class="built_in">FromString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;属性规则&quot;</span>)))</span><br><span class="line">    ];</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>CustomizeHeader</code>中获取并存储了<code>FPropertyMatchMapping</code>实例的真实元素值（PropertyName/Value都是FString），该结构的元素都被放到了<code>CustomizeChildren</code>中创建，因为在<code>CustomizeChildren</code>传递进来的<code>IDetailChildrenBuilder</code>中可以访问到父级结构，也就能获取到所选择的UClass：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026155937.webp"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FCustomPropertyMatchMappingDetails::CustomizeChildren</span><span class="params">(TSharedRef&lt;IPropertyHandle&gt; StructPropertyHandle,</span></span></span><br><span class="line"><span class="params"><span class="function">    IDetailChildrenBuilder&amp; StructBuilder, IPropertyTypeCustomizationUtils&amp; StructCustomizationUtils)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    IDetailCategoryBuilder&amp; ParentCategory = mStructBuilder-&gt;<span class="built_in">GetParentCategory</span>();</span><br><span class="line">    IDetailLayoutBuilder&amp; ParentLayout = ParentCategory.<span class="built_in">GetParentLayout</span>();</span><br><span class="line">    <span class="keyword">auto</span> ScanAssetType = ParentLayout.<span class="built_in">GetProperty</span>(<span class="built_in">GET_MEMBER_NAME_CHECKED</span>(FScannerMatchRule, ScanAssetType));</span><br><span class="line">    ScanAssetType-&gt;<span class="built_in">SetOnPropertyValueChanged</span>(FSimpleDelegate::<span class="built_in">CreateSP</span>(<span class="keyword">this</span>, &amp;FCustomPropertyMatchMappingDetails::OnClassValueChanged));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取到UClass之后，就是获取所有的反射属性，并创建出一个<code>SComboBox</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FCustomPropertyMatchMappingDetails::OnClassValueChanged</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UObject* ClassObject = <span class="literal">NULL</span>;</span><br><span class="line">    Class = <span class="literal">NULL</span>;</span><br><span class="line">    IDetailCategoryBuilder&amp; ParentCategory = mStructBuilder-&gt;<span class="built_in">GetParentCategory</span>();</span><br><span class="line">    IDetailLayoutBuilder&amp; ParentLayout = ParentCategory.<span class="built_in">GetParentLayout</span>();</span><br><span class="line">    <span class="keyword">auto</span> ScanAssetType = ParentLayout.<span class="built_in">GetProperty</span>(<span class="built_in">GET_MEMBER_NAME_CHECKED</span>(FScannerMatchRule, ScanAssetType));</span><br><span class="line">    </span><br><span class="line">    ScanAssetType-&gt;<span class="built_in">GetValue</span>(ClassObject);</span><br><span class="line">    <span class="keyword">if</span>(ClassObject)</span><br><span class="line">    &#123;</span><br><span class="line">        Class = <span class="built_in">Cast</span>&lt;UClass&gt;(ClassObject);</span><br><span class="line">        <span class="keyword">for</span>(TFieldIterator&lt;FProperty&gt; <span class="built_in">PropertyIter</span>(Class);PropertyIter;++PropertyIter)</span><br><span class="line">        &#123;</span><br><span class="line">            FProperty* PropertyIns = *PropertyIter;</span><br><span class="line">            AllPropertyNames.<span class="built_in">Add</span>(<span class="built_in">MakeShareable</span>(<span class="keyword">new</span> <span class="built_in">FString</span>(PropertyIns-&gt;<span class="built_in">GetName</span>())));</span><br><span class="line">            AllPropertyMap.<span class="built_in">Add</span>(PropertyIns-&gt;<span class="built_in">GetName</span>(),PropertyIns);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    TSharedPtr&lt;SWidget&gt; Widget;</span><br><span class="line">    <span class="keyword">if</span>(Class)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">SAssignNew</span>(AllPropertySelector,SComboBox&lt;TSharedPtr&lt;FString&gt;&gt;)</span><br><span class="line">        .<span class="built_in">OptionsSource</span>(&amp;AllPropertyNames)</span><br><span class="line">        .<span class="built_in">OnGenerateWidget</span>(SComboBox&lt;TSharedPtr&lt;FString&gt;&gt;::FOnGenerateWidget::<span class="built_in">CreateRaw</span>(<span class="keyword">this</span>,&amp;FCustomPropertyMatchMappingDetails::HandleGenerateWidget_ForPropertyNamesComboBox))</span><br><span class="line">        .<span class="built_in">OnSelectionChanged</span>(SComboBox&lt; TSharedPtr&lt;FString&gt; &gt;::FOnSelectionChanged::<span class="built_in">CreateRaw</span>(<span class="keyword">this</span>,&amp;FCustomPropertyMatchMappingDetails::HandleSelectionChanged_ForPropertyNamesComboBox))</span><br><span class="line">        [</span><br><span class="line">            <span class="built_in">SAssignNew</span>(PropertyNameComboContent, SBox)</span><br><span class="line">        ];</span><br><span class="line">        PropertyNameComboContent-&gt;<span class="built_in">SetContent</span>(<span class="built_in">SNew</span>(STextBlock).<span class="built_in">Text</span>(FText::<span class="built_in">FromString</span>(*AllPropertyNames[<span class="number">0</span>].<span class="built_in">Get</span>())));</span><br><span class="line">        Widget = AllPropertySelector;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        Widget = PropertyNameHandle-&gt;<span class="built_in">CreatePropertyValueWidget</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    AllPropertySelectorBox-&gt;<span class="built_in">SetContent</span>(Widget.<span class="built_in">ToSharedRef</span>());</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FCustomPropertyMatchMappingDetails::CustomizeChildren</span><span class="params">(TSharedRef&lt;IPropertyHandle&gt; StructPropertyHandle,</span></span></span><br><span class="line"><span class="params"><span class="function">    IDetailChildrenBuilder&amp; StructBuilder, IPropertyTypeCustomizationUtils&amp; StructCustomizationUtils)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    StructBuilder.<span class="built_in">AddCustomRow</span>(FText::<span class="built_in">FromString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;PropertyName&quot;</span>)))</span><br><span class="line">      .<span class="built_in">NameContent</span>()</span><br><span class="line">      [</span><br><span class="line">        PropertyNameHandle-&gt;<span class="built_in">CreatePropertyNameWidget</span>()</span><br><span class="line">      ]</span><br><span class="line">      .<span class="built_in">ValueContent</span>()</span><br><span class="line">      .<span class="built_in">MinDesiredWidth</span>(<span class="number">500</span>)</span><br><span class="line">      [</span><br><span class="line">         <span class="built_in">SAssignNew</span>(AllPropertySelectorBox, SBox)</span><br><span class="line">      ];</span><br><span class="line">        </span><br><span class="line">      <span class="built_in">OnClassValueChanged</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实也是通过Slate创建出一个SWidget，然后塞到由<code>StructBuilder.AddCustomRow</code>创建的ValueContent容器中。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026193054.webp"></p>
+<p>通过创建的<code>SComboBox</code>，可以在编辑器中获取到当前<code>ComboBox</code>中选择的属性名，通过<code>UClass</code>/<code>属性名</code>就能拿到该属性的FProperty，也就是属性的反射信息。所以，当ComboBox中选择的名字不一样，拿到的FProperty也不一样，其所代表的类型也不一样。<br>下一步的关键就是，通过得到的FProperty在属性面板中动态地创建出来应有的类型：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211026161416.webp"></p>
+<p>首先需要在<code>CustomizeChildren</code>中创建存储值控件的容器：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">StructBuilder.<span class="built_in">AddCustomRow</span>(FText::<span class="built_in">FromString</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;PropertyValue&quot;</span>)))</span><br><span class="line">    .<span class="built_in">NameContent</span>()</span><br><span class="line">    [</span><br><span class="line">      MatchValueHandle-&gt;<span class="built_in">CreatePropertyNameWidget</span>()</span><br><span class="line">    ]</span><br><span class="line">    .<span class="built_in">ValueContent</span>()</span><br><span class="line">    .<span class="built_in">MinDesiredWidth</span>(<span class="number">500</span>)</span><br><span class="line">    [</span><br><span class="line">        <span class="built_in">SAssignNew</span>(PropertyContent,SBox)</span><br><span class="line">    ];</span><br></pre></td></tr></table></figure>
+<p><code>PropertyContent</code>是一个<code>TSharedPtr&lt;SBox&gt;</code>，后面创建出来的控件，要通过它来展示。</p>
+<p>回来继续说到根据FProperty创建其类型的值控件，在<code>IDetailChildrenBuilder</code>中有一个函数<code>AddExternalStructureProperty</code>，可以将一个外部结构的某个属性添加到当前的Details中。</p>
+<p>以<code>UTexture2D</code>的<code>CompressionSettings</code>属性为例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditAnywhere, BlueprintReadWrite, Category=Compression, AssetRegistrySearchable)</span><br><span class="line">  TEnumAsByte&lt;<span class="keyword">enum</span> <span class="title class_">TextureCompressionSettings</span>&gt; CompressionSettings;</span><br></pre></td></tr></table></figure>
+<p>它是一个枚举，我想要在一个不包含它的UStruct的属性面板中创建出来，并把它放到前面创建的<code>PropertyContent</code>中显示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Class is UTexture2D</span></span><br><span class="line">IDetailPropertyRow* PropertyRow = mStructBuilder-&gt;<span class="built_in">AddExternalStructureProperty</span>(<span class="built_in">MakeShareable</span>(<span class="keyword">new</span> <span class="built_in">FStructOnScope</span>(<span class="built_in">Cast</span>&lt;UStruct&gt;(Class))), <span class="built_in">TEXT</span>(<span class="string">&quot;CompressionSettings&quot;</span>));</span><br><span class="line"><span class="keyword">if</span>(PropertyRow)</span><br><span class="line">&#123;</span><br><span class="line">    PropertyRow-&gt;<span class="built_in">Visibility</span>(EVisibility::Hidden);</span><br><span class="line"></span><br><span class="line">    FString ExistValue;</span><br><span class="line">    MatchValueHandle-&gt;<span class="built_in">GetValueAsFormattedString</span>(ExistValue);</span><br><span class="line">    PropertyRow-&gt;<span class="built_in">GetPropertyHandle</span>()-&gt;<span class="built_in">SetValueFromFormattedString</span>(ExistValue);</span><br><span class="line">    </span><br><span class="line">    TSharedRef&lt;SWidget&gt; Widget = PropertyRow-&gt;<span class="built_in">GetPropertyHandle</span>()-&gt;<span class="built_in">CreatePropertyValueWidget</span>();</span><br><span class="line">    PropertyContent-&gt;<span class="built_in">SetContent</span>(Widget);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>mStructBuilder</code>可以在<code>CustomizeChildren</code>的参数中拿到并存储起来。</p>
+<p>其实上面的代码就是实现根据<code>FProperty</code>创建出对应值类型控件的关键部分，只需要通过<code>UClass</code>和属性名，就能创建出对应的<code>SWidget</code>，将其放入某个容器中即可显示出来！</p>
+<p>根据ComboxBox获得选择的属性名，再根据属性名获取FProperty，再创建出Wiget的代码碍于篇幅这里就不完整贴出了，感兴趣的可以查看<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>的<a target="_blank" rel="noopener" href="https://github.com/hxhb/ResScannerUE/blob/master/Source/ResScannerEditor/Private/DetailCustomization/CustomPropertyMatchMappingDetails.cpp">DetailCustomization/CustomPropertyMatchMappingDetails.cpp</a>代码，具有完整的实现。</p>
+<h3 id="通用类型的数据存储"><a href="#通用类型的数据存储" class="headerlink" title="通用类型的数据存储"></a>通用类型的数据存储</h3><p>除了需要能够在面板中显示不同的属性，还需要用一种通用的方法把他们存储起来。<br>可以使用字符串来存储所有的类型值信息，UE中也提供了<code>Value Widget</code>读取字符串值、从字符串设置值得方式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FString Value;</span><br><span class="line">MatchValueHandle-&gt;<span class="built_in">GetValueAsFormattedString</span>(Value);</span><br><span class="line">MatchValueHandle-&gt;<span class="built_in">SetValueFromFormattedString</span>(Value);</span><br></pre></td></tr></table></figure>
+<p>通过这两个函数就能实现，所有类型的值都能通过字符串来存储和读取。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/26919/" target="_blank">虚幻引擎中的属性面板定制化</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年10月25日 09时34分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/26919/" target="_blank" title="虚幻引擎中的属性面板定制化">https://imzlp.com/posts/26919/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/26919/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" rel="tag"># 插件开发</a>
+              <a href="/tags/Slate/" rel="tag"># Slate</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/20376/" rel="prev" title="基于ResScannerUE的资源检查自动化实践">
+      <i class="fa fa-chevron-left"></i> 基于ResScannerUE的资源检查自动化实践
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/9028/" rel="next" title="UE热更新：Config的重载与应用">
+      UE热更新：Config的重载与应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B1%9E%E6%80%A7%E9%9D%A2%E6%9D%BFStructureDetailsView"><span class="nav-number">1.</span> <span class="nav-text">属性面板StructureDetailsView</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B1%9E%E6%80%A7%E9%9D%A2%E6%9D%BF%E8%87%AA%E5%AE%9A%E4%B9%89"><span class="nav-number">2.</span> <span class="nav-text">属性面板自定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%A2%E6%9D%BF%E4%B8%AD%E7%9A%84%E5%B1%9E%E6%80%A7%E8%87%AA%E5%AE%9A%E4%B9%89"><span class="nav-number">3.</span> <span class="nav-text">面板中的属性自定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%94%A8%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8"><span class="nav-number">4.</span> <span class="nav-text">通用类型的数据存储</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/26919/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

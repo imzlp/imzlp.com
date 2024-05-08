@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Tor的Bridge如果传播的范围比较广，可能隔几天就被和谐掉了，频繁地换有点麻烦(恍惚间让我想到了当年改host上Google的时光)。今天折腾了一下，自己在VPS上搭建tor的Bridge来自用。而且也从Tor Browser里提取出tor，使其不依赖Tor Browser，可以供其他浏览器使用。警告：部署Bridge可能会增加服务器被墙的概率。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="提取Tor并搭建Tor Bridge">
+<meta property="og:url" content="https://imzlp.com/posts/11177/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="Tor的Bridge如果传播的范围比较广，可能隔几天就被和谐掉了，频繁地换有点麻烦(恍惚间让我想到了当年改host上Google的时光)。今天折腾了一下，自己在VPS上搭建tor的Bridge来自用。而且也从Tor Browser里提取出tor，使其不依赖Tor Browser，可以供其他浏览器使用。警告：部署Bridge可能会增加服务器被墙的概率。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/11177/tor-bridge-server-log.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/11177/onion-duckduckgo.webp">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/11177/onion-imperiallibrary.webp">
+<meta property="article:published_time" content="2018-11-04T19:36:04.000Z">
+<meta property="article:modified_time" content="2018-11-05T10:29:09.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="暗网">
+<meta property="article:tag" content="onion">
+<meta property="article:tag" content="Tor">
+<meta property="article:tag" content="TorTridge">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/blog/posts/11177/tor-bridge-server-log.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/11177/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>提取Tor并搭建Tor Bridge | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/11177/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          提取Tor并搭建Tor Bridge<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2018-11-04-11177.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-11-04 19:36 19:36:04:36" itemprop="dateCreated datePublished" datetime="2018-11-04T19:36:04+00:00">2018-11-04 19:36</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-11-05 10:29 10:29:09:29" itemprop="dateModified" datetime="2018-11-05T10:29:09+00:00">2018-11-05 10:29</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">网络工具</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%B7%A5%E5%85%B7/tor/" itemprop="url" rel="index"><span itemprop="name">tor</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/11177/" class="post-meta-item leancloud_visitors" data-flag-title="提取Tor并搭建Tor Bridge" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Tor的Bridge如果传播的范围比较广，可能隔几天就被和谐掉了，频繁地换有点麻烦(恍惚间让我想到了当年改host上Google的时光)。今天折腾了一下，自己在VPS上搭建tor的Bridge来自用。<br>而且也从<a target="_blank" rel="noopener" href="https://www.torproject.org/projects/torbrowser.html.en">Tor Browser</a>里提取出tor，使其不依赖Tor Browser，可以供其他浏览器使用。<br><strong>警告</strong>：部署Bridge<strong>可能</strong>会增加服务器被墙的概率。</p>
+<span id="more"></span>
+
+<h3 id="搭建Tor-Bridge"><a href="#搭建Tor-Bridge" class="headerlink" title="搭建Tor Bridge"></a>搭建Tor Bridge</h3><p>首先在VPS上安装tor:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ apt-get install tor</span><br></pre></td></tr></table></figure>
+<p>然后安装obfs4proxy:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ apt-get install obfs4proxy</span><br></pre></td></tr></table></figure>
+<p>因为这里tor需要使用obfs来混淆流量，所以如果你的软件仓库里找不到这个包，也可以从代码编译：<a target="_blank" rel="noopener" href="https://github.com/Yawning/obfs4">Yawning/obfs4</a>.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从代码编译obfs4proxy</span></span><br><span class="line">$ git <span class="built_in">clone</span> git@github.com:Yawning/obfs4.git</span><br><span class="line">$ <span class="built_in">cd</span> obfs4</span><br><span class="line"><span class="comment"># 安装依赖,如果这一步出错，后面讲解决方法</span></span><br><span class="line">$ go get -d ...</span><br><span class="line"><span class="comment"># 从代码构建二进制obfs4</span></span><br><span class="line"><span class="comment"># 构建完毕之后可以将其放到/usr/bin/下，后面在torrc配置中要用到</span></span><br><span class="line">$ go build -o obfs4proxy ./obfs4proxy</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：如果在下载依赖包<code>go get -d ...</code>时出现了<code>can&#39;t download</code>之类的错误，可以从提示的包仓库里自己clone下来放到错误消息提示的路径里去。<br>tor相关的库可以从<a target="_blank" rel="noopener" href="https://gitweb.torproject.org/">gitweb.torproject.org</a>里找到。</p>
+</blockquote>
+<p>如果上面<code>tor</code>和<code>obfs4</code>都安装成功了，那么编辑tor的配置文件<code>/etc/tor/torrc</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo nano /etc/tor/torrc</span><br></pre></td></tr></table></figure>
+<p>将下面的配置填入其中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Log notice file /var/log/tor/notices.log</span><br><span class="line">RunAsDaemon 1</span><br><span class="line">ORPort auto</span><br><span class="line">Exitpolicy reject *:*</span><br><span class="line">BridgeRelay 1</span><br><span class="line">ServerTransportPlugin obfs4 exec /usr/bin/obfs4proxy</span><br><span class="line">ExtORPort auto</span><br><span class="line">PublishServerDescriptor 0</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：将ServerTransportPlugin的路径改为你上面将编译出来的obfs4proxy放到的路径。</p>
+</blockquote>
+<p>然后执行命令重启tor:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl restart tor</span><br></pre></td></tr></table></figure>
+<p>执行完毕之后查看tor的日志文件<code>/var/log/tor/notices.log</code>:</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cat /var/log/tor/notices.log</span><br></pre></td></tr></table></figure>
+<p>会出现下面这样类似的输出：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11177/tor-bridge-server-log.webp"><br>表明搭建tor网桥成功。记录下红框中的部分：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ORPort 45.XXX.XXX.95:4XXX9</span><br><span class="line">server&#x27;s identity key FE3XXXXXXXXXXXXXXXXXXXXXXC16DCF</span><br></pre></td></tr></table></figure>
+<p>这两个就是后面将在客户端连接时需要的网桥数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">45.XXX.XXX.95:4XXX9 FE3XXXXXXXXXXXXXXXXXXXXXXC16DCF</span><br></pre></td></tr></table></figure>
+<p>接下来再使用<a target="_blank" rel="noopener" href="https://www.torproject.org/projects/torbrowser.html.en">tor browser</a>时就可以填入自己的网桥了。</p>
+<h3 id="从tor-browser提取tor"><a href="#从tor-browser提取tor" class="headerlink" title="从tor-browser提取tor"></a>从tor-browser提取tor</h3><p>首先，先下载<a target="_blank" rel="noopener" href="https://www.torproject.org/projects/torbrowser.html.en">tor browser</a>的安装包并安装(目录任意)。<br>然后打开tor browser的安装路径，将<code>Tor Browser\Browser\TorBrowser\Tor</code>拷贝出来放到一个新目录，如tor_portable.</p>
+<p>此时tor_portable的目录结构如下:</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">C:\USERS\VISIONSMILE\DESKTOP\TOR_PORTABLE</span><br><span class="line">|   libeay32.dll</span><br><span class="line">|   libevent-2-1-6.dll</span><br><span class="line">|   libevent_core-2-1-6.dll</span><br><span class="line">|   libevent_extra-2-1-6.dll</span><br><span class="line">|   libgcc_s_seh-1.dll</span><br><span class="line">|   libssp-0.dll</span><br><span class="line">|   libwinpthread-1.dll</span><br><span class="line">|   ssleay32.dll</span><br><span class="line">|   tor.exe</span><br><span class="line">|   zlib1.dll</span><br><span class="line">|</span><br><span class="line">\---PluggableTransports</span><br><span class="line">        meek-client-torbrowser.exe</span><br><span class="line">        meek-client.exe</span><br><span class="line">        obfs4proxy.exe</span><br><span class="line">        terminateprocess-buffer.exe</span><br></pre></td></tr></table></figure>
+<p>然后在<code>tor_portable</code>下新建一个Data文件夹备用。</p>
+<p>此时再打开tor browser的安装目录，找到路径<code>Tor Browser\Browser\TorBrowser\Data\Tor</code>，将该目录下的<code>geoip</code>和<code>geoip6</code>这两个文件拷贝到上一步创建的<code>tor_protable\Data</code>目录下。<br>同时，也将tor browser安装目录下<code>Tor Browser\Browser\TorBrowser\Data\Tor</code>的<code>torrc</code>文件拷贝到<code>tor_protable</code>目录。</p>
+<p>执行完毕上面的操作之后，此时<code>tor_protable</code>的目录结构为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">C:\USERS\VISIONSMILE\DESKTOP\TOR_PORTABLE</span><br><span class="line">|   libeay32.dll</span><br><span class="line">|   libevent-2-1-6.dll</span><br><span class="line">|   libevent_core-2-1-6.dll</span><br><span class="line">|   libevent_extra-2-1-6.dll</span><br><span class="line">|   libgcc_s_seh-1.dll</span><br><span class="line">|   libssp-0.dll</span><br><span class="line">|   libwinpthread-1.dll</span><br><span class="line">|   ssleay32.dll</span><br><span class="line">|   tor.exe</span><br><span class="line">|   torrc</span><br><span class="line">|   zlib1.dll</span><br><span class="line">|</span><br><span class="line">+---Data</span><br><span class="line">|       geoip</span><br><span class="line">|       geoip6</span><br><span class="line">|</span><br><span class="line">\---PluggableTransports</span><br><span class="line">        meek-client-torbrowser.exe</span><br><span class="line">        meek-client.exe</span><br><span class="line">        obfs4proxy.exe</span><br><span class="line">        terminateprocess-buffer.exe</span><br></pre></td></tr></table></figure>
+<p>然后使用文本编辑器打开<code>tor_protable\torrc</code>,将下面的配置填入其中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Bridge 45.XXX.XXX.95:4XXX9 FE3XXXXXXXXXXXXXXXXXXXXXXC16DCF</span><br><span class="line">DataDirectory ./Data</span><br><span class="line">GeoIPFile ./Data/geoip</span><br><span class="line">GeoIPv6File ./Data/geoip6</span><br><span class="line">Log notice file ./tor.log</span><br><span class="line">ClientTransportPlugin obfs4 exec .\PluggableTransports\obfs4proxy managed</span><br><span class="line">Socks5Proxy 127.0.0.1:10086</span><br><span class="line">UseBridges 1</span><br></pre></td></tr></table></figure>
+<p><strong>Bridge</strong>为网桥，可以使用上面在服务器上部署的参数。</p>
+<blockquote>
+<p><strong>注意</strong>：不要在Bridge之后填obsf4，测试过程中发现，如果使用这样的格式：</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Bridge obfs4 45.XXX.XXX.95:4XXX9 FE3XXXXXXXXXXXXXXXXXXXXXXC16DCF</span><br></pre></td></tr></table></figure>
+<p>会出现这样的错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Nov 04 19:22:57.000 [warn] Proxy Client: unable to connect to 45.XXX.XXX.95:4XXX9 (&quot;general SOCKS server failure&quot;)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>另外，还要注意<strong>Socks5Proxy</strong>根据自己的配置和需要决定。</p>
+</blockquote>
+<p>执行完上面的操作，tor的提取和配置都执行完毕了。<br>下面可以在本地启动tor了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在tor_protable目录下执行</span></span><br><span class="line">$ tor -f torrc</span><br></pre></td></tr></table></figure>
+<p>此时tor_protable目录下会创建出tor.log文件，打开即可查看tor的日志。<br>当日志中出现下面这样的输出时，即连接成功：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Nov 04 19:20:39.000 [notice] Bootstrapped 50%: Loading relay descriptors for internal paths</span><br><span class="line">Nov 04 19:20:40.000 [notice] The current consensus contains exit nodes. Tor can build exit and internal paths.</span><br><span class="line">Nov 04 19:20:42.000 [notice] Bootstrapped 57%: Loading relay descriptors</span><br><span class="line">Nov 04 19:20:42.000 [notice] Bootstrapped 66%: Loading relay descriptors</span><br><span class="line">Nov 04 19:20:42.000 [notice] Bootstrapped 72%: Loading relay descriptors</span><br><span class="line">Nov 04 19:20:42.000 [notice] Bootstrapped 80%: Connecting to the Tor network</span><br><span class="line">Nov 04 19:20:43.000 [notice] Bootstrapped 85%: Finishing handshake with first hop</span><br><span class="line">Nov 04 19:20:44.000 [notice] Bootstrapped 90%: Establishing a Tor circuit</span><br><span class="line">Nov 04 19:20:45.000 [notice] Tor has successfully opened a circuit. Looks like client functionality is working.</span><br><span class="line">Nov 04 19:20:45.000 [notice] Bootstrapped 100%: Done</span><br></pre></td></tr></table></figure>
+<p>tor启动之后会创建一个Socks5代理(<code>127.0.0.1:9050</code>)，可以在Chrome上使用插件<a target="_blank" rel="noopener" href="https://chrome.google.com/webstore/detail/proxy-switchyomega/padekgcemlokbadohgkifijomclgjgif">Proxy SwitchyOmega</a>来设置，如果不能访问Chrome Web Store，也可以从github下载：<a target="_blank" rel="noopener" href="https://github.com/FelisCatus/SwitchyOmega/releases">FelisCatus/SwitchyOmega</a>。</p>
+<p>设置完毕之后，就可以打开一些“暗网”网址了！</p>
+<p>比如DuckDuckGo的暗网网址：<a target="_blank" rel="noopener" href="https://3g2upl4pq6kufc4m.onion/">https://3g2upl4pq6kufc4m.onion</a><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11177/onion-duckduckgo.webp"><br>或者分享书籍的Imperial Library：<a target="_blank" rel="noopener" href="http://xfmro77i3lixucja.onion/">http://xfmro77i3lixucja.onion</a><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11177/onion-imperiallibrary.webp"></p>
+<h3 id="快速启动-关闭tor批处理"><a href="#快速启动-关闭tor批处理" class="headerlink" title="快速启动/关闭tor批处理"></a>快速启动/关闭tor批处理</h3><p>上面启动tor时使用的是命令<code>tor -f torrc</code>，可以将其写为批处理：</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">rem tor-run.bat</span></span><br><span class="line">tor -f torrc</span><br></pre></td></tr></table></figure>
+
+<p>接下来时关闭tor的批处理，因为tor会启动<code>obfs4proxy</code>来混淆流量，所以会同时启动<code>tor</code>和<code>obfs4proxy</code>的进程。我们在关闭时需要杀掉这些进程，在windows下可以使用<code>taskkill /IM</code>命令：</p>
+<figure class="highlight bat"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">rem tor-stop.bat</span></span><br><span class="line"><span class="built_in">taskkill</span> /IM tor.exe /F</span><br><span class="line"><span class="built_in">taskkill</span> /IM obfs4proxy.exe /F</span><br></pre></td></tr></table></figure>
+
+<p>本文到此完全结束，此时tor_protable完整的目录结构如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">C:\USERS\VISIONSMILE\DESKTOP\TOR_PROTABLE</span><br><span class="line">|   libeay32.dll</span><br><span class="line">|   libevent-2-1-6.dll</span><br><span class="line">|   libevent_core-2-1-6.dll</span><br><span class="line">|   libevent_extra-2-1-6.dll</span><br><span class="line">|   libgcc_s_seh-1.dll</span><br><span class="line">|   libssp-0.dll</span><br><span class="line">|   libwinpthread-1.dll</span><br><span class="line">|   ssleay32.dll</span><br><span class="line">|   tor-run.bat</span><br><span class="line">|   tor-stop.bat</span><br><span class="line">|   tor.exe</span><br><span class="line">|   tor.log</span><br><span class="line">|   torrc</span><br><span class="line">|   zlib1.dll</span><br><span class="line">|</span><br><span class="line">+---Data</span><br><span class="line">|       geoip</span><br><span class="line">|       geoip6</span><br><span class="line">|</span><br><span class="line">\---PluggableTransports</span><br><span class="line">        meek-client-torbrowser.exe</span><br><span class="line">        meek-client.exe</span><br><span class="line">        obfs4proxy.exe</span><br><span class="line">        terminateprocess-buffer.exe</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>2018.11.05 10:29</strong>更新：修改部分措辞和别字。</li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/11177/" target="_blank">提取Tor并搭建Tor Bridge</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2018年11月04日 19时36分<br/>
+             
+              <span>更新时间:</span>2018年11月05日 10时29分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有1.8k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/11177/" target="_blank" title="提取Tor并搭建Tor Bridge">https://imzlp.com/posts/11177/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/11177/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%9A%97%E7%BD%91/" rel="tag"># 暗网</a>
+              <a href="/tags/onion/" rel="tag"># onion</a>
+              <a href="/tags/Tor/" rel="tag"># Tor</a>
+              <a href="/tags/TorTridge/" rel="tag"># TorTridge</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/5214/" rel="prev" title="Macro defined by UBT in UE4">
+      <i class="fa fa-chevron-left"></i> Macro defined by UBT in UE4
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/18949/" rel="next" title="动态链接库的使用：加载和链接">
+      动态链接库的使用：加载和链接 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%90%AD%E5%BB%BATor-Bridge"><span class="nav-number">1.</span> <span class="nav-text">搭建Tor Bridge</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8Etor-browser%E6%8F%90%E5%8F%96tor"><span class="nav-number">2.</span> <span class="nav-text">从tor-browser提取tor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E5%90%AF%E5%8A%A8-%E5%85%B3%E9%97%ADtor%E6%89%B9%E5%A4%84%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">快速启动&#x2F;关闭tor批处理</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/11177/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

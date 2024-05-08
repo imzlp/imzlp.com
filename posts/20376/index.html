@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="对于项目中的资源检查需求，需要能够实现简单且方便地配置、自动化地执行，并且能够及时地定位相关人员。基于这个需求，我开源了一个资源合规扫描工具ResScannerUE，配置文档：UE 资源合规检查工具 ResScannerUE。本篇文章将介绍如何通过该工具，实现资源扫描的自动化，并提供了与Git结合的方式进行增量检测支持，使用Commandlet在CI平台上实现Content内容变更的自动触发并执行">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于ResScannerUE的资源检查自动化实践">
+<meta property="og:url" content="https://imzlp.com/posts/20376/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="对于项目中的资源检查需求，需要能够实现简单且方便地配置、自动化地执行，并且能够及时地定位相关人员。基于这个需求，我开源了一个资源合规扫描工具ResScannerUE，配置文档：UE 资源合规检查工具 ResScannerUE。本篇文章将介绍如何通过该工具，实现资源扫描的自动化，并提供了与Git结合的方式进行增量检测支持，使用Commandlet在CI平台上实现Content内容变更的自动触发并执行">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051834278.webp">
+<meta property="article:published_time" content="2021-10-25T15:49:18.000Z">
+<meta property="article:modified_time" content="2021-10-25T15:49:18.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="资源管理">
+<meta property="article:tag" content="ResScanner">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2022/202302051834278.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/20376/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于ResScannerUE的资源检查自动化实践 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/20376/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于ResScannerUE的资源检查自动化实践<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-10-25-20376.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Automated Resource Scanning and Inspection with ResScannerUE</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-25 15:49 15:49:18:49" itemprop="dateCreated datePublished" datetime="2021-10-25T15:49:18+00:00">2021-10-25 15:49</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">资源管理</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/20376/" class="post-meta-item leancloud_visitors" data-flag-title="基于ResScannerUE的资源检查自动化实践" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>对于项目中的资源检查需求，需要能够实现简单且方便地配置、自动化地执行，并且能够及时地定位相关人员。基于这个需求，我开源了一个资源合规扫描工具<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>，配置文档：<a href="https://imzlp.com/posts/11750/">UE 资源合规检查工具 ResScannerUE</a>。<br>本篇文章将介绍如何通过该工具，实现资源扫描的自动化，并提供了与Git结合的方式进行增量检测支持，使用Commandlet在CI平台上实现Content内容变更的自动触发并执行检测规则，并能够定位到出问题资源最近提交人，实现精确定位，实时发送扫描报告至企业微信，提醒通知相关人员进行处理。<br>另外，我还提供了基于Git的Pre-Commit Hook实现，可以在提交之前检测本次提交是否具有不合规资源，并禁止提交，避免问题资源污染远程仓库。整体方案经过了精心设计和大量体验优化、增强自动化支持，可以非常方便地配置、接入，能够实现各种资源扫描的需求。</p>
+<span id="more"></span>
+<p>在插件中能够配置针对每个规则的路径、资源列表，同时也提供了针对所有规则使用的全局的资源路径、资源列表，并且能支持屏蔽每个规则中的配置。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211025165419.webp"></p>
+<p>控制好<strong>全局资源</strong>，并且屏蔽单个规则中的资源配置，能够精确地控制对哪些资源进行所有规则的检查，这也是要实现<strong>自动化资源扫描</strong>的基础。</p>
+<p>对于实现<strong>自动化资源扫描</strong>，根据需求不同，可以拆分成两个部分：</p>
+<ol>
+<li>全量扫描</li>
+<li>增量扫描</li>
+</ol>
+<p>全量扫描自不必多说，只需要在插件中指定全局资源<code>/Game</code>等Root目录，屏蔽规则中配置得资源，导出一份配置即可。增量扫描，我在插件中提供了两种方案：基于文件列表的检测、基于Git版本检测。</p>
+<h3 id="基于文件列表检测"><a href="#基于文件列表检测" class="headerlink" title="基于文件列表检测"></a>基于文件列表检测</h3><p>如果想要动态地指定检测哪些资源而不是在配置中预先指定，我对<code>ResScanner</code>的commandlet提供了指定文件列表的功能，在执行参数中加入<code>-filecheck</code>与<code>-filelist</code>来指定文件列表，通过<code>,</code>分割文件。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe Project.uproject -run=<span class="string">&quot;ResScanner&quot;</span> -config=<span class="string">&quot;ScannerConfig.json&quot;</span> -filecheck -filelist=<span class="string">&quot;Asset/A.uasset,Asset/B.uasset&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这种方式需要在外部传递所有要检测的文件。</p>
+<h3 id="基于Git版本比对检测"><a href="#基于Git版本比对检测" class="headerlink" title="基于Git版本比对检测"></a>基于Git版本比对检测</h3><p>通常，工程仓库会分为两部分：</p>
+<ol>
+<li>代码仓库：基础工程结构、代码、配置等</li>
+<li>资源仓库：Content</li>
+</ol>
+<p>用于隔离美术与程序的工作环境不相互影响。对于大多数资源管理的情况，会使用Git等版本控制工具进行管理。所以需要把Git管理的<strong>资源仓库</strong>中每次提交的版本中的文件列表提取出来，传递给ResScanner进行特定资源的检查。</p>
+<p>原始的Git进行两个Commit之间的比对可以用以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git diff --name-only HEAD~ HEAD</span><br></pre></td></tr></table></figure>
+
+<p>能够用来获取最近的两次提交之间的文件变动，从而获取到原始的变更文件列表。</p>
+<p>通常，这部分逻辑会通过python等脚本来实现，但是这种需求还是具有通用性，所以我直接在<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>提供了支持，当我们想要使用Git版本来进行规则的检测时，可以通过插件开启提供的<code>GitChecker</code>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211025165457.webp"></p>
+<p>Git的版本对比、提交人获取，基于我之前开源的一个工具：<a target="_blank" rel="noopener" href="https://github.com/hxhb/GitControllerUE">GitControllerUE</a>，是UE中的一个插件，能够获取Git仓库的版本信息。<br><img data-src="https://imgs.imzlp.com/imgs/zlp/blog/notes/ue/index/UE4/git-diff-in-ue4-no-runtime.webp"></p>
+<p>基于它，<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>能够自动化地扫描最近地提交记录变更的文件，检测是否有不合规的提交。默认情况下会检测最近的一次提交，但是，如果想要指定更多次的提交，只需要在配置中修改启示Commit的HASH值即可。</p>
+<p>以下配置为例，扫描最近的一次Git提交的文件进行贴图的命名检测：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">	<span class="attr">&quot;configName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;全量资源扫描&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bByGlobalScanFilters&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bBlockRuleFilter&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;globalScanFilters&quot;</span><span class="punctuation">:</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;filters&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;assets&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;globalIgnoreFilters&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;gitChecker&quot;</span><span class="punctuation">:</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;bGitCheck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;bRecordCommiter&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;bDiffCommit&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;repoDir&quot;</span><span class="punctuation">:</span></span><br><span class="line">		<span class="punctuation">&#123;</span></span><br><span class="line">			<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;[PROJECT_CONTENT_DIR]&quot;</span></span><br><span class="line">		<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;beginCommitHash&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HEAD~&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;endCommitHash&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HEAD&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="attr">&quot;bUncommitFiles&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bUseRulesTable&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;importRulesTable&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;scannerRules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">		<span class="punctuation">&#123;</span></span><br><span class="line">			<span class="attr">&quot;ruleName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;贴图命名规范&quot;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;ruleDescribe&quot;</span><span class="punctuation">:</span> <span class="string">&quot;贴图需以T_开头&quot;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;bEnableRule&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;priority&quot;</span><span class="punctuation">:</span> <span class="string">&quot;GENERAL&quot;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;scanFilters&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;scanAssetType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Class&#x27;/Script/Engine.Texture2D&#x27;&quot;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;recursiveClasses&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;nameMatchRules&quot;</span><span class="punctuation">:</span></span><br><span class="line">			<span class="punctuation">&#123;</span></span><br><span class="line">				<span class="attr">&quot;rules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">					<span class="punctuation">&#123;</span></span><br><span class="line">						<span class="attr">&quot;matchMode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;StartWith&quot;</span><span class="punctuation">,</span></span><br><span class="line">						<span class="attr">&quot;matchLogic&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Necessary&quot;</span><span class="punctuation">,</span></span><br><span class="line">						<span class="attr">&quot;rules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">							<span class="punctuation">&#123;</span></span><br><span class="line">								<span class="attr">&quot;ruleText&quot;</span><span class="punctuation">:</span> <span class="string">&quot;T_&quot;</span><span class="punctuation">,</span></span><br><span class="line">								<span class="attr">&quot;bReverseCheck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">							<span class="punctuation">&#125;</span></span><br><span class="line">						<span class="punctuation">]</span></span><br><span class="line">					<span class="punctuation">&#125;</span></span><br><span class="line">				<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">				<span class="attr">&quot;bReverseCheck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">			<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;pathMatchRules&quot;</span><span class="punctuation">:</span></span><br><span class="line">			<span class="punctuation">&#123;</span></span><br><span class="line">				<span class="attr">&quot;rules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">				<span class="attr">&quot;bReverseCheck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">			<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;propertyMatchRules&quot;</span><span class="punctuation">:</span></span><br><span class="line">			<span class="punctuation">&#123;</span></span><br><span class="line">				<span class="attr">&quot;matchRules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">				<span class="attr">&quot;bReverseCheck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">			<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;customRules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;ignoreFilters&quot;</span><span class="punctuation">:</span></span><br><span class="line">			<span class="punctuation">&#123;</span></span><br><span class="line">				<span class="attr">&quot;filters&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">				<span class="attr">&quot;assets&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span></span><br><span class="line">			<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;bEnablePostProcessor&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;postProcessors&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span></span><br><span class="line">		<span class="punctuation">&#125;</span></span><br><span class="line">	<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSaveConfig&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSaveResult&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;savePath&quot;</span><span class="punctuation">:</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;[PROJECT_SAVED_DIR]/ResScanner&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bStandaloneMode&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;additionalExecCommand&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>只需要在执行Commandlet时指定该Config即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe Project.uproject -run=<span class="string">&quot;ResScanner&quot;</span> -config=<span class="string">&quot;Full_Scan_Config.json&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>另外，在<code>GitChecker</code>的配置中，可以开启是否记录文件的提交者，这里我做了一个Trick操作，在扫描结果的存储结构中，是有两个数组的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FFileCommiter</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite)</span><br><span class="line">	FString File;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite)</span><br><span class="line">	FString Commiter;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FRuleMatchedInfo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite)</span><br><span class="line">    TArray&lt;FString&gt; AssetPackageNames;</span><br><span class="line">    <span class="built_in">UPROPERTY</span>(EditAnywhere,BlueprintReadWrite)</span><br><span class="line">    TArray&lt;FFileCommiter&gt; AssetsCommiter;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>扫描的结果会被序列化成json，默认情况下，这两个数组都会被序列化出来，但是这并不是我们的需求，在关闭<code>bRecordCommiter</code>时只序列化扫描出来资源的<code>AssetPackageNames</code>，反之则序列化<code>AssetsCommiter</code>，可以通过控制<code>FProperty</code>是否具有<code>CPF_Transient</code>的FLAG来控制，如果包含了该FLAG，则该Property就不会被序列化。</p>
+<p>所以，我在每次序列化扫描结果之前会进行一次标记，根据配置来决定给哪个属性添加<code>CPF_Transient</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// set CPF_Transient to AssetPackageNames or AssetsCommiter</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">SetSerializeTransient</span><span class="params">(<span class="type">bool</span> bCommiter)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  FString NotSerializeName = bCommiter ? <span class="built_in">TEXT</span>(<span class="string">&quot;AssetPackageNames&quot;</span>) : <span class="built_in">TEXT</span>(<span class="string">&quot;AssetsCommiter&quot;</span>);</span><br><span class="line">  <span class="keyword">for</span>(TFieldIterator&lt;FProperty&gt; <span class="built_in">PropertyIter</span>(FRuleMatchedInfo::<span class="built_in">StaticStruct</span>());PropertyIter;++PropertyIter)</span><br><span class="line">  &#123;</span><br><span class="line">    FProperty* PropertyIns = *PropertyIter;</span><br><span class="line">    <span class="keyword">if</span>(NotSerializeName.<span class="built_in">Equals</span>(*PropertyIns-&gt;<span class="built_in">GetName</span>()))</span><br><span class="line">    &#123;</span><br><span class="line">      PropertyIns-&gt;<span class="built_in">SetPropertyFlags</span>(CPF_Transient);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="comment">// clear CPF_Transient</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">ResetTransient</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  TArray&lt;FString&gt; NotSerializeNames = &#123;<span class="built_in">TEXT</span>(<span class="string">&quot;AssetsCommiter&quot;</span>),<span class="built_in">TEXT</span>(<span class="string">&quot;AssetPackageNames&quot;</span>)&#125;;</span><br><span class="line">  <span class="keyword">for</span>(TFieldIterator&lt;FProperty&gt; <span class="built_in">PropertyIter</span>(FRuleMatchedInfo::<span class="built_in">StaticStruct</span>());PropertyIter;++PropertyIter)</span><br><span class="line">  &#123;</span><br><span class="line">    FProperty* PropertyIns = *PropertyIter;</span><br><span class="line">    <span class="keyword">if</span>(NotSerializeNames.<span class="built_in">Contains</span>(*PropertyIns-&gt;<span class="built_in">GetName</span>()) &amp;&amp; PropertyIns-&gt;<span class="built_in">HasAnyPropertyFlags</span>(CPF_Transient))</span><br><span class="line">    &#123;</span><br><span class="line">    PropertyIns-&gt;<span class="built_in">ClearPropertyFlags</span>(CPF_Transient);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在每次序列化之前调用这两个函数即可：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FRuleMatchedInfo::<span class="built_in">ResetTransient</span>();</span><br><span class="line">FRuleMatchedInfo::<span class="built_in">SetSerializeTransient</span>(<span class="built_in">GetScannerConfig</span>()-&gt;GitChecker.bGitCheck &amp;&amp; <span class="built_in">GetScannerConfig</span>()-&gt;GitChecker.bRecordCommiter);</span><br></pre></td></tr></table></figure>
+
+<p>从而实现按需序列化的效果：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211025205135.webp"></p>
+<h3 id="Git待提交文件检测"><a href="#Git待提交文件检测" class="headerlink" title="Git待提交文件检测"></a>Git待提交文件检测</h3><p>上一节介绍了已经提交之后的两个Commit版本之间变动资源的检测，如果资源未被Commit，则需要利用另一种机制。</p>
+<p>待提交文件，指本地仓库有修改，但未被commit的文件列表：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ git status</span><br><span class="line">On branch master</span><br><span class="line">Your branch is behind <span class="string">&#x27;origin/master&#x27;</span> by 49 commits, and can be fast-forwarded.</span><br><span class="line">  (use <span class="string">&quot;git pull&quot;</span> to update your <span class="built_in">local</span> branch)</span><br><span class="line"></span><br><span class="line">Changes to be committed:</span><br><span class="line">  (use <span class="string">&quot;git restore --staged &lt;file&gt;...&quot;</span> to unstage)</span><br><span class="line">        modified:   Assets/Scene/BaseMaterials/4X4_MRA.uasset</span><br></pre></td></tr></table></figure>
+<p>基于待提交的文件检测，可以实现提交之前进行资源扫描，不合规禁止提交。基于pre-commit hook的实现，后文会详细介绍。</p>
+<p>插件中在<code>GitChecker</code>配置中提供了选项：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;gitChecker&quot;</span><span class="punctuation">:</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">	<span class="attr">&quot;bGitCheck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bRecordCommiter&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bDiffCommit&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;repoDir&quot;</span><span class="punctuation">:</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;[PROJECT_CONTENT_DIR]&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;beginCommitHash&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HEAD~&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;endCommitHash&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HEAD&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bUncommitFiles&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>基于Git的检测有两种模式：</p>
+<ul>
+<li><strong>bDiffCommit</strong>：基于两个Commit HASH的版本比对，对差异资源进行扫描</li>
+<li><strong>bUncommitFiles</strong>：扫描待提交资源</li>
+</ul>
+<p>两种模式可以按需启用，通常，在定时扫描，会启用<code>bDiffCommit</code>，提交前的检测会使用<code>bUncommitFiles</code>。</p>
+<h3 id="Commandlet参数替换"><a href="#Commandlet参数替换" class="headerlink" title="Commandlet参数替换"></a>Commandlet参数替换</h3><p>为了更加方便地通过Commandlet来执行扫描任务，我同时也为<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>的commandlet增加了参数替换功能。可以在指定配置文件的同时，通过命令行参数动态替换配置文件中的选项，实现更加强大的自动化能力。</p>
+<p>如通过命令行关闭全局资源配置、是否存储扫描结果等：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe Project.uproject -run=<span class="string">&quot;ResScanner&quot;</span> -config=<span class="string">&quot;Full_Scan_Config.json&quot;</span> -bByGlobalScanFilters=<span class="literal">false</span> -savePath.path=<span class="string">&quot;D:\&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>以及可以指定Git版本扫描的起始Commit HASH：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe Project.uproject -run=<span class="string">&quot;ResScanner&quot;</span> -config=<span class="string">&quot;Full_Scan_Config.json&quot;</span> -gitChecker.bGitCheck=<span class="literal">true</span> -gitchecker.beginCommitHash=HEAD~ -gitchecker.endCommitHash=HEAD</span><br></pre></td></tr></table></figure>
+
+<p>插件中的属性都可以通过<code>-ProjectName=Value</code>的方式来进行指定。这种方式就能实现只需提供一个基础配置，通过命令行来动态控制配置中的参数的行为，在集成至CI系统时，可以暴露更多的可选参数。</p>
+<h3 id="企业微信提醒"><a href="#企业微信提醒" class="headerlink" title="企业微信提醒"></a>企业微信提醒</h3><p>基于<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>的commandlet机制，可以十分方便地接入企业微信提醒，在提交资源后，自动对提交资源的进行检测，并发送群提醒：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211111105351.webp"></p>
+<p>整个流程只需要：</p>
+<ol>
+<li>python拉起<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>的Commandlet</li>
+<li>通过commandlet的返回值检测是否有命中资源(return <code>-1</code>)</li>
+<li>读取<code>Saved/ResScanner/*_result.json</code>文件</li>
+<li>使用python发送企业微信消息</li>
+</ol>
+<p>我这里提供一个示例：</p>
+<figure class="highlight python"><figcaption><span>resscanner_notice.py</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> chardet</span><br><span class="line"><span class="keyword">import</span> argparse</span><br><span class="line"><span class="keyword">import</span> codecs</span><br><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"><span class="keyword">from</span> notice_robot_py <span class="keyword">import</span> robot</span><br><span class="line"></span><br><span class="line">commandlets_args = argparse.ArgumentParser(description=<span class="string">&quot;do commandlet&quot;</span>)</span><br><span class="line">commandlets_args.add_argument(<span class="string">&#x27;--enginedir&#x27;</span>,<span class="built_in">help</span>=<span class="string">&#x27;engine root directory&#x27;</span>)</span><br><span class="line">commandlets_args.add_argument(<span class="string">&#x27;--projectdir&#x27;</span>,<span class="built_in">help</span>=<span class="string">&#x27;project root directory&#x27;</span>)</span><br><span class="line">commandlets_args.add_argument(<span class="string">&#x27;--projectname&#x27;</span>,<span class="built_in">help</span>=<span class="string">&#x27;project name,match projectname.uproject&#x27;</span>)</span><br><span class="line">commandlets_args.add_argument(<span class="string">&#x27;--config&#x27;</span>,<span class="built_in">help</span>=<span class="string">&#x27;config&#x27;</span>)</span><br><span class="line">commandlets_args.add_argument(<span class="string">&#x27;--notice&#x27;</span>,default=<span class="string">&quot;false&quot;</span>,<span class="built_in">help</span>=<span class="string">&#x27;is enable notice to wechat&#x27;</span>)</span><br><span class="line"></span><br><span class="line">wechat_robot_id = <span class="string">&quot;xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&quot;</span></span><br><span class="line">MentionList = [<span class="string">&quot;&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">notice_to_wechat</span>(<span class="params">Msg,bToWechat</span>):</span><br><span class="line">    URlStr = <span class="string">&quot;https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=%s&quot;</span> % (wechat_robot_id)</span><br><span class="line">    MsgType = <span class="string">&quot;text&quot;</span>    </span><br><span class="line">    <span class="keyword">if</span> bToWechat:</span><br><span class="line">        robot.Robot.set_robot_config(URlStr, MsgType, MentionList)</span><br><span class="line">        res = robot.Robot.notice(Msg)</span><br><span class="line">        <span class="keyword">if</span> res <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="built_in">print</span>(res)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_args_by_name</span>(<span class="params">parser_args,ArgName</span>):</span><br><span class="line">    args_pairs = parser_args.__dict__</span><br><span class="line">    <span class="keyword">for</span> key,value <span class="keyword">in</span> args_pairs.items():</span><br><span class="line">        <span class="keyword">if</span> key == ArgName:</span><br><span class="line">            <span class="keyword">return</span> value</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">ue_commandlet</span>(<span class="params">cmd_params</span>):</span><br><span class="line">    parser_args = commandlets_args.parse_args()</span><br><span class="line">    engine_dir = get_args_by_name(parser_args,<span class="string">&quot;enginedir&quot;</span>)</span><br><span class="line">    project_dir = get_args_by_name(parser_args,<span class="string">&quot;projectdir&quot;</span>)</span><br><span class="line">    project_name = get_args_by_name(parser_args,<span class="string">&quot;projectname&quot;</span>)</span><br><span class="line"></span><br><span class="line">    engine_cmd_exe_path = <span class="string">&quot;\&quot;%s/Engine/Binaries/Win64/UE4Editor-cmd.exe\&quot;&quot;</span> % (engine_dir)</span><br><span class="line">    uproject_path = <span class="string">&quot;\&quot;%s/%s.uproject\&quot;&quot;</span> % (project_dir,project_name)</span><br><span class="line"></span><br><span class="line">    final_cmdlet = <span class="string">&quot;%s %s %s&quot;</span> % (engine_cmd_exe_path,uproject_path,cmd_params)</span><br><span class="line">    <span class="built_in">print</span>(final_cmdlet)</span><br><span class="line">    ps = subprocess.Popen(final_cmdlet)</span><br><span class="line">    ps.wait()</span><br><span class="line">    </span><br><span class="line">    exit_code = ps.returncode <span class="comment"># os.system(final_cmdlet)</span></span><br><span class="line">    <span class="keyword">return</span> exit_code</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">    parser_args = commandlets_args.parse_args()</span><br><span class="line">    config = get_args_by_name(parser_args,<span class="string">&quot;config&quot;</span>)</span><br><span class="line">    project_dir = get_args_by_name(parser_args,<span class="string">&quot;projectdir&quot;</span>)</span><br><span class="line">    result_saved_dir = os.path.join(project_dir,<span class="string">&quot;Saved&quot;</span>,<span class="string">&quot;ResScanner&quot;</span>,<span class="string">&quot;ResScanner_result.json&quot;</span>)</span><br><span class="line">    cmd_params = <span class="string">&quot;-run=ResScanner -config=\&quot;%s\&quot;&quot;</span> % (config)</span><br><span class="line">    </span><br><span class="line">    exit_code = ue_commandlet(cmd_params)</span><br><span class="line">    <span class="keyword">if</span> exit_code != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> os.path.exists(result_saved_dir):</span><br><span class="line">            <span class="keyword">with</span> <span class="built_in">open</span>(result_saved_dir, encoding=<span class="string">&#x27;utf-8&#x27;</span>, errors=<span class="string">&#x27;ignore&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">                s = f.read()</span><br><span class="line">                lines = s.splitlines()</span><br><span class="line">                <span class="keyword">for</span> line <span class="keyword">in</span> lines:</span><br><span class="line">                    splited_line = line.rsplit(<span class="string">&#x27;,&#x27;</span>,<span class="number">1</span>)</span><br><span class="line">                    <span class="keyword">if</span> <span class="built_in">len</span>(splited_line) == <span class="number">2</span> <span class="keyword">and</span> splited_line[<span class="number">1</span>]:</span><br><span class="line">                        match_role = splited_line[<span class="number">1</span>]</span><br><span class="line">                        match_role = match_role.strip()</span><br><span class="line">                        <span class="keyword">if</span> match_role <span class="keyword">not</span> <span class="keyword">in</span> MentionList:</span><br><span class="line">                            MentionList.append(match_role)</span><br><span class="line">                msg = <span class="string">&quot;触发资源扫描，具有不合规资源\n%s&quot;</span> %(s)</span><br><span class="line">                bIsNotice = str2bool(get_args_by_name(parser_args,<span class="string">&quot;notice&quot;</span>))</span><br><span class="line">                notice_to_wechat(msg,bIsNotice)</span><br><span class="line">                f.close()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">   main()</span><br></pre></td></tr></table></figure>
+
+<p>使用方法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">python3 resscanner_notice.py</span><br><span class="line">--enginedir C:\Program Files\Epic Games\UE_4.26</span><br><span class="line">--projectdir D:\UnrealProjects\Client </span><br><span class="line">--projectname PROJECT_NAME</span><br><span class="line">--config D:\UnrealProjects\Client\ResScannerConfig.json</span><br><span class="line">--notice <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>传递这几个参数，即可实现拉起ResScanner进行扫描，并可以将结果通知到企业微信。</p>
+<h3 id="Pre-Commit-Hook"><a href="#Pre-Commit-Hook" class="headerlink" title="Pre-Commit Hook"></a>Pre-Commit Hook</h3><p>前面的自动化流程，都是基于提交之后触发检测，发送报告的形式。本质还是<strong>先出现问题</strong>、<strong>再解决问题</strong>的流程。</p>
+<p>所以，能否把错误资源对主干的污染消灭在萌芽里，让每个人提交之前就检测资源是否合规，不合规的就禁止提交呢？</p>
+<p>答案是肯定的，可以利用<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>提供的<code>GitChecker.bUncommitFiles</code>（详见<a href="https://imzlp.com/posts/20376/#Git%E5%BE%85%E6%8F%90%E4%BA%A4%E6%96%87%E4%BB%B6%E6%A3%80%E6%B5%8B">Git待提交文件检测</a>）与Git提供的Pre-Commit Hook的机制结合实现：</p>
+<ol>
+<li>在Commit时执行Hook脚本</li>
+<li>Hook脚本拉起ResScannerUE的Commandlet，进行<strong>待提交资源</strong>的合规扫描（<code>GitChecker.bUncommitFiles = true</code>）</li>
+<li>获取Commandlet退出代码，若具有不合规资源，停止commit，提示不合规资源</li>
+</ol>
+<p>Git Pre-Commit Hook要执行的脚本如下：</p>
+<figure class="highlight python"><figcaption><span>res_rescanner_pre_commit_hook.py</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"></span><br><span class="line"><span class="comment"># handle encoding convert</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">conv_encoding</span>(<span class="params">content_str</span>):</span><br><span class="line">    <span class="comment"># return content_str.decode(&#x27;utf-8&#x27;).encode(&#x27;gbk&#x27;)</span></span><br><span class="line">    <span class="keyword">return</span> content_str</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">   engine_cmd_exe_path = <span class="string">&quot;D:/UnrealEngine/Engine/Engine/Binaries/Win64/UE4Editor-cmd.exe&quot;</span></span><br><span class="line">   uproject_path = <span class="string">&quot;D:/UnrealProjects/Client/FGame.uproject&quot;</span></span><br><span class="line">   config_path = <span class="string">&quot;D:/UnrealProjects/Client/CommandletConfig/PRE_COMMIT_HOOK.json&quot;</span></span><br><span class="line">   cmd_params = <span class="string">&quot;-run=ResScanner -config=\&quot;%s\&quot; -bDiffCommit=false -bUncommitFiles=true&quot;</span> % (config_path)</span><br><span class="line">   result_saved_dir = <span class="string">&quot;D:/UnrealProjects/Client/Saved/ResScanner/PRE_COMMIT_HOOK_result.json&quot;</span></span><br><span class="line"></span><br><span class="line">   final_cmdlet = <span class="string">&quot;%s %s %s&quot;</span> % (engine_cmd_exe_path,uproject_path,cmd_params)</span><br><span class="line">   FNULL = <span class="built_in">open</span>(os.devnull, <span class="string">&#x27;w&#x27;</span>)</span><br><span class="line">   ps = subprocess.Popen(conv_encoding(final_cmdlet),stdout=FNULL,stderr=subprocess.STDOUT)</span><br><span class="line">   ps.wait()</span><br><span class="line">   exit_code = ps.returncode</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> exit_code != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> os.path.exists(result_saved_dir):</span><br><span class="line">            <span class="keyword">with</span> <span class="built_in">open</span>(result_saved_dir) <span class="keyword">as</span> f:</span><br><span class="line">                s = f.read()</span><br><span class="line">                lines = s.splitlines()</span><br><span class="line">                <span class="keyword">for</span> line <span class="keyword">in</span> lines:</span><br><span class="line">                    splited_line = line.rsplit(<span class="string">&#x27;,&#x27;</span>,<span class="number">1</span>)</span><br><span class="line">                    <span class="keyword">if</span> splited_line[<span class="number">1</span>]:</span><br><span class="line">                        MentionList.append(splited_line[<span class="number">1</span>])</span><br><span class="line">                msg = <span class="string">&quot;本次提交具有不合规资源：\n%s&quot;</span> %(s.decode(encoding = <span class="string">&quot;utf-8-sig&quot;</span>).encode(<span class="string">&#x27;utf-8&#x27;</span>))</span><br><span class="line">                <span class="built_in">print</span>(conv_encoding(msg))</span><br><span class="line">                f.close()</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;%s file not found!&quot;</span> % (result_saved_dir))</span><br><span class="line"></span><br><span class="line">   exit(exit_code)</span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">   main()</span><br></pre></td></tr></table></figure>
+<p>将其放在<code>Content</code>根目录，在<code>Content/.git/hooks</code>下创建<code>pre-commit</code>文件，填入以下sh脚本即可：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line">python res_rescanner_pre_commit_hook.py</span><br><span class="line">exitCode=<span class="string">&quot;$?&quot;</span></span><br><span class="line"><span class="built_in">exit</span> <span class="variable">$exitCode</span></span><br></pre></td></tr></table></figure>
+<p>执行效果：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211112104259.webp"></p>
+<p>结合一些Git GUI客户端可以实现友好的提示效果：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20211119165626.webp"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本篇文章介绍了基于<a href="https://imzlp.com/posts/11750/">ResScannerUE</a>实现资源扫描自动化的工程实践，可以方便地将资源扫描接入开发管线的各个流程中。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/20376/" target="_blank">基于ResScannerUE的资源检查自动化实践</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年10月25日 15时49分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.1k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/20376/" target="_blank" title="基于ResScannerUE的资源检查自动化实践">https://imzlp.com/posts/20376/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/20376/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" rel="tag"># 资源管理</a>
+              <a href="/tags/ResScanner/" rel="tag"># ResScanner</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/3635/" rel="prev" title="开源一个虚幻引擎启动器UE Launcher">
+      <i class="fa fa-chevron-left"></i> 开源一个虚幻引擎启动器UE Launcher
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/26919/" rel="next" title="虚幻引擎中的属性面板定制化">
+      虚幻引擎中的属性面板定制化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E6%96%87%E4%BB%B6%E5%88%97%E8%A1%A8%E6%A3%80%E6%B5%8B"><span class="nav-number">1.</span> <span class="nav-text">基于文件列表检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8EGit%E7%89%88%E6%9C%AC%E6%AF%94%E5%AF%B9%E6%A3%80%E6%B5%8B"><span class="nav-number">2.</span> <span class="nav-text">基于Git版本比对检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Git%E5%BE%85%E6%8F%90%E4%BA%A4%E6%96%87%E4%BB%B6%E6%A3%80%E6%B5%8B"><span class="nav-number">3.</span> <span class="nav-text">Git待提交文件检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Commandlet%E5%8F%82%E6%95%B0%E6%9B%BF%E6%8D%A2"><span class="nav-number">4.</span> <span class="nav-text">Commandlet参数替换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%8F%90%E9%86%92"><span class="nav-number">5.</span> <span class="nav-text">企业微信提醒</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Pre-Commit-Hook"><span class="nav-number">6.</span> <span class="nav-text">Pre-Commit Hook</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/20376/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

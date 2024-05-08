@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="UE是模块化的架构，Engine&#x2F;Game Project&#x2F;StandaloneApplication&#x2F;Plugins都是Module(Unreal Engine API Reference列出了Engine提供的Module列表)，本篇文章从FModuleManager的代码来分析一下UE的Module是如何通过FModuleManager::LoadModule加载和启动的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="引擎源码分析：模块的加载和启动">
+<meta property="og:url" content="https://imzlp.com/posts/24007/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="UE是模块化的架构，Engine&#x2F;Game Project&#x2F;StandaloneApplication&#x2F;Plugins都是Module(Unreal Engine API Reference列出了Engine提供的Module列表)，本篇文章从FModuleManager的代码来分析一下UE的Module是如何通过FModuleManager::LoadModule加载和启动的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230417214818.webp">
+<meta property="article:published_time" content="2019-03-19T11:11:57.000Z">
+<meta property="article:modified_time" content="2019-03-30T15:38:27.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230417214818.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/24007/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>引擎源码分析：模块的加载和启动 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/24007/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          引擎源码分析：模块的加载和启动<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2019-03-19-24007.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Engine Source Analysis: Module Loading and Startup</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-03-19 11:11 11:11:57:11" itemprop="dateCreated datePublished" datetime="2019-03-19T11:11:57+00:00">2019-03-19 11:11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-03-30 15:38 15:38:27:38" itemprop="dateModified" datetime="2019-03-30T15:38:27+00:00">2019-03-30 15:38</time>
+              </span>
+
+          
+            <span id="/posts/24007/" class="post-meta-item leancloud_visitors" data-flag-title="引擎源码分析：模块的加载和启动" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>UE是模块化的架构，Engine/Game Project/StandaloneApplication/Plugins都是Module(<a target="_blank" rel="noopener" href="http://api.unrealengine.com/INT/API/index.html">Unreal Engine API Reference</a>列出了Engine提供的Module列表)，本篇文章从<code>FModuleManager</code>的代码来分析一下UE的Module是如何通过<code>FModuleManager::LoadModule</code>加载和启动的。</p>
+<span id="more"></span>
+<h2 id="Forward"><a href="#Forward" class="headerlink" title="Forward"></a>Forward</h2><blockquote>
+<p>本文的UE代码引用均为4.21版本。</p>
+</blockquote>
+<p><strong>注意</strong>：本文中说的<code>IS_MONOLITHIC</code>是模块使用者的<code>*.target.cs</code>中的<code>LinkType</code>,可以使用<code>TargetLinkType.Monolithic</code>来指定。</p>
+<ul>
+<li>TargetLinkType.Monolithic(单片模式)的含义是将所有的代码放到一个单独的可执行文件中，编译时使用实现包含或者静态链接等方式，不依赖其他Module的DLL。</li>
+</ul>
+<p><strong>Module API Specifiers</strong>详见：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/en-US/Programming/Modules/API">Programming/ModulesModule API Specifiers</a></p>
+<blockquote>
+<p><code>FModuleManager::LoadModule</code>或者<code>FModuleManager::LoadModuleWithFailureReason</code>的调用会执行被加载Module的<code>StartupModule</code>.</p>
+</blockquote>
+<h2 id="Module-Implementation"><a href="#Module-Implementation" class="headerlink" title="Module Implementation"></a>Module Implementation</h2><p>在UE中，项目的宏是<code>IMPLEMENT_PRIMARY_GAME_MODULE</code>，在创建项目后它一般是在<code>ProjectName.cpp</code>中定义：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">IMPLEMENT_PRIMARY_GAME_MODULE</span>( FDefaultGameModuleImpl, VRExpansion, <span class="string">&quot;VRExpansion&quot;</span> );</span><br></pre></td></tr></table></figure>
+<p><code>FDefaultGameModuleImpl</code>是一个继承自<code>FDefaultModuleImpl</code>又间接继承自<code>IModuleInterface</code>的类，没有重写<code>IModuleInterface</code>的任何函数，仅作为一层封装的默认实现(游戏项目的启动也不需要通过Module的StartupModule驱动)。在Module中可以传入自己继承自<code>IModuleInterface</code>的类，重写其中的接口，就可以在Module加载时做特定的行为了(<code>IModuleInterface</code>的接口列在后面)。</p>
+<p><code>IMPLEMENT_PRIMARY_GAME_MODULE</code>宏首先替换到<code>IMPLEMENT_GAME_MODULE</code>然后又继续替换到的也是<code>IMPLEMENT_MODULE</code>.<br>在目前的引擎实现里看，这三个宏没有区别：</p>
+<ul>
+<li>IMPLEMENT_PRIMARY_GAME_MODULE</li>
+<li>IMPLEMENT_GAME_MODULE</li>
+<li>IMPLEMENT_MODULE</li>
+</ul>
+<p>一般插件中使用的都是<code>IMPLEMENT_MODULE</code>(该宏定义在<code>Runtime\Core\Public\Modules\ModuleManger.h</code>中):</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> IS_MONOLITHIC</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// If we&#x27;re linking monolithically we assume all modules are linked in with the main binary.</span></span><br><span class="line">  <span class="meta">#<span class="keyword">define</span> IMPLEMENT_MODULE( ModuleImplClass, ModuleName ) \</span></span><br><span class="line"><span class="meta">    <span class="comment">/** Global registrant object for this module when linked statically */</span> \</span></span><br><span class="line"><span class="meta">    static FStaticallyLinkedModuleRegistrant<span class="string">&lt; ModuleImplClass &gt;</span> ModuleRegistrant##ModuleName( #ModuleName ); \</span></span><br><span class="line"><span class="meta">    <span class="comment">/** Implement an empty function so that if this module is built as a statically linked lib, */</span> \</span></span><br><span class="line"><span class="meta">    <span class="comment">/** static initialization for this lib can be forced by referencing this symbol */</span> \</span></span><br><span class="line"><span class="meta">    void EmptyLinkFunctionForStaticInitialization##ModuleName()&#123;&#125; \</span></span><br><span class="line"><span class="meta">    PER_MODULE_BOILERPLATE_ANYLINK(ModuleImplClass, ModuleName)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"></span><br><span class="line">  <span class="meta">#<span class="keyword">define</span> IMPLEMENT_MODULE( ModuleImplClass, ModuleName ) \</span></span><br><span class="line"><span class="meta">    \</span></span><br><span class="line"><span class="meta">    <span class="comment">/**/</span> \</span></span><br><span class="line"><span class="meta">    <span class="comment">/* InitializeModule function, called by module manager after this module&#x27;s DLL has been loaded */</span> \</span></span><br><span class="line"><span class="meta">    <span class="comment">/**/</span> \</span></span><br><span class="line"><span class="meta">    <span class="comment">/* @return  Returns an instance of this module */</span> \</span></span><br><span class="line"><span class="meta">    <span class="comment">/**/</span> \</span></span><br><span class="line"><span class="meta">    extern <span class="string">&quot;C&quot;</span> DLLEXPORT IModuleInterface* InitializeModule() \</span></span><br><span class="line"><span class="meta">    &#123; \</span></span><br><span class="line"><span class="meta">      return new ModuleImplClass(); \</span></span><br><span class="line"><span class="meta">    &#125; \</span></span><br><span class="line"><span class="meta">    PER_MODULE_BOILERPLATE \</span></span><br><span class="line"><span class="meta">    PER_MODULE_BOILERPLATE_ANYLINK(ModuleImplClass, ModuleName)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">//IS_MONOLITHIC</span></span></span><br></pre></td></tr></table></figure>
+<p>这个宏的含义是定义和导出一个通用的模块接口，供外部来驱动这个Module启动/停止或者其他，这个宏是必须的，有这个宏才能被UE的模块机制驱动。</p>
+<h2 id="IS-MONOLITHIC"><a href="#IS-MONOLITHIC" class="headerlink" title="IS_MONOLITHIC"></a>IS_MONOLITHIC</h2><p>在编译目标的<code>target.cs</code>中<code>LinkType</code>是<code>TargetLinkType.Monolithic</code>的情况下，则编译时使用的时<code>IS_MONOLITHIC</code>逻辑。这种模式下Module的<code>IMPLEMENT_MODULE</code>宏则是构造了一个<code>FStaticallyLinkedModuleRegistrant&lt;ModuleImplClass&gt;</code>的static对象，在它的构造函数中会调用<code>FModuleManager::RegisterStaticallyLinkedModule</code>来将其添加到一个TMap对象(<code>FModuleManager::StaticallyLinkedModuleInitializers</code>)中，供后续LoadModule时查找:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> <span class="title class_">ModuleClass</span> &gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FStaticallyLinkedModuleRegistrant</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Explicit constructor that registers a statically linked module</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">FStaticallyLinkedModuleRegistrant</span>( <span class="type">const</span> ANSICHAR* InModuleName )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// Create a delegate to our InitializeModule method</span></span><br><span class="line">    FModuleManager::FInitializeStaticallyLinkedModule InitializerDelegate = FModuleManager::FInitializeStaticallyLinkedModule::<span class="built_in">CreateRaw</span>(</span><br><span class="line">        <span class="keyword">this</span>, &amp;FStaticallyLinkedModuleRegistrant&lt;ModuleClass&gt;::InitializeModule );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register this module</span></span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">RegisterStaticallyLinkedModule</span>(</span><br><span class="line">      <span class="built_in">FName</span>( InModuleName ),  <span class="comment">// Module name</span></span><br><span class="line">      InitializerDelegate );  <span class="comment">// Initializer delegate</span></span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Creates and initializes this statically linked module.</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * The module manager calls this function through the delegate that was created</span></span><br><span class="line"><span class="comment">   * in the @see FStaticallyLinkedModuleRegistrant constructor.</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * @return A pointer to a new instance of the module.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">IModuleInterface* <span class="title">InitializeModule</span><span class="params">( )</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ModuleClass</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FModuleManager</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">RegisterStaticallyLinkedModule</span><span class="params">( <span class="type">const</span> FName InModuleName, <span class="type">const</span> FInitializeStaticallyLinkedModule&amp; InInitializerDelegate )</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    StaticallyLinkedModuleInitializers.<span class="built_in">Add</span>( InModuleName, InInitializerDelegate );</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="comment">/** Map of module names to a delegate that can initialize each respective statically linked module */</span></span><br><span class="line">  <span class="keyword">typedef</span> TMap&lt; FName, FInitializeStaticallyLinkedModule &gt; FStaticallyLinkedModuleInitializerMap;</span><br><span class="line">  FStaticallyLinkedModuleInitializerMap StaticallyLinkedModuleInitializers;</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>IS_MONOLITHIC</code>的情况下，函数<strong>FModuleManager::LoadModuleWithFailureReason</strong>(调用<code>FModuleManager::LoadModule</code>实现上也是转发到这里)通过对TMap<code>ModuleName-InitializerDelegate</code>(<strong>FStaticallyLinkedModuleRegistrant<ModuleClass>::InitializeModule</strong>)的查找，可以得到一个指定模块的<code>IModuleInterface</code>接口。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// FModuleManager::LoadModuleWithFailureReason (Runtime\Core\Private\Modules\ModuleManager.cpp)</span></span><br><span class="line"><span class="function">IModuleInterface* <span class="title">FModuleManager::LoadModuleWithFailureReason</span><span class="params">(<span class="type">const</span> FName InModuleName, EModuleLoadResult&amp; OutFailureReason)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// something....</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Make sure this isn&#x27;t a module that we had previously loaded, and then unloaded at shutdown time.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// If this assert goes off, your trying to load a module during the shutdown phase that was already</span></span><br><span class="line">  <span class="comment">// cleaned up.  The easiest way to fix this is to change your code to query for an already-loaded</span></span><br><span class="line">  <span class="comment">// module instead of trying to load it directly.</span></span><br><span class="line">  <span class="built_in">checkf</span>((!ModuleInfo-&gt;bWasUnloadedAtShutdown), <span class="built_in">TEXT</span>(<span class="string">&quot;Attempted to load module &#x27;%s&#x27; that was already unloaded at shutdown.  FModuleManager::LoadModule() was called to load a module that was previously loaded, and was unloaded at shutdown time.  If this assert goes off, your trying to load a module during the shutdown phase that was already cleaned up.  The easiest way to fix this is to change your code to query for an already-loaded module instead of trying to load it directly.&quot;</span>), *InModuleName.<span class="built_in">ToString</span>());</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Check if we&#x27;re statically linked with the module.  Those modules register with the module manager using a static variable,</span></span><br><span class="line">  <span class="comment">// so hopefully we already know about the name of the module and how to initialize it.</span></span><br><span class="line">  <span class="type">const</span> FInitializeStaticallyLinkedModule* ModuleInitializerPtr = StaticallyLinkedModuleInitializers.<span class="built_in">Find</span>(InModuleName);</span><br><span class="line">  <span class="keyword">if</span> (ModuleInitializerPtr != <span class="literal">nullptr</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="function"><span class="type">const</span> FInitializeStaticallyLinkedModule&amp; <span class="title">ModuleInitializer</span><span class="params">(*ModuleInitializerPtr)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Initialize the module!</span></span><br><span class="line">    ModuleInfo-&gt;Module = <span class="built_in">TUniquePtr</span>&lt;IModuleInterface&gt;(ModuleInitializer.<span class="built_in">Execute</span>());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (ModuleInfo-&gt;Module.<span class="built_in">IsValid</span>())</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="comment">// Startup the module</span></span><br><span class="line">    ModuleInfo-&gt;Module-&gt;<span class="built_in">StartupModule</span>();</span><br><span class="line">    <span class="comment">// The module might try to load other dependent modules in StartupModule. In this case, we want those modules shut down AFTER this one because we may still depend on the module at shutdown.</span></span><br><span class="line">    ModuleInfo-&gt;LoadOrder = FModuleInfo::CurrentLoadOrder++;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Module was started successfully!  Fire callbacks.</span></span><br><span class="line">    ModulesChangedEvent.<span class="built_in">Broadcast</span>(InModuleName, EModuleChangeReason::ModuleLoaded);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Set the return parameter</span></span><br><span class="line">    LoadedModule = ModuleInfo-&gt;Module.<span class="built_in">Get</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Unable to load module &#x27;%s&#x27; because InitializeModule function failed (returned nullptr.)&quot;</span>), *InModuleName.<span class="built_in">ToString</span>());</span><br><span class="line">    OutFailureReason = EModuleLoadResult::FailedToInitialize;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> IS_MONOLITHIC</span></span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// Monolithic builds that do not have the initializer were *not found* during the build step, so return FileNotFound</span></span><br><span class="line">    <span class="comment">// (FileNotFound is an acceptable error in some case - ie loading a content only project)</span></span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Module &#x27;%s&#x27; not found - its StaticallyLinkedModuleInitializers function is null.&quot;</span>), *InModuleName.<span class="built_in">ToString</span>());</span><br><span class="line">    OutFailureReason = EModuleLoadResult::FileNotFound;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">// something....</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="IS-MONOLITHIC-1"><a href="#IS-MONOLITHIC-1" class="headerlink" title="!IS_MONOLITHIC"></a>!IS_MONOLITHIC</h2><p>在<code>!IS_MONOLITHIC</code>的情况下，它是导出了一个<code>IModuleInterface* InitializeModule()</code>的符号(在<code>target.cs</code>中没有指定为<code>LinkType.Monolithic</code>(<code>IS_MONOLITHIC</code>)的情况下每个Module是单独的链接库(lib/dll))。<br>在使用<code>FModuleManager::LoadModuleWithFailureReason</code>来加载指定Module时，首先通过<code>FModuleManager::FindModulePaths</code>来获取Module的链接库(DLL)路径：<br>它会依次查找:</p>
+<ul>
+<li>FPlatformProcess::GetModulesDirectory</li>
+<li>EngineBinariesDirectories</li>
+<li>GameBinariesDirectories</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> !IS_MONOLITHIC</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FModuleManager::FindModulePaths</span><span class="params">(<span class="type">const</span> TCHAR* NamePattern, TMap&lt;FName, FString&gt; &amp;OutModulePaths, <span class="type">bool</span> bCanUseCache <span class="comment">/*= true*/</span>)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!ModulePathsCache)</span><br><span class="line">  &#123;</span><br><span class="line">    ModulePathsCache.<span class="built_in">Emplace</span>();</span><br><span class="line">    <span class="type">const</span> <span class="type">bool</span> bCanUseCacheWhileGeneratingIt = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">FindModulePaths</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;*&quot;</span>), ModulePathsCache.<span class="built_in">GetValue</span>(), bCanUseCacheWhileGeneratingIt);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (bCanUseCache)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// Try to use cache first</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="type">const</span> FString* ModulePathPtr = ModulePathsCache-&gt;<span class="built_in">Find</span>(NamePattern))</span><br><span class="line">    &#123;</span><br><span class="line">      OutModulePaths.<span class="built_in">Add</span>(<span class="built_in">FName</span>(NamePattern), *ModulePathPtr);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Wildcard for all items</span></span><br><span class="line">    <span class="keyword">if</span> (FCString::<span class="built_in">Strcmp</span>(NamePattern, <span class="built_in">TEXT</span>(<span class="string">&quot;*&quot;</span>)) == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      OutModulePaths = ModulePathsCache.<span class="built_in">GetValue</span>();</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Wildcard search</span></span><br><span class="line">    <span class="keyword">if</span> (FCString::<span class="built_in">Strchr</span>(NamePattern, <span class="built_in">TEXT</span>(<span class="string">&#x27;*&#x27;</span>)) || FCString::<span class="built_in">Strchr</span>(NamePattern, <span class="built_in">TEXT</span>(<span class="string">&#x27;?&#x27;</span>)))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="type">bool</span> bFoundItems = <span class="literal">false</span>;</span><br><span class="line">      <span class="function">FString <span class="title">NamePatternString</span><span class="params">(NamePattern)</span></span>;</span><br><span class="line">      <span class="keyword">for</span> (<span class="type">const</span> TPair&lt;FName, FString&gt;&amp; CacheIt : ModulePathsCache.<span class="built_in">GetValue</span>())</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">if</span> (CacheIt.Key.<span class="built_in">ToString</span>().<span class="built_in">MatchesWildcard</span>(NamePatternString))</span><br><span class="line">        &#123;</span><br><span class="line">          OutModulePaths.<span class="built_in">Add</span>(CacheIt.Key, *CacheIt.Value);</span><br><span class="line">          bFoundItems = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (bFoundItems)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Search through the engine directory</span></span><br><span class="line">  <span class="built_in">FindModulePathsInDirectory</span>(FPlatformProcess::<span class="built_in">GetModulesDirectory</span>(), <span class="literal">false</span>, NamePattern, OutModulePaths);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Search any engine directories</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> Idx = <span class="number">0</span>; Idx &lt; EngineBinariesDirectories.<span class="built_in">Num</span>(); Idx++)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">FindModulePathsInDirectory</span>(EngineBinariesDirectories[Idx], <span class="literal">false</span>, NamePattern, OutModulePaths);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Search any game directories</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> Idx = <span class="number">0</span>; Idx &lt; GameBinariesDirectories.<span class="built_in">Num</span>(); Idx++)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">FindModulePathsInDirectory</span>(GameBinariesDirectories[Idx], <span class="literal">true</span>, NamePattern, OutModulePaths);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FModuleManager::FindModulePathsInDirectory</span><span class="params">(<span class="type">const</span> FString&amp; InDirectoryName, <span class="type">bool</span> bIsGameDirectory, <span class="type">const</span> TCHAR* NamePattern, TMap&lt;FName, FString&gt; &amp;OutModulePaths)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// Figure out the BuildId if it&#x27;s not already set.</span></span><br><span class="line">  <span class="keyword">if</span> (!BuildId.<span class="built_in">IsSet</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    FString FileName = FModuleManifest::<span class="built_in">GetFileName</span>(FPlatformProcess::<span class="built_in">GetModulesDirectory</span>(), <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">    FModuleManifest Manifest;</span><br><span class="line">    <span class="keyword">if</span> (!FModuleManifest::<span class="built_in">TryRead</span>(FileName, Manifest))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">UE_LOG</span>(LogModuleManager, Fatal, <span class="built_in">TEXT</span>(<span class="string">&quot;Unable to read module manifest from &#x27;%s&#x27;. Module manifests are generated at build time, and must be present to locate modules at runtime.&quot;</span>), *FileName)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BuildId = Manifest.BuildId;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Find all the directories to search through, including the base directory</span></span><br><span class="line">  TArray&lt;FString&gt; SearchDirectoryNames;</span><br><span class="line">  IFileManager::<span class="built_in">Get</span>().<span class="built_in">FindFilesRecursive</span>(SearchDirectoryNames, *InDirectoryName, <span class="built_in">TEXT</span>(<span class="string">&quot;*&quot;</span>), <span class="literal">false</span>, <span class="literal">true</span>);</span><br><span class="line">  SearchDirectoryNames.<span class="built_in">Insert</span>(InDirectoryName, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Enumerate the modules in each directory</span></span><br><span class="line">  <span class="keyword">for</span>(<span class="type">const</span> FString&amp; SearchDirectoryName: SearchDirectoryNames)</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManifest Manifest;</span><br><span class="line">    <span class="keyword">if</span> (FModuleManifest::<span class="built_in">TryRead</span>(FModuleManifest::<span class="built_in">GetFileName</span>(SearchDirectoryName, bIsGameDirectory), Manifest) &amp;&amp; Manifest.BuildId == BuildId.<span class="built_in">GetValue</span>())</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">for</span> (<span class="type">const</span> TPair&lt;FString, FString&gt;&amp; Pair : Manifest.ModuleNameToFileName)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">if</span> (Pair.Key.<span class="built_in">MatchesWildcard</span>(NamePattern))</span><br><span class="line">        &#123;</span><br><span class="line">          OutModulePaths.<span class="built_in">Add</span>(<span class="built_in">FName</span>(*Pair.Key), *FPaths::<span class="built_in">Combine</span>(*SearchDirectoryName, *Pair.Value));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>得到链接库的路径之后就通过<code>FPlatformProcess::GetDllExport</code>来获取DLL中的<code>IModuleInterface::InitializeModule</code>函数指针，然后调用<code>IModuleInterface::StartupModule</code>启动这个模块。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// FModuleManager::LoadModuleWithFailureReason (Runtime\Core\Private\Modules\ModuleManager.cpp)</span></span><br><span class="line"><span class="function">IModuleInterface* <span class="title">FModuleManager::LoadModuleWithFailureReason</span><span class="params">(<span class="type">const</span> FName InModuleName, EModuleLoadResult&amp; OutFailureReason)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// something....</span></span><br><span class="line"><span class="comment">// Make sure that any UObjects that need to be registered were already processed before we go and</span></span><br><span class="line"><span class="comment">// load another module.  We just do this so that we can easily tell whether UObjects are present</span></span><br><span class="line"><span class="comment">// in the module being loaded.</span></span><br><span class="line"><span class="keyword">if</span> (bCanProcessNewlyLoadedObjects)</span><br><span class="line">&#123;</span><br><span class="line">  ProcessLoadedObjectsCallback.<span class="built_in">Broadcast</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Try to dynamically load the DLL</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">UE_LOG</span>(LogModuleManager, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Load Module &#x27;%s&#x27; DLL &#x27;%s&#x27;&quot;</span>), *InModuleName.<span class="built_in">ToString</span>(), *ModuleInfo-&gt;Filename);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (ModuleInfo-&gt;Filename.<span class="built_in">IsEmpty</span>() || !FPaths::<span class="built_in">FileExists</span>(ModuleInfo-&gt;Filename))</span><br><span class="line">&#123;</span><br><span class="line">  TMap&lt;FName, FString&gt; ModulePathMap;</span><br><span class="line">  <span class="built_in">FindModulePaths</span>(*InModuleName.<span class="built_in">ToString</span>(), ModulePathMap);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (ModulePathMap.<span class="built_in">Num</span>() != <span class="number">1</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Unable to load module &#x27;%s&#x27;  - %d instances of that module name found.&quot;</span>), *InModuleName.<span class="built_in">ToString</span>(), ModulePathMap.<span class="built_in">Num</span>());</span><br><span class="line">    OutFailureReason = EModuleLoadResult::FileNotFound;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ModuleInfo-&gt;Filename = <span class="built_in">MoveTemp</span>(TMap&lt;FName, FString&gt;::<span class="built_in">TIterator</span>(ModulePathMap).<span class="built_in">Value</span>());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Determine which file to load for this module.</span></span><br><span class="line"><span class="type">const</span> FString ModuleFileToLoad = FPaths::<span class="built_in">ConvertRelativePathToFull</span>(ModuleInfo-&gt;Filename);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Clear the handle and set it again below if the module is successfully loaded</span></span><br><span class="line">ModuleInfo-&gt;Handle = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Skip this check if file manager has not yet been initialized</span></span><br><span class="line"><span class="keyword">if</span> (FPaths::<span class="built_in">FileExists</span>(ModuleFileToLoad))</span><br><span class="line">&#123;</span><br><span class="line">  ModuleInfo-&gt;Handle = FPlatformProcess::<span class="built_in">GetDllHandle</span>(*ModuleFileToLoad);</span><br><span class="line">  <span class="keyword">if</span> (ModuleInfo-&gt;Handle != <span class="literal">nullptr</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// First things first.  If the loaded DLL has UObjects in it, then their generated code&#x27;s</span></span><br><span class="line">    <span class="comment">// static initialization will have run during the DLL loading phase, and we&#x27;ll need to</span></span><br><span class="line">    <span class="comment">// go in and make sure those new UObject classes are properly registered.</span></span><br><span class="line">    &#123;</span><br><span class="line">    <span class="comment">// Sometimes modules are loaded before even the UObject systems are ready.  We need to assume</span></span><br><span class="line">    <span class="comment">// these modules aren&#x27;t using UObjects.</span></span><br><span class="line">    <span class="keyword">if</span> (bCanProcessNewlyLoadedObjects)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="comment">// OK, we&#x27;ve verified that loading the module caused new UObject classes to be</span></span><br><span class="line">      <span class="comment">// registered, so we&#x27;ll treat this module as a module with UObjects in it.</span></span><br><span class="line">      ProcessLoadedObjectsCallback.<span class="built_in">Broadcast</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Find our &quot;InitializeModule&quot; global function, which must exist for all module DLLs</span></span><br><span class="line">    FInitializeModuleFunctionPtr InitializeModuleFunctionPtr =</span><br><span class="line">(FInitializeModuleFunctionPtr)FPlatformProcess::<span class="built_in">GetDllExport</span>(ModuleInfo-&gt;Handle, <span class="built_in">TEXT</span>(<span class="string">&quot;InitializeModule&quot;</span>));</span><br><span class="line">    <span class="keyword">if</span> (InitializeModuleFunctionPtr != <span class="literal">nullptr</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( ModuleInfo-&gt;Module.<span class="built_in">IsValid</span>() )</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="comment">// Assign the already loaded module into the return value, otherwise the return value gives the impression the module failed load!</span></span><br><span class="line">        LoadedModule = ModuleInfo-&gt;Module.<span class="built_in">Get</span>();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span></span><br><span class="line">      &#123;</span><br><span class="line">        <span class="comment">// Initialize the module!</span></span><br><span class="line">        ModuleInfo-&gt;Module = <span class="built_in">TUniquePtr</span>&lt;IModuleInterface&gt;(<span class="built_in">InitializeModuleFunctionPtr</span>());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> ( ModuleInfo-&gt;Module.<span class="built_in">IsValid</span>() )</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="comment">// Startup the module</span></span><br><span class="line">          ModuleInfo-&gt;Module-&gt;<span class="built_in">StartupModule</span>();</span><br><span class="line">          <span class="comment">// The module might try to load other dependent modules in StartupModule. In this case, we want those modules shut down AFTER this one because we may still depend on the module at shutdown.</span></span><br><span class="line">          ModuleInfo-&gt;LoadOrder = FModuleInfo::CurrentLoadOrder++;</span><br><span class="line"></span><br><span class="line">          <span class="comment">// Module was started successfully!  Fire callbacks.</span></span><br><span class="line">          ModulesChangedEvent.<span class="built_in">Broadcast</span>(InModuleName, EModuleChangeReason::ModuleLoaded);</span><br><span class="line"></span><br><span class="line">          <span class="comment">// Set the return parameter</span></span><br><span class="line">          LoadedModule = ModuleInfo-&gt;Module.<span class="built_in">Get</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Unable to load module &#x27;%s&#x27; because InitializeModule function failed (returned nullptr.)&quot;</span>), *ModuleFileToLoad);</span><br><span class="line"></span><br><span class="line">          FPlatformProcess::<span class="built_in">FreeDllHandle</span>(ModuleInfo-&gt;Handle);</span><br><span class="line">          ModuleInfo-&gt;Handle = <span class="literal">nullptr</span>;</span><br><span class="line">          OutFailureReason = EModuleLoadResult::FailedToInitialize;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Unable to load module &#x27;%s&#x27; because InitializeModule function was not found.&quot;</span>), *ModuleFileToLoad);</span><br><span class="line"></span><br><span class="line">      FPlatformProcess::<span class="built_in">FreeDllHandle</span>(ModuleInfo-&gt;Handle);</span><br><span class="line">      ModuleInfo-&gt;Handle = <span class="literal">nullptr</span>;</span><br><span class="line">      OutFailureReason = EModuleLoadResult::FailedToInitialize;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Unable to load module &#x27;%s&#x27; because the file couldn&#x27;t be loaded by the OS.&quot;</span>), *ModuleFileToLoad);</span><br><span class="line">    OutFailureReason = EModuleLoadResult::CouldNotBeLoadedByOS;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">UE_LOG</span>(LogModuleManager, Warning, <span class="built_in">TEXT</span>(<span class="string">&quot;ModuleManager: Unable to load module &#x27;%s&#x27; because the file &#x27;%s&#x27; was not found.&quot;</span>), *InModuleName.<span class="built_in">ToString</span>(), *ModuleFileToLoad);</span><br><span class="line">  OutFailureReason = EModuleLoadResult::FileNotFound;</span><br><span class="line">&#125;</span><br><span class="line">  <span class="comment">// something....</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="IModuleInterface"><a href="#IModuleInterface" class="headerlink" title="IModuleInterface"></a>IModuleInterface</h2><p>不论是通过<code>IS_MONOLITHIC</code>还是<code>!IS_MONOLITHIC</code>的方式，最终得到的都是Module的<strong>IModuleInterface</strong>(<em>Runtime\Core\Public\Modules\ModuleInterface.h</em>)接口，它里面声明了通用的Module接口：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">IModuleInterface</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="comment">// Note: Even though this is an interface class we need a virtual destructor here because modules are deleted via a pointer to this interface</span></span><br><span class="line">  <span class="keyword">virtual</span> ~<span class="built_in">IModuleInterface</span>()&#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Called right after the module DLL has been loaded and the module object has been created</span></span><br><span class="line">  <span class="comment">// Load dependent modules here, and they will be guaranteed to be available during ShutdownModule. ie:</span></span><br><span class="line">  <span class="comment">// FModuleManager::Get().LoadModuleChecked(TEXT(&quot;HTTP&quot;));</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">StartupModule</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Called before the module has been unloaded</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PreUnloadCallback</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Called after the module has been reloaded</span></span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">PostLoadCallback</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Called before the module is unloaded, right before the module object is destroyed.</span></span><br><span class="line">  <span class="comment">// During normal shutdown, this is called in reverse order that modules finish StartupModule().</span></span><br><span class="line">  <span class="comment">// This means that, as long as a module references dependent modules in it&#x27;s StartupModule(), it</span></span><br><span class="line">  <span class="comment">// can safely reference those dependencies in ShutdownModule() as well.</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">ShutdownModule</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Override this to set whether your module is allowed to be unloaded on the fly</span></span><br><span class="line">  <span class="comment">// @return  Whether the module supports shutdown separate from the rest of the engine.</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">SupportsDynamicReloading</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="literal">true</span>;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Override this to set whether your module would like cleanup on application shutdown</span></span><br><span class="line">  <span class="comment">// @return  Whether the module supports shutdown on application exit</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">SupportsAutomaticShutdown</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="literal">true</span>;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Returns true if this module hosts gameplay code</span></span><br><span class="line">  <span class="comment">// @return True for &quot;gameplay modules&quot;, or false for engine code modules, plugins, etc.</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">IsGameModule</span><span class="params">()</span> <span class="type">const</span></span>&#123;<span class="keyword">return</span> <span class="literal">false</span>;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Load-Modules-when-the-Engine-Launch"><a href="#Load-Modules-when-the-Engine-Launch" class="headerlink" title="Load Modules when the Engine Launch"></a>Load Modules when the Engine Launch</h2><p>前面提到，UE是模块化的架构，引擎的实现就是靠各个模块组合驱动的，所以在引擎启动的时候会启动各种相应的模块。<br>引擎的启动入口是在<a target="_blank" rel="noopener" href="http://api.unrealengine.com/INT/API/Runtime/Launch/index.html">Launch</a>模块中，由各个平台的<code>main</code>函数转发到<code>GuardedMain</code>(Engine\Source\Runtime\Launch\Private\Launch.cpp)中。<br>在<code>GuardedMain</code>中依次执行<code>GEngineLoop.PreInit(CmdLine)</code>和<code>GEngineLoop.Init()</code></p>
+<p>在<code>FEngingLoop::PreInit</code>中，通过依次调用<code>FEngineLoop::LoadCoreModules</code>(<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp#L1480">LaunchEngineLoop.cpp#L1480</a>)和<code>FEngineLoop::LoadPreInitModules</code>(<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp#L1572">LaunchEngineLoop.cpp#L1572</a>)来加载引擎启动所必须的模块，模块的加载顺序如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LaunchEngineLoop.cpp</span></span><br><span class="line">FEngineLoop::<span class="built_in">PreInit</span>()</span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="comment">// L1480</span></span><br><span class="line">	<span class="comment">// Load Core modules required for everything else to work (needs to be loaded before InitializeRenderingCVarsCaching)</span></span><br><span class="line">	<span class="keyword">if</span> (!<span class="built_in">LoadCoreModules</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogInit, Error, <span class="built_in">TEXT</span>(<span class="string">&quot;Failed to load Core modules.&quot;</span>));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// L1572</span></span><br><span class="line">	<span class="built_in">LoadPreInitModules</span>();</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// L2015</span></span><br><span class="line">  <span class="comment">// note: Since 4.20 add ELoadingPhase::PreEarlyLoadingScreen Support.</span></span><br><span class="line">	<span class="comment">// Load up all modules that need to hook into the loading screen</span></span><br><span class="line">	<span class="keyword">if</span> (!IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PreEarlyLoadingScreen) || !IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PreEarlyLoadingScreen))</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// L2202</span></span><br><span class="line">	<span class="keyword">if</span> ( !<span class="built_in">LoadStartupCoreModules</span>() )</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// At least one startup module failed to load, return 1 to indicate an error</span></span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// L2211</span></span><br><span class="line">  <span class="comment">// Load up all modules that need to hook into the loading screen</span></span><br><span class="line">  <span class="keyword">if</span> (!IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PreLoadingScreen) || !IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PreLoadingScreen))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// L2310</span></span><br><span class="line">	<span class="keyword">if</span> ( !<span class="built_in">LoadStartupModules</span>() )</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// At least one startup module failed to load, return 1 to indicate an error</span></span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// L2457</span></span><br><span class="line">  <span class="comment">// Load all the post-engine init modules</span></span><br><span class="line">  <span class="built_in">ensure</span>(IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PostEngineInit));</span><br><span class="line">  <span class="built_in">ensure</span>(IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PostEngineInit));</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment">// L3044</span></span><br><span class="line">  <span class="comment">// Load all the post-engine init modules</span></span><br><span class="line">  <span class="keyword">if</span> (!IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PostEngineInit) || !IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PostEngineInit))</span><br><span class="line">  &#123;</span><br><span class="line">    GIsRequestingExit = <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// L4279</span></span><br><span class="line">  <span class="comment">// Load &quot;pre-init&quot; plugin modules</span></span><br><span class="line">  <span class="keyword">if</span> (!ProjectManager.<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PostConfigInit) || !PluginManager.<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PostConfigInit))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>EnginePreInit时加载Module的几个函数实现：</p>
+<h3 id="FEngineLoop-LoadCoreModules"><a href="#FEngineLoop-LoadCoreModules" class="headerlink" title="FEngineLoop::LoadCoreModules"></a>FEngineLoop::LoadCoreModules</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp#L2679">FEngineLoop::LoadCoreModules</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LaunchEngineLoop.cpp#L2679</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FEngineLoop::LoadCoreModules</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// Always attempt to load CoreUObject. It requires additional pre-init which is called from its module&#x27;s StartupModule method.</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_COREUOBJECT</span></span><br><span class="line">  <span class="keyword">return</span> FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;CoreUObject&quot;</span>)) != <span class="literal">nullptr</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="FEngineLoop-LoadPreInitModules"><a href="#FEngineLoop-LoadPreInitModules" class="headerlink" title="FEngineLoop::LoadPreInitModules"></a>FEngineLoop::LoadPreInitModules</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp#L2690">FEngineLoop::LoadPreInitModules</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LaunchEngineLoop.cpp#L2690</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FEngineLoop::LoadPreInitModules</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">DECLARE_SCOPE_CYCLE_COUNTER</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Loading PreInit Modules&quot;</span>), STAT_PreInitModules, STATGROUP_LoadTime);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// GGetMapNameDelegate is initialized here</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_ENGINE</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Engine&quot;</span>));</span><br><span class="line"></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Renderer&quot;</span>));</span><br><span class="line"></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;AnimGraphRuntime&quot;</span>));</span><br><span class="line"></span><br><span class="line">  FPlatformApplicationMisc::<span class="built_in">LoadPreInitModules</span>();</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !UE_SERVER</span></span><br><span class="line">  <span class="keyword">if</span> (!<span class="built_in">IsRunningDedicatedServer</span>() )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (!GUsingNullRHI)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="comment">// This needs to be loaded before InitializeShaderTypes is called</span></span><br><span class="line">      FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModuleChecked</span>&lt;ISlateRHIRendererModule&gt;(<span class="string">&quot;SlateRHIRenderer&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Landscape&quot;</span>));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Initialize ShaderCore before loading or compiling any shaders,</span></span><br><span class="line">  <span class="comment">// But after Renderer and any other modules which implement shader types.</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ShaderCore&quot;</span>));</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_EDITORONLY_DATA</span></span><br><span class="line">  <span class="comment">// Load the texture compressor module before any textures load. They may</span></span><br><span class="line">  <span class="comment">// compress asynchronously and that can lead to a race condition.</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;TextureCompressor&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">// WITH_ENGINE</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> (WITH_EDITOR &amp;&amp; !(UE_BUILD_SHIPPING || UE_BUILD_TEST))</span></span><br><span class="line">  <span class="comment">// Load audio editor module before engine class CDOs are loaded</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;AudioEditor&quot;</span>));</span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;AnimationModifiers&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="FPlatformApplicationMisc-LoadPreInitModules"><a href="#FPlatformApplicationMisc-LoadPreInitModules" class="headerlink" title="FPlatformApplicationMisc::LoadPreInitModules"></a>FPlatformApplicationMisc::LoadPreInitModules</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/ApplicationCore/Private/Windows/WindowsPlatformApplicationMisc.cpp#L22">FPlatformApplicationMisc::LoadPreInitModules</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// FPlatformApplicationMisc::LoadPreInitModules</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FWindowsPlatformApplicationMisc::LoadPreInitModules</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// D3D11 is not supported on WinXP, so in this case we use the OpenGL RHI</span></span><br><span class="line">  <span class="keyword">if</span>(FWindowsPlatformMisc::<span class="built_in">VerifyWindowsVersion</span>(<span class="number">6</span>, <span class="number">0</span>))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">//#todo-rco: Only try on Win10</span></span><br><span class="line">    <span class="type">const</span> <span class="type">bool</span> bForceD3D12 = FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;d3d12&quot;</span>)) || FParse::<span class="built_in">Param</span>(FCommandLine::<span class="built_in">Get</span>(), <span class="built_in">TEXT</span>(<span class="string">&quot;dx12&quot;</span>));</span><br><span class="line">    <span class="keyword">if</span> (bForceD3D12)</span><br><span class="line">    &#123;</span><br><span class="line">      FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;D3D12RHI&quot;</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;D3D11RHI&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;OpenGLDrv&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FEngineLoop-LoadStartupCoreModules"><a href="#FEngineLoop-LoadStartupCoreModules" class="headerlink" title="FEngineLoop::LoadStartupCoreModules"></a>FEngineLoop::LoadStartupCoreModules</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp#L2739">FEngineLoop::LoadStartupCoreModules</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LaunchEngineLoop.cpp#L2739</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FEngineLoop::LoadStartupCoreModules</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function">FScopedSlowTask <span class="title">SlowTask</span><span class="params">(<span class="number">100</span>)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">DECLARE_SCOPE_CYCLE_COUNTER</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Loading Startup Modules&quot;</span>), STAT_StartupModules, STATGROUP_LoadTime);</span><br><span class="line"></span><br><span class="line">  <span class="type">bool</span> bSuccess = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load all Runtime modules</span></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">10</span>);</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Core&quot;</span>));</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Networking&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">10</span>);</span><br><span class="line">  FPlatformApplicationMisc::<span class="built_in">LoadStartupModules</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// initialize messaging</span></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">10</span>);</span><br><span class="line">  <span class="keyword">if</span> (FPlatformProcess::<span class="built_in">SupportsMultithreading</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">LoadModuleChecked</span>&lt;IMessagingModule&gt;(<span class="string">&quot;Messaging&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Init Scene Reconstruction support</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !UE_SERVER</span></span><br><span class="line">  <span class="keyword">if</span> (!<span class="built_in">IsRunningDedicatedServer</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">LoadModuleChecked</span>&lt;IMRMeshModule&gt;(<span class="string">&quot;MRMesh&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">10</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">    FModuleManager::<span class="built_in">LoadModuleChecked</span>&lt;IEditorStyleModule&gt;(<span class="string">&quot;EditorStyle&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">//WITH_EDITOR</span></span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load UI modules</span></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">10</span>);</span><br><span class="line">  <span class="keyword">if</span> ( !<span class="built_in">IsRunningDedicatedServer</span>() )</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;Slate&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !UE_BUILD_SHIPPING</span></span><br><span class="line">    <span class="comment">// Need to load up the SlateReflector module to initialize the WidgetSnapshotService</span></span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;SlateReflector&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">// !UE_BUILD_SHIPPING</span></span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">  <span class="comment">// In dedicated server builds with the editor, we need to load UMG/UMGEditor for compiling blueprints.</span></span><br><span class="line">  <span class="comment">// UMG must be loaded for runtime and cooking.</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;UMG&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">  <span class="keyword">if</span> ( !<span class="built_in">IsRunningDedicatedServer</span>() )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// UMG must be loaded for runtime and cooking.</span></span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;UMG&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">//WITH_EDITOR</span></span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load all Development modules</span></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">20</span>);</span><br><span class="line">  <span class="keyword">if</span> (!<span class="built_in">IsRunningDedicatedServer</span>())</span><br><span class="line">  &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_UNREAL_DEVELOPER_TOOLS</span></span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;MessageLog&quot;</span>);</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;CollisionAnalyzer&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span>  <span class="comment">//WITH_UNREAL_DEVELOPER_TOOLS</span></span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_UNREAL_DEVELOPER_TOOLS</span></span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;FunctionalTesting&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span>  <span class="comment">//WITH_UNREAL_DEVELOPER_TOOLS</span></span></span><br><span class="line"></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">30</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> (WITH_EDITOR &amp;&amp; !(UE_BUILD_SHIPPING || UE_BUILD_TEST))</span></span><br><span class="line">  <span class="comment">// <span class="doctag">HACK:</span> load BT editor as early as possible for statically initialized assets (non cooked BT assets needs it)</span></span><br><span class="line">  <span class="comment">// cooking needs this module too</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;BehaviorTreeEditor&quot;</span>));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Ability tasks are based on GameplayTasks, so we need to make sure that module is loaded as well</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;GameplayTasksEditor&quot;</span>));</span><br><span class="line"></span><br><span class="line">  IAudioEditorModule* AudioEditorModule = &amp;FModuleManager::<span class="built_in">LoadModuleChecked</span>&lt;IAudioEditorModule&gt;(<span class="string">&quot;AudioEditor&quot;</span>);</span><br><span class="line">  AudioEditorModule-&gt;<span class="built_in">RegisterAssetActions</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load the StringTableEditor module to register its asset actions</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="string">&quot;StringTableEditor&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>( !<span class="built_in">IsRunningDedicatedServer</span>() )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// VREditor needs to be loaded in non-server editor builds early, so engine content Blueprints can be loaded during DDC generation</span></span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;VREditor&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// -----------------------------------------------------</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// <span class="doctag">HACK:</span> load EQS editor as early as possible for statically initialized assets (non cooked EQS assets needs it)</span></span><br><span class="line">  <span class="comment">// cooking needs this module too</span></span><br><span class="line">  <span class="type">bool</span> bEnvironmentQueryEditor = <span class="literal">false</span>;</span><br><span class="line">  GConfig-&gt;<span class="built_in">GetBool</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;EnvironmentQueryEd&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;EnableEnvironmentQueryEd&quot;</span>), bEnvironmentQueryEditor, GEngineIni);</span><br><span class="line">  <span class="keyword">if</span> (bEnvironmentQueryEditor</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">    || <span class="built_in">GetDefault</span>&lt;UEditorExperimentalSettings&gt;()-&gt;bEQSEditor</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">// WITH_EDITOR</span></span></span><br><span class="line">    )</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;EnvironmentQueryEditor&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// We need this for blueprint projects that have online functionality.</span></span><br><span class="line">  <span class="comment">//FModuleManager::Get().LoadModule(TEXT(&quot;OnlineBlueprintSupport&quot;));</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">IsRunningCommandlet</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;IntroTutorials&quot;</span>));</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Blutility&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">//(WITH_EDITOR &amp;&amp; !(UE_BUILD_SHIPPING || UE_BUILD_TEST))</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_ENGINE</span></span><br><span class="line">  <span class="comment">// Load runtime client modules (which are also needed at cook-time)</span></span><br><span class="line">  <span class="keyword">if</span>( !<span class="built_in">IsRunningDedicatedServer</span>() )</span><br><span class="line">  &#123;</span><br><span class="line">    FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Overlay&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;MediaAssets&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ClothingSystemRuntime&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;ClothingSystemEditor&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;PacketHandler&quot;</span>));</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bSuccess;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="FPlatformApplicationMisc-LoadStartupModules"><a href="#FPlatformApplicationMisc-LoadStartupModules" class="headerlink" title="FPlatformApplicationMisc::LoadStartupModules"></a>FPlatformApplicationMisc::LoadStartupModules</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/ApplicationCore/Private/Windows/WindowsPlatformApplicationMisc.cpp#L38">FPlatformApplicationMisc::LoadStartupModules</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// FPlatformApplicationMisc::LoadStartupModules</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FWindowsPlatformApplicationMisc::LoadStartupModules</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !UE_SERVER</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;XAudio2&quot;</span>));</span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;HeadMountedDisplay&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">// !UE_SERVER</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">  FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModule</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;SourceCodeAccess&quot;</span>));</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span>  <span class="comment">//WITH_EDITOR</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FEngineLoop-LoadStartupModules"><a href="#FEngineLoop-LoadStartupModules" class="headerlink" title="FEngineLoop::LoadStartupModules"></a>FEngineLoop::LoadStartupModules</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp#L2884">FEngineLoop::LoadStartupModules</a></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LaunchEngineLoop.cpp#L2884</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FEngineLoop::LoadStartupModules</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function">FScopedSlowTask <span class="title">SlowTask</span><span class="params">(<span class="number">3</span>)</span></span>;</span><br><span class="line"></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">1</span>);</span><br><span class="line">  <span class="comment">// Load any modules that want to be loaded before default modules are loaded up.</span></span><br><span class="line">  <span class="keyword">if</span> (!IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PreDefault) || !IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PreDefault))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">1</span>);</span><br><span class="line">  <span class="comment">// Load modules that are configured to load in the default phase</span></span><br><span class="line">  <span class="keyword">if</span> (!IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::Default) || !IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::Default))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">1</span>);</span><br><span class="line">  <span class="comment">// Load any modules that want to be loaded after default modules are loaded up.</span></span><br><span class="line">  <span class="keyword">if</span> (!IProjectManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForProject</span>(ELoadingPhase::PostDefault) || !IPluginManager::<span class="built_in">Get</span>().<span class="built_in">LoadModulesForEnabledPlugins</span>(ELoadingPhase::PostDefault))</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以从上面的代码看到引擎<code>PreInit</code>启动的模块，以及启动的插件的模块(根据插件的LoadingPhase来决定启动时机)。</p>
+<h2 id="Load-Plugin-Modules"><a href="#Load-Plugin-Modules" class="headerlink" title="Load Plugin Modules"></a>Load Plugin Modules</h2><p>在上文中整理的代码中可以看到，项目的插件Module也是在<code>FEngineLoop::PreInit</code>中加载的。<br>写过UE的插件的都知道，UE的插件配置(<strong>.uplugin</strong>)里面有两个选项：<code>Type</code>和<code>LoadingPhase</code>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;FileVersion&quot;</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="string">&quot;Version&quot;</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="string">&quot;VersionName&quot;</span>: <span class="string">&quot;1.0&quot;</span>,</span><br><span class="line">  <span class="string">&quot;FriendlyName&quot;</span>: <span class="string">&quot;TaskTools&quot;</span>,</span><br><span class="line">  <span class="string">&quot;Description&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;Category&quot;</span>: <span class="string">&quot;Other&quot;</span>,</span><br><span class="line">  <span class="string">&quot;CreatedBy&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;CreatedByURL&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;DocsURL&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;MarketplaceURL&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;SupportURL&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;CanContainContent&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">  <span class="string">&quot;IsBetaVersion&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">  <span class="string">&quot;Installed&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">  <span class="string">&quot;Modules&quot;</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="string">&quot;Name&quot;</span>: <span class="string">&quot;TaskTools&quot;</span>,</span><br><span class="line">      <span class="string">&quot;Type&quot;</span>: <span class="string">&quot;Runtime&quot;</span>,</span><br><span class="line">      <span class="string">&quot;LoadingPhase&quot;</span>: <span class="string">&quot;Default&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中的Modules下的<code>Type</code>和<code>LoadingPhase</code>决定了引擎启动时该Plugin下的Module是否加载以及加载的时机。<br>Type是必要参数，LadingPhase是可选参数，默认是Default.</p>
+<ul>
+<li>Type：决定了在不同运行环境的项目是否加载Module</li>
+<li>LoadingPhase：决定了该Module的加载时机</li>
+</ul>
+<h3 id="Plugin-Type-Required"><a href="#Plugin-Type-Required" class="headerlink" title="Plugin:Type(Required)"></a>Plugin:Type(Required)</h3><blockquote>
+<p>Sets the type of Module. Valid options are <code>Runtime</code>, <code>RuntimeNoCommandlet</code>, <code>Developer</code>, <code>Editor</code>, <code>EditorNoCommandlet</code>, and <code>Program</code>. This type determines which types of applications this Plugin’s Module is suitable for loading in. For example, some plugins may include modules that are only designed to be loaded when the editor is running. Runtime modules will be loaded in all cases, even in shipped games. Developer modules will only be loaded in development runtime or editor builds, but never in shipping builds. Editor modules will only be loaded when the editor is starting up. Your Plugin can use a combination of modules of different types.</p>
+</blockquote>
+<p>Type可选的项如下(在<code>FModuleDescriptor::Read</code>从json中读入)：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> EHostType</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">enum</span> <span class="title class_">Type</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">// Any target using the UE4 runtime</span></span><br><span class="line">    Runtime,</span><br><span class="line">    <span class="comment">// Any target except for commandlet</span></span><br><span class="line">    RuntimeNoCommandlet,</span><br><span class="line">    <span class="comment">// Any target or program</span></span><br><span class="line">    RuntimeAndProgram,</span><br><span class="line">    <span class="comment">// Loaded only in cooked builds</span></span><br><span class="line">    CookedOnly,</span><br><span class="line">    <span class="comment">// Loaded only when the engine has support for developer tools enabled</span></span><br><span class="line">    Developer,</span><br><span class="line">    <span class="comment">// Loaded only by the editor</span></span><br><span class="line">    Editor,</span><br><span class="line">    <span class="comment">// Loaded only by the editor, except when running commandlets</span></span><br><span class="line">    EditorNoCommandlet,</span><br><span class="line">    <span class="comment">// Loaded only by programs</span></span><br><span class="line">    Program,</span><br><span class="line">    <span class="comment">// Loaded only by servers</span></span><br><span class="line">    ServerOnly,</span><br><span class="line">    <span class="comment">// Loaded only by clients</span></span><br><span class="line">    ClientOnly,</span><br><span class="line">    <span class="comment">// <span class="doctag">NOTE:</span> If you add a new value, make sure to update the ToString() method below!</span></span><br><span class="line"></span><br><span class="line">    Max</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Plugin-LoadingPhase-Optional"><a href="#Plugin-LoadingPhase-Optional" class="headerlink" title="Plugin:LoadingPhase(Optional)"></a>Plugin:LoadingPhase(Optional)</h3><p><code>.uplugin</code> Module LoadingPhase Descriptors.</p>
+<blockquote>
+<p>If specified, controls when the plugin is loaded at start-up. This is an advanced option that should not normally be required. The valid options are <code>Default</code>(which is used when no LoadingPhase is specified), <code>PreDefault</code>, and <code>PostConfigInit</code>. <code>PostConfigInit</code> enables the module to be loaded before the engine has finished starting up key subsystems. <code>PreDefault</code> loads just before the normal phase. Typically, this is only needed if you expect game modules to depend directly on content within your plugin, or types declared within the plugin’s code.</p>
+</blockquote>
+<p>如果<code>.upugin</code>中没有指定<code>LoadingPhase</code>项，则默认是<code>Default</code>，LoadingPhase的可选项如下:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> ELoadingPhase</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">enum</span> <span class="title class_">Type</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">/** Loaded before the engine is fully initialized, immediately after the config system has been initialized.  Necessary only for very low-level hooks */</span></span><br><span class="line">    PostConfigInit,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Loaded before the engine is fully initialized for modules that need to hook into the loading screen before it triggers */</span></span><br><span class="line">    PreLoadingScreen,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Right before the default phase */</span></span><br><span class="line">    PreDefault,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Loaded at the default loading point during startup (during engine init, after game modules are loaded.) */</span></span><br><span class="line">    Default,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Right after the default phase */</span></span><br><span class="line">    PostDefault,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** After the engine has been initialized */</span></span><br><span class="line">    PostEngineInit,</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Do not automatically load this module */</span></span><br><span class="line">    None,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// <span class="doctag">NOTE:</span> If you add a new value, make sure to update the ToString() method below!</span></span><br><span class="line">    Max</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FProjectManager-LoadModulesForProject"><a href="#FProjectManager-LoadModulesForProject" class="headerlink" title="FProjectManager::LoadModulesForProject"></a>FProjectManager::LoadModulesForProject</h3><p><code>FEngineLoop::PreInit</code>中通过对<code>IProjectManager::Get().LoadModulesForProject</code>的调用来加载指定LoadingPhase的插件Module：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime\Project\Private\ModuleDescriptor.cpp</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FProjectManager::LoadModulesForProject</span><span class="params">( <span class="type">const</span> ELoadingPhase::Type LoadingPhase )</span></span></span><br></pre></td></tr></table></figure>
+<p>它里面将Module的加载转发到了FModuleDescriptor::LoadModulesForPhase，并对调用的结果做了错误检测(平常见到的插件的编译失败就是在这一步提示的)：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FProjectManager::LoadModulesForProject</span><span class="params">( <span class="type">const</span> ELoadingPhase::Type LoadingPhase )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">DECLARE_SCOPE_CYCLE_COUNTER</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Loading Game Modules&quot;</span>), STAT_GameModule, STATGROUP_LoadTime);</span><br><span class="line"></span><br><span class="line">  <span class="type">bool</span> bSuccess = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( CurrentProject.<span class="built_in">IsValid</span>() )</span><br><span class="line">  &#123;</span><br><span class="line">    TMap&lt;FName, EModuleLoadResult&gt; ModuleLoadFailures;</span><br><span class="line">    FModuleDescriptor::<span class="built_in">LoadModulesForPhase</span>(LoadingPhase, CurrentProject-&gt;Modules, ModuleLoadFailures);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ( ModuleLoadFailures.<span class="built_in">Num</span>() &gt; <span class="number">0</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      FText FailureMessage;</span><br><span class="line">      <span class="keyword">for</span> ( <span class="keyword">auto</span> FailureIt = ModuleLoadFailures.<span class="built_in">CreateConstIterator</span>(); FailureIt; ++FailureIt )</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="type">const</span> EModuleLoadResult FailureReason = FailureIt.<span class="built_in">Value</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>( FailureReason != EModuleLoadResult::Success )</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="type">const</span> FText TextModuleName = FText::<span class="built_in">FromName</span>(FailureIt.<span class="built_in">Key</span>());</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> ( FailureReason == EModuleLoadResult::FileNotFound )</span><br><span class="line">          &#123;</span><br><span class="line">            FailureMessage = FText::<span class="built_in">Format</span>( <span class="built_in">LOCTEXT</span>(<span class="string">&quot;PrimaryGameModuleNotFound&quot;</span>, <span class="string">&quot;The game module &#x27;&#123;0&#125;&#x27; could not be found. Please ensure that this module exists and that it is compiled.&quot;</span>), TextModuleName );</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">if</span> ( FailureReason == EModuleLoadResult::FileIncompatible )</span><br><span class="line">          &#123;</span><br><span class="line">            FailureMessage = FText::<span class="built_in">Format</span>( <span class="built_in">LOCTEXT</span>(<span class="string">&quot;PrimaryGameModuleIncompatible&quot;</span>, <span class="string">&quot;The game module &#x27;&#123;0&#125;&#x27; does not appear to be up to date. This may happen after updating the engine. Please recompile this module and try again.&quot;</span>), TextModuleName );</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">if</span> ( FailureReason == EModuleLoadResult::FailedToInitialize )</span><br><span class="line">          &#123;</span><br><span class="line">            FailureMessage = FText::<span class="built_in">Format</span>( <span class="built_in">LOCTEXT</span>(<span class="string">&quot;PrimaryGameModuleFailedToInitialize&quot;</span>, <span class="string">&quot;The game module &#x27;&#123;0&#125;&#x27; could not be successfully initialized after it was loaded.&quot;</span>), TextModuleName );</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">if</span> ( FailureReason == EModuleLoadResult::CouldNotBeLoadedByOS )</span><br><span class="line">          &#123;</span><br><span class="line">            FailureMessage = FText::<span class="built_in">Format</span>( <span class="built_in">LOCTEXT</span>(<span class="string">&quot;PrimaryGameModuleCouldntBeLoaded&quot;</span>, <span class="string">&quot;The game module &#x27;&#123;0&#125;&#x27; could not be loaded. There may be an operating system error or the module may not be properly set up.&quot;</span>), TextModuleName );</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">else</span> </span><br><span class="line">          &#123;</span><br><span class="line">            <span class="built_in">ensure</span>(<span class="number">0</span>);  <span class="comment">// If this goes off, the error handling code should be updated for the new enum values!</span></span><br><span class="line">            FailureMessage = FText::<span class="built_in">Format</span>( <span class="built_in">LOCTEXT</span>(<span class="string">&quot;PrimaryGameModuleGenericLoadFailure&quot;</span>, <span class="string">&quot;The game module &#x27;&#123;0&#125;&#x27; failed to load for an unspecified reason.  Please report this error.&quot;</span>), TextModuleName );</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="comment">// Just report the first error</span></span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      FMessageDialog::<span class="built_in">Open</span>(EAppMsgType::Ok, FailureMessage);</span><br><span class="line">      bSuccess = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bSuccess;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FModuleDescriptor-LoadModulesForPhase"><a href="#FModuleDescriptor-LoadModulesForPhase" class="headerlink" title="FModuleDescriptor::LoadModulesForPhase"></a>FModuleDescriptor::LoadModulesForPhase</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Runtime\Project\Private\ModuleDescriptor.cpp</span></span><br><span class="line"><span class="comment">// LoadingPhase - is want load Module LoadingPhase Descriptor</span></span><br><span class="line"><span class="comment">// Modules - is current project all modoules(CurrentProject-&gt;Modules)</span></span><br><span class="line"><span class="comment">// ModuleLoadErrors - is module-moduleLoadError mapping</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FModuleDescriptor::LoadModulesForPhase</span><span class="params">(ELoadingPhase::Type LoadingPhase, <span class="type">const</span> TArray&lt;FModuleDescriptor&gt;&amp; Modules, TMap&lt;FName, EModuleLoadResult&gt;&amp; ModuleLoadErrors)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function">FScopedSlowTask <span class="title">SlowTask</span><span class="params">(Modules.Num())</span></span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> Idx = <span class="number">0</span>; Idx &lt; Modules.<span class="built_in">Num</span>(); Idx++)</span><br><span class="line">  &#123;</span><br><span class="line">    SlowTask.<span class="built_in">EnterProgressFrame</span>(<span class="number">1</span>);</span><br><span class="line">    <span class="type">const</span> FModuleDescriptor&amp; Descriptor = Modules[Idx];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Don&#x27;t need to do anything if this module is already loaded</span></span><br><span class="line">    <span class="keyword">if</span> (!FModuleManager::<span class="built_in">Get</span>().<span class="built_in">IsModuleLoaded</span>(Descriptor.Name))</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> (LoadingPhase == Descriptor.LoadingPhase &amp;&amp; Descriptor.<span class="built_in">IsLoadedInCurrentConfiguration</span>())</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="comment">// @todo plugin: DLL search problems.  Plugins that statically depend on other modules within this plugin may not be found?  Need to test this.</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// <span class="doctag">NOTE:</span> Loading this module may cause other modules to become loaded, both in the engine or game, or other modules </span></span><br><span class="line">        <span class="comment">//       that are part of this project or plugin.  That&#x27;s totally fine.</span></span><br><span class="line">        EModuleLoadResult FailureReason;</span><br><span class="line">        IModuleInterface* ModuleInterface = FModuleManager::<span class="built_in">Get</span>().<span class="built_in">LoadModuleWithFailureReason</span>(Descriptor.Name, FailureReason);</span><br><span class="line">        <span class="keyword">if</span> (ModuleInterface == <span class="literal">nullptr</span>)</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="comment">// The module failed to load. Note this in the ModuleLoadErrors list.</span></span><br><span class="line">          ModuleLoadErrors.<span class="built_in">Add</span>(Descriptor.Name, FailureReason);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数的实现就是对当前项目的所有模块进行一次遍历，当遍历Module的<code>LoadingPhase</code>匹配传入的<code>LoadingPhase</code>参数以及该Module的<code>Type</code>符合当前的运行环境(通过<strong>FModuleDescriptor::IsLoadedInCurrentConfiguration</strong>来判断)，则加载Module.</p>
+<h3 id="FModuleDescriptor-IsLoadedInCurrentConfiguration"><a href="#FModuleDescriptor-IsLoadedInCurrentConfiguration" class="headerlink" title="FModuleDescriptor::IsLoadedInCurrentConfiguration"></a>FModuleDescriptor::IsLoadedInCurrentConfiguration</h3><p><code>FModuleDescriptor::IsLoadedInCurrentConfiguration</code>的作用就是根据当前的模块的<code>Type</code>判断与当前的运行环境是否相匹配，从而返回bool决定是否加载Module。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FModuleDescriptor::IsLoadedInCurrentConfiguration</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">// Check that the module is built for this configuration</span></span><br><span class="line">  <span class="keyword">if</span>(!<span class="built_in">IsCompiledInCurrentConfiguration</span>())</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Check that the runtime environment allows it to be loaded</span></span><br><span class="line">  <span class="keyword">switch</span> (Type)</span><br><span class="line">  &#123;</span><br><span class="line">  <span class="keyword">case</span> EHostType::RuntimeAndProgram:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> (WITH_ENGINE || WITH_PLUGIN_SUPPORT)</span></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::Runtime:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> (WITH_ENGINE || WITH_PLUGIN_SUPPORT) &amp;&amp; !IS_PROGRAM</span></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">case</span> EHostType::RuntimeNoCommandlet:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> (WITH_ENGINE || WITH_PLUGIN_SUPPORT)  &amp;&amp; !IS_PROGRAM</span></span><br><span class="line">      <span class="keyword">if</span>(!<span class="built_in">IsRunningCommandlet</span>()) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::CookedOnly:</span><br><span class="line">    <span class="keyword">return</span> FPlatformProperties::<span class="built_in">RequiresCookedData</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::Developer:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> WITH_UNREAL_DEVELOPER_TOOLS</span></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::Editor:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">      <span class="keyword">if</span>(GIsEditor) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::EditorNoCommandlet:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> WITH_EDITOR</span></span><br><span class="line">      <span class="keyword">if</span>(GIsEditor &amp;&amp; !<span class="built_in">IsRunningCommandlet</span>()) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::Program:</span><br><span class="line">    <span class="meta">#<span class="keyword">if</span> WITH_PLUGIN_SUPPORT &amp;&amp; IS_PROGRAM</span></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::ServerOnly:</span><br><span class="line">    <span class="keyword">return</span> !FPlatformProperties::<span class="built_in">IsClientOnly</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">case</span> EHostType::ClientOnly:</span><br><span class="line">    <span class="keyword">return</span> !<span class="built_in">IsRunningDedicatedServer</span>();</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至此，引擎启动时加载的引擎Module和项目的插件Module都启动完毕了。</p>
+<h2 id="ChangeLog"><a href="#ChangeLog" class="headerlink" title="ChangeLog"></a>ChangeLog</h2><ul>
+<li><strong>2019-03-20 16:24:32</strong> 增加引擎启动时加载模块的内容</li>
+<li><strong>2019-03-21 12:41:52</strong> 增加插件Module启动的内容</li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/24007/" target="_blank">引擎源码分析：模块的加载和启动</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2019年03月19日 11时11分<br/>
+             
+              <span>更新时间:</span>2019年03月30日 15时38分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有5.5k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/24007/" target="_blank" title="引擎源码分析：模块的加载和启动">https://imzlp.com/posts/24007/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/24007/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/23224/" rel="prev" title="LaTeX数学符号速查表">
+      <i class="fa fa-chevron-left"></i> LaTeX数学符号速查表
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/6362/" rel="next" title="Build flow of the Unreal Engine4 project">
+      Build flow of the Unreal Engine4 project <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Forward"><span class="nav-number">1.</span> <span class="nav-text">Forward</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Module-Implementation"><span class="nav-number">2.</span> <span class="nav-text">Module Implementation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IS-MONOLITHIC"><span class="nav-number">3.</span> <span class="nav-text">IS_MONOLITHIC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IS-MONOLITHIC-1"><span class="nav-number">4.</span> <span class="nav-text">!IS_MONOLITHIC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IModuleInterface"><span class="nav-number">5.</span> <span class="nav-text">IModuleInterface</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Load-Modules-when-the-Engine-Launch"><span class="nav-number">6.</span> <span class="nav-text">Load Modules when the Engine Launch</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#FEngineLoop-LoadCoreModules"><span class="nav-number">6.1.</span> <span class="nav-text">FEngineLoop::LoadCoreModules</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FEngineLoop-LoadPreInitModules"><span class="nav-number">6.2.</span> <span class="nav-text">FEngineLoop::LoadPreInitModules</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#FPlatformApplicationMisc-LoadPreInitModules"><span class="nav-number">6.2.1.</span> <span class="nav-text">FPlatformApplicationMisc::LoadPreInitModules</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FEngineLoop-LoadStartupCoreModules"><span class="nav-number">6.3.</span> <span class="nav-text">FEngineLoop::LoadStartupCoreModules</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#FPlatformApplicationMisc-LoadStartupModules"><span class="nav-number">6.3.1.</span> <span class="nav-text">FPlatformApplicationMisc::LoadStartupModules</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FEngineLoop-LoadStartupModules"><span class="nav-number">6.4.</span> <span class="nav-text">FEngineLoop::LoadStartupModules</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Load-Plugin-Modules"><span class="nav-number">7.</span> <span class="nav-text">Load Plugin Modules</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Plugin-Type-Required"><span class="nav-number">7.1.</span> <span class="nav-text">Plugin:Type(Required)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Plugin-LoadingPhase-Optional"><span class="nav-number">7.2.</span> <span class="nav-text">Plugin:LoadingPhase(Optional)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FProjectManager-LoadModulesForProject"><span class="nav-number">7.3.</span> <span class="nav-text">FProjectManager::LoadModulesForProject</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FModuleDescriptor-LoadModulesForPhase"><span class="nav-number">7.4.</span> <span class="nav-text">FModuleDescriptor::LoadModulesForPhase</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FModuleDescriptor-IsLoadedInCurrentConfiguration"><span class="nav-number">7.5.</span> <span class="nav-text">FModuleDescriptor::IsLoadedInCurrentConfiguration</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ChangeLog"><span class="nav-number">8.</span> <span class="nav-text">ChangeLog</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/24007/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

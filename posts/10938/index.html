@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="HotPatcher是我之前开源的一个UE4热更新版本管理和资源打包工具，可以方便地进行版本间的差异分析和pak打包。之前的文章为了直观地介绍都是基于手动地在编辑器中进行配置和打包的，在真正的工程实践中，可以自动化的重复操作就要避免手动的参与，较早之前我就在插件中添加了commandlet的支持，近期修复了一些问题以及增加了很多针对commandlet的优化，本篇文章是基于HotPatcher的自">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE热更新：基于HotPatcher的自动化流程">
+<meta property="og:url" content="https://imzlp.com/posts/10938/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="HotPatcher是我之前开源的一个UE4热更新版本管理和资源打包工具，可以方便地进行版本间的差异分析和pak打包。之前的文章为了直观地介绍都是基于手动地在编辑器中进行配置和打包的，在真正的工程实践中，可以自动化的重复操作就要避免手动的参与，较早之前我就在插件中添加了commandlet的支持，近期修复了一些问题以及增加了很多针对commandlet的优化，本篇文章是基于HotPatcher的自">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206152838.webp">
+<meta property="article:published_time" content="2021-01-24T12:47:34.000Z">
+<meta property="article:modified_time" content="2021-01-24T12:47:34.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="HotPatcher">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230206152838.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/10938/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE热更新：基于HotPatcher的自动化流程 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/10938/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE热更新：基于HotPatcher的自动化流程<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2021-01-24-10938.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-24 12:47 12:47:34:47" itemprop="dateCreated datePublished" datetime="2021-01-24T12:47:34+00:00">2021-01-24 12:47</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E7%83%AD%E6%9B%B4%E6%96%B0/" itemprop="url" rel="index"><span itemprop="name">热更新</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/10938/" class="post-meta-item leancloud_visitors" data-flag-title="UE热更新：基于HotPatcher的自动化流程" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>是我之前开源的一个UE4热更新版本管理和资源打包工具，可以方便地进行版本间的差异分析和pak打包。之前的文章为了直观地介绍都是基于手动地在编辑器中进行配置和打包的，在真正的工程实践中，可以自动化的重复操作就要避免手动的参与，较早之前我就在插件中添加了commandlet的支持，近期修复了一些问题以及增加了很多针对commandlet的优化，本篇文章是基于HotPatcher的自动化热更新流程的工程实践。</p>
+<span id="more"></span>
+
+<p>在之前的文章中，介绍了<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>的工作机制，可以从以下几篇文章中获取更详细的信息：</p>
+<ul>
+<li><a href="https://imzlp.com/posts/17590/">UE4 资源热更打包工具 HotPatcher</a></li>
+<li><a href="https://imzlp.com/posts/17371">UE4 热更新：需求分析与方案设计</a></li>
+<li><a href="https://imzlp.com/posts/11043/">2020 Unreal Open Day</a></li>
+</ul>
+<p>从流程上简单的划分为以下几个步骤：</p>
+<ol>
+<li>使用UE的方式打基础包；</li>
+<li>提取基础包的paklist文件，导入HotPatcher中进行分析；</li>
+<li>生成基础包的Release信息（多平台使用一份Release）；</li>
+<li>热更版本基于Release信息进行比对；</li>
+<li>生成Patch；</li>
+</ol>
+<p>所以本篇文章的目的就是实现这几个关键步骤的可配置自动化流程，并且这个流程和所有的配置文件不应该受到引擎、项目路径在不同机器的差异等非关键因素的影响，实现真正通用的配置和流程。</p>
+<h2 id="自动化出基础包"><a href="#自动化出基础包" class="headerlink" title="自动化出基础包"></a>自动化出基础包</h2><p>当需要集成到ci/cd进行自动化构建出包，可以使用UE的BuildGraph来指导UBT和UAT工作。</p>
+<p>可以直接使用下面的命令（引擎、项目、平台根据自己实际情况修改）：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">E:\UnrealEngine\Launcher\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat BuildCookRun -nocompileeditor -installed -nop4 -project=&quot;E:/Examples/Blank425/Blank425.uproject&quot; -cook -stage -archive -archivedirectory=&quot;E:/Examples/Blank425/Package&quot; -package -pak -prereqs -nodebuginfo -targetplatform=Android -cookflavor=ASTC -build -target=Blank425 -clientconfig=Development -utf8output</span><br></pre></td></tr></table></figure>
+
+<p>支持的平台名字为：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Win32,Win64,HoloLens,Mac,XboxOne,PS4,IOS,Android,HTML5,Linux,LinuxAArch64,AllDesktop,TVOS,Switch,Lumin</span><br></pre></td></tr></table></figure>
+
+<p>也可以通过自己写BuildGraph的脚本来更精准地控制打包的阶段，这里不再赘述，可以自行在网络上搜索相关文章。</p>
+<p>通过上面的命令可以通过命令行的方式将UE的项目打包，可以自己封装一层脚本集成到ci/cd平台上。</p>
+<p>打包不是本节的重点，重点是在打包后的第一时间提取当前打包时UE产生的<code>paklist*.txt</code>文件。</p>
+<p>UE打基础包时会把项目中配置的资源打包成pak文件，UE的打包流程中也是通过创建了一个<code>paklist*.txt</code>文件来记录哪些资源需要被打成pak，所以，只要提取了<code>paklist*.txt</code>文件就能知道当前基础包中包含了哪些<strong>文件</strong>（注意不仅仅是uasset）。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>提供了两种方式来生成基础包的<code>Release</code>信息（用于记录基础包中的所有资源信息）：</p>
+<ol>
+<li>通过导入打基础包时生成的paklist文件</li>
+<li>通过自己指定打包的目录、添加外部文件</li>
+</ol>
+<p>我建议的方式是使用第一种，因为更精准，可以精确地分析出基础包的任何一个文件（uasset/non-uasset），而且可以分析出不同平台的基础包中的差异文件，实现完全精确地基础包信息导出。</p>
+<p>UE打基础包时默认会把paklist文件存放在以下路径中（源码版与安装版的路径不同）：</p>
+<p><strong>安装版引擎</strong>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%AppData%\Unreal Engine\AutomationTool\Logs\引擎路径拼接\PakList_*.txt</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>引擎路径拼接</code>的规则为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 引擎路径</span></span><br><span class="line">E:\UnrealEngine\Launcher\UE_4.25</span><br><span class="line"><span class="comment"># 拼接之后</span></span><br><span class="line">E+UnrealEngine+Launcher+UE_4.25</span><br></pre></td></tr></table></figure>
+
+<p><strong>源码版引擎</strong>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Engine\Programs\AutomationTool\Saved\Logs\BuildCookRun\PakList_*.txt</span><br></pre></td></tr></table></figure>
+
+<p>所以，当打完基础包之后就按照上面的路径规则提取<code>paklist_*.txt</code>文件即可，以安装版为例，Win上可以使用以下文件拷贝命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> f|xcopy /y/i/s/e <span class="string">&quot;%AppData%\Unreal Engine\AutomationTool\Logs\E+UnrealEngine+Launcher+UE_4.25\PakList_*.txt&quot;</span> <span class="string">&quot;E:\ClientVersion\0.0.1.0&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>就会把当前该目录下所有符合<code>paklist_*.txt</code>规则的文件拷贝到指定目录了。</p>
+<p>为了统一获取源码版和安装版paklist的路径差异，可以使用Python写个脚本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">GetPakListFileRules</span>(<span class="params">target_platform,engine_root_dir</span>):</span><br><span class="line">    b_installed_engine = <span class="literal">False</span></span><br><span class="line">    installedbuild_txt_path = <span class="string">&quot;%s\\Engine\\Build\\InstalledBuild.txt&quot;</span> % engine_root_dir</span><br><span class="line">    <span class="keyword">if</span> os.path.exists(InstalledBuild_txt_path):</span><br><span class="line">        b_installed_engine = <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">    ue_paklist_dir = <span class="string">&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> b_installed_engine:</span><br><span class="line">        sys_appdata_dir = os.getenv(<span class="string">&quot;APPDATA&quot;</span>)</span><br><span class="line">        ue_aut_log_dir = <span class="string">&quot;Unreal Engine\\AutomationTool\\Logs&quot;</span></span><br><span class="line">        engine_log_dir = engine_root_dir</span><br><span class="line">        engine_log_dir = engine_log_dir.replace(<span class="string">&#x27;:&#x27;</span>,<span class="string">&#x27;&#x27;</span>)</span><br><span class="line">        engine_log_dir = engine_log_dir.replace(<span class="string">&#x27;\\&#x27;</span>,<span class="string">&#x27;+&#x27;</span>)</span><br><span class="line">        engine_log_dir = engine_log_dir.replace(<span class="string">&#x27;/&#x27;</span>,<span class="string">&#x27;+&#x27;</span>)</span><br><span class="line">        ue_paklist_dir = <span class="string">&quot;%s\\%s\\%s\\BuildCookRun&quot;</span> % (sys_appdata_dir,ue_aut_log_dir,engine_log_dir)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        ue_paklist_dir = <span class="string">&quot;%s\\Engine\\Programs\\AutomationTool\\Saved\\Logs\\BuildCookRun&quot;</span> % engine_root_dir</span><br><span class="line">    <span class="built_in">print</span>(ue_paklist_dir)</span><br><span class="line">    ue_pak_list_rule = <span class="string">&quot;%s\\PakList_pakchunk*-%s.txt&quot;</span> % (ue_paklist_dir,GetRealPlatformName(target_platform))</span><br><span class="line">    <span class="keyword">return</span> ue_pak_list_rule</span><br></pre></td></tr></table></figure>
+<p>调用方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ue_paklist_rules = GetPakListFileRules(<span class="string">&quot;Android_ASTC&quot;</span>,<span class="string">&quot;C:\\Program Files\\Epic Games\\UE_4.26&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>根据自己项目的需要简单修改即可。</p>
+<blockquote>
+<p>注意：每打包一个平台都<strong>必须要立即提取</strong>该平台基础包的paklist文件，因为当执行下一个打包任务的时候，该目录下的文件会被清理。</p>
+</blockquote>
+<h2 id="自动化提取基础包信息"><a href="#自动化提取基础包信息" class="headerlink" title="自动化提取基础包信息"></a>自动化提取基础包信息</h2><p>在上一步自动化出基础包中，实现了两个关键点的自动化：</p>
+<ol>
+<li>UE的打包</li>
+<li>提取当前平台的基础包的paklist</li>
+</ol>
+<p>这一节的重点，则是当我们打包了<code>0.0.1.0</code>版本数个平台的基础包和提取了相应的paklist文件之后，如何生成多平台的release的流程。</p>
+<p>提取到的几个平台的Paklist目录结构如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">E:\ClientVersion\0.0.1.0&gt;tree /a /f</span><br><span class="line">卷 Document 的文件夹 PATH 列表</span><br><span class="line">卷序列号为 0003-AEBB</span><br><span class="line">E:.</span><br><span class="line">+---Android_ASTC</span><br><span class="line">|       PakList_pakchunk0-Android_ASTC.txt</span><br><span class="line">|       PakList_pakchunk1-Android_ASTC.txt</span><br><span class="line">|       PakList_pakchunk2-Android_ASTC.txt</span><br><span class="line">|</span><br><span class="line">+---IOS</span><br><span class="line">|       PakList_pakchunk0-ios.txt</span><br><span class="line">|       PakList_pakchunk1-ios.txt</span><br><span class="line">|       PakList_pakchunk2-ios.txt</span><br><span class="line">|</span><br><span class="line">\---WindowsNoEditor</span><br><span class="line">        PakList_pakchunk0-WindowsNoEditor.txt</span><br><span class="line">        PakList_pakchunk1-WindowsNoEditor.txt</span><br><span class="line">        PakList_pakchunk2-WindowsNoEditor.txt</span><br></pre></td></tr></table></figure>
+
+<p>几个平台的paklist的存放结构和文件名是有相同规则的，只要有规则就可以自动化处理。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>提供了<code>HotRelease</code>的Commandlet，用于命令行的方式来导出Release，可以指定配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor.exe PROJECT.uproject -run=HotRelease -config=<span class="string">&quot;release-config.json&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>但是，简单地指定配置文件其实对命令行是不那么友好的，因为首先需要构造出config文件才能指定，所以我近期对HotRelease的Commandlet做了增强，可以完全通过命令行来控制config的参数，并且可以不指定config文件。</p>
+<p>因为前面已经提到HotPather支持两种模式导出Release的信息，所以如果当使用导入<code>paklist</code>时，只需要指定以下几个关键参数即可：</p>
+<ol>
+<li><code>VersionId</code> 当前Release的版本号</li>
+<li><code>ByPakList</code> 开启Paklist模式</li>
+<li><code>PlatformsPakListFiles</code> 指定各个平台的对应的paklist*.txt文件</li>
+<li><code>SavePath</code> 生成Release 的存储路径</li>
+</ol>
+<p>我使用UE的反射机制实现了可以在命令行指定参数结构中定义的名字来构造出真实的配置信息（暂不支持指定数组），可以在执行commandlet时直接指定上面的参数。</p>
+<p>所以，需要使用的HotRelease的Commandlet命令为（方便观看我对参数换行拆分）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">E:\UnrealEngine\Launcher\UE_4.25\Engine\Binaries\UE4Editor-cmd.exe</span><br><span class="line">E:\Examples\Blank425\Blank425.uproject</span><br><span class="line">-run=HotRelease</span><br><span class="line">-versionid=<span class="string">&quot;0.0.1.0&quot;</span></span><br><span class="line">-ByPakList=<span class="literal">true</span></span><br><span class="line">-AddPlatformPakList=WindowsNoEditor+E:\ClientVersion\0.0.1.0\WindowsNoEditor\PakList_pakchunk0-WindowsNoEditor.txt+E:\ClientVersion\0.0.1.0\WindowsNoEditor\PakList_pakchunk1-WindowsNoEditor.txt+E:\ClientVersion\0.0.1.0\WindowsNoEditor\PakList_pakchunk2-WindowsNoEditor.txt</span><br><span class="line">-savepath.path=<span class="string">&quot;E:\ClientVersion\&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>AddPlatformPakList</code>是通过命令行指定<code>Platform-PaklistFiles</code>的参数，要求为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PLATFORM_NAME+Paklist_0.txt+PakList_1.txt,PLATFORM_NAME+Paklist_0.txt+PakList_1.txt</span><br></pre></td></tr></table></figure>
+
+<p>可以指定多个平台，以逗号(<code>,</code>)分割，每个平台的节第一个为平台名通过<code>+</code>号分割，后面可以指定任意数量的Paklist文件。</p>
+<p>以指定<code>WindowsNoEditor</code>/<code>Android_ASTC</code>/<code>IOS</code>三个平台为例：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-AddPlatformPakList=WindowsNoEditor+E:\Paklist_chunk01_WindowsNoEditor.txt+E:\Paklist_chunk02_WindowsNoEditor.txt,Android_ASTC+E:\Paklist_chunk01_Android_ASTC.txt+E:\Paklist_chunk02_Android_ASTC.txt,IOS+E:\Paklist_chunk01_IOS.txt+E:\Paklist_chunk02_IOS.txt</span><br></pre></td></tr></table></figure>
+
+<p>指定平台和文件路径都是有规则的，可以使用<code>Python</code>等脚本来针对项目的管理风格进行封装，最后直接使用<code>os.system</code>来执行commandlet即可，就会与在Editor中在HotPatcher编辑器中手动执行ByRelease一样的行为。</p>
+<blockquote>
+<p>注意：虽然Release.json中记录了Non-uasset文件的绝对路径，但是实际上进行版本比对时，是不检查文件的绝对路径的，所以Release.json文件是跨机器通用的信息（以资源路径、mount路径进行比对）。</p>
+</blockquote>
+<h2 id="自动化生成Patch"><a href="#自动化生成Patch" class="headerlink" title="自动化生成Patch"></a>自动化生成Patch</h2><p>上一节也已经介绍了如何自动化地生成Release信息，生成Release需要配置的选项不多，但是Patch就有非常多的配置了，所以完全地抛弃config文件是更麻烦的行为，所以我想了一个折衷方案——指定通用配置文件和命令行指定特殊的参数。</p>
+<p>那么，哪些是通用的配置文件呢？</p>
+<ul>
+<li>Patch要扫描的资源目录</li>
+<li>要添加的文件（ini/shaderbytecode/assetregistry）</li>
+<li>Non-uasset的文件、目录</li>
+<li>Chunk的划分</li>
+</ul>
+<p>哪些是可以通过命令行指定的呢？</p>
+<ul>
+<li>VersionID</li>
+<li>基础版本的Release文件</li>
+<li>是否Cook当前Patch中的资源</li>
+<li>要生成Patch的平台</li>
+<li>Pak文件的命名规则</li>
+<li>保存目录</li>
+</ul>
+<p>在老版本的<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>中，配置文件是依赖各种参数的绝对路径的（添加的Non-uasset）文件，近期我做了优化，可以支持相对于工程目录的相对路径。</p>
+<p>以添加<code>Content/Script</code>目录为例，在之前的版本中只能通过选择绝对路径的文件夹：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/10938/hotpatch-abs-path.webp"></p>
+<p>现在可以通过<code>[PROJECT_CONTENT_DIR]</code>来替代：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/10938/hotpatch-relative-path.webp"></p>
+<p>在执行Path的过程中会扫描替换为当前工程的绝对路径。</p>
+<p>支持<code>[]</code>标记的相对路径有以下几个：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[ENGINEDIR]</span><br><span class="line">[ENGINE_CONTENT_DIR]</span><br><span class="line">[PROJECTDIR]</span><br><span class="line">[PROJECT_CONTENT_DIR]</span><br><span class="line">[PROJECT_SAVED_DIR]</span><br><span class="line">[PROJECT_CONFIG_DIR]</span><br></pre></td></tr></table></figure>
+
+<p>可以根据自己的需要使用，使用这种方式，就可以导出一份通用的配置。</p>
+<figure class="highlight json"><figcaption><span>PatchTemplate.json</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">	<span class="attr">&quot;bByBaseVersion&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;baseVersion&quot;</span><span class="punctuation">:</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;filePath&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;versionId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;assetIncludeFilters&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">		<span class="punctuation">&#123;</span></span><br><span class="line">			<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;/Game&quot;</span></span><br><span class="line">		<span class="punctuation">&#125;</span></span><br><span class="line">	<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;assetIgnoreFilters&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bForceSkipContent&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;forceSkipContentRules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">		<span class="punctuation">&#123;</span></span><br><span class="line">			<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;/Engine/Editor&quot;</span></span><br><span class="line">		<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="punctuation">&#123;</span></span><br><span class="line">			<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;/Engine/VREditor&quot;</span></span><br><span class="line">		<span class="punctuation">&#125;</span></span><br><span class="line">	<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;forceSkipAssets&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludeHasRefAssetsOnly&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bAnalysisFilterDependencies&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bRecursiveWidgetTree&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;assetRegistryDependencyTypes&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">		<span class="string">&quot;Packages&quot;</span></span><br><span class="line">	<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;includeSpecifyAssets&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludeAssetRegistry&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludeGlobalShaderCache&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludeShaderBytecode&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludeEngineIni&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludePluginIni&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludeProjectIni&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bEnableExternFilesDiff&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;ignoreDeletionModulesAsset&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;addExternAssetsToPlatform&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">		<span class="punctuation">&#123;</span></span><br><span class="line">			<span class="attr">&quot;targetPlatform&quot;</span><span class="punctuation">:</span> <span class="string">&quot;AllPlatforms&quot;</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;addExternFileToPak&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">			<span class="attr">&quot;addExternDirectoryToPak&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">				<span class="punctuation">&#123;</span></span><br><span class="line">					<span class="attr">&quot;directoryPath&quot;</span><span class="punctuation">:</span></span><br><span class="line">					<span class="punctuation">&#123;</span></span><br><span class="line">						<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;[PROJECT_CONTENT_DIR]/Script&quot;</span></span><br><span class="line">					<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">					<span class="attr">&quot;mountPoint&quot;</span><span class="punctuation">:</span> <span class="string">&quot;../../../Blank425/Content/Script&quot;</span></span><br><span class="line">				<span class="punctuation">&#125;</span></span><br><span class="line">			<span class="punctuation">]</span></span><br><span class="line">		<span class="punctuation">&#125;</span></span><br><span class="line">	<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIncludePakVersionFile&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;pakVersionFileMountPoint&quot;</span><span class="punctuation">:</span> <span class="string">&quot;../../../Blank425/Versions/version.json&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bEnableChunk&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;chunkInfos&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bCookPatchAssets&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;pakCommandOptions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;replacePakCommandTexts&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;unrealPakOptions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">		<span class="string">&quot;-compress&quot;</span><span class="punctuation">,</span></span><br><span class="line">		<span class="string">&quot;-compressionformats=Zlib&quot;</span></span><br><span class="line">	<span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;pakTargetPlatforms&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bCustomPakNameRegular&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;pakNameRegular&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&#123;VERSION&#125;_&#123;CHUNKNAME&#125;_&#123;PLATFORM&#125;_001_P&quot;</span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bIgnoreDeleatedAssetsInfo&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSaveDeletedAssetsToNewReleaseJson&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSavePakList&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSaveDiffAnalysis&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSaveAssetRelatedInfo&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;bSavePatchConfig&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">	<span class="attr">&quot;savePath&quot;</span><span class="punctuation">:</span></span><br><span class="line">	<span class="punctuation">&#123;</span></span><br><span class="line">		<span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">	<span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>这个配置就可以作为生成Path时<strong>资源相关</strong>的通用配置文件，当我们想要修改打包的配置时只需要修改这个文件即可。</p>
+<p>其他的版本相关的参数都可以通过HotPatcher的commandlet命令行来指定了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">E:\UnrealEngine\Launcher\UE_4.25\Engine\Binaries\UE4Editor-cmd.exe</span><br><span class="line">E:\Examples\Blank425\Blank425.uproject</span><br><span class="line">-run=HotPatcher</span><br><span class="line">-config=<span class="string">&quot;E:\ClientVersion\PatchTemplate.json&quot;</span></span><br><span class="line">-versionid=<span class="string">&quot;0.0.1.1&quot;</span></span><br><span class="line">-baseVersion.filePath=<span class="string">&quot;E:\ClientVersion\0.0.1.0\0.0.1.0_Release.json&quot;</span></span><br><span class="line">-AddPatchPlatforms=<span class="string">&quot;WindowsNoEditor,Android_ASTC,IOS&quot;</span></span><br><span class="line">-savePath.path=<span class="string">&quot;E:\ClientVersion\&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>同样，这个命令的参数也是有规律可循的，当目录结构组织比较好的情况下，只要指定当前Patch的基础版本和当前的版本号就可以完全自动化的出包了。</p>
+<p>同样，生成Path的流程也可以通过Python等脚本进行封装，可以在ci/cd平台上指定引擎目录、项目目录、基线版本、当前版本、以及生成哪些平台的patch等参数，方便控制。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本篇文章介绍了使用<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>来自动化执行热更新的流程，包括UE自动化出基础包、paklsit的提取，Release的生成、通用的Patch生成规则等，可以方便地集成至ci/cd平台，避免手动参与的过程。</p>
+<p>后续有时间我会写一份用于<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher">HotPatcher</a>自动化导出Release/Patch的Python脚本，方便直接使用。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/10938/" target="_blank">UE热更新：基于HotPatcher的自动化流程</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2021年01月24日 12时47分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有3.4k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/10938/" target="_blank" title="UE热更新：基于HotPatcher的自动化流程">https://imzlp.com/posts/10938/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/10938/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="tag"># 热更新</a>
+              <a href="/tags/HotPatcher/" rel="tag"># HotPatcher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/13765/" rel="prev" title="UE热更新：拆分基础包">
+      <i class="fa fa-chevron-left"></i> UE热更新：拆分基础包
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/8890/" rel="next" title="对开源的一些思考与想法">
+      对开源的一些思考与想法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E5%87%BA%E5%9F%BA%E7%A1%80%E5%8C%85"><span class="nav-number">1.</span> <span class="nav-text">自动化出基础包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E6%8F%90%E5%8F%96%E5%9F%BA%E7%A1%80%E5%8C%85%E4%BF%A1%E6%81%AF"><span class="nav-number">2.</span> <span class="nav-text">自动化提取基础包信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E7%94%9F%E6%88%90Patch"><span class="nav-number">3.</span> <span class="nav-text">自动化生成Patch</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">4.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/10938/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

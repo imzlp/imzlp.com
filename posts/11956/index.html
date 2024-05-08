@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="通常，UE4开发者获取UE4引擎的方式有两种：  从Epic Games Launcher安装 从Github上Clone代码本地编译  从EpicGamesLauncher安装的是公版引擎，不能修改代码重新编译，可以在根据选择安装支持的平台、调试符号等。自己从Github上Clone代码进行编译的则是源码版引擎，有些功能只能在源码版中使用（比如Standalone Application），但是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BuildGraph：构建支持多平台打包的二进制引擎">
+<meta property="og:url" content="https://imzlp.com/posts/11956/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="通常，UE4开发者获取UE4引擎的方式有两种：  从Epic Games Launcher安装 从Github上Clone代码本地编译  从EpicGamesLauncher安装的是公版引擎，不能修改代码重新编译，可以在根据选择安装支持的平台、调试符号等。自己从Github上Clone代码进行编译的则是源码版引擎，有些功能只能在源码版中使用（比如Standalone Application），但是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323183712.webp">
+<meta property="article:published_time" content="2020-11-08T15:40:19.000Z">
+<meta property="article:modified_time" content="2023-10-22T12:35:18.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="BuildGraph">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/20230323183712.webp">
+
+<link rel="canonical" href="https://imzlp.com/posts/11956/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>BuildGraph：构建支持多平台打包的二进制引擎 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/11956/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          BuildGraph：构建支持多平台打包的二进制引擎<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2020-11-08-11956.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-11-08 15:40 15:40:19:40" itemprop="dateCreated datePublished" datetime="2020-11-08T15:40:19+00:00">2020-11-08 15:40</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-10-22 12:35 12:35:18:35" itemprop="dateModified" datetime="2023-10-22T12:35:18+00:00">2023-10-22 12:35</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E6%9E%84%E5%BB%BA/" itemprop="url" rel="index"><span itemprop="name">构建</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/11956/" class="post-meta-item leancloud_visitors" data-flag-title="BuildGraph：构建支持多平台打包的二进制引擎" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>16 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>通常，UE4开发者获取UE4引擎的方式有两种：</p>
+<ol>
+<li>从Epic Games Launcher安装</li>
+<li>从Github上Clone代码本地编译</li>
+</ol>
+<p>从EpicGamesLauncher安装的是公版引擎，不能修改代码重新编译，可以在根据选择安装支持的平台、调试符号等。<br>自己从Github上Clone代码进行编译的则是源码版引擎，有些功能只能在源码版中使用（比如Standalone Application），但是如果在项目中修改了引擎的代码，导致每个人都需要Clone一遍源码编译一遍引擎，这个过程十分耗时，而且源码版引擎的占用的磁盘空间十分巨大，达到上百G。在当需要把引擎部署到多台构建机时，编译引擎的时间和空间是冗余的，所以需要通过一台机器编译引擎，然后其他的机器只需要拉取编译后的引擎即可，实现与安装版引擎一样的行为。</p>
+<p>本篇文章主要介绍BuildGraph的工作流程，以及对引擎默认构建脚本<code>InstalledEngineBuild.xml</code>的分析；如何使用BuildGraph从源码配置、编译并导出支持Android/IOS打包的二进制引擎、以及如何裁剪和加速整个的构建流程。</p>
+<span id="more"></span>
+
+<p>UE提供了BuildGraph功能使我们可以从源码中构建出和Epic Game Launcher相同的安装版引擎。</p>
+<p>使用参数如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RunUAT.bat BuildGraph -target=<span class="string">&quot;Make Installed Build Win64&quot;</span> -script=Engine/Build/InstalledEngineBuild.xml -<span class="built_in">set</span>:WithMac=<span class="literal">false</span> -<span class="built_in">set</span>:WithAndroid=<span class="literal">false</span> -<span class="built_in">set</span>:WithIOS=<span class="literal">false</span> -<span class="built_in">set</span>:WithTVOS=<span class="literal">false</span> -<span class="built_in">set</span>:WithLinux=<span class="literal">false</span> -<span class="built_in">set</span>:WithHTML5=<span class="literal">false</span> -<span class="built_in">set</span>:WithSwitch=<span class="literal">false</span> -<span class="built_in">set</span>:WithDDC=<span class="literal">false</span> -<span class="built_in">set</span>:WithWin32=<span class="literal">false</span> -<span class="built_in">set</span>:WithLumin=<span class="literal">false</span> -<span class="built_in">set</span>:WithPS4=<span class="literal">false</span> -<span class="built_in">set</span>:WithXboxOne=<span class="literal">false</span> -<span class="built_in">set</span>:WithHoloLens=<span class="literal">false</span> -<span class="built_in">set</span>:GameConfigurations=Development</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>BuildGraph</code>来执行<code>InstalledEngineBuild.xml</code>脚本中的<code>Make Installed Build Win64</code>实现，引擎编译、导出二进制的一条龙流程。</p>
+<p>但是这样有几个问题：默认这样构建出来的只能够打包Windows，不能打包Android/IOS。</p>
+<p>如何构建Android/IOS的二进制引擎，暂时先按下不表，首先先来分析一下UE默认的<code>InstalledEngineBuild.xml</code>脚本。</p>
+<h2 id="优化BuildGraph的构建流程"><a href="#优化BuildGraph的构建流程" class="headerlink" title="优化BuildGraph的构建流程"></a>优化BuildGraph的构建流程</h2><p><code>InstalledEngineBuild.xml</code>是位于引擎的<code>Engine/Build/</code>目录下的BuildGraph的构建脚本，主要实现了通过代码导出二进制引擎的功能，支持了很多的平台。BuildGraph的官方介绍和语法：<a target="_blank" rel="noopener" href="https://docs.unrealengine.com/zh-CN/Programming/BuildTools/AutomationTool/BuildGraph/index.html">BuildGraph</a>。</p>
+<p>我们主要使用<code>Make Installed Build Win64</code>，是它的一个Node实现。</p>
+<p>主要流程如下：</p>
+<ol>
+<li>编译UBT等构建工具</li>
+<li>编译NotForLicence工具</li>
+<li>编译Editor</li>
+<li>编译支持的平台（默认Win64）</li>
+<li>Make Feature Packs</li>
+<li>拷贝构建结果</li>
+</ol>
+<blockquote>
+<p>如果想要修改构建的二进制引擎的导出路径，可以修改<code>InstalledEngineBuild.xml</code>中的<code>BuiltDirectory</code>值。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- Ouput directory for the build --&gt;</span><br><span class="line">&lt;Option Name=&quot;BuiltDirectory&quot; DefaultValue=&quot;$(RootDir)/LocalBuilds/Engine&quot; Description=&quot;Directory for outputting the built engine&quot;/&gt;</span><br><span class="line"></span><br><span class="line">&lt;!-- The local output directory --&gt;</span><br><span class="line">&lt;Property Name=&quot;LocalInstalledDir&quot; Value=&quot;$(BuiltDirectory)/Windows&quot;/&gt;</span><br><span class="line">&lt;Property Name=&quot;LocalInstalledDirMac&quot; Value=&quot;$(BuiltDirectory)/Mac&quot;/&gt;</span><br><span class="line">&lt;Property Name=&quot;LocalInstalledDirLinux&quot; Value=&quot;$(BuiltDirectory)/Linux&quot;/&gt;</span><br></pre></td></tr></table></figure>
+
+<p>而且，经过分析<code>Make Installed Build Win64</code>，发现它其中有很多重复执行的编译流程。</p>
+<p>以编译<code>UE4Game Win64</code>为例：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Node</span> <span class="attr">Name</span>=<span class="string">&quot;Compile UE4Game Win64&quot;</span> <span class="attr">Requires</span>=<span class="string">&quot;Compile UnrealHeaderTool Win64&quot;</span> <span class="attr">Produces</span>=<span class="string">&quot;#UE4Game Win64;#UE4Game Win64 Unstripped;#UE4Game Win64 Stripped;#UE4Game Win64 Unsigned;#UE4Game Win64 Signed&quot;</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">ForEach</span> <span class="attr">Name</span>=<span class="string">&quot;Target&quot;</span> <span class="attr">Values</span>=<span class="string">&quot;UE4Game;$(OptionalClientTarget);$(OptionalServerTarget)&quot;</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">ForEach</span> <span class="attr">Name</span>=<span class="string">&quot;Configuration&quot;</span> <span class="attr">Values</span>=<span class="string">&quot;$(GameConfigurations)&quot;</span>&gt;</span></span><br><span class="line">			<span class="tag">&lt;<span class="name">Compile</span> <span class="attr">Target</span>=<span class="string">&quot;$(Target)&quot;</span> <span class="attr">Platform</span>=<span class="string">&quot;Win64&quot;</span> <span class="attr">Configuration</span>=<span class="string">&quot;$(Configuration)&quot;</span> <span class="attr">Tag</span>=<span class="string">&quot;#UE4Game Win64&quot;</span> <span class="attr">Arguments</span>=<span class="string">&quot;-precompile -allmodules -nolink $(VSCompilerArg) $(TargetDebugInfoArg)&quot;</span>/&gt;</span></span><br><span class="line">			<span class="tag">&lt;<span class="name">Compile</span> <span class="attr">Target</span>=<span class="string">&quot;$(Target)&quot;</span> <span class="attr">Platform</span>=<span class="string">&quot;Win64&quot;</span> <span class="attr">Configuration</span>=<span class="string">&quot;$(Configuration)&quot;</span> <span class="attr">Tag</span>=<span class="string">&quot;#UE4Game Win64&quot;</span> <span class="attr">Arguments</span>=<span class="string">&quot;-precompile $(VSCompilerArg) $(TargetDebugInfoArg)&quot;</span> <span class="attr">Clean</span>=<span class="string">&quot;false&quot;</span>/&gt;</span></span><br><span class="line">		<span class="tag">&lt;/<span class="name">ForEach</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">ForEach</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Node</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，针对同一个编译的Target，使用不同的编译参数执行了两次：</p>
+<ol>
+<li>具有<code>-allmodules</code>、<code>-nolink</code>等参数</li>
+<li>不具有上述参数</li>
+</ol>
+<p>而开启了<code>-allmodules</code>，则意味着引擎中所有的模块都要重新编译，是完整地编译引擎。当下次执行，还是要完整地编译整个引擎，UBT中具有对<code>-allmodules</code>的介绍：</p>
+<p><code>-allmodules</code>参数是定义在UBT的<code>TargetRules.cs</code>中的：</p>
+<figure class="highlight csharp"><figcaption><span>UnrealBuildTool/Configuration/TargetRules.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Build all the modules that are valid for this target type. Used for CIS and making installed engine builds.</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">[<span class="meta">CommandLine(<span class="string">&quot;-AllModules&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> bBuildAllModules = <span class="literal">false</span>;</span><br></pre></td></tr></table></figure>
+
+<p>专门用来构建安装版引擎的，我觉得可以关掉，使用增量编译的方式执行，不然在ci上每次执行都太慢了。</p>
+<p>而且这个脚本中对每个平台都执行了两遍，一遍是不含<code>-nolink</code>参数的，一遍是包含<code>-nolink</code>参数的，可以根据自己的需求决定是否关闭。<br>UE的文档中是这么介绍的(<a target="_blank" rel="noopener" href="https://www.unrealengine.com/en-US/blog/unreal-engine-4-14-released">Unreal Engine 4.14 Released!</a>)：</p>
+<blockquote>
+<p>New: Added a -nolink command line option for Unreal Build Tool, which enables compiling a target without linking it. This is useful for automated build tests, such as non-unity compiles.</p>
+</blockquote>
+<p>当使用BuildGraph来构建引擎的时候，默认情况下对引擎的编译次数计算公式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UE4Editor DebugGame/Development 2次</span><br><span class="line">UE4Game Win64/Android/IOS/...   每个平台2*Configuration次（-allmodules -nolink）</span><br></pre></td></tr></table></figure>
+
+<p>如果我们使用BuildGraph通过<code>Make Installed Build Win64</code>来构建出安装版引擎（支持Win/Android/IOS打包），至少需要编译<code>2+3*2=8</code>，对引擎的代码要编译八次！而且每一次执行都要完整的编译所有的模块，耗时非常之长。</p>
+<p>所以裁剪是非常有必要的，上面也已经提到了：</p>
+<ol>
+<li>去掉<code>-allmodules</code>参数，增量编译</li>
+<li>去掉<code>-nolink</code>的构建（根据需求决定）</li>
+<li>减少需要构建的平台</li>
+</ol>
+<p>裁剪之后需要需要编译的次数：</p>
+<ol>
+<li>UE4Editor Development 1次</li>
+<li>UE4Game Win64/Android/IOS/…   每个平台<code>1*Configuration</code>次</li>
+</ol>
+<p>则需要编译4次，与默认减少一倍，并且可以增量编译，时间会快很多了。</p>
+<h2 id="构建引擎支持Android打包"><a href="#构建引擎支持Android打包" class="headerlink" title="构建引擎支持Android打包"></a>构建引擎支持Android打包</h2><p>想要使用<code>Make Installed Build Win64</code>构建出支持Android打包的引擎，需要在执行BuildGraph脚本时添加<code>-set:WithAndroid=true</code>，因为<code>WithAndroid</code>是<code>InstalledEngineBuild.xml</code>中定义的参数，可以通过命令行传递。</p>
+<p>不过，仅仅是命令行指定开启是不够的，在执行BuildGraph之前，需要安装好Android的开发环境，在BuildGraph在执行编译时会去系统PATH里查找JDK/Android NDK/Android SDK以及<code>gradle</code>的路径，需要自己进行预先配置：</p>
+<p><strong>注意</strong>：虽然在执行编译时会检测环境自动下载gradle，但是由于在墙内的原因，不一定会下载成功。</p>
+<p>需要把Android的环境按照添加至系统的环境变量中：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11956/20201105155939.webp"></p>
+<p><strong>注意</strong>：当使用一些ci工具的时候，ci只能查到服务启动的用户的环境变量，为避免额外的问题，最好添加至系统的环境变量。</p>
+<p>默认情况下会编译出支持打包Android架构为<code>armv7</code>和<code>arm64</code>的引擎，如果不需要其中的某个架构，可以在<code>InstalledEngineBuild.xml</code>里选择注释掉指定的平台。</p>
+<p>Android比较简单，配置完Android的开发环境就可以直接导出可以打包Android的引擎：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11956/20201105094329.webp"></p>
+<h2 id="构建引擎支持IOS打包"><a href="#构建引擎支持IOS打包" class="headerlink" title="构建引擎支持IOS打包"></a>构建引擎支持IOS打包</h2><p>前面已经提到了，构建支持Android打包的二进制引擎，支持IOS平台要更复杂一些。</p>
+<p>首先构建支持IOS打包的引擎必须要有一台Mac执行远程构建，因为BuildGraph需要编译IOS平台的UE4Game，在Win上无法编译IOS的库，所以必须要一台Mac。</p>
+<ol>
+<li>局域网中有一台可访问的Mac</li>
+<li>具有mobileprovision</li>
+<li>生成SSH Key</li>
+</ol>
+<p>至于“为什么有了Mac还需要在Win上支持IOS？”这个问题主要是因为：</p>
+<ol>
+<li>Mac机能受限，直接在Mac上打包是编译+Cook的操作都在Mac上，如果进行远程构建，则Mac只需要处理代码的编译，而不需要执行Cook的流程，降低对Mac机能的依赖，可以提高构建的效率。</li>
+<li>统一地使用Win来构建出全平台包（Win/Android/IOS）</li>
+</ol>
+<p>首先需要在Win上生成Mac的SSH Keys，BuildGraph编译引擎支持IOS也需要设置ssh key，生成的方法在我之前的博客中有记录，不再赘述：<a href="https://imzlp.com/posts/1948/#%E9%85%8D%E7%BD%AE%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BA">UE4 开发笔记：Mac/iOS 篇#配置远程构建</a></p>
+<p>当生成了SSHkey之后，需要在引擎的<code>Engine/Config/BaseEngine.ini</code>中修改以下配置：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/IOSRuntimeSettings.IOSRuntimeSettings]</span></span><br><span class="line"><span class="attr">RemoteServerName</span>=</span><br><span class="line"><span class="attr">RSyncUsername</span>=</span><br><span class="line"><span class="attr">SSHPrivateKeyOverridePath</span>=</span><br><span class="line"><span class="attr">mobileprovision</span>=</span><br><span class="line">SigningCertificate=</span><br></pre></td></tr></table></figure>
+
+<p>注意：这里的mobileprovision和SigningCertificate指定名字就可以，如：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">MobileProvision</span>=com.XXXX.XXXX.fmgame_Development_SignProvision.mobileprovision</span><br><span class="line"><span class="attr">SigningCertificate</span>=iPhone Developer: Created via API (JDPXHYVWYZ)</span><br></pre></td></tr></table></figure>
+
+<p>并且，可以不指定<code>SSHPrivateKeyOverridePath</code>的路径，在<code>RemoteMac.cs</code>中，针对引擎目录有三个自动查找的路径：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (ProjectFile != <span class="literal">null</span>)</span><br><span class="line">&#123;</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(ProjectFile.Directory, <span class="string">&quot;Build&quot;</span>, <span class="string">&quot;NotForLicensees&quot;</span>));</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(ProjectFile.Directory, <span class="string">&quot;Build&quot;</span>, <span class="string">&quot;NoRedist&quot;</span>));</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(ProjectFile.Directory, <span class="string">&quot;Build&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>把SSH Key按照这样的命名格式放到这三个目录下即可：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SSHKeys/IP_ADDR/USER_NAME/RemoteToolChainPrivate.key</span><br></pre></td></tr></table></figure>
+
+<p>如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SSHKeys/192.168.1.123/buildmachine/RemoteToolChainPrivate.key</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>在4.26及后续引擎中，SSH Key的查找路径有变化。详见：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/4.26/Engine/Source/Programs/UnrealBuildTool/ToolChain/RemoteMac.cs">ToolChain/RemoteMac.cs</a></p>
+</blockquote>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (ProjectFile != <span class="literal">null</span>)</span><br><span class="line">&#123;</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(ProjectFile.Directory, <span class="string">&quot;Restricted&quot;</span>, <span class="string">&quot;NotForLicensees&quot;</span>, <span class="string">&quot;Build&quot;</span>));</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(ProjectFile.Directory, <span class="string">&quot;Restricted&quot;</span>, <span class="string">&quot;NoRedist&quot;</span>, <span class="string">&quot;Build&quot;</span>));</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(ProjectFile.Directory, <span class="string">&quot;Build&quot;</span>));</span><br><span class="line">&#125;</span><br><span class="line">Locations.Add(DirectoryReference.Combine(UnrealBuildTool.EngineDirectory, <span class="string">&quot;Restricted&quot;</span>, <span class="string">&quot;NotForLicensees&quot;</span>, <span class="string">&quot;Build&quot;</span>));</span><br><span class="line">Locations.Add(DirectoryReference.Combine(UnrealBuildTool.EngineDirectory, <span class="string">&quot;Restricted&quot;</span>, <span class="string">&quot;NoRedist&quot;</span>, <span class="string">&quot;Build&quot;</span>));</span><br><span class="line">Locations.Add(DirectoryReference.Combine(UnrealBuildTool.EngineDirectory, <span class="string">&quot;Build&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[PROJECT_DIR]]\Restricted\NotForLicensees\Build\SSHKeys\192.168.31.55\lipengzha\RemoteToolChainPrivate.key</span><br></pre></td></tr></table></figure>
+
+<h3 id="远程构建的UBT路径异常"><a href="#远程构建的UBT路径异常" class="headerlink" title="远程构建的UBT路径异常"></a>远程构建的UBT路径异常</h3><p>在执行时<code>RemoteMac.cs</code>中报错的问题：</p>
+<figure class="highlight csharp"><figcaption><span>// RemoteMac.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Attempts to get the SSH private key from the standard locations</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;OutPrivateKey&quot;&gt;</span>If successful, receives the location of the private key that was found<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span>True if a private key was found, false otherwise<span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="built_in">bool</span> <span class="title">TryGetSshPrivateKey</span>(<span class="params"><span class="keyword">out</span> FileReference OutPrivateKey</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// Build a list of all the places to look for a private key</span></span><br><span class="line">	List&lt;DirectoryReference&gt; Locations = <span class="keyword">new</span> List&lt;DirectoryReference&gt;();</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(DirectoryReference.GetSpecialFolder(Environment.SpecialFolder.ApplicationData), <span class="string">&quot;Unreal Engine&quot;</span>, <span class="string">&quot;UnrealBuildTool&quot;</span>));</span><br><span class="line">	Locations.Add(DirectoryReference.Combine(DirectoryReference.GetSpecialFolder(Environment.SpecialFolder.Personal), <span class="string">&quot;Unreal Engine&quot;</span>, <span class="string">&quot;UnrealBuildTool&quot;</span>));</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码在Combine时没有做检测，<code>Environment.SpecialFolder.ApplicationData</code>这个路径是不一定能得到的，所以要修改UBT的<code>RemoteMac.cs</code>中的这部分代码，进行检测：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="built_in">bool</span> <span class="title">TryGetSshPrivateKey</span>(<span class="params"><span class="keyword">out</span> FileReference OutPrivateKey</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// Build a list of all the places to look for a private key</span></span><br><span class="line">	List&lt;DirectoryReference&gt; Locations = <span class="keyword">new</span> List&lt;DirectoryReference&gt;();</span><br><span class="line">	DirectoryReference ApplicationData = DirectoryReference.GetSpecialFolder(Environment.SpecialFolder.ApplicationData);</span><br><span class="line"></span><br><span class="line">	DirectoryReference Personal = DirectoryReference.GetSpecialFolder(Environment.SpecialFolder.Personal);</span><br><span class="line">	<span class="keyword">if</span>( ApplicationData != <span class="literal">null</span>)</span><br><span class="line">		Locations.Add(DirectoryReference.Combine(ApplicationData, <span class="string">&quot;Unreal Engine&quot;</span>, <span class="string">&quot;UnrealBuildTool&quot;</span>));</span><br><span class="line">	<span class="keyword">if</span>(Personal != <span class="literal">null</span>)</span><br><span class="line">		Locations.Add(DirectoryReference.Combine(Personal, <span class="string">&quot;Unreal Engine&quot;</span>, <span class="string">&quot;UnrealBuildTool&quot;</span>));</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上一步的操作，只能解决找ssh key时的路径报错问题。</p>
+<h3 id="远程构建时SSH连接错误"><a href="#远程构建时SSH连接错误" class="headerlink" title="远程构建时SSH连接错误"></a>远程构建时SSH连接错误</h3><p>解决了这个问题还有另外一个问题：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">****** [4/11] Compile UnrealHeaderTool Mac</span><br><span class="line"></span><br><span class="line">Reading local file list from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Update Version Files\Tag-Update Version Files.xml</span><br><span class="line">Running: C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Binaries\DotNET\UnrealBuildTool.exe UnrealHeaderTool Mac Development  -NoUBTMakefiles -nobuilduht -precompile -allmodules -Manifest=C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Intermediate\Build\Manifest.xml -NoHotReload -log=&quot;C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Programs\AutomationTool\Saved\Logs\UBT-UnrealHeaderTool-Mac-Development.txt&quot;</span><br><span class="line">  [Remote] Using remote server &#x27;xx.xx.xx.xx&#x27; on port 2222 (user &#x27;buildmachine&#x27;)</span><br><span class="line">  [Remote] Using private key at C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Build\NotForLicensees\SSHKeys\xx.xx.xx.xx\buildmachine\RemoteToolChainPrivate.key</span><br><span class="line">  ERROR: Unable to determine home directory for remote user. SSH output:</span><br><span class="line">           Host key verification failed.</span><br><span class="line">Took 0.6103776s to run UnrealBuildTool.exe, ExitCode=6</span><br><span class="line">UnrealBuildTool failed. See log for more details. (C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Programs\AutomationTool\Saved\Logs\UBT-UnrealHeaderTool-Mac-Development.txt)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>看到是ssh key的验证失败了，其实这个错误并不是Key的问题（这个问题非常坑）。<br>而是因为<code>RemoteMac.cs</code>中对ssh连接命令的代码里是这么写的：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title">RemoteMac</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">	<span class="comment"><span class="doctag">///</span> The authentication used for SSH (probably similar to RsyncAuthentication).</span></span><br><span class="line">	<span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">	[<span class="meta">XmlConfigFile</span>]</span><br><span class="line">	<span class="keyword">private</span> <span class="built_in">string</span> SshAuthentication = <span class="string">&quot;-i &#x27;$&#123;CYGWIN_SSH_PRIVATE_KEY&#125;&#x27;&quot;</span>;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">RemoteMac</span>(<span class="params">FileReference ProjectFile</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    SshAuthentication = ExpandVariables(SshAuthentication);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Build a list of arguments for SSH</span></span><br><span class="line">    CommonSshArguments = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line">    CommonSshArguments.Add(<span class="string">&quot;-o BatchMode=yes&quot;</span>);</span><br><span class="line">    CommonSshArguments.Add(SshAuthentication);</span><br><span class="line">    CommonSshArguments.Add(String.Format(<span class="string">&quot;-p &#123;0&#125;&quot;</span>, ServerPort));</span><br><span class="line">    CommonSshArguments.Add(String.Format(<span class="string">&quot;\&quot;&#123;0&#125;@&#123;1&#125;\&quot;&quot;</span>, UserName, ServerName));</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个代码生成的拼接的ssh命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\Engine\Extras\ThirdPartyNotUE\DeltaCopy\Binaries\ssh.exe -o BatchMode=<span class="built_in">yes</span> -i \Engine\Build\NotForLicensees\SSHKeys\xx.xx.xx.xx\buildmachine\RemoteToolChainPrivate.key -p 22 buildmachine@xx.xx.xx.xx</span><br></pre></td></tr></table></figure>
+
+<p>问题的关键就是处在<code>BatchMode=yes</code>上，当我们第一次通过ssh连接一台主机，会下列提示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ Engine\Extras\ThirdPartyNotUE\DeltaCopy\Binaries\ssh.exe -p 22 buildmachine@ 192.168.1.123 </span><br><span class="line">The authenticity of host <span class="string">&#x27;[ 192.168.1.123 ]:22 ([ 192.168.1.123 ]:22)&#x27;</span> can<span class="string">&#x27;t be established.</span></span><br><span class="line"><span class="string">RSA key fingerprint is e0:8d:b9:7c:65:c7:9e:18:94:12:ed:ef:40:1a:15:47.</span></span><br><span class="line"><span class="string">Are you sure you want to continue connecting (yes/no)? yes</span></span><br><span class="line"><span class="string">Warning: Permanently added &#x27;</span>[ 192.168.1.123 ]:22<span class="string">&#x27; (RSA) to the list of known hosts.</span></span><br><span class="line"><span class="string">Password:</span></span><br></pre></td></tr></table></figure>
+
+<p>会弹出提示让你验证这台主机（需要手动输入yes），但是开启了<code>BatchMode=yes</code>之后，会禁止所有的交互式提示，出现交互直接连接失败！这就是我们使用正确的Key，但是会提示<code>Host key verification failed.</code>的原因。<br>那么，知道了原因，解决这个问题的办法有两种：</p>
+<ol>
+<li>关闭ssh的连接时验证</li>
+<li>在进行构建之前，手动使用ssh命令连接主机，通过交互式的验证（只需要初始化验证一次）</li>
+<li>也有可能是Client上的key文件权限过于开放导致的，需要修改权限。</li>
+</ol>
+<p>关闭SSH的连接时验证，需要编辑Mac上的<code>/etc/ssh/ssh_config</code>文件，修改或添加以下项：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">StrictHostKeyChecking no</span><br></pre></td></tr></table></figure>
+
+<p>然后重启<code>sshd</code>服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist</span><br><span class="line">sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist</span><br></pre></td></tr></table></figure>
+
+<p>或者修改ssh连接的命令，添加以下参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null user@192.168.1.123</span><br></pre></td></tr></table></figure>
+
+<p>具体位置为：</p>
+<figure class="highlight csharp"><figcaption><span>RemoteMac.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">CommonSshArguments = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line"><span class="comment">//++[lipengzha] skip ssh new host auth</span></span><br><span class="line">CommonSshArguments.Add(<span class="string">&quot;-o StrictHostKeyChecking=no&quot;</span>);</span><br><span class="line">CommonSshArguments.Add(<span class="string">&quot;-o UserKnownHostsFile=/dev/null&quot;</span>);</span><br><span class="line">CommonSshArguments.Add(<span class="string">&quot;-q&quot;</span>); <span class="comment">// dont print shh warnning log,for rsync GetRemotePath</span></span><br><span class="line"><span class="comment">//--[lipengzha]</span></span><br></pre></td></tr></table></figure>
+
+<p>因为远程构建时，rsync也是通过配置的<code>ssh</code>信息进行文件传输的，所以也要对rsync的命令进行修改：</p>
+<figure class="highlight csharp"><figcaption><span>RemoteMac.cs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//++[RSTDIO][lipengzha] skip ssh new host auth</span></span><br><span class="line">BasicRsyncArguments.Add(String.Format(<span class="string">&quot;--rsh=\&quot;&#123;0&#125; -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -q -p &#123;1&#125;\&quot;&quot;</span>, RsyncAuthentication, ServerPort));</span><br><span class="line"><span class="comment">//--[RSTUDIO]</span></span><br></pre></td></tr></table></figure>
+
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2023/20230529154459.png"></p>
+<p>原始rsync的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rsync --compress --verbose --rsh=<span class="string">&quot;./ssh -i &#x27;/cygdrive/D/Projects/Client/Build/NotForLicensees/SSHKeys/xx.xx.xx.xx/buildmachine/RemoteToolChainPrivate.key&#x27;-p 2222&quot;</span> --<span class="built_in">chmod</span>=ugo=rwx --recursive --delete --delete-excluded --<span class="built_in">times</span> --omit-dir-times --prune-empty-dirs --copy-links --rsync-path=<span class="string">&quot;mkdir -p /Users/buildmachine/UE4/Builds/lipengzha-PCb/D/Projects/Client &amp;&amp; rsync&quot;</span> --filter=<span class="string">&quot;merge /cygdrive/D/Projects/Client/Build/Rsync/RsyncProject.txt&quot;</span> --filter=<span class="string">&quot;merge /cygdrive/D/Projects/Engine/Engine/Build/Rsync/RsyncProject.txt&quot;</span> --exclude=<span class="string">&#x27;*&#x27;</span> <span class="string">&quot;/cygdrive/D/Projects/Client/&quot;</span> <span class="string">&quot;buildmachine@xx.xx.xx.xx&quot;</span>:<span class="string">&#x27;/Users/buildmachine/UE4/Builds/lipengzha-PCb/D/Projects/Client/&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>修改后的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rsync --compress --verbose --rsh=<span class="string">&quot;./ssh -i &#x27;/cygdrive/D/Projects/Client/Build/NotForLicensees/SSHKeys/xx.xx.xx.xx/buildmachine/RemoteToolChainPrivate.key&#x27; -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -q -p 2222&quot;</span> --<span class="built_in">chmod</span>=ugo=rwx --recursive --delete --delete-excluded --<span class="built_in">times</span> --omit-dir-times --prune-empty-dirs --copy-links --rsync-path=<span class="string">&quot;mkdir -p /Users/buildmachine/UE4/Builds/lipengzha-PCb/D/Projects/Client &amp;&amp; rsync&quot;</span> --filter=<span class="string">&quot;merge /cygdrive/D/Projects/Client/Build/Rsync/RsyncProject.txt&quot;</span> --filter=<span class="string">&quot;merge /cygdrive/D/Projects/Engine/Engine/Build/Rsync/RsyncProject.txt&quot;</span> --exclude=<span class="string">&#x27;*&#x27;</span> <span class="string">&quot;/cygdrive/D/Projects/Client/&quot;</span> <span class="string">&quot;buildmachine@xx.xx.xx.xx&quot;</span>:<span class="string">&#x27;/Users/buildmachine/UE4/Builds/lipengzha-PCb/D/Projects/Client/&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="未导入provision的错误"><a href="#未导入provision的错误" class="headerlink" title="未导入provision的错误"></a>未导入provision的错误</h3><p>编译时的其他错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">****** [6/11] Compile UE4Game IOS</span><br><span class="line"></span><br><span class="line">Reading local file list from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Compile UnrealHeaderTool Mac\Tag-Compile UnrealHeaderTool Mac.xml</span><br><span class="line">Reading local file list from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Update Version Files\Tag-Update Version Files.xml</span><br><span class="line">Reading shared manifest from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Compile UnrealHeaderTool Mac\Manifest.xml</span><br><span class="line">Running: C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Binaries\DotNET\UnrealBuildTool.exe UE4Game IOS Development  -NoUBTMakefiles -nobuilduht -precompile -allmodules -nolink -nodebuginfo -Manifest=C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Intermediate\Build\Manifest.xml -NoHotReload -log=&quot;C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Programs\AutomationTool\Saved\Logs\UBT-UE4Game-IOS-Development.txt&quot;</span><br><span class="line">  [Remote] Using remote server &#x27;xx.xx.xx.xxx&#x27; on port 22 (user &#x27;buildmachine&#x27;)</span><br><span class="line">  [Remote] Using private key at C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Build\NotForLicensees\SSHKeys\10.75.27.129\buildmachine\RemoteToolChainPrivate.key</span><br><span class="line">  [Remote] Using base directory &#x27;/Users/buildmachine/UE4/Builds/lipengzha-PC2&#x27;</span><br><span class="line">  ERROR: Unable to find mobile provision for UE4Game. See log for more information.</span><br><span class="line">Took 4.0300959s to run UnrealBuildTool.exe, ExitCode=6</span><br></pre></td></tr></table></figure>
+
+<p>这是因为编译引擎时没有配置<code>provision</code>，需要在<code>Engine/Config/BaseEngine.ini</code>中设置。</p>
+<p>在这里可以只指定<code>provision</code>文件的名字，在<code>UEBuildIOS.cs</code>中的代码会从<code>C:\Users\lipengzha\AppData\Local\Apple Computer\MobileDevice\Provisioning Profiles</code>路径下去查找。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">IOSProvisioningData</span>(<span class="params">IOSProjectSettings ProjectSettings, <span class="built_in">bool</span> bIsTVOS, <span class="built_in">bool</span> bForDistribtion</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">	<span class="keyword">if</span>(!<span class="built_in">string</span>.IsNullOrEmpty(MobileProvision))</span><br><span class="line">	&#123;</span><br><span class="line">		DirectoryReference MobileProvisionDir;</span><br><span class="line">		<span class="keyword">if</span>(BuildHostPlatform.Current.Platform == UnrealTargetPlatform.Mac)</span><br><span class="line">		&#123;</span><br><span class="line">			MobileProvisionDir = DirectoryReference.Combine(<span class="keyword">new</span> DirectoryReference(Environment.GetEnvironmentVariable(<span class="string">&quot;HOME&quot;</span>)), <span class="string">&quot;Library&quot;</span>, <span class="string">&quot;MobileDevice&quot;</span>, <span class="string">&quot;Provisioning Profiles&quot;</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			MobileProvisionDir = DirectoryReference.Combine(DirectoryReference.GetSpecialFolder(Environment.SpecialFolder.LocalApplicationData), <span class="string">&quot;Apple Computer&quot;</span>, <span class="string">&quot;MobileDevice&quot;</span>, <span class="string">&quot;Provisioning Profiles&quot;</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		FileReference PossibleMobileProvisionFile = FileReference.Combine(MobileProvisionDir, MobileProvision);</span><br><span class="line">		<span class="keyword">if</span>(FileReference.Exists(PossibleMobileProvisionFile))</span><br><span class="line">		&#123;</span><br><span class="line">			MobileProvisionFile = PossibleMobileProvisionFile;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这部分操作也可以通过引擎来导入，不仅仅只需要导入<code>provision</code>还需要导入证书（也可以通过iPhonePackager来导入）：<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11956/20201105142657.webp"><br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11956/20201105143249.webp"></p>
+<p>如果不导入会有下列错误：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">****** [7/12] Compile UE4Game IOS</span><br><span class="line"></span><br><span class="line">Reading local file list from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Compile UnrealHeaderTool Mac\Tag-Compile UnrealHeaderTool Mac.xml</span><br><span class="line">Reading local file list from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Update Version Files\Tag-Update Version Files.xml</span><br><span class="line">Reading shared manifest from C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Saved\BuildGraph\Compile UnrealHeaderTool Mac\Manifest.xml</span><br><span class="line">Running: C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Binaries\DotNET\UnrealBuildTool.exe UE4Game IOS Development  -NoUBTMakefiles -nobuilduht -precompile -allmodules -nolink -nodebuginfo -Manifest=C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Intermediate\Build\Manifest.xml -NoHotReload -log=&quot;C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Programs\AutomationTool\Saved\Logs\UBT-UE4Game-IOS-Development.txt&quot;</span><br><span class="line">  [Remote] Using remote server &#x27;192.168.1.123&#x27; on port 22 (user &#x27;buildmachine&#x27;)</span><br><span class="line">  [Remote] Using private key at C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Build\NotForLicensees\SSHKeys\192.168.1.123\buildmachine\RemoteToolChainPrivate.key</span><br><span class="line">  [Remote] Using base directory &#x27;/Users/buildmachine/UE4/Builds/lipengzha-PC3&#x27;</span><br><span class="line">  [Remote] Uploading C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Intermediate\Remote\UE4Game\IOS\Development\com.xxxxx.xxxx.xx_Development_SignProvision.mobileprovision</span><br><span class="line">  [Remote] Exporting certificate for C:\Users\lipengzha\AppData\Local\Apple Computer\MobileDevice\Provisioning Profiles\com.xxxxx.xxxx.xx_Development_SignProvision.mobileprovision...</span><br><span class="line">  Executing iPhonePackager ExportCertificate C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Source -provisionfile C:\Users\lipengzha\AppData\Local\Apple Computer\MobileDevice\Provisioning Profiles\com.xxxxx.xxxx.xx_Development_SignProvision.mobileprovision -outputcertificate C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Intermediate\Remote\UE4Game\IOS\Development\Certificate.p12</span><br><span class="line">  CWD: C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Binaries\DotNET\IOS</span><br><span class="line">  Initial Dir: C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Source</span><br><span class="line">  Env CWD: C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Binaries\DotNET\IOS</span><br><span class="line">  BranchPath = lipengzha-PC3/C/BuildAgent/workspace/FGameEngine/Engine/Engine/Binaries --- GameBranchPath = lipengzha-PC3/C/BuildAgent/workspace/FGameEngine/Engine/Engine/Binaries</span><br><span class="line">  </span><br><span class="line">  ----------</span><br><span class="line">  Executing command &#x27;ExportCertificate&#x27; &#x27;&#x27; ...</span><br><span class="line">    Looking for a certificate that matches the application identifier &#x27;9TV4ZYSS4J.com.xxxxx.xxxx.xx&#x27;</span><br><span class="line">    .. Provision entry SN &#x27;61B440405D86B84D&#x27; matched 0 installed certificate(s)</span><br><span class="line">    .. Failed to find a valid certificate that was in date</span><br><span class="line">  IPP ERROR: Failed to find a valid certificate</span><br><span class="line">  </span><br><span class="line">  ERROR: IphonePackager failed.</span><br><span class="line">Took 2.9281688s to run UnrealBuildTool.exe, ExitCode=6</span><br></pre></td></tr></table></figure>
+
+<p>上述的问题解决完毕之后就能够正常地把BuildGraph的流程执行完毕，导出了根据引擎代码编译出的二进制引擎，启动之后就可以看到能够打包Windows/Android/IOS了。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11956/support-package-win-android-ios.webp"></p>
+<h2 id="错误排查"><a href="#错误排查" class="headerlink" title="错误排查"></a>错误排查</h2><h3 id="No-certificate-for-team-xxxx-matching"><a href="#No-certificate-for-team-xxxx-matching" class="headerlink" title="No certificate for team xxxx matching"></a>No certificate for team xxxx matching</h3><p>这个问题应该是项目里配置的证书和系统中的匹配不上导致的（或者同一个mobileProvision对应了多个证书），按照以下步骤操作后需重启机器生效。</p>
+<p>如果有以下错误提示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Code Signing Error: No certificate for team &#x27;9TV4ZYSS4J&#x27; matching &#x27;iPhone Developer: Created via API (JDPXHYVWYZ)&#x27; found: Select a different signing certificate for CODE_SIGN_IDENTITY, a team that matches your selected certificate, or switch to autom atic provisioning.</span><br></pre></td></tr></table></figure>
+
+<p>解决办法：</p>
+<ol>
+<li>在Mac上的<code>~/Library/MobileDevice/Provisioning\ Profiles</code>清理掉多余的mobileprovision文件。</li>
+<li>在Mac钥匙串中清理掉过期的开发者证书</li>
+<li>重新导入mobileprovision与证书</li>
+</ol>
+<p>注意：导入的mobileprovision的文件命名要与在<code>BaseEngine.ini</code>中指定的<code>MobileProvision</code>相同。</p>
+<h3 id="errSecInternalComponent错误"><a href="#errSecInternalComponent错误" class="headerlink" title="errSecInternalComponent错误"></a>errSecInternalComponent错误</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/24023639/xcode-command-usr-bin-codesign-failed-with-exit-code-1-errsecinternalcomponen">Xcode Command /usr/bin/codesign failed with exit code 1 : errSecInternalComponent</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/b03e59560d31">iOS远程自动打包问题</a></li>
+<li><a target="_blank" rel="noopener" href="https://medium.com/@ceyhunkeklik/how-to-fix-ios-application-code-signing-error-4818bd331327">How to Fix iOS Application Code Signing Error?</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/48911289/warning-unable-to-build-chain-to-self-signed-root-for-signer-warning-in-xcode">“Warning: unable to build chain to self-signed root for signer” warning in Xcode 9.2</a></li>
+</ul>
+<h4 id="方法一"><a href="#方法一" class="headerlink" title="方法一"></a>方法一</h4><p>是因为通过ssh去调用<code>/usr/bin/codesign</code>访问钥匙串没有权限，可以使用以下命令在ssh中执行解锁：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">security unlock-keychain -p password login.keychain</span><br></pre></td></tr></table></figure>
+
+<p>在UE远程构建时，可以先执行这条命令在当前的ssh环境下解锁keychain，使后面的签名可以正常执行。<br>修改UE中的<code>Engine\Build\BatchFiles\Mac\Build.sh</code>文件，在调用UBT编译之前，写入以下内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> <span class="string">&quot;`dirname &quot;</span><span class="variable">$0</span><span class="string">&quot;`/../../../..&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Setup Mono</span></span><br><span class="line"><span class="built_in">source</span> Engine/Build/BatchFiles/Mac/SetupMono.sh Engine/Build/BatchFiles/Mac</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$4</span>&quot;</span> == <span class="string">&quot;-buildscw&quot;</span> ] || [ <span class="string">&quot;<span class="variable">$5</span>&quot;</span> == <span class="string">&quot;-buildscw&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">	<span class="built_in">echo</span> Building ShaderCompileWorker...</span><br><span class="line">	mono Engine/Binaries/DotNET/UnrealBuildTool.exe ShaderCompileWorker Mac Development</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"><span class="built_in">echo</span> unlock mac keychain...</span><br><span class="line">security unlock-keychain -p password login.keychain</span><br><span class="line"><span class="built_in">echo</span> Running <span class="built_in">command</span> : Engine/Binaries/DotNET/UnrealBuildTool.exe <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">mono Engine/Binaries/DotNET/UnrealBuildTool.exe <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line"></span><br><span class="line">ExitCode=$?</span><br><span class="line"><span class="keyword">if</span> [ <span class="variable">$ExitCode</span> -eq 254 ] || [ <span class="variable">$ExitCode</span> -eq 255 ] || [ <span class="variable">$ExitCode</span> -eq 2 ]; <span class="keyword">then</span></span><br><span class="line">	<span class="built_in">exit</span> 0</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">	<span class="built_in">exit</span> <span class="variable">$ExitCode</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>因为编译时会把Build.sh通过RSync传递到Mac上，所以可以看到以下log:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Remote] Executing build</span><br><span class="line">  Running bundled mono, version: Mono JIT compiler version 5.16.0.220 (2018-06/bb3ae37d71a Fri Nov 16 17:12:11 EST 2018)</span><br><span class="line">  unlock mac keychain...</span><br><span class="line">  Running command : Engine/Binaries/DotNET/UnrealBuildTool.exe UnrealHeaderTool Mac Development -SkipRulesCompile -XmlConfigCache=/Users/buildmachine/UE4/Builds/lipengzha-PC2/C/BuildAgent/workspace/FGameEngine/Engine/Engine/Intermediate/Build/XmlConfigCache.bin -precompile -allmodules -Log=/Users/buildmachine/UE4/Builds/lipengzha-PC2/C/BuildAgent/workspace/FGameEngine/Engine/Engine/Programs/AutomationTool/Saved/Logs/UBT-UnrealHeaderTool-Mac-Development_Remote.txt -Manifest=/Users/buildmachine/UE4/Builds/lipengzha-PC2/C/BuildAgent/workspace/FGameEngine/Engine/Engine/Intermediate/Remote/UnrealHeaderTool/Mac/Development/Manifest.xml</span><br><span class="line">  Target is up to date</span><br><span class="line">  Deploying UnrealHeaderTool Mac Development...</span><br><span class="line">  Deploying now!</span><br><span class="line">  Total execution time: 1.01 seconds</span><br><span class="line">[Remote] Downloading C:\BuildAgent\workspace\FGameEngine\Engine\Engine\Intermediate\Remote\UnrealHeaderTool\Mac\Development\Manifest.xml</span><br><span class="line">[Remote] Downloading build products</span><br><span class="line">  receiving file list ... done</span><br></pre></td></tr></table></figure>
+
+<p>这样每次编译都会解锁keychain，从而避免ssh连接时没有访问codesign导致的签名错误。</p>
+<blockquote>
+<p>注意：也需要排查BaseEngine.ini中<code>SigningCertificate</code>的值是否被指定。</p>
+</blockquote>
+<h4 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h4><p>如果系统中苹果的开发者中级证书过期，同样会导致这个问题。解决办法是导入新的苹果开发者根证书：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/de/support/expiration/">Apple Worldwide Developer Relations Intermediate Certificate Expiration</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer">Worldwide Developer Relations - G3 (Expiring 02/20/2030 00:00:00 UTC)</a></li>
+</ul>
+<p>把<code>钥匙串</code>-<code>系统</code>-<code>Apple Worldwise Developer Relations Certification Authority</code>删除，然后从上面的连接中下载新的，重新导入即可。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2021/20210611130513.webp"></p>
+<h4 id="方法三"><a href="#方法三" class="headerlink" title="方法三"></a>方法三</h4><p>在钥匙串中检查证书是否被导入了登录(Login)下，删除后在<code>系统</code>中导入。</p>
+<h3 id="Invalid-trust-settings"><a href="#Invalid-trust-settings" class="headerlink" title="Invalid trust settings"></a>Invalid trust settings</h3><p>如果Log中出现以下错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Code Signing Error: Invalid trust settings. Restore system default trust settings for certificate &quot;iPhone Developer: Created via API (JDPXHYVWYZ)&quot; in order to sign code with it.</span><br><span class="line">Code Signing Error: Code signing is required for product type &#x27;Application&#x27; in SDK &#x27;iOS 13.6&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>这是因为在Mac上的钥匙串中对证书的设置被修改为了<code>始终信任</code>，修改回<code>使用系统默认</code>即可。<br><img data-src="https://img.imzlp.com/imgs/zlp/blog/posts/11956/20210326121855.webp"></p>
+<h3 id="unable-to-build-chain-to-self-signed-root-for-signer"><a href="#unable-to-build-chain-to-self-signed-root-for-signer" class="headerlink" title="unable to build chain to self-signed root for signer"></a>unable to build chain to self-signed root for signer</h3><p>检查证书在钥匙串中，是被导入到了<strong>登录</strong>还是<strong>系统</strong>分类下。<br>如果在<strong>登录</strong>中，则删除后重新导入到<strong>系统</strong>中。</p>
+<h2 id="拷贝自定义目录"><a href="#拷贝自定义目录" class="headerlink" title="拷贝自定义目录"></a>拷贝自定义目录</h2><p>在构建二进制引擎时，默认情况下就和从EpicLauncher中安装的一致，但如果修改了引擎，想要把一些新的目录打包进去。</p>
+<p>修改<code>InstalledEngineFilters.xml</code>文件，在<code>CopyEditorFilter</code>下添加目录即可:</p>
+<figure class="highlight xml"><figcaption><span>InstalledEngineFilters.xml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Define Editor Filters --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">Property</span> <span class="attr">Name</span>=<span class="string">&quot;CopyEditorFilter&quot;</span>&gt;</span></span><br><span class="line">	<span class="comment">&lt;!-- This assembly is normally embedded into the UBT executable, but it can technically be rebuilt from an installed build --&gt;</span></span><br><span class="line">	Engine/Binaries/ThirdParty/Newtonsoft/...</span><br><span class="line">	Engine/Binaries/ThirdParty/VisualStudio/...</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- In-editor documentation --&gt;</span></span><br><span class="line">	Engine/Documentation/Source/Shared/...</span><br><span class="line">	Engine/Documentation/Extras/...</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- Content folders --&gt;</span></span><br><span class="line">	Engine/Content/...</span><br><span class="line">	<span class="comment">&lt;!-- Shaders folders --&gt;</span></span><br><span class="line">	Engine/Shaders/...</span><br><span class="line">	<span class="comment">&lt;!-- Source code --&gt;</span></span><br><span class="line">	Engine/Source/UE4Game.Target.cs</span><br><span class="line">	Engine/Source/UE4Editor.Target.cs</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- Starter content --&gt;</span></span><br><span class="line">	Samples/StarterContent/Content/...</span><br><span class="line">	Samples/MobileStarterContent/Content/...</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- Templates --&gt;</span></span><br><span class="line">	Templates/TemplateCategories.ini</span><br><span class="line">	Templates/FP_FirstPerson/...</span><br><span class="line">	Templates/FP_FirstPersonBP/...</span><br><span class="line">	Templates/Media/...</span><br><span class="line">	Templates/TP_Blank/...</span><br><span class="line">	Templates/TP_BlankBP/...</span><br><span class="line">	Templates/TP_FirstPerson/...</span><br><span class="line">	Templates/TP_FirstPersonBP/...</span><br><span class="line">	Templates/TP_Flying/...</span><br><span class="line">	Templates/TP_FlyingBP/...</span><br><span class="line">	Templates/TP_HandheldARBP/...</span><br><span class="line">	Templates/TP_ProductConfigBP/...</span><br><span class="line">	Templates/TP_Rolling/...</span><br><span class="line">	Templates/TP_RollingBP/...</span><br><span class="line">	Templates/TP_SideScroller/...</span><br><span class="line">	Templates/TP_SideScrollerBP/...</span><br><span class="line">	Templates/TP_ThirdPerson/...</span><br><span class="line">	Templates/TP_ThirdPersonBP/...</span><br><span class="line">	Templates/TP_TopDown/...</span><br><span class="line">	Templates/TP_TopDownBP/...</span><br><span class="line">	Templates/TP_TwinStick/...</span><br><span class="line">	Templates/TP_TwinStickBP/...</span><br><span class="line">	Templates/TP_Vehicle/...</span><br><span class="line">	Templates/TP_VehicleBP/...</span><br><span class="line">	Templates/TP_Puzzle/...</span><br><span class="line">	Templates/TP_PuzzleBP/...</span><br><span class="line">	Templates/TP_2DSideScroller/...</span><br><span class="line">	Templates/TP_2DSideScrollerBP/...</span><br><span class="line">	Templates/TP_VehicleAdv/...</span><br><span class="line">	Templates/TP_VehicleAdvBP/...</span><br><span class="line">	Templates/TP_VirtualRealityBP/...</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- Enterprise Templates --&gt;</span></span><br><span class="line">	Templates/TP_AEC_BlankBP/...</span><br><span class="line">	Templates/TP_AEC_ArchvisBP/...</span><br><span class="line">	Templates/TP_PhotoStudioBP/...</span><br><span class="line"></span><br><span class="line">	Templates/TP_ME_BlankBP/...</span><br><span class="line">	Templates/TP_ME_VProdBP/...</span><br><span class="line"></span><br><span class="line">	Templates/TP_CollaborativeBP/...</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- Shared template resources --&gt;</span></span><br><span class="line">	Templates/TemplateResources/...</span><br><span class="line"></span><br><span class="line">	<span class="comment">&lt;!-- Build files --&gt;</span></span><br><span class="line">	Engine/Build/Build.version</span><br><span class="line">	Engine/Build/Target.cs.template</span><br><span class="line"><span class="tag">&lt;/<span class="name">Property</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>根据自己的需要，修改即可。</p>
+<h2 id="增量构建二进制引擎"><a href="#增量构建二进制引擎" class="headerlink" title="增量构建二进制引擎"></a>增量构建二进制引擎</h2><p>避免每次都重新编译Engine模块，导致引擎中大量依赖它的模块被重新编译。修改引擎中的<code>Engine.Build.cs</code>：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PrivateIncludePathModuleNames.AddRange(</span><br><span class="line">			<span class="keyword">new</span> <span class="built_in">string</span>[] &#123;</span><br><span class="line">				<span class="string">&quot;MessagingRpc&quot;</span>,</span><br><span class="line">				<span class="string">&quot;PortalRpc&quot;</span>,</span><br><span class="line">				<span class="string">&quot;PortalServices&quot;</span>,</span><br><span class="line">			&#125;</span><br></pre></td></tr></table></figure>
+
+<p>改为：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PublicDependencyModuleNames.AddRange(</span><br><span class="line">			<span class="keyword">new</span> <span class="built_in">string</span>[] &#123;</span><br><span class="line">				<span class="string">&quot;MessagingRpc&quot;</span>,</span><br><span class="line">				<span class="string">&quot;PortalRpc&quot;</span>,</span><br><span class="line">				<span class="string">&quot;PortalServices&quot;</span>,</span><br><span class="line">			&#125;</span><br></pre></td></tr></table></figure>
+
+<p>UDN上的相关讨论：<a target="_blank" rel="noopener" href="https://udn.unrealengine.com/s/question/0D52L00004luw5rSAA/make-installed-build-win64%E4%B8%AD-compile-ue4game-win64-%E7%89%B9%E5%88%AB%E6%85%A2%E7%9A%84%E9%97%AE%E9%A2%98?fromCase=1">Make Installed Build Win64中 Compile UE4Game Win64 特别慢的问题</a></p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本篇文章主要介绍了BuildGraph的工作流程、优化构建速度，以及支持Android/IOS的打包。</p>
+<p>需要注意的是，文章开头使用的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RunUAT.bat BuildGraph -target=<span class="string">&quot;Make Installed Build Win64&quot;</span> -script=Engine/Build/InstalledEngineBuild.xml -<span class="built_in">set</span>:WithMac=<span class="literal">false</span> -<span class="built_in">set</span>:WithAndroid=<span class="literal">false</span> -<span class="built_in">set</span>:WithIOS=<span class="literal">false</span> -<span class="built_in">set</span>:WithTVOS=<span class="literal">false</span> -<span class="built_in">set</span>:WithLinux=<span class="literal">false</span> -<span class="built_in">set</span>:WithHTML5=<span class="literal">false</span> -<span class="built_in">set</span>:WithSwitch=<span class="literal">false</span> -WithDDC=<span class="literal">false</span> -<span class="built_in">set</span>:WithWin32=<span class="literal">false</span> -<span class="built_in">set</span>:WithLumin=<span class="literal">false</span> -<span class="built_in">set</span>:WithPS4=<span class="literal">false</span> -<span class="built_in">set</span>:WithXboxOne=<span class="literal">false</span> -<span class="built_in">set</span>:WithHoloLens=<span class="literal">false</span> -<span class="built_in">set</span>:GameConfigurations=Development</span><br></pre></td></tr></table></figure>
+
+<p>它的<code>GameConfigurations</code>只设置了<code>Dvelopment</code>，所以编译出来的引擎也只能打包<code>Development</code>，如果想要支持Shipping打包，就需要在<code>BuildGraph</code>中指定：<code>-set:GameConfigurations=Development;Shipping</code>，但是这样会增加构建的时间，因为Development和Shipping都是需要分别编译的，对执行支持的所有平台都增加了一次引擎编译的时间开销，当然是必要的，不过在日常的开发中，可以有选择性地开启，节省构建的时间。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/11956/" target="_blank">BuildGraph：构建支持多平台打包的二进制引擎</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2020年11月08日 15时40分<br/>
+             
+              <span>更新时间:</span>2023年10月22日 12时35分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有6.3k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/11956/" target="_blank" title="BuildGraph：构建支持多平台打包的二进制引擎">https://imzlp.com/posts/11956/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/11956/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/BuildGraph/" rel="tag"># BuildGraph</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/15049/" rel="prev" title="UE：Hook UObject">
+      <i class="fa fa-chevron-left"></i> UE：Hook UObject
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/27392/" rel="next" title="二零二零：下一个五年计划">
+      二零二零：下一个五年计划 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%96BuildGraph%E7%9A%84%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">优化BuildGraph的构建流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%BC%95%E6%93%8E%E6%94%AF%E6%8C%81Android%E6%89%93%E5%8C%85"><span class="nav-number">2.</span> <span class="nav-text">构建引擎支持Android打包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%BC%95%E6%93%8E%E6%94%AF%E6%8C%81IOS%E6%89%93%E5%8C%85"><span class="nav-number">3.</span> <span class="nav-text">构建引擎支持IOS打包</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BA%E7%9A%84UBT%E8%B7%AF%E5%BE%84%E5%BC%82%E5%B8%B8"><span class="nav-number">3.1.</span> <span class="nav-text">远程构建的UBT路径异常</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E6%9E%84%E5%BB%BA%E6%97%B6SSH%E8%BF%9E%E6%8E%A5%E9%94%99%E8%AF%AF"><span class="nav-number">3.2.</span> <span class="nav-text">远程构建时SSH连接错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AA%E5%AF%BC%E5%85%A5provision%E7%9A%84%E9%94%99%E8%AF%AF"><span class="nav-number">3.3.</span> <span class="nav-text">未导入provision的错误</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E6%8E%92%E6%9F%A5"><span class="nav-number">4.</span> <span class="nav-text">错误排查</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#No-certificate-for-team-xxxx-matching"><span class="nav-number">4.1.</span> <span class="nav-text">No certificate for team xxxx matching</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#errSecInternalComponent%E9%94%99%E8%AF%AF"><span class="nav-number">4.2.</span> <span class="nav-text">errSecInternalComponent错误</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80"><span class="nav-number">4.2.1.</span> <span class="nav-text">方法一</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C"><span class="nav-number">4.2.2.</span> <span class="nav-text">方法二</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%89"><span class="nav-number">4.2.3.</span> <span class="nav-text">方法三</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Invalid-trust-settings"><span class="nav-number">4.3.</span> <span class="nav-text">Invalid trust settings</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unable-to-build-chain-to-self-signed-root-for-signer"><span class="nav-number">4.4.</span> <span class="nav-text">unable to build chain to self-signed root for signer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%B7%E8%B4%9D%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9B%AE%E5%BD%95"><span class="nav-number">5.</span> <span class="nav-text">拷贝自定义目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A2%9E%E9%87%8F%E6%9E%84%E5%BB%BA%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%BC%95%E6%93%8E"><span class="nav-number">6.</span> <span class="nav-text">增量构建二进制引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">7.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/11956/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

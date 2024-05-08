@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-tilt-brush.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-tilt-brush.png">
+  <link rel="mask-icon" href="/images/favicon-32x32-tilt-brush.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/5.15.2/css/all.min.css">
+  <link rel="stylesheet" href="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="最近读龙书DX12会用到LaTeX来记录一些公式。为了方便查找，整理了一些常用的LaTeX数学符号语法表，更多符号可以看LaTeX:Symbols。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LaTeX数学符号速查表">
+<meta property="og:url" content="https://imzlp.com/posts/23224/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="最近读龙书DX12会用到LaTeX来记录一些公式。为了方便查找，整理了一些常用的LaTeX数学符号语法表，更多符号可以看LaTeX:Symbols。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-03-22T00:27:13.000Z">
+<meta property="article:modified_time" content="2019-03-22T11:25:15.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="LaTeX">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://imzlp.com/posts/23224/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LaTeX数学符号速查表 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-friends">
+
+    <a href="/friends/" rel="section"><i class="fas fa-link fa-fw"></i>友链</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/23224/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LaTeX数学符号速查表<a href="https://github.com/imzlp/blog-md/blob/master/_posts/2019-03-22-23224.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+        </h1>
+
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-03-22 00:27 00:27:13:27" itemprop="dateCreated datePublished" datetime="2019-03-22T00:27:13+00:00">2019-03-22 00:27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-03-22 11:25 11:25:15:25" itemprop="dateModified" datetime="2019-03-22T11:25:15+00:00">2019-03-22 11:25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/LaTex/" itemprop="url" rel="index"><span itemprop="name">LaTex</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/23224/" class="post-meta-item leancloud_visitors" data-flag-title="LaTeX数学符号速查表" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>11 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近读<a target="_blank" rel="noopener" href="https://book.douban.com/subject/30426701/">龙书DX12</a>会用到LaTeX来记录一些公式。为了方便查找，整理了一些常用的LaTeX数学符号语法表，更多符号可以看<a target="_blank" rel="noopener" href="https://artofproblemsolving.com/wiki/index.php/LaTeX:Symbols">LaTeX:Symbols</a>。</p>
+<span id="more"></span>
+
+<h3 id="加减乘除"><a href="#加减乘除" class="headerlink" title="加减乘除"></a>加减乘除</h3><table>
+<thead>
+<tr>
+<th>加</th>
+<th>语法</th>
+<th>减</th>
+<th>语法</th>
+<th>乘</th>
+<th>语法</th>
+<th>除</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$+$</td>
+<td>+</td>
+<td>$-$</td>
+<td>-</td>
+<td>$\times$</td>
+<td>\times</td>
+<td>$\div$</td>
+<td>\div</td>
+</tr>
+</tbody></table>
+<h3 id="幂运算"><a href="#幂运算" class="headerlink" title="幂运算"></a>幂运算</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$a^x$</td>
+<td>a^x</td>
+<td>$a^{xyz}$</td>
+<td>a^{xyz}</td>
+<td>$\sqrt{x}$</td>
+<td>\sqrt{x}</td>
+<td>$\sqrt[n]{x}$</td>
+<td>\sqrt[n]{x}</td>
+</tr>
+</tbody></table>
+<h3 id="逻辑运算"><a href="#逻辑运算" class="headerlink" title="逻辑运算"></a>逻辑运算</h3><table>
+<thead>
+<tr>
+<th>异或</th>
+<th>语法</th>
+<th>或</th>
+<th>语法</th>
+<th>与</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\oplus$</td>
+<td>\oplus</td>
+<td>$\vee$</td>
+<td>\vee</td>
+<td>$\wedge$</td>
+<td>\wedge</td>
+</tr>
+</tbody></table>
+<h3 id="绝对值"><a href="#绝对值" class="headerlink" title="绝对值"></a>绝对值</h3><p>直接插入竖线|即可，使用\left和\right标签指定竖线的垂直长度。</p>
+<p>$\left| \sum_i \vec{v}_i \left|\Delta t_i\right| \right|$</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">代码：\left| \sum_i \vec&#123;v&#125;_i \left|\Delta t_i\right| \right|</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="分式"><a href="#分式" class="headerlink" title="分式"></a>分式</h3><p>参考本文下方的”分式”一节，这里简单说说语法</p>
+<p>$(\frac{a}{x} )^2$ 语法：<code>(\frac&#123;a&#125;&#123;x&#125; )^2</code></p>
+<p>上面的表达式效果是：右边的上标没有对齐，因此可以改进一下：</p>
+<p>$\left(\frac{a}{x} \right)^2$ 语法：<code>\left(\frac&#123;a&#125;&#123;x&#125; \right)^2</code></p>
+<h3 id="其他运算"><a href="#其他运算" class="headerlink" title="其他运算"></a>其他运算</h3><p>详见下文操作</p>
+<table>
+<thead>
+<tr>
+<th>求和</th>
+<th>语法</th>
+<th>积分</th>
+<th>语法</th>
+<th>积分</th>
+<th>语法</th>
+<th>求积</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\sum$</td>
+<td>\sum</td>
+<td>$\int$</td>
+<td>\int</td>
+<td>$\oint$</td>
+<td>\oint</td>
+<td>$\prod$</td>
+<td>\prod</td>
+</tr>
+</tbody></table>
+<h3 id="关系"><a href="#关系" class="headerlink" title="关系"></a>关系</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$=$</td>
+<td>=</td>
+<td>$\not=$</td>
+<td>\not=</td>
+<td>$\approx$</td>
+<td>\approx</td>
+<td>$\equiv$</td>
+<td>\equiv</td>
+</tr>
+<tr>
+<td>$&lt;$</td>
+<td>&lt;</td>
+<td>$&gt;$</td>
+<td>&gt;</td>
+<td>$\le$</td>
+<td>\le</td>
+<td>$\ge$</td>
+<td>\ge</td>
+</tr>
+<tr>
+<td>$\ll$</td>
+<td>\ll</td>
+<td>$\gg$</td>
+<td>\gg</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="集合"><a href="#集合" class="headerlink" title="集合"></a>集合</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\in$</td>
+<td>\in</td>
+<td>$\ni$</td>
+<td>\ni</td>
+</tr>
+<tr>
+<td>$\subset$</td>
+<td>\subset</td>
+<td>$\supset$</td>
+<td>\supset</td>
+</tr>
+<tr>
+<td>$\subseteq$</td>
+<td>\subseteq</td>
+<td>$\supseteq$</td>
+<td>\supseteq</td>
+</tr>
+</tbody></table>
+<h3 id="存在"><a href="#存在" class="headerlink" title="存在"></a>存在</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\exists$</td>
+<td>\exists</td>
+<td>$\forall$</td>
+<td>\forall</td>
+</tr>
+</tbody></table>
+<h3 id="希腊字母"><a href="#希腊字母" class="headerlink" title="希腊字母"></a>希腊字母</h3><p>直接根据拼写输入即可，小写共有22个，大写8个：大写的是小写语法首字母大写。不全部列出了。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>小写</td>
+<td>$\alpha$</td>
+<td>\alpha</td>
+<td>$\beta$</td>
+<td>\beta</td>
+<td>$\gamma$</td>
+<td>\gamma</td>
+</tr>
+<tr>
+<td>大写</td>
+<td>$\Phi$</td>
+<td>\Phi</td>
+<td>$\Omega$</td>
+<td>\Omega</td>
+<td>$\Delta$</td>
+<td>\Delta</td>
+</tr>
+</tbody></table>
+<h3 id="箭头"><a href="#箭头" class="headerlink" title="箭头"></a>箭头</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\gets$</td>
+<td>\gets</td>
+<td>$\to$</td>
+<td>\to</td>
+<td>$\Leftarrow$</td>
+<td>\Leftarrow</td>
+<td>$\Rightarrow$</td>
+<td>\Reftarrow</td>
+<td>$\Leftrightarrow$</td>
+<td>\Leftrightarrow</td>
+</tr>
+</tbody></table>
+<h3 id="省略号"><a href="#省略号" class="headerlink" title="省略号"></a>省略号</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\dots$</td>
+<td>\dots</td>
+<td>$\cdots$</td>
+<td>\cdots</td>
+</tr>
+</tbody></table>
+<h3 id="头顶符号"><a href="#头顶符号" class="headerlink" title="头顶符号"></a>头顶符号</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\hat{x}$</td>
+<td>\hat{x}</td>
+<td>$\bar{x}$</td>
+<td>\bar{x}</td>
+<td>$\vec{x}$</td>
+<td>\vec{x}</td>
+</tr>
+<tr>
+<td>$\dot{x}$</td>
+<td>\dot{x}</td>
+<td>$\ddot{x}$</td>
+<td>\ddot{x}</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="标准括号"><a href="#标准括号" class="headerlink" title="标准括号"></a>标准括号</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$($</td>
+<td>(</td>
+<td>$)$</td>
+<td>)</td>
+<td>$[$</td>
+<td>[</td>
+<td>$]$</td>
+<td>]</td>
+</tr>
+</tbody></table>
+<h3 id="取整函数"><a href="#取整函数" class="headerlink" title="取整函数"></a>取整函数</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\lfloor$</td>
+<td>\lfloor</td>
+<td>$\rfloor$</td>
+<td>\rfloor</td>
+</tr>
+<tr>
+<td>$\lceil$</td>
+<td>\lceil</td>
+<td>$\rceil$</td>
+<td>\rceil</td>
+</tr>
+</tbody></table>
+<h3 id="空格"><a href="#空格" class="headerlink" title="空格"></a>空格</h3><p>LaTex默认是省略空格，要输入空格就得自己输入命令，mu是一个数学单位。</p>
+<table>
+<thead>
+<tr>
+<th>效果</th>
+<th>说明</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$a \quad b$</td>
+<td>空格宽度是当前字宽(18mu)</td>
+<td>\quad</td>
+</tr>
+<tr>
+<td>$a , b$</td>
+<td>空格宽度是3mu</td>
+<td>,</td>
+</tr>
+<tr>
+<td>$a : b$</td>
+<td>空格宽度是4mu</td>
+<td>:</td>
+</tr>
+<tr>
+<td>$a ; b$</td>
+<td>空格宽度是5mu</td>
+<td>;</td>
+</tr>
+<tr>
+<td>$a ! b$</td>
+<td>空格宽度是-3mu(向左缩)</td>
+<td>!</td>
+</tr>
+<tr>
+<td>$a \ b$</td>
+<td>空格宽度是标准空格键效果</td>
+<td>在\后面敲一个空格</td>
+</tr>
+<tr>
+<td>$a \qquad b$</td>
+<td>空格宽度是36mu</td>
+<td>\qquad</td>
+</tr>
+</tbody></table>
+<h3 id="上标与下标"><a href="#上标与下标" class="headerlink" title="上标与下标"></a>上标与下标</h3><p>使用{..}来告诉MathJax上下表的位置在哪，是谁是大括号</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$2^2$</td>
+<td>2^2</td>
+<td>$a_i$</td>
+<td>a_i</td>
+</tr>
+<tr>
+<td>$2^{23}$</td>
+<td>2^{23}</td>
+<td>$n_{i-1}$</td>
+<td>n_{i-1}</td>
+</tr>
+<tr>
+<td>$a^{i+1}_3$</td>
+<td>a^{i+1}_3</td>
+<td>$x^{3^2}$</td>
+<td>x^{3^2}</td>
+</tr>
+<tr>
+<td>$2^{a_i}$</td>
+<td>2^{a_i}</td>
+<td>$2^a_i$</td>
+<td>2^a_i</td>
+</tr>
+</tbody></table>
+<h3 id="上划线下划线"><a href="#上划线下划线" class="headerlink" title="上划线下划线"></a>上划线下划线</h3><table>
+<thead>
+<tr>
+<th>上</th>
+<th>语法</th>
+<th>下</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\overline{a+bi}$</td>
+<td>\overline{a+bi}</td>
+<td>$\underline{431}$</td>
+<td>\underline{431}</td>
+</tr>
+</tbody></table>
+<h3 id="分式-1"><a href="#分式-1" class="headerlink" title="分式"></a>分式</h3><p>有两种尺寸：frac和drac</p>
+<table>
+<thead>
+<tr>
+<th>尺寸较小</th>
+<th>因此适合打印</th>
+<th>尺寸适中</th>
+<th>用于显示器展示</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>符号</td>
+<td>语法</td>
+<td>符号</td>
+<td>语法</td>
+</tr>
+<tr>
+<td>$\frac{1}{2}$</td>
+<td>\frac{1}{2}</td>
+<td>$\dfrac{1}{2}$</td>
+<td>\dfrac{1}{2}</td>
+</tr>
+<tr>
+<td>$\frac{2}{x+2}$</td>
+<td>\frac{2}{x+2}</td>
+<td>$\dfrac{2}{x+2}$</td>
+<td>\dfrac{2}{x+2}</td>
+</tr>
+<tr>
+<td>$\frac{1+\frac{1}{x}}{3x + 2}$</td>
+<td>\frac{1+\frac{1}{x}}{3x + 2}</td>
+<td>$\dfrac{1+\frac{1}{x}}{3x + 2}$</td>
+<td>\dfrac{1+\frac{1}{x}}{3x + 2}</td>
+</tr>
+</tbody></table>
+<p>连续（嵌套）使用：<code>\cfrac</code></p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\cfrac{2}{1+\cfrac{2}{1+\cfrac{2}{1+\cfrac{2}{1}}}}$</td>
+<td>\cfrac{2}{1+\cfrac{2}{1+\cfrac{2}{1+\cfrac{2}{1}}}}</td>
+</tr>
+</tbody></table>
+<h3 id="根式"><a href="#根式" class="headerlink" title="根式"></a>根式</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\sqrt(2)$</td>
+<td>\sqrt(2)</td>
+<td>$\sqrt{2}$</td>
+<td>\sqrt{2}</td>
+</tr>
+<tr>
+<td>$\sqrt{x+y}$</td>
+<td>\sqrt{x+y}</td>
+<td>$\sqrt{x+\frac{1}{2}}$</td>
+<td>\sqrt{x+\frac{1}{2}}</td>
+</tr>
+<tr>
+<td>$\sqrt[3]{3}$</td>
+<td>\sqrt[3]{3}</td>
+<td>$\sqrt[n]{x}$</td>
+<td>\sqrt[n]{x}</td>
+</tr>
+</tbody></table>
+<h3 id="求和-求积-求极限"><a href="#求和-求积-求极限" class="headerlink" title="求和 求积 求极限"></a>求和 求积 求极限</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\sum_{i=1}^{\infty}\frac{1}{i}$</td>
+<td>\sum_{i=1}^{\infty}\frac{1}{i}</td>
+</tr>
+<tr>
+<td>$\prod_{n=1}^5\frac{n}{n-1}$</td>
+<td>\prod_{n=1}^5\frac{n}{n-1}</td>
+</tr>
+<tr>
+<td>$\lim_{x\to\infty}\frac{1}{x}$</td>
+<td>\lim_{x\to\infty}\frac{1}{x}</td>
+</tr>
+</tbody></table>
+<h3 id="求微积分-偏导"><a href="#求微积分-偏导" class="headerlink" title="求微积分 偏导"></a>求微积分 偏导</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\frac{d}{dx}\left(x^2\right) = 2x$</td>
+<td>\frac{d}{dx}\left(x^2\right) = 2x</td>
+</tr>
+<tr>
+<td>$\int 2x,dx = x^2+C$</td>
+<td>\int 2x,dx = x^2+C</td>
+</tr>
+<tr>
+<td>$\frac{\partial^2U}{\partial x^2} + \frac{\partial^2U}{\partial y^2}$</td>
+<td>\frac{\partial^2U}{\partial x^2} + \frac{\partial^2U}{\partial y^2}</td>
+</tr>
+</tbody></table>
+<h3 id="求模"><a href="#求模" class="headerlink" title="求模"></a>求模</h3><p>$9\equiv 3 \pmod{6}$ —— 语法：<code>9\equiv 3 \pmod&#123;6&#125;</code></p>
+<h3 id="三角函数"><a href="#三角函数" class="headerlink" title="三角函数"></a>三角函数</h3><p>直接输入正常书写的符号即可，不全列举</p>
+<table>
+<thead>
+<tr>
+<th>余弦</th>
+<th>语法</th>
+<th>反余弦</th>
+<th>语法</th>
+<th>双曲余弦</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\cos$</td>
+<td>\cos</td>
+<td>$\arccos$</td>
+<td>\arccos</td>
+<td>$\cosh$</td>
+<td>\cosh</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\cos^2 x +\sin^2 x = 1$</td>
+<td>\cos^2 x +\sin^2 x = 1</td>
+</tr>
+<tr>
+<td>$\cos 90^\circ = 0$</td>
+<td>\cos 90^\circ = 0</td>
+</tr>
+</tbody></table>
+<h3 id="矩阵"><a href="#矩阵" class="headerlink" title="矩阵"></a>矩阵</h3><p>使用<code>$$\begin&#123;matrix&#125;…\end&#123;matrix&#125;$$</code>，每一行末用<code>\\</code>(在markdown中写LaTeX双反斜杠<code>\\</code>会被转义，所以要使用<code>\\\\</code>)结束，用&amp;分隔矩阵元素。</p>
+<p>$$<br>\begin{equation}<br>H_x=\frac{1}{3}\times{<br>\left[ \begin{array}{ccc}<br>1 &amp; 0 &amp; -1\\<br>1 &amp; 0 &amp; -1\\<br>1 &amp; 0 &amp; -1<br>\end{array}<br>\right ]},<br>H_y=\frac{1}{3}\times{<br>\left[ \begin{array}{ccc}<br>1 &amp; 1 &amp; 1\\<br>0&amp; 0 &amp; 0\\<br>1 &amp; 1 &amp; 1<br>\end{array}<br>\right ]}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">H<span class="built_in">_</span>x=<span class="keyword">\frac</span>&#123;1&#125;&#123;3&#125;<span class="keyword">\times</span>&#123;</span><br><span class="line"><span class="keyword">\left</span>[ <span class="keyword">\begin</span>&#123;array&#125;&#123;ccc&#125;</span><br><span class="line">1 <span class="built_in">&amp;</span> 0 <span class="built_in">&amp;</span> -1<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">1 <span class="built_in">&amp;</span> 0 <span class="built_in">&amp;</span> -1<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">1 <span class="built_in">&amp;</span> 0 <span class="built_in">&amp;</span> -1</span><br><span class="line"><span class="keyword">\end</span>&#123;array&#125; </span><br><span class="line"><span class="keyword">\right</span> ]&#125;,</span><br><span class="line">H<span class="built_in">_</span>y=<span class="keyword">\frac</span>&#123;1&#125;&#123;3&#125;<span class="keyword">\times</span>&#123;</span><br><span class="line"><span class="keyword">\left</span>[ <span class="keyword">\begin</span>&#123;array&#125;&#123;ccc&#125;</span><br><span class="line">1 <span class="built_in">&amp;</span> 1 <span class="built_in">&amp;</span> 1<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">0<span class="built_in">&amp;</span> 0 <span class="built_in">&amp;</span> 0<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">1 <span class="built_in">&amp;</span> 1 <span class="built_in">&amp;</span> 1</span><br><span class="line"><span class="keyword">\end</span>&#123;array&#125;</span><br><span class="line"><span class="keyword">\right</span> ]&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="带省略号的矩阵"><a href="#带省略号的矩阵" class="headerlink" title="带省略号的矩阵"></a>带省略号的矩阵</h4><p>$$<br>\begin{equation}<br>S<br>=\begin{bmatrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F\\<br> \vdots  &amp; \vdots &amp; \ddots &amp; \vdots \\<br> G &amp; H  &amp; \cdots\ &amp; I\\<br>\end{bmatrix}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">S</span><br><span class="line">=<span class="keyword">\begin</span>&#123;bmatrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line"> <span class="keyword">\vdots</span>  <span class="built_in">&amp;</span> <span class="keyword">\vdots</span> <span class="built_in">&amp;</span> <span class="keyword">\ddots</span> <span class="built_in">&amp;</span> <span class="keyword">\vdots</span> <span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line"> G <span class="built_in">&amp;</span> H  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> I<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line"><span class="keyword">\end</span>&#123;bmatrix&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>竖直方向</th>
+<th>语法</th>
+<th>水平方向</th>
+<th>语法</th>
+<th>对角线方向</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\vdots$</td>
+<td>\vdots</td>
+<td>$\cdots$</td>
+<td>\cdots</td>
+<td>$\ddots$</td>
+<td>\ddots</td>
+</tr>
+</tbody></table>
+<h4 id="matrix"><a href="#matrix" class="headerlink" title="matrix"></a>matrix</h4><p>$$<br>\begin{matrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F<br>\end{matrix}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;matrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;matrix&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="pmatrix"><a href="#pmatrix" class="headerlink" title="pmatrix"></a>pmatrix</h4><p>$$<br>\begin{equation}<br>S<br>=\begin{pmatrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F<br>\end{pmatrix}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">S</span><br><span class="line">=<span class="keyword">\begin</span>&#123;pmatrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;pmatrix&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="bmatrix"><a href="#bmatrix" class="headerlink" title="bmatrix"></a>bmatrix</h4><p>$$<br>\begin{equation}<br>S<br>=\begin{bmatrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F<br>\end{bmatrix}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">S</span><br><span class="line">=<span class="keyword">\begin</span>&#123;bmatrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;bmatrix&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Bmatrix"><a href="#Bmatrix" class="headerlink" title="Bmatrix"></a>Bmatrix</h4><p>$$<br>\begin{equation}<br>S<br>=\begin{Bmatrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F<br>\end{Bmatrix}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">S</span><br><span class="line">=<span class="keyword">\begin</span>&#123;Bmatrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;Bmatrix&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="vmatrix"><a href="#vmatrix" class="headerlink" title="vmatrix"></a>vmatrix</h4><p>$$<br>\begin{equation}<br>S<br>=\begin{vmatrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F<br>\end{vmatrix}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">S</span><br><span class="line">=<span class="keyword">\begin</span>&#123;vmatrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;vmatrix&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Vmatrix"><a href="#Vmatrix" class="headerlink" title="Vmatrix"></a>Vmatrix</h4><p>$$<br>\begin{equation}<br>S<br>=\begin{Vmatrix}<br>A  &amp;  B  &amp; \cdots\ &amp;C\\<br>D  &amp;  E  &amp; \cdots\ &amp; F<br>\end{Vmatrix}<br>\end{equation}<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\begin</span>&#123;equation&#125;</span><br><span class="line">S</span><br><span class="line">=<span class="keyword">\begin</span>&#123;Vmatrix&#125;</span><br><span class="line">A  <span class="built_in">&amp;</span>  B  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span>C<span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D  <span class="built_in">&amp;</span>  E  <span class="built_in">&amp;</span> <span class="keyword">\cdots</span><span class="keyword">\ </span><span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;Vmatrix&#125;</span><br><span class="line"><span class="keyword">\end</span>&#123;equation&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="增广矩阵"><a href="#增广矩阵" class="headerlink" title="增广矩阵"></a>增广矩阵</h4><p>$$<br>\left[<br>\begin{array}{cc|c}<br>A &amp; B &amp; C \\<br>D &amp; E &amp; F<br>\end{array}<br>\right]<br>$$</p>
+<figure class="highlight latex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">\left</span>[</span><br><span class="line"><span class="keyword">\begin</span>&#123;array&#125;&#123;cc|c&#125;</span><br><span class="line">A <span class="built_in">&amp;</span> B <span class="built_in">&amp;</span> C <span class="keyword">\\</span><span class="keyword">\\</span></span><br><span class="line">D <span class="built_in">&amp;</span> E <span class="built_in">&amp;</span> F</span><br><span class="line"><span class="keyword">\end</span>&#123;array&#125;</span><br><span class="line"><span class="keyword">\right</span>]</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="其他符号"><a href="#其他符号" class="headerlink" title="其他符号"></a>其他符号</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+<th>符号</th>
+<th>语法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$\infty$</td>
+<td>\infty</td>
+<td>$\triangle$</td>
+<td>\triangle</td>
+<td>$\angle$</td>
+<td>\angle</td>
+</tr>
+<tr>
+<td>$\checkmark$</td>
+<td>\checkmark</td>
+<td>$\nabla$</td>
+<td>\nabla</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/23224/" target="_blank">LaTeX数学符号速查表</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2019年03月22日 00时27分<br/>
+             
+              <span>更新时间:</span>2019年03月22日 11时25分<br/>
+             
+             <span>本文字数:</span><span class="page-count">本文一共有4.5k字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/23224/" target="_blank" title="LaTeX数学符号速查表">https://imzlp.com/posts/23224/</a>
+             <span class="copy-path" data-clipboard-text="原文链接: https://imzlp.com/posts/23224/ 作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LaTeX/" rel="tag"># LaTeX</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/31962/" rel="prev" title="Create A Standalone Application in UE4">
+      <i class="fa fa-chevron-left"></i> Create A Standalone Application in UE4
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/24007/" rel="next" title="引擎源码分析：模块的加载和启动">
+      引擎源码分析：模块的加载和启动 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E5%87%8F%E4%B9%98%E9%99%A4"><span class="nav-number">1.</span> <span class="nav-text">加减乘除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%82%E8%BF%90%E7%AE%97"><span class="nav-number">2.</span> <span class="nav-text">幂运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="nav-number">3.</span> <span class="nav-text">逻辑运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%9D%E5%AF%B9%E5%80%BC"><span class="nav-number">4.</span> <span class="nav-text">绝对值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%BC%8F"><span class="nav-number">5.</span> <span class="nav-text">分式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E8%BF%90%E7%AE%97"><span class="nav-number">6.</span> <span class="nav-text">其他运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E7%B3%BB"><span class="nav-number">7.</span> <span class="nav-text">关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E5%90%88"><span class="nav-number">8.</span> <span class="nav-text">集合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%9C%A8"><span class="nav-number">9.</span> <span class="nav-text">存在</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%8C%E8%85%8A%E5%AD%97%E6%AF%8D"><span class="nav-number">10.</span> <span class="nav-text">希腊字母</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%AD%E5%A4%B4"><span class="nav-number">11.</span> <span class="nav-text">箭头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9C%81%E7%95%A5%E5%8F%B7"><span class="nav-number">12.</span> <span class="nav-text">省略号</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%B4%E9%A1%B6%E7%AC%A6%E5%8F%B7"><span class="nav-number">13.</span> <span class="nav-text">头顶符号</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%87%E5%87%86%E6%8B%AC%E5%8F%B7"><span class="nav-number">14.</span> <span class="nav-text">标准括号</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%96%E6%95%B4%E5%87%BD%E6%95%B0"><span class="nav-number">15.</span> <span class="nav-text">取整函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E6%A0%BC"><span class="nav-number">16.</span> <span class="nav-text">空格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E6%A0%87%E4%B8%8E%E4%B8%8B%E6%A0%87"><span class="nav-number">17.</span> <span class="nav-text">上标与下标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E5%88%92%E7%BA%BF%E4%B8%8B%E5%88%92%E7%BA%BF"><span class="nav-number">18.</span> <span class="nav-text">上划线下划线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%BC%8F-1"><span class="nav-number">19.</span> <span class="nav-text">分式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B9%E5%BC%8F"><span class="nav-number">20.</span> <span class="nav-text">根式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B1%82%E5%92%8C-%E6%B1%82%E7%A7%AF-%E6%B1%82%E6%9E%81%E9%99%90"><span class="nav-number">21.</span> <span class="nav-text">求和 求积 求极限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B1%82%E5%BE%AE%E7%A7%AF%E5%88%86-%E5%81%8F%E5%AF%BC"><span class="nav-number">22.</span> <span class="nav-text">求微积分 偏导</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B1%82%E6%A8%A1"><span class="nav-number">23.</span> <span class="nav-text">求模</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E8%A7%92%E5%87%BD%E6%95%B0"><span class="nav-number">24.</span> <span class="nav-text">三角函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9F%A9%E9%98%B5"><span class="nav-number">25.</span> <span class="nav-text">矩阵</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%A6%E7%9C%81%E7%95%A5%E5%8F%B7%E7%9A%84%E7%9F%A9%E9%98%B5"><span class="nav-number">25.1.</span> <span class="nav-text">带省略号的矩阵</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#matrix"><span class="nav-number">25.2.</span> <span class="nav-text">matrix</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#pmatrix"><span class="nav-number">25.3.</span> <span class="nav-text">pmatrix</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bmatrix"><span class="nav-number">25.4.</span> <span class="nav-text">bmatrix</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Bmatrix"><span class="nav-number">25.5.</span> <span class="nav-text">Bmatrix</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vmatrix"><span class="nav-number">25.6.</span> <span class="nav-text">vmatrix</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Vmatrix"><span class="nav-number">25.7.</span> <span class="nav-text">Vmatrix</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A2%9E%E5%B9%BF%E7%9F%A9%E9%98%B5"><span class="nav-number">25.8.</span> <span class="nav-text">增广矩阵</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%AC%A6%E5%8F%B7"><span class="nav-number">26.</span> <span class="nav-text">其他符号</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="https://img.imzlp.com/imgs/zlp/picgo/2023/202304152112902.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">189</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">188</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/imzlp" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;imzlp" rel="noopener" target="_blank"><i class="fa fa-custom zhihu fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://consolehelp.imzlp.com/" title="https:&#x2F;&#x2F;consolehelp.imzlp.com&#x2F;" rel="noopener" target="_blank">UE Console Help</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/posts/11515/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;posts&#x2F;11515&#x2F;">UE C++ API Dash Documents</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">747k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animejs/3.2.1/anime.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/lozad.js/1.16.0/lozad.min.js"></script>
+  <script src="//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.1.2/es5/tex-mml-chtml.min.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+  <script src="//img.imzlp.com/imgs/zlp/picgo/2021/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/23224/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/valine/1.4.14/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : '',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
