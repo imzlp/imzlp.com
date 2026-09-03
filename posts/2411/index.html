@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN,default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon-touch-icon.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在我们开发UE插件时，为了灵活控制，通常会提供大量的配置化参数，用于控制插件具体的执行逻辑和行为。 本文是我UE插件开发系列文章的第八篇，将介绍我在开发插件的过程中，对于插件配置化能力的思考和实现，在项目配置、任务配置、动态参数替换等方面的实践，使插件的配置流程尽可能地足够灵活易用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE插件与工具开发：配置化能力">
+<meta property="og:url" content="https://imzlp.com/posts/2411/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在我们开发UE插件时，为了灵活控制，通常会提供大量的配置化参数，用于控制插件具体的执行逻辑和行为。 本文是我UE插件开发系列文章的第八篇，将介绍我在开发插件的过程中，对于插件配置化能力的思考和实现，在项目配置、任务配置、动态参数替换等方面的实践，使插件的配置流程尽可能地足够灵活易用。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/07/122544.png">
+<meta property="article:published_time" content="2025-07-10T12:28:32.000Z">
+<meta property="article:modified_time" content="2025-07-10T12:28:32.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="插件开发">
+<meta property="article:tag" content="Plugins">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/07/122544.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/2411/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE插件与工具开发：配置化能力 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <div class="l10n-header-widget">
+    <script>
+      // 获取当前页面的 URL
+      const currentUrl = window.location.href;
+      // 替换 URL 中的部分内容
+      const jumpToL10nLink = currentUrl.replace('imzlp.com', 'en.imzlp.com');
+      // 将 jumpToL10nLink 绑定到一个全局变量
+      window.jumpToL10nLink = jumpToL10nLink;
+    </script>
+
+    <a href="#" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: none;" rel="noopener" target="_blank" onclick="window.open(window.jumpToL10nLink, '_blank'); return false;">
+      <i class="fa fa-solid fa-language"></i>
+    </a>
+  </div>
+
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/2411/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE插件与工具开发：配置化能力<a href="https://github.com/imzlp/blog-md/blob/zh/_posts/2025-07-10-2411.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a><a href="https://en.imzlp.com/posts/2411/" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-solid fa-language"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">UE plug-in and tool development: Configurable Capabilities</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-10 12:28 12:28:32:28" itemprop="dateCreated datePublished" datetime="2025-07-10T12:28:32+00:00">2025-07-10 12:28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">插件开发</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/2411/" class="post-meta-item leancloud_visitors" data-flag-title="UE插件与工具开发：配置化能力" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在我们开发UE插件时，为了灵活控制，通常会提供大量的配置化参数，用于控制插件具体的执行逻辑和行为。</p>
+<p>本文是我<a href="https://imzlp.com/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/">UE插件开发系列文章</a>的第八篇，将介绍我在开发插件的过程中，对于插件配置化能力的思考和实现，在项目配置、任务配置、动态参数替换等方面的实践，使插件的配置流程尽可能地足够灵活易用。</p>
+<span id="more"></span>
+
+<h2 id="项目配置"><a href="#项目配置" class="headerlink" title="项目配置"></a>项目配置</h2><h3 id="全局配置创建"><a href="#全局配置创建" class="headerlink" title="全局配置创建"></a>全局配置创建</h3><p>插件可以在<code>Project Settings</code>-<code>Plugins</code>分类下，创建独属于插件本身的配置，控制插件行为。</p>
+<p>以HotPatcher为例，在<code>Project Settings</code>-<code>HotPatcher</code>下，就有创建：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/104355.png"></p>
+<p>在项目设置下，是要对插件进行全局控制的逻辑，也就是插件在<strong>当前引擎环境中运行的全局参数</strong>，并且配置的值是存储在<code>Config</code>内的，可以提交到仓库中，作为整个项目的默认配置。</p>
+<p>创建方式，需要先创建出一个<code>UObject</code>的类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>(config = Game, defaultconfig)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HOTPATCHERCORE_API</span> UHotPatcherSettings:<span class="keyword">public</span> UObject</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">GENERATED_UCLASS_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">UPROPERTY</span>(EditAnywhere, config, Category = <span class="string">&quot;Editor&quot;</span>)</span><br><span class="line">    <span class="type">bool</span> bWhiteListCookInEditor = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">UPROPERTY</span>(EditAnywhere, config, Category = <span class="string">&quot;Editor&quot;</span>)</span><br><span class="line">    TArray&lt;ETargetPlatform&gt; PlatformWhitelists;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>把想要暴露出的配置参数，都加上反射标记，并且<code>UCLASS</code>上要加上Config相关的标识，这样编辑后的ini会存到<code>[PROJECT_DIR]/Config</code>下面，不过具体存到哪个ini里去，就要根据情况自己决定了。如果是纯Editor相关的，可以放到<code>Editor</code>下面去。</p>
+<p>创建完之后，还需要把它注册到引擎中去，可以在引擎启动时，可以通过SettingsModule注册。同样以HotPatcher为例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (ISettingsModule* SettingsModule = FModuleManager::<span class="built_in">GetModulePtr</span>&lt;ISettingsModule&gt;(<span class="string">&quot;Settings&quot;</span>))</span><br><span class="line">&#123;</span><br><span class="line">    SettingsModule-&gt;<span class="built_in">RegisterSettings</span>(<span class="string">&quot;Project&quot;</span>, <span class="string">&quot;Plugins&quot;</span>, <span class="string">&quot;Hot Patcher&quot;</span>,</span><br><span class="line">        <span class="built_in">LOCTEXT</span>(<span class="string">&quot;HotPatcherSettingsName&quot;</span>, <span class="string">&quot;Hot Patcher&quot;</span>),</span><br><span class="line">        <span class="built_in">LOCTEXT</span>(<span class="string">&quot;HotPatcherSettingsDescroption&quot;</span>, <span class="string">&quot;Configure the HotPatcher plugin&quot;</span>),</span><br><span class="line">        <span class="built_in">GetMutableDefault</span>&lt;UHotPatcherSettings&gt;());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的逻辑，就是把<code>UHotPatcherSettings</code>这个类的CDO，绑定到了<code>Project Settings</code>-<code>Plugins</code>-<code>Hot Patcher</code>上。</p>
+<p>在项目设置中，点开<code>Hot Patcher</code>的项，就会根据<code>CDO</code>的情况列出所有的配置参数了。</p>
+<h3 id="配置保存"><a href="#配置保存" class="headerlink" title="配置保存"></a>配置保存</h3><p>修改了其中的值之后，会触发<code>UObject::SaveConfig</code>，把当前CDO的值，保存到对应的ini中去：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/110526.png" alt="image.png"></p>
+<p>保存的配置：</p>
+<figure class="highlight ini"><figcaption><span>DefaultGame.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/HotPatcherEditor.HotPatcherSettings]</span></span><br><span class="line"><span class="attr">bWhiteListCookInEditor</span>=<span class="literal">True</span></span><br><span class="line">+<span class="attr">PlatformWhitelists</span>=WindowsNoEditor</span><br><span class="line">+<span class="attr">PlatformWhitelists</span>=IOS</span><br><span class="line">+<span class="attr">PlatformWhitelists</span>=Android_ASTC</span><br><span class="line">+<span class="attr">CookParams</span>=-compress</span><br><span class="line"><span class="attr">TempPakDir</span>=Saved/HotPatcher/Paks</span><br><span class="line"><span class="attr">TempPatchSetting</span>=()</span><br></pre></td></tr></table></figure>
+
+<p>它就是典型的CDO默认参数配置，在引擎启动时，创建出CDO后，会从UClass指定的ini里读取值并写入。<br>这样就能够实现插件在项目中通用配置的存储、修改了。</p>
+<h3 id="访问配置"><a href="#访问配置" class="headerlink" title="访问配置"></a>访问配置</h3><p>如何使用呢？</p>
+<p>因为我们用于保存插件配置的对象就是CDO，如果想要访问到引擎当中的实时值，就可以通过CDO的方式获取：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> UHotPatcherSettings* Settings = <span class="built_in">GetDefault</span>&lt;UHotPatcherSettings&gt;();</span><br></pre></td></tr></table></figure>
+<p>然后就跟普通的属性访问一样，去获取对应的值就行了。<br>以Hot Patcher配置中的<code>bWhiteListCookInEditor</code>为例：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/111512.png" alt="image.png"><br>它控制的就是，只在<code>Cook And Pak</code>中列出指定的白名单的平台列表。</p>
+<p>通过这个方式就能为插件比较方便地做一些<strong>全局通用行为</strong>的参数控制了。</p>
+<h2 id="任务配置"><a href="#任务配置" class="headerlink" title="任务配置"></a>任务配置</h2><p>前一小结提到，可以为插件创建出全局的配置，用于控制通用行为。</p>
+<p>那么在此基础上，我们有时需要让插件执行一些不同的任务，这些不同的任务之间，也会使用不同的参数。所以，通常还需要为插件提供一个用于执行任务的配置化逻辑。</p>
+<h3 id="PropertyEditor创建"><a href="#PropertyEditor创建" class="headerlink" title="PropertyEditor创建"></a>PropertyEditor创建</h3><p>同样以HotPatcher为例，在主界面打开<code>byPatch</code>，就会弹出一个配置面板：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/112136.png"><br>用于编辑执行任务的配置，并且在右上角还提供了三个选项，分别是<code>Import</code>/<code>Export</code>/<code>Reset</code>，用来方便导入、导出、和重置当前的配置。<br>这样可以把每一个执行任务，都独立出一份配置文件，当需要执行时，就选择对应的配置文件就可以了。</p>
+<p>那么如何做到呢？<br>同样以HotPatcher为例，需要先创建出一个<strong>反射结构</strong>，并声明所有需要在配置中访问的属性：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">USTRUCT</span>()</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">HOTPATCHERRUNTIME_API</span> FExportPatchSettings:<span class="keyword">public</span> FHotPatcherSettingBase</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">GENERATED_USTRUCT_BODY</span>()</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere,  Category = <span class="string">&quot;BaseVersion&quot;</span>)</span><br><span class="line">		<span class="type">bool</span> bByBaseVersion = <span class="literal">false</span>;</span><br><span class="line">	<span class="built_in">UPROPERTY</span>(EditAnywhere, Category = <span class="string">&quot;BaseVersion&quot;</span>, meta = (RelativeToGameContentDir, EditCondition=<span class="string">&quot;bByBaseVersion&quot;</span>))</span><br><span class="line">		FFilePath BaseVersion;</span><br><span class="line">	<span class="comment">// ....</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>整个执行配置的所有选项都定义在其中，在实际执行时，也是通过配置文件构造出一个该结构的实例来运行的。</p>
+<p>创建完结构后，还需要创建出一个Slate控件，用于容纳我们的配置化界面，其实本质上就是需要把这个反射结构的跟Editor绑定起来，允许编辑。</p>
+<p>可以使用<code>PropertyModule</code>来创建出一个SettingView：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">SHotPatcherPatchWidget::CreateDetailsView</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// Create a property view</span></span><br><span class="line">	FPropertyEditorModule&amp; EditModule = FModuleManager::<span class="built_in">Get</span>().<span class="built_in">GetModuleChecked</span>&lt;FPropertyEditorModule&gt;(<span class="string">&quot;PropertyEditor&quot;</span>);</span><br><span class="line"></span><br><span class="line">	FDetailsViewArgs DetailsViewArgs;</span><br><span class="line">	&#123;</span><br><span class="line">		DetailsViewArgs.bAllowSearch = <span class="literal">true</span>;</span><br><span class="line">		DetailsViewArgs.bHideSelectionTip = <span class="literal">true</span>;</span><br><span class="line">		DetailsViewArgs.bLockable = <span class="literal">false</span>;</span><br><span class="line">		DetailsViewArgs.bSearchInitialKeyFocus = <span class="literal">true</span>;</span><br><span class="line">		DetailsViewArgs.bUpdatesFromSelection = <span class="literal">false</span>;</span><br><span class="line">		DetailsViewArgs.NotifyHook = <span class="literal">nullptr</span>;</span><br><span class="line">		DetailsViewArgs.bShowModifiedPropertiesOption = <span class="literal">false</span>;</span><br><span class="line">		DetailsViewArgs.bShowScrollBar = <span class="literal">false</span>;</span><br><span class="line">		DetailsViewArgs.bShowOptions = <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	FStructureDetailsViewArgs StructureViewArgs;</span><br><span class="line">	&#123;</span><br><span class="line">		StructureViewArgs.bShowObjects = <span class="literal">true</span>;</span><br><span class="line">		StructureViewArgs.bShowAssets = <span class="literal">true</span>;</span><br><span class="line">		StructureViewArgs.bShowClasses = <span class="literal">true</span>;</span><br><span class="line">		StructureViewArgs.bShowInterfaces = <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	SettingsView = EditModule.<span class="built_in">CreateStructureDetailView</span>(DetailsViewArgs, StructureViewArgs, <span class="literal">nullptr</span>);</span><br><span class="line">	FStructOnScope* Struct = <span class="keyword">new</span> <span class="built_in">FStructOnScope</span>(FExportPatchSettings::<span class="built_in">StaticStruct</span>(), (uint8*)ExportPatchSetting.<span class="built_in">Get</span>());</span><br><span class="line">	SettingsView-&gt;<span class="built_in">GetDetailsView</span>()-&gt;<span class="built_in">RegisterInstancedCustomPropertyLayout</span>(FExportPatchSettings::<span class="built_in">StaticStruct</span>(),FOnGetDetailCustomizationInstance::<span class="built_in">CreateStatic</span>(&amp;FPatchSettingsDetails::MakeInstance));</span><br><span class="line">	SettingsView-&gt;<span class="built_in">SetStructureData</span>(<span class="built_in">MakeShareable</span>(Struct));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>并且把这个<code>SettingView</code>与这个反射结构、实例绑定起来，从而实现Editor中修改了值，对应的内存实例也会同步修改的需要。</p>
+<p><code>SettingView</code>创建之后，还需要把它的控件，放到指定的Slata容器控件中：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/113413.png"></p>
+<p>这样，当打开我们创建的Slate控件，我们所定义的反射结构（<code>FExportPatchSettings</code>）的所有反射属性值，就会以引擎<code>PropertyEditor</code>的形式列出来了，如同HotPatcher的配置界面那样：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/113607.png"></p>
+<p>通过这个配置界面修改值，就会同步修改到底层绑定的<code>FExportPatchSettings</code>对象实例，我们对于配置的读取和保存，也是通过访问这个<strong>反射结构实例</strong>来做的，后面会具体介绍。</p>
+<h3 id="配置的序列化"><a href="#配置的序列化" class="headerlink" title="配置的序列化"></a>配置的序列化</h3><p>前面已经提到了，通过<code>PropertyEditor</code>我们可以把属性窗口跟内存中的<strong>反射结构实例</strong>绑定起来，那么对于我们想要读取/保存/重置的需求而言，只需要能够修改这个结构的实例就可以了。<br>如何做呢？</p>
+<h4 id="保存"><a href="#保存" class="headerlink" title="保存"></a>保存</h4><p>对于配置的保存，我们可以把一个<strong>反射结构实例</strong>的值，保存为一个json结构，引擎本身也提供了这样的能力。</p>
+<p>首先可以把一个反射结构，转换为一个JsonObject:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FExportPatchSettings StructIns;  </span><br><span class="line">TSharedPtr&lt;FJsonObject&gt; JsonObject = <span class="built_in">MakeShareable</span>(<span class="keyword">new</span> FJsonObject);  </span><br><span class="line"><span class="type">bool</span> bStatus = FJsonObjectConverter::<span class="built_in">UStructToJsonObject</span>(FExportPatchSettings::<span class="built_in">StaticStruct</span>(),&amp;StructIns,JsonObject.<span class="built_in">ToSharedRef</span>(),<span class="number">0</span>,<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<p>然后就可以把这个JsonObject转换为一个Json的字符串：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FString JsonString;  </span><br><span class="line"><span class="keyword">if</span> (bStatus)  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">auto</span> JsonWriter = TJsonWriterFactory&lt;&gt;::<span class="built_in">Create</span>(&amp;JsonString);  </span><br><span class="line">    FJsonSerializer::<span class="built_in">Serialize</span>(JsonObject.<span class="built_in">ToSharedRef</span>(), JsonWriter);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>拿到字符串之后，就可以存盘了，它就是我们想要存储的配置文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FFileHelper::<span class="built_in">SaveStringToFile</span>(JsonString,*SavePath);</span><br></pre></td></tr></table></figure>
+
+<h4 id="加载"><a href="#加载" class="headerlink" title="加载"></a>加载</h4><p>当把配置文件保存之后，对于配置文件的加载，其实就分为那么两步：从json文件刷新<strong>反射结构实例</strong>的属性、更新PropertyEditor展示的值。</p>
+<p>对于从json反序列化为UStruct，也可以通过<code>FJsonSerializer</code>相关的辅助函数做到：</p>
+<ol>
+<li>从json文件读取字符串，然后deserialize为JsonObject</li>
+<li>根据JsonObject去修改<strong>反射结构实例</strong>的值</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FExportPatchSettings StructIns;  </span><br><span class="line">TSharedRef&lt;TJsonReader&lt;TCHAR&gt;&gt; JsonReader = TJsonReaderFactory&lt;TCHAR&gt;::<span class="built_in">Create</span>(InJsonString);  </span><br><span class="line">TSharedPtr&lt;FJsonObject&gt; DeserializeJsonObject;  </span><br><span class="line"><span class="keyword">if</span> (FJsonSerializer::<span class="built_in">Deserialize</span>(JsonReader, DeserializeJsonObject))  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="type">bool</span> bStatus = FJsonObjectConverter::<span class="built_in">JsonObjectToUStruct</span>(DeserializeJsonObject.<span class="built_in">ToSharedRef</span>(),FExportPatchSettings::<span class="built_in">StaticStruct</span>(),&amp;StructIns,<span class="number">0</span>,<span class="number">0</span>);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就能够把json中的配置，覆写到实例中了。</p>
+<p>然后还需要刷新<code>PropertyEditor</code>的<code>SettingView</code>，确保显示的跟实际值一致：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SettingsView-&gt;<span class="built_in">GetDetailsView</span>()-&gt;<span class="built_in">ForceRefresh</span>();</span><br></pre></td></tr></table></figure>
+<h4 id="重置"><a href="#重置" class="headerlink" title="重置"></a>重置</h4><p>经过前面两部分的介绍之后，其实重置逻辑就更为简单了：只需要把<strong>反射结构实例</strong>重置为默认构造值就行了，然后刷新SettingView。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">StructIns = FExportPatchSettings&#123;&#125;;</span><br><span class="line">SettingsView-&gt;<span class="built_in">GetDetailsView</span>()-&gt;<span class="built_in">ForceRefresh</span>();</span><br></pre></td></tr></table></figure>
+
+<p>这样就实现了最基础的重置逻辑。不过HotPatcher做的还更复杂一些，会重置为<code>Project Settings</code>中预设的配置值，但基本原理是一致的。</p>
+<h2 id="动态参数替换"><a href="#动态参数替换" class="headerlink" title="动态参数替换"></a>动态参数替换</h2><p>当我们能够导出和导入配置后，不仅仅只会在Editor下使用，通常还会提供cmdlet来在ci系统中进行自动化执行。<br>那么对于多配置的情况而言，允许cmdlet指定配置文件来控制执行的任务，是一个不错的选择。</p>
+<p>如<code>HotPatcher</code>和<code>ResScanner</code>提供的那样：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-run=HotPatcher -config=config.json</span><br></pre></td></tr></table></figure>
+
+<p>虽然比较方便，但是还存在一个痛点：如果两个要执行的任务，大多数参数都一样，只有个别的参数不一致。需要为每种情况都创建出一个独立的配置文件，那么管理起来就比较麻烦了。</p>
+<p>所以这种情况下，就需要提供一种可以动态控制某个参数值的逻辑，让我们能为一批相似逻辑提供一个通用的配置，然后通过命令行动态修改所需的值。</p>
+<p>基于这种需要，我写了一个模板函数，可以通过指定一个结构实例，以及指定一个<code>Name-Value</code>的键值对，来实现反射属性的覆写：<a target="_blank" rel="noopener" href="https://gist.github.com/hxhb/03853032bff2e163febb4ce9a5d356c8#file-replaceproperty-hpp">ReplaceProperty.hpp</a></p>
+<p>只需要在<code>cmdlet</code>执行参数后指定结构属性即可，并且还支持多级结构，如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-run=HotPatcher -config=config.json -bByBaseVersion=<span class="literal">true</span> -BaseVersion.filePath=<span class="string">&quot;&quot;</span> -versionid=<span class="string">&quot;0.1.00&quot;</span> -savePath.path=<span class="string">&quot;[OUTPUT_DIR]&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>首先读取config并反序列化，然后再执行参数覆写，这样就能够方便地动态控制参数了。</p>
+<p>其实不仅仅是cmdlet的配置，项目配置中的CDO配置也可以通过参数来动态替换，与这里介绍的是类似的，就不再详细赘述了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇文章介绍了几种在UE中为插件添加配置化能力的方式，基于这几种方式，能够让插件的灵活性大幅提升。配置化、灵活控制永远是插件开发追求的主题，工具也需要不断地进行迭代。</p>
+<p>除了上面介绍的这些之外，还可以对PropertyEditor进行定制化，把配置界面的展示与实际保存的数据类型脱离，比如底层结构存储的是一个字符串，但是配置界面可以特殊处理展示，就像之前的一篇文章（<a href="https://imzlp.com/posts/26919">虚幻引擎中的属性面板定制化</a>）里写的那样。</p>
+<p><a href="https://imzlp.com/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/">插件</a>与<a href="https://imzlp.com/categories/UnrealEngine/%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/">工具</a>开发系列的文章，还有几篇正在筹备中，下一篇会介绍如何为插件添加自定义流程控制和动态扩展的能力，敬请期待。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/2411/" target="_blank">UE插件与工具开发：配置化能力</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2025/07/10 12:28<br/>
+             
+             <span>本文字数:</span><span class="page-count">3.2k 字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/2411/" target="_blank" title="UE插件与工具开发：配置化能力">https://imzlp.com/posts/2411/</a>
+             <span class="copy-path" data-clipboard-text="原始链接: https://imzlp.com/posts/2411/ 文章作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" rel="tag"># 插件开发</a>
+              <a href="/tags/Plugins/" rel="tag"># Plugins</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/88478/" rel="prev" title="UE PAK的加密分析与加固策略">
+      <i class="fa fa-chevron-left"></i> UE PAK的加密分析与加固策略
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/53079/" rel="next" title="极致优化UE Android APK的大小">
+      极致优化UE Android APK的大小 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="nav-number">1.</span> <span class="nav-text">项目配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E9%85%8D%E7%BD%AE%E5%88%9B%E5%BB%BA"><span class="nav-number">1.1.</span> <span class="nav-text">全局配置创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%BF%9D%E5%AD%98"><span class="nav-number">1.2.</span> <span class="nav-text">配置保存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE%E9%85%8D%E7%BD%AE"><span class="nav-number">1.3.</span> <span class="nav-text">访问配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1%E9%85%8D%E7%BD%AE"><span class="nav-number">2.</span> <span class="nav-text">任务配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PropertyEditor%E5%88%9B%E5%BB%BA"><span class="nav-number">2.1.</span> <span class="nav-text">PropertyEditor创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96"><span class="nav-number">2.2.</span> <span class="nav-text">配置的序列化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%9D%E5%AD%98"><span class="nav-number">2.2.1.</span> <span class="nav-text">保存</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD"><span class="nav-number">2.2.2.</span> <span class="nav-text">加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%8D%E7%BD%AE"><span class="nav-number">2.2.3.</span> <span class="nav-text">重置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%8F%82%E6%95%B0%E6%9B%BF%E6%8D%A2"><span class="nav-number">3.</span> <span class="nav-text">动态参数替换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="/images/avatar.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">198</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">194</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">794k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/2411/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : 'https://appcounter.imzlp.com',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

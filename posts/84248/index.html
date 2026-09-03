@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN,default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon-touch-icon.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="今年对我来说是个非常意义重大的一年：我娃出生了。在新生的喜悦中，也不免有很多焦虑——总担心不能科学地喂养宝宝、有什么纰漏。在月子中心时，月嫂会比较规律的喂养信息记录——什么时间喝奶、睡了多久，几次大小便，有没有吃AD等，都会记录下来，可以追踪喂养状态。 但她们是通过纸笔记录，不够数字化。 当回家之后，需要自己带娃了，我觉得记录下来宝宝的抚养状态依然是有必要的：一是可以追踪每日具体的喂养状况，方便备">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从Vibe Coding到AI Agent：一个喂养系统的完整实践">
+<meta property="og:url" content="https://imzlp.com/posts/84248/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="今年对我来说是个非常意义重大的一年：我娃出生了。在新生的喜悦中，也不免有很多焦虑——总担心不能科学地喂养宝宝、有什么纰漏。在月子中心时，月嫂会比较规律的喂养信息记录——什么时间喝奶、睡了多久，几次大小便，有没有吃AD等，都会记录下来，可以追踪喂养状态。 但她们是通过纸笔记录，不够数字化。 当回家之后，需要自己带娃了，我觉得记录下来宝宝的抚养状态依然是有必要的：一是可以追踪每日具体的喂养状况，方便备">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/7b2a65654e3370b1.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/d15833f4e1866d0b.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/af373fb662ea7c13.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/3ba357636c98dd5b.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/a42c29d611e7a09d.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/209861a91231b2cc.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/389f3ff5df4fa61b.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/7dea312ef09b0d23.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/b134d45801e55275.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/9c630cb7fd8e3146.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/95dd0e271fe6cf53.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/581ceae7ddad9b23.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/123f9a1ce01289ae.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/bc4d5015becf319f.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/0f7771230f2f3d12.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/9bbd6c0b1ddcbcb6.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/5cc1c062c4012d85.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/04785f87b5d21c1e.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/0ce4dd1d84f5cca4.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/0348a966e9d604ab.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/da2af1bdf25a44a0.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/95b0e14f10bf2372.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/80188ef0fb89a380.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/97a088a1b0fa7f7c.png">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/af160f9716d535a4.png">
+<meta property="article:published_time" content="2026-08-13T14:05:07.000Z">
+<meta property="article:modified_time" content="2026-08-13T14:05:07.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="VibeCoding">
+<meta property="article:tag" content="Agent">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/7b2a65654e3370b1.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/84248/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>从Vibe Coding到AI Agent：一个喂养系统的完整实践 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <div class="l10n-header-widget">
+    <script>
+      // 获取当前页面的 URL
+      const currentUrl = window.location.href;
+      // 替换 URL 中的部分内容
+      const jumpToL10nLink = currentUrl.replace('imzlp.com', 'en.imzlp.com');
+      // 将 jumpToL10nLink 绑定到一个全局变量
+      window.jumpToL10nLink = jumpToL10nLink;
+    </script>
+
+    <a href="#" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: none;" rel="noopener" target="_blank" onclick="window.open(window.jumpToL10nLink, '_blank'); return false;">
+      <i class="fa fa-solid fa-language"></i>
+    </a>
+  </div>
+
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/84248/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          从Vibe Coding到AI Agent：一个喂养系统的完整实践<a href="https://github.com/imzlp/blog-md/blob/zh/_posts/2026-08-13-84248.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a><a href="https://en.imzlp.com/posts/84248/" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-solid fa-language"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">From Vibe Coding to AI Agent: A Complete Journey of Building a Baby Feeding System</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2026-08-13 14:05 14:05:07:05" itemprop="dateCreated datePublished" datetime="2026-08-13T14:05:07+00:00">2026-08-13 14:05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/Agent/" itemprop="url" rel="index"><span itemprop="name">Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/Agent/VibeCoding/" itemprop="url" rel="index"><span itemprop="name">VibeCoding</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/84248/" class="post-meta-item leancloud_visitors" data-flag-title="从Vibe Coding到AI Agent：一个喂养系统的完整实践" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>今年对我来说是个非常意义重大的一年：我娃出生了。在新生的喜悦中，也不免有很多焦虑——总担心不能科学地喂养宝宝、有什么纰漏。在月子中心时，月嫂会比较规律的喂养信息记录——什么时间喝奶、睡了多久，几次大小便，有没有吃AD等，都会记录下来，可以追踪喂养状态。</p>
+<p>但她们是通过纸笔记录，不够数字化。</p>
+<p>当回家之后，需要自己带娃了，我觉得记录下来宝宝的抚养状态依然是有必要的：一是可以追踪每日具体的喂养状况，方便备忘，二是我希望能够基于日常的喂养数据，分析出宝宝的状态，给出针对性的建议，避免过度喂养或喂养不足，也能追踪宝宝的生长趋势。</p>
+<p>想法有了，说干就干。</p>
+<p>得益于近一年AI的发展，AI Coding已经跨过了可用性门槛，已经能够实际参与到真实项目的开发之中了。所以，我计划用AI帮我实现一个能够记录宝宝喂养和成长状态的系统——最好完全不用我自己写代码。</p>
+<p>另外，随着AI Agent的发展，也让我思考如何把AI介入到宝宝的日常喂养中，作为专属的AI喂养助理，文章中会介绍我的实践。</p>
+<span id="more"></span>
+<h2 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h2><p>虽然喂养系统这个需求可能小众且非常私人化，但是我依然希望把它当作一个完整的小产品来设计。</p>
+<p>我希望这个系统不仅仅能记录喂养状态，而是一个全面的婴儿成长记录：</p>
+<ol>
+<li>基础喂养系统（母乳亲喂、瓶喂、奶粉、辅食、尿布、睡眠记录）</li>
+<li>营养补剂（AD、维生素D等）</li>
+<li>健康（用药、体温、疫苗）</li>
+<li>成长（身高、体重、长牙顺序等）</li>
+<li>备忘系统</li>
+</ol>
+<p>除了这些基础记录之外，我还希望能够基于这些记录数据，搞一个数据看板，可以跨天追踪近期的整体状态。</p>
+<ol>
+<li>按时间轴展示喂养数据</li>
+<li>高频数据进行统计展示（如喂养量、大小便、睡眠时长、补剂服用情况等）</li>
+<li> 身高、体重曲线（以及与WHO的参考值对比）</li>
+<li>未完成的疫苗记录</li>
+<li>喂养、作息是否规律</li>
+<li>…..</li>
+</ol>
+<p>总的来说，我希望能够基于原始的喂养信息，分析所有可知的数据。</p>
+<p>几个关键的技术点的选择：</p>
+<ol>
+<li>基于Next.js + Tailwind CSS</li>
+<li>响应式设计，优化移动端体验</li>
+<li>纯Web实现，需支持PWA</li>
+<li>采用Sqlite单文件存储</li>
+<li>支持多租户，数据的隔离和安全性需要保证</li>
+<li>完整的HTTP API、支持Webhook</li>
+<li>方便Docker部署</li>
+</ol>
+<p>从功能支持，到基础技术点，以及部署的方便性都提出了要求。而不是只是一个笼统的概念，比较清晰的设计也能够方便让AI来实现，这也是AI最擅长的领域——把明确的事情做好。</p>
+<h2 id="实现-体验迭代"><a href="#实现-体验迭代" class="headerlink" title="实现 / 体验迭代"></a>实现 / 体验迭代</h2><p>虽然AI已经可以写代码了，但是对于一个完善产品的理解和设计能力还是有很大差距，它可以针对单点问题给出合理的实现，但不能很好地基于产品的整体架构考虑，以及模块之前的关联，有时候改完一个问题，又冒出来几个新的问题。</p>
+<p>所以就算有了AI加持，如果从零开始设计一个系统，需要人脑中先有一个整体框架，基于这个框架优先设计数据结构和数据库，然后让AI填充逻辑和细节。<br><strong>数据结构和数据库设计非常重要</strong>，一定要慎重。字段语义需要明确，且要考虑扩展性，不然一旦新增、修改功能，对已有数据的迁移和兼容会存在挑战。</p>
+<p>当然，这部分内容也可以跟AI不断讨论后进行迭代，有了AI确实可以解放生产力，来实现那些之前不擅长、人力投入产出比没有那么多的事情。</p>
+<p>当具有一个整体的需求和关键技术点的选择后，使用AI来实现初版功能是非常快的，半天就可以迭代出一个能跑的服务。</p>
+<blockquote>
+<p>注：我使用 ClaudeCode +Opus 4.6实现了初始的版本，后续用DeepSeek + GPT5.6做过多轮优化。</p>
+</blockquote>
+<p>AI能把功能实现，或许没什么太大问题，但AI不知道怎么样的交互才是最方便与合理的——尤其是对于一个需要高频操作的功能来说，麻烦的操作会磨灭记录的耐心——还不如手写记录一下，这也是我老婆最初的真实吐槽。</p>
+<p>所以，VibeCoding或许可以极高提升编码效率，但对产品的细微体验的提升或许当前阶段还是需要人来做，毕竟有人味的产品，一定会超越冷冰冰的功能堆砌。</p>
+<p>产品的设计与功能的实现，一定不能脱离真实的用户反馈，毕竟每天真实使用产品的人，才是最了解一个功能应该是什么样的人。</p>
+<p>从最初实现的版本，到今天已有半年，期间经过了我多轮优化，更新了20多个版本。目前是我体验起来整体比较满意的了，这个小产品，也正随着我娃一起成长。</p>
+<p>我将迭代的范围总结为下面几点：</p>
+<ol>
+<li>功能设计随着宝宝的增长可能逐渐不符合预期</li>
+<li>不同时段的宝宝，需要记录的侧重点不同（新生早期可能侧重奶粉，后面可能母乳、混合辅食）</li>
+<li>随着一天天长大，又有新的项目需要记录（如辅食、长牙）</li>
+<li>数据需要新的流转方式——如接入到AI Agent</li>
+</ol>
+<p>可能一个产品完全做完了，就是产品生命力结束的那天，用户体验的提升可能是永无止境的。</p>
+<h2 id="使用-部署"><a href="#使用-部署" class="headerlink" title="使用 / 部署"></a>使用 / 部署</h2><p>我将项目开源到了github上，详见：<a target="_blank" rel="noopener" href="https://github.com/hxhb/baby-feed">hxhb/baby-feed</a>。</p>
+<p>可以自己用Docker部署，我将最新的版本也发布到了DockerHub上，使用下面的配置即可部署：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">baby-feed:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">ahzknarf/baby-feed:latest</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">baby-feed</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;3010:3000&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">NODE_ENV=production</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">DATABASE_URL=file:/app/data/baby-feed.db</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">NEXTAUTH_SECRET=$&#123;NEXTAUTH_SECRET&#125;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">NEXTAUTH_URL=$&#123;NEXTAUTH_URL&#125;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">TRUST_PROXY=$&#123;TRUST_PROXY:-true&#125;</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">./data:/app/data</span></span><br><span class="line">    <span class="attr">healthcheck:</span></span><br><span class="line">      <span class="attr">test:</span> [<span class="string">&quot;CMD&quot;</span>, <span class="string">&quot;node&quot;</span>, <span class="string">&quot;-e&quot;</span>, <span class="string">&quot;fetch(&#x27;http://localhost:3000/&#x27;).then(r=&gt;&#123;process.exit(r.ok?0:1)&#125;).catch(()=&gt;process.exit(1))&quot;</span>]</span><br><span class="line">      <span class="attr">interval:</span> <span class="string">30s</span></span><br><span class="line">      <span class="attr">timeout:</span> <span class="string">10s</span></span><br><span class="line">      <span class="attr">retries:</span> <span class="number">3</span></span><br><span class="line">      <span class="attr">start_period:</span> <span class="string">40s</span></span><br></pre></td></tr></table></figure>
+
+<p>默认运行在3000端口，首次登录注册的账号为管理员账户。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/7b2a65654e3370b1.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/d15833f4e1866d0b.png"></p>
+<p>每个记录项目的控件，都是完全独立的，力求达到用最方便和直观的方式记录。</p>
+<h3 id="项目记录"><a href="#项目记录" class="headerlink" title="项目记录"></a>项目记录</h3><p>下面挑几个特色的项目介绍一下：<br>如亲喂和睡眠，支持实时计时和事后补记：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/af373fb662ea7c13.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/3ba357636c98dd5b.png"></p>
+<p>疫苗会自动带入未完成的针次，可以快速记录：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/a42c29d611e7a09d.png"></p>
+<p>牙齿萌出，可以直观选中牙齿：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/209861a91231b2cc.png"></p>
+<h3 id="统计信息"><a href="#统计信息" class="headerlink" title="统计信息"></a>统计信息</h3><p>并且正如前面所说，我提供了丰富的基于原始数据的统计信息，可以对比近期的喂养趋势：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/389f3ff5df4fa61b.png"></p>
+<p>身高、体重、BMI趋势：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/7dea312ef09b0d23.png"></p>
+<p>疫苗记录，可以方便查看未完成疫苗、剩余针次：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/b134d45801e55275.png"></p>
+<h3 id="数据洞察"><a href="#数据洞察" class="headerlink" title="数据洞察"></a>数据洞察</h3><p>在洞察中，还可以查看当前身高体重的WHO位点：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/9c630cb7fd8e3146.png"></p>
+<p>婴儿体检时，医生也是依据当前所处的WHO位点判断生长情况的。</p>
+<p>除此之外还包含喂养洞察、成长洞察、健康洞察等，不再一一介绍。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/95dd0e271fe6cf53.png"></p>
+<h2 id="AI-Agent：自然语言交互"><a href="#AI-Agent：自然语言交互" class="headerlink" title="AI Agent：自然语言交互"></a>AI Agent：自然语言交互</h2><p>前面介绍的内容，还是传统应用的思路，无非是功能、交互。</p>
+<p>但现在是2026年，AI Agent爆发的时代。所以我一直在思考，怎么样才能更方便地使用这个喂养系统。</p>
+<p>让我们只需要动动嘴，就可以记录宝宝状态。<br>有什么疑问，就可以直接问它，它能够基于宝宝的事实数据，给出针对性的回答，而不是笼统地问Chat。</p>
+<p>一个完全基于宝宝的数据上下文的贴心AI助手！</p>
+<p>为实现这个需求，我改造了<a target="_blank" rel="noopener" href="https://github.com/hxhb/baby-feed">hxhb/baby-feed</a>项目，为每个可操作行为，都配备了HTTP请求接口：<a target="_blank" rel="noopener" href="https://github.com/hxhb/baby-feed/blob/master/docs/HTTP_REQUESTS.md">HTTP API</a>。</p>
+<p>并且账户系统中，还提供了API KEY机制，可以基于API KEY进行账户验证、获取数据。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/581ceae7ddad9b23.png"></p>
+<p>通过这些接口，就能操作整个系统——包括新增、删除、修改记录，获取近期数据。并且准备了所有API的数据Schema，这样提供了能让AI操作的可能。</p>
+<p>基于这些接口，我实现了一个喂养系统专属的SKILL：<a target="_blank" rel="noopener" href="https://github.com/hxhb/baby-feed-assistant/">hxhb/baby-feed-assistant</a></p>
+<p>这个SKILL也迭代了很多版本，踩过一些坑，下面是我觉得必须要做的：</p>
+<ol>
+<li>不要往SKILL中写太多内容，拆分引用文档，支持渐进式加载</li>
+<li>把明确的部分，拆分为脚本，让AI执行脚本，获取确定性结果</li>
+<li>系统功能更新时，及时更新SKILL，通过版本号标记</li>
+</ol>
+<p>可以把它装到任何你喜欢的Agent中——ClaudeCode、Codex、Pi、Hermes、OpenClaw，都没问题。</p>
+<p>我个人主要使用Hermes，接入到了QQ和微信中，就可以用自然语言让它操作喂养系统了，并且还能支持语音识别，更为方便。</p>
+<p>询问宝宝状态怎么样：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/123f9a1ce01289ae.png"></p>
+<p>添加记录：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/bc4d5015becf319f.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/0f7771230f2f3d12.png"></p>
+<p>可以添加什么辅食：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/9bbd6c0b1ddcbcb6.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/5cc1c062c4012d85.png"></p>
+<p>对宝宝大便带血丝的担心：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/04785f87b5d21c1e.png"></p>
+<p>基于这个SKILL，就能完全操作整个喂养系统，AI可以添加、修改、删除、询问。并且数据依然可以在Web中访问、继续查看统计和洞察。</p>
+<p>结合了两者的优点：</p>
+<ul>
+<li>利用AI提供了一种更方便和人性化的交互方式，使用自然语言、语音，就可以操作记录信息，询问问题，并分析数据给出针对性的回答。</li>
+<li>保持Web的高信息密度，可以打开页面直观看到整体情况。</li>
+</ul>
+<p>AI Agent确实提供了非常丰富的可能性——只要数据足够丰富，给AI的指南足够明确，就可以实现非常惊艳的效果。</p>
+<p>拥抱AI从来都不是最重要的目标，更重要是怎么样能通过它带来更好的用户体验。</p>
+<h2 id="Webhook：让AI主动提醒"><a href="#Webhook：让AI主动提醒" class="headerlink" title="Webhook：让AI主动提醒"></a>Webhook：让AI主动提醒</h2><p>前面介绍的，还只是能够让AI回答问题，但是随着喂养系统+AI，我越来越有一个新的想法：能不能根据记录数据，让AI在需要的时间主动提醒我？</p>
+<p>为什么Agent的定时任务不够？</p>
+<p>定时任务——顾名思义，它是固定时间段内执行的任务。</p>
+<p>但我希望的是即时性，如：</p>
+<ul>
+<li>宝宝隔了一段时间没喂，提醒我喂养。它不是固定时间定时的，而是需要根据上次喂养时间推导</li>
+<li>宝宝打了疫苗，提醒我隔几个小时量体温</li>
+<li>宝宝还没喂养AD，提醒服用</li>
+<li>宝宝几个小时没睡了，提醒我要不要让他睡觉，避免过度劳累</li>
+</ul>
+<p>它需要基于系统的记录时间戳，根据规则，即时提醒我。</p>
+<p>如果这些事情交由Agent的定时系统来做，要么就需要忍受不能及时提醒，要么就需要高频触发——浪费Token！</p>
+<p>所以，我给喂养系统添加了支持Webhook机制，当达到设定条件时，主动推送给Agent，也就是QQ微信发消息给我。</p>
+<p>允许创建Webhook，监听事件：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/0ce4dd1d84f5cca4.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/0348a966e9d604ab.png"></p>
+<p>并添加了提醒功能：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/da2af1bdf25a44a0.png"><br>并且结合了健康项目记录事件——当记录宝宝打疫苗了，自动创建体温提醒。</p>
+<p>我将其接入到了Hermes的Webhook中，这样就可以顺利接收提醒了。</p>
+<p>3小时喂奶提醒：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/95b0e14f10bf2372.png"></p>
+<p>疫苗后体温提醒：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/80188ef0fb89a380.png"></p>
+<p>睡眠提醒：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/97a088a1b0fa7f7c.png"></p>
+<p>从被动询问，到主动提醒，AI已经更深地介入到了宝宝的日常抚养中。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>这个项目，随着我娃的成长，一直在迭代，也是我纯Vibe出来的一个完整生命周期的自用产品，麻雀虽小，五脏俱全。</p>
+<p>我们已经在这个系统上，记录了宝宝3600条数据，它们是宝宝成长的见证，伴随他一天一天慢慢长大：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2026/08/13/af160f9716d535a4.png"><br>也给了我们作为新手父母的自信——带娃可以用更科学的方式。</p>
+<p>另外，在这个喂养系统中做的AI Agent尝试，也带给了我更多思考。</p>
+<ul>
+<li>AI可以快速实现功能，但落点一定要能解决具体且实际的需求，它才是有价值的。</li>
+<li>丰富的结构化可解释的数据，是AI应用的飞轮。没有数据的AI应用可能只是无根之水，有了数据才与你有关，才能够深度介入到你的生活中。</li>
+</ul>
+<p>AI从不是目的，能提供更好的体验才是。</p>
+<p>如果你是新手奶爸/妈，且有自部署服务的经验，欢迎你体验<a target="_blank" rel="noopener" href="https://github.com/hxhb/baby-feed">hxhb/baby-feed</a>，如果有好的建议也可以反馈给我，持续进化。</p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/84248/" target="_blank">从Vibe Coding到AI Agent：一个喂养系统的完整实践</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2026/08/13 14:05<br/>
+             
+             <span>本文字数:</span><span class="page-count">4k 字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/84248/" target="_blank" title="从Vibe Coding到AI Agent：一个喂养系统的完整实践">https://imzlp.com/posts/84248/</a>
+             <span class="copy-path" data-clipboard-text="原始链接: https://imzlp.com/posts/84248/ 文章作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/VibeCoding/" rel="tag"># VibeCoding</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/posts/99122/" rel="next" title="包体优化：UE跨版本资源复用的方案">
+      包体优化：UE跨版本资源复用的方案 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">需求分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-%E4%BD%93%E9%AA%8C%E8%BF%AD%E4%BB%A3"><span class="nav-number">2.</span> <span class="nav-text">实现 &#x2F; 体验迭代</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-%E9%83%A8%E7%BD%B2"><span class="nav-number">3.</span> <span class="nav-text">使用 &#x2F; 部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BD%95"><span class="nav-number">3.1.</span> <span class="nav-text">项目记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%9F%E8%AE%A1%E4%BF%A1%E6%81%AF"><span class="nav-number">3.2.</span> <span class="nav-text">统计信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%B4%9E%E5%AF%9F"><span class="nav-number">3.3.</span> <span class="nav-text">数据洞察</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AI-Agent%EF%BC%9A%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E4%BA%A4%E4%BA%92"><span class="nav-number">4.</span> <span class="nav-text">AI Agent：自然语言交互</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Webhook%EF%BC%9A%E8%AE%A9AI%E4%B8%BB%E5%8A%A8%E6%8F%90%E9%86%92"><span class="nav-number">5.</span> <span class="nav-text">Webhook：让AI主动提醒</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">6.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="/images/avatar.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">198</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">194</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">794k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/84248/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : 'https://appcounter.imzlp.com',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

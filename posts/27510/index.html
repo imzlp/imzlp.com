@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-CN,default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon-touch-icon.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在我们开发插件时，当插件功能逐渐复杂，通常需要提供一些扩展性的支持，实现自定义的扩展功能来丰富插件的功能，也可以方便用户在不修改程序本体的情况下实现项目的定制需求。在之前的文章（HotPatcher 的模块化改造和开发规划）中，介绍了HotPatcher与扩展模块的支持与如何基于HotPatcher开发一个新的模块，本篇文章主要介绍在UE内的具体实现方式。 简单地说，就是需要在UE本身的插件系统之">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE插件与工具开发：可扩展性支持">
+<meta property="og:url" content="https://imzlp.com/posts/27510/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在我们开发插件时，当插件功能逐渐复杂，通常需要提供一些扩展性的支持，实现自定义的扩展功能来丰富插件的功能，也可以方便用户在不修改程序本体的情况下实现项目的定制需求。在之前的文章（HotPatcher 的模块化改造和开发规划）中，介绍了HotPatcher与扩展模块的支持与如何基于HotPatcher开发一个新的模块，本篇文章主要介绍在UE内的具体实现方式。 简单地说，就是需要在UE本身的插件系统之">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/07/104735.png">
+<meta property="article:published_time" content="2025-07-12T09:54:52.000Z">
+<meta property="article:modified_time" content="2025-07-12T09:54:52.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="工具开发">
+<meta property="article:tag" content="插件开发">
+<meta property="article:tag" content="Plugins">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/07/104735.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/27510/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE插件与工具开发：可扩展性支持 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <div class="l10n-header-widget">
+    <script>
+      // 获取当前页面的 URL
+      const currentUrl = window.location.href;
+      // 替换 URL 中的部分内容
+      const jumpToL10nLink = currentUrl.replace('imzlp.com', 'en.imzlp.com');
+      // 将 jumpToL10nLink 绑定到一个全局变量
+      window.jumpToL10nLink = jumpToL10nLink;
+    </script>
+
+    <a href="#" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: none;" rel="noopener" target="_blank" onclick="window.open(window.jumpToL10nLink, '_blank'); return false;">
+      <i class="fa fa-solid fa-language"></i>
+    </a>
+  </div>
+
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/27510/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE插件与工具开发：可扩展性支持<a href="https://github.com/imzlp/blog-md/blob/zh/_posts/2025-07-12-27510.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a><a href="https://en.imzlp.com/posts/27510/" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-solid fa-language"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">UE Plugin and Tools Development: Extensibility Support</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-12 09:54 09:54:52:54" itemprop="dateCreated datePublished" datetime="2025-07-12T09:54:52+00:00">2025-07-12 09:54</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">插件开发</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/27510/" class="post-meta-item leancloud_visitors" data-flag-title="UE插件与工具开发：可扩展性支持" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在我们开发插件时，当插件功能逐渐复杂，通常需要提供一些扩展性的支持，实现自定义的扩展功能来丰富插件的功能，也可以方便用户在不修改程序本体的情况下实现项目的定制需求。<br>在之前的文章（<a href="https://imzlp.com/posts/30178/">HotPatcher 的模块化改造和开发规划</a>）中，介绍了<a href="https://imzlp.com/posts/17590/">HotPatcher</a>与扩展模块的支持与如何基于HotPatcher开发一个新的模块，本篇文章主要介绍在UE内的具体实现方式。</p>
+<p>简单地说，就是需要在UE本身的插件系统之上，构建自己的扩展系统。本篇文章会介绍我在提高插件扩展性方面的一些思考了技巧，如何方便地让这些扩展功能与插件本体解耦，方便维护和管理。</p>
+<span id="more"></span>
+
+<h2 id="本体改造"><a href="#本体改造" class="headerlink" title="本体改造"></a>本体改造</h2><p>根据我对<a href="https://imzlp.com/posts/17590/">HotPatcher</a>的经验，扩展Mod通常会实现下面几种需求：</p>
+<ol>
+<li>监听执行流程，做一些事情。比如监听HotPatcher打包完毕之后可以直接把补丁推送到手机上。</li>
+<li>扩展执行流程，在默认执行框架内，做一些额外的数据记录和处理。比如<a href="https://imzlp.com/posts/17590/">HotPatcher</a>热更流程中，会记录每个本地仓库的当前git commit信息。</li>
+<li>逻辑替换，替换掉插件内的的逻辑，换成自己需要定制的。</li>
+<li>功能封装，这种情况下，不会影响到本体插件的流程和逻辑，但是会把插件本体的功能根据需要做一层特殊的封装，比如GameFeaturePacker这个Mod，就是针对GF的打包对<a href="https://imzlp.com/posts/17590/">HotPatcher</a>做的封装。</li>
+</ol>
+<p>所以，基于这些需求，在进行扩展化改造之前，需要对基础插件本体做一些改造：</p>
+<ol>
+<li>配置化改造：让插件执行任务完全以配置驱动，扩展模块可以自己重写配置逻辑，来实现定制的功能。如我之前实现的GameFeaturePackaer模块，它是对<a href="https://imzlp.com/posts/17590/">HotPatcher</a>打包能力的封装，但加入了对GF插件的特定的资产和文件进包逻辑。</li>
+<li>执行逻辑拆分阶段：使插件流程拆分为多个不同的阶段，这部分较为关键，拆分后能够使我们可以较为方便地介入到每一个阶段的执行过程，实现扩展性的目的。</li>
+<li>上下文支持：在整个执行流程中，确保有一个统一的上下文（<code>Context</code>），在扩展流程中，很多情况下都是去修改上下文中的数据（比如对<a href="https://imzlp.com/posts/17590/">HotPatcher</a>差异分析后的结果做进一步处理，就需要从上下文中获取差异结果，并在处理完之后修改上下文）。</li>
+<li>关键逻辑替换：插件中的有些行为，不是直接写死在代码中，而是能够动态或修改配置控制，比如<a href="https://imzlp.com/posts/17590/">HotPatcher</a>中的资源分析、差异分析等逻辑。</li>
+<li>允许记录额外的数据或文件：当开发了模块后，可能模块会产出一些非本体需要的数据或文件，在本体的流程中需要统一收集起来。</li>
+<li>模块隔离：需要对扩展模块本身的行为做好抽象，避免本体对模块的直接依赖，避免出现UE中插件循环依赖的情况。</li>
+</ol>
+<p>当一个插件经过上面的改造之后，本体已经是比较清晰的执行架构，并且能够方便扩展了，接下来会介绍可扩展部分的具体实现。</p>
+<p>我们要实现的目标是：</p>
+<ol>
+<li>Mod是完全独立的UE插件，安装它无需对本体做任何修改，只需将Mod的插件放入工程即可。</li>
+<li>Mod具有可插拔的行为，对本体的影响都是可控的，随时可以通过配置关闭，避免一个Mod出现问题影响整个执行流程。</li>
+<li>Mod具有完全独立的配置和执行流程</li>
+</ol>
+<h2 id="Mod注册"><a href="#Mod注册" class="headerlink" title="Mod注册"></a>Mod注册</h2><p>有时模块会添加完全独立的配置，如<a href="https://imzlp.com/posts/17590/">HotPatcher</a>的扩展模块：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/113608.png"></p>
+<p>每一个模块的配置都是独立的，并且都支持<code>Import</code>/<code>Export</code>/<code>Reset</code>的配置机制。<br>因为主界面是通过<a href="https://imzlp.com/posts/17590/">HotPatcher</a>本体编写的，而每个模块的配置逻辑和Slate控件是写在自己的模块之内的，并且每个模块也可能具有多种配置情况。<br>所以需要在本体内对模块定义好抽象，每一个模块行为都被抽象为了一个Action，每个扩展可以具有多个Actions：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> FRequestWidgetPtr = TFunction&lt;<span class="built_in">TSharedRef</span>&lt;SHotPatcherWidgetInterface&gt;(TSharedPtr&lt;FHotPatcherModContextBase&gt;)&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">HOTPATCHEREDITOR_API</span> FHotPatcherActionDesc</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">FHotPatcherActionDesc</span>()=<span class="keyword">default</span>;</span><br><span class="line">	<span class="built_in">FHotPatcherActionDesc</span>(FString InCategory,FString InModName,FString InActionName,FString InToolTip,FRequestWidgetPtr InRequestWidgetPtr,int32 InPriority = <span class="number">0</span>):</span><br><span class="line">	<span class="built_in">Category</span>(InCategory),<span class="built_in">ModName</span>(InModName),<span class="built_in">ActionName</span>(InActionName),<span class="built_in">ToolTip</span>(InToolTip),<span class="built_in">RequestWidgetPtr</span>(InRequestWidgetPtr),<span class="built_in">Priority</span>(InPriority)</span><br><span class="line">	&#123;&#125;</span><br><span class="line">	</span><br><span class="line">	FString Category;</span><br><span class="line">	FString ModName;</span><br><span class="line">	FString ActionName;</span><br><span class="line">	FString ToolTip;</span><br><span class="line">	FRequestWidgetPtr RequestWidgetPtr;</span><br><span class="line">	int32 Priority = <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">HOTPATCHEREDITOR_API</span> FHotPatcherModDesc  </span><br><span class="line">&#123;  </span><br><span class="line">    FString ModName;  </span><br><span class="line">    <span class="type">bool</span> bIsBuiltInMod = <span class="literal">false</span>;  </span><br><span class="line">    <span class="type">float</span> CurrentVersion = <span class="number">0.f</span>;  </span><br><span class="line">    FString Description;  </span><br><span class="line">    FString URL;  </span><br><span class="line">    FString UpdateURL;  </span><br><span class="line">    <span class="type">float</span> MinHotPatcherVersion = <span class="number">0.0f</span>;  </span><br><span class="line">    TArray&lt;FHotPatcherActionDesc&gt; ModActions;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>对于每个Mod而言，需要记录它的这些信息：</p>
+<ol>
+<li>名字</li>
+<li>是否是本体内置Mod</li>
+<li>当前的版本号</li>
+<li>Mod描述信息</li>
+<li>Mod的网址（文档等）</li>
+<li>更新地址（检查Mod的更新）</li>
+<li>本Mod依赖的最小本体版本</li>
+<li>Mod支持的Action列表</li>
+</ol>
+<p>这样就能清晰地记录每个Mod的信息了。<br>每个Mod通过注册Action来添加可执行的配置逻辑，允许通过<code>RequestWidgetPtr</code>来动态请求Mod的Widget，它只是一个回调函数。</p>
+<p>以<a href="https://imzlp.com/posts/17590/">HotPatcher</a>为例，当在右上角的列表中选择了一个Mod的Action，就会动态地请求该Action的控件，并填充到主界面中：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/120109.gif"></p>
+<p>同时，也需要在Mod插件的Module启动时写一个注册Action的逻辑，这也依赖基础本体插件的加载时机（LoadingPhase）是要早于扩展Mod的。</p>
+<p>本体提供注册函数</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">HOTPATCHEREDITOR_API</span> FHotPatcherActionManager</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">static</span> FHotPatcherActionManager Manager;</span><br><span class="line">	<span class="function"><span class="type">static</span> FHotPatcherActionManager&amp; <span class="title">Get</span><span class="params">()</span>	</span>&#123; <span class="keyword">return</span> Manager; &#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">RegisteHotPatcherAction</span><span class="params">(<span class="type">const</span> FHotPatcherActionDesc&amp; NewAction)</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">UnRegisteHotPatcherAction</span><span class="params">(<span class="type">const</span> FString&amp; Category, <span class="type">const</span> FString&amp; ActionName)</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">RegisteHotPatcherMod</span><span class="params">(<span class="type">const</span> FHotPatcherModDesc&amp; ModDesc)</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">UnRegisteHotPatcherMod</span><span class="params">(<span class="type">const</span> FHotPatcherModDesc&amp; ModDesc)</span></span>;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Mod需要在插件启动时调用注册：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CREATE_ACTION_WIDGET_LAMBDA(WIDGET_CLASS,MODENAME) \  </span></span><br><span class="line">    [](TSharedPtr&lt;FHotPatcherModContextBase&gt; InContext)-&gt;TSharedRef&lt;SHotPatcherWidgetInterface&gt;&#123;\  </span><br><span class="line">       <span class="keyword">return</span> <span class="built_in">SNew</span>(WIDGET_CLASS,InContext).<span class="built_in">Visibility_Lambda</span>([=]()-&gt;EVisibility&#123;\  </span><br><span class="line">          <span class="keyword">return</span> InContext-&gt;<span class="built_in">GetModeName</span>().<span class="built_in">IsEqual</span>(MODENAME) ? EVisibility::Visible : EVisibility::Collapsed;\  </span><br><span class="line">    &#125;);&#125;</span><br><span class="line"><span class="function">FHotPatcherModDesc <span class="title">FGameFeaturePackerEditorModule::GetModDesc</span><span class="params">()</span> <span class="type">const</span>  </span></span><br><span class="line"><span class="function"></span>&#123;  </span><br><span class="line">    FHotPatcherModDesc TmpModDesc;  </span><br><span class="line">    TmpModDesc.ModName = MOD_NAME;  </span><br><span class="line">    TmpModDesc.CurrentVersion = MOD_VERSION;  </span><br><span class="line">    TmpModDesc.bIsBuiltInMod = IS_INTERNAL_MODE;  </span><br><span class="line">    TmpModDesc.MinHotPatcherVersion = <span class="number">80.0f</span>;  </span><br><span class="line">    TmpModDesc.Description = <span class="built_in">TEXT</span>(<span class="string">&quot;Plugin/GameFeature Packager&quot;</span>);  </span><br><span class="line">    TmpModDesc.URL = <span class="built_in">TEXT</span>(<span class="string">&quot;https://imzlp.com/posts/17658/&quot;</span>);  </span><br><span class="line">    TmpModDesc.UpdateURL = <span class="built_in">TEXT</span>(<span class="string">&quot;https://github.com/hxhb/HotPatcher/Mods/GameFeaturePacker&quot;</span>);  </span><br><span class="line">    TArray&lt;FHotPatcherActionDesc&gt; ActionDescs;  </span><br><span class="line">    TmpModDesc.ModActions.<span class="built_in">Emplace</span>(  </span><br><span class="line">       <span class="built_in">TEXT</span>(<span class="string">&quot;Patcher&quot;</span>),MOD_NAME,<span class="built_in">TEXT</span>(<span class="string">&quot;ByGameFeature&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;Create an Game Feature Package.&quot;</span>),  </span><br><span class="line">       <span class="built_in">CREATE_ACTION_WIDGET_LAMBDA</span>(SGameFeaturePackageWidget,<span class="built_in">TEXT</span>(<span class="string">&quot;ByGameFeature&quot;</span>)),<span class="number">0</span>  </span><br><span class="line">       );  </span><br><span class="line">    <span class="keyword">return</span> TmpModDesc;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把这些信息传递进去，就实现了Mod的注册，在本体中动态接收的能力。</p>
+<p>通过这样的实现机制，就做到了，只需要把Mod的插件放入工程中，就能够被本体识别，并可以选择Mod进行配置了。</p>
+<h2 id="流程扩展"><a href="#流程扩展" class="headerlink" title="流程扩展"></a>流程扩展</h2><p>在前面<a href="#%E6%9C%AC%E4%BD%93%E6%94%B9%E9%80%A0">本体改造</a>小结，我介绍了本体需要<strong>拆分执行阶段</strong>，并且需要具有一个<strong>统一的上下文</strong>（Context），这是进行流程扩展的关键。</p>
+<h3 id="Delegates"><a href="#Delegates" class="headerlink" title="Delegates"></a>Delegates</h3><p>当我们把执行阶段拆分完毕后，我们可以为每个阶段的前后都添加流程控制的口子，常规的做法是可以添加的<code>Delegate</code>代理，用于通知执行到了哪个阶段。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">DECLARE_MULTICAST_DELEGATE_TwoParams</span>(FNotificationEvent, FText, <span class="type">const</span> FString&amp;)  </span><br><span class="line"><span class="built_in">DECLARE_MULTICAST_DELEGATE_OneParam</span>(FHotPatcherPatcherEvent,FHotPatcherContextBase*)  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HOTPATCHERCORE_API</span> FHotPatcherDelegates  </span><br><span class="line">&#123;  </span><br><span class="line"><span class="keyword">public</span>:  </span><br><span class="line">    <span class="comment">/** Return a single FGameDelegates object */</span>  </span><br><span class="line">    <span class="function"><span class="type">static</span> FHotPatcherDelegates&amp; <span class="title">Get</span><span class="params">()</span></span>;  </span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">OnExecDelegate</span><span class="params">(EPatcherCustomFlowType FlowType,FHotPatcherContextBase* Context)</span></span>;  </span><br><span class="line">    <span class="comment">// for patcher  </span></span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherInited,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherShutdown,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherContextInited,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherBaseVerImported,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherCurrentVerAnalysised,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherVerDiffFinished,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherPostMakeChunks,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherPreCook,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherPostCook,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherPakGenerated,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherReleaseGenerated,FHotPatcherPatcherEvent);  </span><br><span class="line">    <span class="built_in">DEFINE_GAME_DELEGATE_TYPED</span>(OnPatcherFinished,FHotPatcherPatcherEvent);  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>通过监听这个全局代理，就能够监听执行到了什么阶段，并且从参数中接收上下文，进行需要的处理。</p>
+<blockquote>
+<p>其实引擎内也有大量的流程是基于Delegate做的，比如<code>FGameDelegates</code>、<code>FCoreDelegates</code>等等，是类似的做法，都是在引擎执行的特定时机触发，用于做需要的事情。</p>
+</blockquote>
+<h3 id="UClass"><a href="#UClass" class="headerlink" title="UClass"></a>UClass</h3><p>通常全局代理在执行过程中是一定会调用的，只要有绑定就会接收到回调。它并不是可以动态控制插拔的逻辑，所以一般只会用在一些通用的逻辑中，比如监听整个任务执行完毕了，做一些后续的处理等。</p>
+<p>那么如何实现动态配置可插拔呢？</p>
+<p>可以通过UClass来实现，把各个阶段的回调函数原型也定义出一个基类，每个Mod可以继承这个基类重写虚函数：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/125041.png"></p>
+<p>然后可以在配置中指定该Class，在运行时构造一个它的实例，来执行我们重写的逻辑。<br>比如<a href="https://imzlp.com/posts/17590/">HotPatcher</a>中，支持创建二进制补丁的Mod：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/093702.png"></p>
+<p>以及自定义资源分析过程的Mod（HotChunker接入热更流程）：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/094252.png"></p>
+<p>而且还可以利用PropertyCustomization机制（详见文章<a href="https://imzlp.com/posts/26919">虚幻引擎中的属性面板定制化</a>），给每个指定的Class添加覆写的参数，这样能够更灵活地控制行为：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/094359.png"></p>
+<p>并且可以根据参数的类型自动创建属性控件，底层存储的是字符串：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/094547.png"></p>
+<p>这样就能够根据配置文件来决定启用哪些扩展能力了。</p>
+<h3 id="扩展案例"><a href="#扩展案例" class="headerlink" title="扩展案例"></a>扩展案例</h3><p>除了前面介绍的之外，我们在热更流程中，还基于<a href="https://imzlp.com/posts/11750/">ResScanner</a>添加了对热更资产的检查流程，在每次热更时都会检查所有参与热更的资产的规范，避免把有问题的资源带入现网。</p>
+<p>在<a href="https://imzlp.com/posts/17590/">HotPatcher</a>中，就可以指定<a href="https://imzlp.com/posts/11750/">ResScanner</a>的适配器来做到这一点：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/102534.png"></p>
+<p>实现逻辑就是当热更补丁创建完毕后，获取补丁内的所有资产，然后检查所有的规则：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/102818.png"></p>
+<p>并且会将结果输出到本次补丁的目录中。</p>
+<p>基于这样的扩展模式，可以非常方便地把各种插件组合起来，实现<code>1+1&gt;2</code>的效果，并且无需编写额外的控制流程，都在同一个执行过程就能实现了。</p>
+<h2 id="逻辑替换"><a href="#逻辑替换" class="headerlink" title="逻辑替换"></a>逻辑替换</h2><p>除了上一小节提到的<strong>流程扩展</strong>之外，还会有替换某些内置逻辑的需要。<br>比如<a href="https://imzlp.com/posts/17590/">HotPatcher</a>中选择什么样的二进制补丁算法、修改默认的差异分析流程等，都是想要替换掉默认的流程，指定一个新的。</p>
+<h3 id="ModularFeature"><a href="#ModularFeature" class="headerlink" title="ModularFeature"></a>ModularFeature</h3><p>在很早之前，我写过一篇文章，在UE内集成新的压缩算法：<a href="https://imzlp.com/posts/8470/">ModularFeature：为 UE4 集成 ZSTD 压缩算法</a>。</p>
+<p>它就是利用了引擎中的ModularFeature机制，可以提供一个基础的接口类，然后分别实现，并且注册到引擎中。</p>
+<p>在需要对应的能力时，可以从引擎中获取到对应的ModularFeature实例，来执行逻辑。</p>
+<p>如<a href="https://imzlp.com/posts/17590/">HotPatcher</a>提供的用来创建二进制补丁的MF基础接口，需要集成自<code>IModularFeature</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">IBinariesDiffPatchFeature</span>: <span class="keyword">public</span> IModularFeature  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">IBinariesDiffPatchFeature</span>()&#123;&#125;;  </span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">CreateDiff</span><span class="params">(<span class="type">const</span> TArray&lt;uint8&gt;&amp; NewData, <span class="type">const</span> TArray&lt;uint8&gt;&amp; OldData, TArray&lt;uint8&gt;&amp; OutPatch)</span> </span>= <span class="number">0</span>;  </span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">PatchDiff</span><span class="params">(<span class="type">const</span> TArray&lt;uint8&gt;&amp; OldData, <span class="type">const</span> TArray&lt;uint8&gt;&amp; PatchData, TArray&lt;uint8&gt;&amp; OutNewData)</span> </span>= <span class="number">0</span>;  </span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> FString <span class="title">GetFeatureName</span><span class="params">()</span><span class="type">const</span> </span>= <span class="number">0</span>;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>然后在Mod中扩展了一个HDiffPatch的算法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FHDiffPatchModule</span> : <span class="keyword">public</span> IBinariesDiffPatchFeature,<span class="keyword">public</span> IModuleInterface</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** IModuleInterface implementation */</span></span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">StartupModule</span><span class="params">()</span> <span class="keyword">override</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">ShutdownModule</span><span class="params">()</span> <span class="keyword">override</span></span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">CreateDiff</span><span class="params">(<span class="type">const</span> TArray&lt;uint8&gt;&amp; NewData, <span class="type">const</span> TArray&lt;uint8&gt;&amp; OldData, TArray&lt;uint8&gt;&amp; OutPatch)</span> <span class="keyword">override</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">PatchDiff</span><span class="params">(<span class="type">const</span> TArray&lt;uint8&gt;&amp; OldData, <span class="type">const</span> TArray&lt;uint8&gt;&amp; PatchData, TArray&lt;uint8&gt;&amp; OutNewData)</span> <span class="keyword">override</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">virtual</span> FString <span class="title">GetFeatureName</span><span class="params">()</span><span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="built_in">TEXT</span>(<span class="string">&quot;HDIFFPATCH&quot;</span>); &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>需要在UE的Module启动时，把它注册到引擎中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FHDiffPatchModule::StartupModule</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	IModularFeatures::<span class="built_in">Get</span>().<span class="built_in">RegisterModularFeature</span>(BINARIES_DIFF_PATCH_FEATURE_NAME,<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FHDiffPatchModule::ShutdownModule</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	IModularFeatures::<span class="built_in">Get</span>().<span class="built_in">UnregisterModularFeature</span>(BINARIES_DIFF_PATCH_FEATURE_NAME,<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当运行时，需要访问到ModularFeature时，可以从引擎中获取所有已注册的Features：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TArray&lt;IBinariesDiffPatchFeature*&gt; ModularFeatures = IModularFeatures::<span class="built_in">Get</span>().<span class="built_in">GetModularFeatureImplementations</span>&lt;IBinariesDiffPatchFeature&gt;(BINARIES_DIFF_PATCH_FEATURE_NAME);</span><br></pre></td></tr></table></figure>
+
+<p>然后可以遍历这个数组，通过<code>GetFeatureName</code>找到需要使用的Feature了。</p>
+<p>这样就能脱离插件本体，单独扩展任意的算法了。</p>
+<p>它比较适合用于指定那些业务逻辑无关的，比较通用的机制，比如引擎内支持新的压缩算法也是通过ModularFeature实现的。</p>
+<h3 id="UClass-1"><a href="#UClass-1" class="headerlink" title="UClass"></a>UClass</h3><p>除了ModularFeature之外，前面<strong>流程扩展</strong>小节的部分也已经提到了可以通过UClass类来扩展。其实流程替换也是一样的，也是需要先抽象出一个独立的接口类，然后在Mod中继承和覆写。</p>
+<p>以<a href="https://imzlp.com/posts/17590/">HotPatcher</a>的差异流程为例，我创建了一个抽象接口类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>(Abstract)  </span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HOTPATCHERRUNTIME_API</span> UPatcherCustomDiffGenerator : <span class="keyword">public</span> UPatcherCustomOperatorBase  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="built_in">GENERATED_BODY</span>()  </span><br><span class="line"><span class="keyword">public</span>:  </span><br><span class="line">    <span class="comment">// generate patch  </span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">DiffVersionByContext</span><span class="params">(FHotPatcherContextBase* Context)</span></span>&#123; <span class="keyword">return</span> <span class="literal">false</span>; &#125;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>然后基于默认的分析过程，写了一个Default的类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>()  </span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HOTPATCHERCORE_API</span> UDefaultPatchDiffGenerator:<span class="keyword">public</span> UPatcherCustomDiffGenerator  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="built_in">GENERATED_BODY</span>()  </span><br><span class="line"><span class="keyword">public</span>:  </span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">DiffVersionByContext</span><span class="params">(FHotPatcherContextBase* Context)</span> <span class="keyword">override</span></span>;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>并且把它在配置中变成可以指定的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditAnywhere)  </span><br><span class="line">TSubclassOf&lt;UPatcherCustomDiffGenerator&gt; DiffGenerator;</span><br></pre></td></tr></table></figure>
+
+<p>访问指定的Class，</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取是否指定有效的UClass，否则使用默认的</span></span><br><span class="line">TSubclassOf&lt;UPatcherCustomDiffGenerator&gt; CustomDiffGeneratorClass = Context.<span class="built_in">GetSettingObject</span>()-&gt;<span class="built_in">GetDiffOptions</span>().DiffGenerator;  </span><br><span class="line"><span class="keyword">if</span>(!<span class="built_in">IsValid</span>(CustomDiffGeneratorClass))  </span><br><span class="line">&#123;  </span><br><span class="line">    CustomDiffGeneratorClass = UDefaultPatchDiffGenerator::<span class="built_in">StaticClass</span>();  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>拿到Class后创建实例，覆写实例参数，并调用预设接口：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">UPatcherCustomDiffGenerator* CustomDiffGenerator = <span class="built_in">Cast</span>&lt;UPatcherCustomDiffGenerator&gt;(<span class="built_in">NewObject</span>&lt;UObject&gt;(Context.<span class="built_in">GetProxy</span>(),CustomDiffGeneratorClass.<span class="built_in">Get</span>()));  </span><br><span class="line">UFlibReflectionHelper::<span class="built_in">OverrideArgs</span>(CustomDiffGenerator,Context.<span class="built_in">GetSettingObject</span>()-&gt;<span class="built_in">GetDiffOptions</span>().Args);  </span><br><span class="line"><span class="keyword">if</span>(<span class="built_in">IsValid</span>(CustomDiffGenerator))  </span><br><span class="line">&#123;  </span><br><span class="line">    CustomDiffGenerator-&gt;<span class="built_in">DiffVersionByContext</span>(&amp;Context);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就在流程中实现了可替换逻辑。</p>
+<p>修改逻辑，也只是需要在配置中选择对应的UClass：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/101226.png"></p>
+<h2 id="模块管理"><a href="#模块管理" class="headerlink" title="模块管理"></a>模块管理</h2><p>基于上面几个小结的介绍，我们已经可以对插件本体做较为丰富的扩展了。那么如何方便地管理Mod也是需要考虑的。</p>
+<p>我目前是基于git submodule来进行管理的（详见<a target="_blank" rel="noopener" href="https://github.com/hxhb/HotPatcher/tree/master/Mods">Mods</a>），较为方便：</p>
+<ol>
+<li>每个submodule是一个独立的git仓库，可以独立维护与扩展</li>
+<li>单独的权限管理，因为每个仓库是独立的，所以可以精确地控制每个Mod的访问权限</li>
+<li>插件本体中可以记录每个mod的git hash，可以用于指定默认submodule版本，方便迭代</li>
+</ol>
+<p>git submodule相关的内容，可以看我之前写的一篇文章：<a href="https://imzlp.com/posts/53696/#submodule">Git快速上手指南</a>。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本篇文章介绍了我在开发<a href="https://imzlp.com/posts/17590/">HotPatcher</a>过程中，一些对插件进行模块化开发的经验和思路，避免所有的功能都堆积在一个插件下，实现灵活的扩展性。<br>可以比较方便地进行功能扩展、不同插件的功能组合、模块化的管理和迭代方式，尽可能地解耦实现，可以作为在UE的插件系统上实现一个Mod扩展系统的实现参考。</p>
+<p>而<a href="https://imzlp.com/posts/17590/">HotPatcher</a>经过长期地开发与扩展，它的功能早已<strong>不局限于</strong>资源打包和热更新，而是包含<strong>资源分包</strong>、<strong>热更新</strong>、<strong>包体优化</strong>、<strong>资源审计</strong>、<strong>自动化资源处理</strong>的一整套资源管理方案。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/103451.png"></p>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/27510/" target="_blank">UE插件与工具开发：可扩展性支持</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2025/07/12 09:54<br/>
+             
+             <span>本文字数:</span><span class="page-count">4.1k 字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/27510/" target="_blank" title="UE插件与工具开发：可扩展性支持">https://imzlp.com/posts/27510/</a>
+             <span class="copy-path" data-clipboard-text="原始链接: https://imzlp.com/posts/27510/ 文章作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/" rel="tag"># 工具开发</a>
+              <a href="/tags/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/" rel="tag"># 插件开发</a>
+              <a href="/tags/Plugins/" rel="tag"># Plugins</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/66804/" rel="prev" title="UE热更新：更新能力与热更安全">
+      <i class="fa fa-chevron-left"></i> UE热更新：更新能力与热更安全
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/88478/" rel="next" title="UE PAK的加密分析与加固策略">
+      UE PAK的加密分析与加固策略 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E4%BD%93%E6%94%B9%E9%80%A0"><span class="nav-number">1.</span> <span class="nav-text">本体改造</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mod%E6%B3%A8%E5%86%8C"><span class="nav-number">2.</span> <span class="nav-text">Mod注册</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%81%E7%A8%8B%E6%89%A9%E5%B1%95"><span class="nav-number">3.</span> <span class="nav-text">流程扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Delegates"><span class="nav-number">3.1.</span> <span class="nav-text">Delegates</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UClass"><span class="nav-number">3.2.</span> <span class="nav-text">UClass</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E6%A1%88%E4%BE%8B"><span class="nav-number">3.3.</span> <span class="nav-text">扩展案例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E6%9B%BF%E6%8D%A2"><span class="nav-number">4.</span> <span class="nav-text">逻辑替换</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ModularFeature"><span class="nav-number">4.1.</span> <span class="nav-text">ModularFeature</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UClass-1"><span class="nav-number">4.2.</span> <span class="nav-text">UClass</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E7%AE%A1%E7%90%86"><span class="nav-number">5.</span> <span class="nav-text">模块管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">6.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="/images/avatar.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">198</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">194</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">794k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/27510/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : 'https://appcounter.imzlp.com',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

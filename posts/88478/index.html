@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN,default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon-touch-icon.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在开发项目中后期，直至上线之前，通常还需要处理客户端资产安全性的问题，避免直接利用公版引擎和相关工具直接能把资源解包，以及对于一些后续版本的关键资产（如商业化资产）的保护。 所以需要在引擎层面，对UE的默认加密机制做一些改造和混淆，使其不那么容易地被破解。但因为最终解密还是要在客户端执行的，所以无法保证绝对的安全性，只能尽可能地拉高解密成本。 本篇文章会介绍我对UE默认加密机制的分析，并介绍几种加">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE PAK的加密分析与加固策略">
+<meta property="og:url" content="https://imzlp.com/posts/88478/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="在开发项目中后期，直至上线之前，通常还需要处理客户端资产安全性的问题，避免直接利用公版引擎和相关工具直接能把资源解包，以及对于一些后续版本的关键资产（如商业化资产）的保护。 所以需要在引擎层面，对UE的默认加密机制做一些改造和混淆，使其不那么容易地被破解。但因为最终解密还是要在客户端执行的，所以无法保证绝对的安全性，只能尽可能地拉高解密成本。 本篇文章会介绍我对UE默认加密机制的分析，并介绍几种加">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/07/153515.png">
+<meta property="article:published_time" content="2025-07-11T09:21:59.000Z">
+<meta property="article:modified_time" content="2025-07-11T09:21:59.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="UnrealEngine">
+<meta property="article:tag" content="资源管理">
+<meta property="article:tag" content="Pak">
+<meta property="article:tag" content="加密">
+<meta property="article:tag" content="Encrypt">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/07/153515.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/88478/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>UE PAK的加密分析与加固策略 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <div class="l10n-header-widget">
+    <script>
+      // 获取当前页面的 URL
+      const currentUrl = window.location.href;
+      // 替换 URL 中的部分内容
+      const jumpToL10nLink = currentUrl.replace('imzlp.com', 'en.imzlp.com');
+      // 将 jumpToL10nLink 绑定到一个全局变量
+      window.jumpToL10nLink = jumpToL10nLink;
+    </script>
+
+    <a href="#" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: none;" rel="noopener" target="_blank" onclick="window.open(window.jumpToL10nLink, '_blank'); return false;">
+      <i class="fa fa-solid fa-language"></i>
+    </a>
+  </div>
+
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/88478/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UE PAK的加密分析与加固策略<a href="https://github.com/imzlp/blog-md/blob/zh/_posts/2025-07-11-88478.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a><a href="https://en.imzlp.com/posts/88478/" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-solid fa-language"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Encrypted Analysis and Special Protection of PAK in UE</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-11 09:21 09:21:59:21" itemprop="dateCreated datePublished" datetime="2025-07-11T09:21:59+00:00">2025-07-11 09:21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/" itemprop="url" rel="index"><span itemprop="name">UnrealEngine</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/UnrealEngine/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">资源管理</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/88478/" class="post-meta-item leancloud_visitors" data-flag-title="UE PAK的加密分析与加固策略" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>13 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在开发项目中后期，直至上线之前，通常还需要处理客户端资产安全性的问题，避免直接利用公版引擎和相关工具直接能把资源解包，以及对于一些后续版本的关键资产（如商业化资产）的保护。</p>
+<p>所以需要在引擎层面，对UE的默认加密机制做一些改造和混淆，使其不那么容易地被破解。但因为最终解密还是要在客户端执行的，所以<strong>无法保证绝对的安全性</strong>，只能尽可能地拉高解密成本。</p>
+<p>本篇文章会介绍我对UE默认加密机制的分析，并介绍几种加固思路。因为安全方面的内容较为敏感，所以文章内不会提供具体的修改方法，只提供加固的可行性思路。</p>
+<span id="more"></span>
+
+<h2 id="默认加密分析"><a href="#默认加密分析" class="headerlink" title="默认加密分析"></a>默认加密分析</h2><h3 id="项目加密配置"><a href="#项目加密配置" class="headerlink" title="项目加密配置"></a>项目加密配置</h3><p>可以在<code>ProjectSettings</code>-<code>Project</code>-<code>Crypto</code>中配置加密参数：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/155821.png"></p>
+<p>该配置会存储在工程的<code>Config/DefaultCrypto.ini</code>目录中。</p>
+<figure class="highlight ini"><figcaption><span>title:"Config/DefaultCrypto.ini"</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[/Script/CryptoKeys.CryptoKeysSettings]</span></span><br><span class="line"><span class="attr">EncryptionKey</span>=PgpZZZZZZZZZZtu/jXXXXXXXXXXXXXXXXXXEVYBhui0=</span><br><span class="line"><span class="attr">bEncryptPakIniFiles</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">bEncryptPakIndex</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">bEncryptUAssetFiles</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">bEncryptAllAssetFiles</span>=<span class="literal">True</span></span><br><span class="line"><span class="attr">SigningPublicExponent</span>=AQAB</span><br><span class="line"><span class="attr">SigningModulus</span>=FRY0C5Siqs2j2a9e9gflNqOhSTq1q6K/wdF1basIglGZm8FikE3wP8e13DXeqxjoTkxspwPyMdZpbj4OhMUFkYgHjVt4rUl/<span class="number">4</span>Cnya78Y+pfhu3kQR9btSiHefjeEnJW0x26A19ZOc6MXhEpSxR7/kafC18qW4WvM2gnRkv4MsZhIaVIav8l1gBJ56sSAPoLLkHu4Lv2+z4s81XuuUqcrdq3ft73plIFr6JBnW6jFUq9N3qK1IJgFP8gKBWy9/Vyj29odY4pFmbWNajD9gvWwyGwGzL3iGLJzJtJI2qpFq/FfEJTOYL/<span class="number">5</span>VaB8Nf8FIqmnzpt1Vd8q1LfMC0ckk245SKJ63wZfLZWL88LSakLRhZRmigNmpCNYz22YDbeBYAP8Iu2NzWuaxOXPNE6FEF1pq9bp1d/xw/F9MatvyxzH9hpgVKbetYaH+Dr2FylS22dhB87q5I3QeMv/YFVHWvKjU4znXMYQ5y+WSSE474ZDWqKXzDkG31DwaN52cqVhc3D9SM7TQSD/b3j3RlKP1E6+Drb398mNpEukS5FPvUzTIUchGe4IMvT7S9PZ3+Cg+pPTsq3ZZ99WbHSK3aQFzMYIc88gnIZAah73fTpi58qta0Ru4wI1pCr/XCccBFD8JGiAp2Am36OCxhPpSlIMPKpqpbt5y4FKrlZYgucKTl62Lbw=</span><br><span class="line"><span class="attr">SigningPrivateExponent</span>=<span class="string">&quot;qbacV1tHkg9gqrcID3uVHDFWPIsdrmigeh8LaIwXhpfal3JByWFMPk2cetKb475Jaxspi0AVLL2/Bu/rq7phRtb+f5cgFcz7TlmhQR9RSRaggxtIFPh/EzBsbgOm0U+Dcb9cxUzbgu2VRMO+vhmk6An7HGTA9HHLqI3DRLn83wIvVseid8UHdDiM7W1uea6ADzBSn0xL4A3Hova9+jzeuuMUNO9bI6L2dl4CRHbXkn+D9ccjUhF+4fX8fq/lMmUZzgIdI8sF8suBfPwtEuE9TG4txxcxFqSO8TKzfmZUq18wkASJ1WfazCiPeLssL2bCoL08v3oaYQ16GfiYtwpXiu12o0f1SoQIbpwW8/mvePV3aAm++Xff/j8y7oKJccJ9ZoRxWjdJkQbKMLsxz//EWmvC+jqGdYS/S6gjIhKER04vwBcEkJjsuR0hFXZFTxo4ZyXk5MBxG8vW5PLkbl6iWKbklGpdxJbghQ3ymAJ7WmdnkmPYCDO6SJ1MTIm1MElr9X8VKUf6nAwunSrIhXoVVHDzZ1IHVemf9frLVEINhPHBQxtg5Br7NzMe1gUUEVRg451jUSfIPkzThCoNwPxf9khKRm89APS0r4oybyEACEdq82roe7Ju2qR12wOVNYCnDGmDnWo2/T/7h2tkaFhPZ/xaf5Om/06BTxCNPpiQWDI=&quot;</span></span><br><span class="line"><span class="attr">bEnablePakSigning</span>=<span class="literal">False</span></span><br></pre></td></tr></table></figure>
+
+<p>这些配置会被用在UnrealPak打包资源时，以及在编译代码时，把解密的Key编译到可执行程序之内。</p>
+<p>其中的<code>EncryptionKey</code>、<code>SigningModulus</code>以及<code>SigningPrivateExponent</code>的值都是BASE64编码的，实际编译至代码中的密钥是解码之后的。</p>
+<figure class="highlight cpp"><figcaption><span>title:"UnrealBuildTool\System\EncryptionAndSigning.cs"</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Parse encryption key</span></span><br><span class="line">string EncryptionKeyString;</span><br><span class="line">Ini.<span class="built_in">GetString</span>(SectionName, <span class="string">&quot;EncryptionKey&quot;</span>, out EncryptionKeyString);</span><br><span class="line"><span class="keyword">if</span> (!string.<span class="built_in">IsNullOrEmpty</span>(EncryptionKeyString))</span><br><span class="line">&#123;</span><br><span class="line">	Settings.EncryptionKey = <span class="keyword">new</span> <span class="built_in">EncryptionKey</span>();</span><br><span class="line">	Settings.EncryptionKey.Key = System.Convert.<span class="built_in">FromBase64String</span>(EncryptionKeyString);</span><br><span class="line">	Settings.EncryptionKey.Guid = Guid.Empty.<span class="built_in">ToString</span>();</span><br><span class="line">	Settings.EncryptionKey.Name = <span class="string">&quot;Embedded&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line"><span class="comment">// Parse signing key</span></span><br><span class="line">string PrivateExponent, PublicExponent, Modulus;</span><br><span class="line">Ini.<span class="built_in">GetString</span>(SectionName, <span class="string">&quot;SigningPrivateExponent&quot;</span>, out PrivateExponent);</span><br><span class="line">Ini.<span class="built_in">GetString</span>(SectionName, <span class="string">&quot;SigningModulus&quot;</span>, out Modulus);</span><br><span class="line">Ini.<span class="built_in">GetString</span>(SectionName, <span class="string">&quot;SigningPublicExponent&quot;</span>, out PublicExponent);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!String.<span class="built_in">IsNullOrEmpty</span>(PrivateExponent) &amp;&amp; !String.<span class="built_in">IsNullOrEmpty</span>(PublicExponent) &amp;&amp; !String.<span class="built_in">IsNullOrEmpty</span>(Modulus))</span><br><span class="line">&#123;</span><br><span class="line">	Settings.SigningKey = <span class="keyword">new</span> <span class="built_in">SigningKeyPair</span>();</span><br><span class="line">	Settings.SigningKey.PublicKey.Exponent = System.Convert.<span class="built_in">FromBase64String</span>(PublicExponent);</span><br><span class="line">	Settings.SigningKey.PublicKey.Modulus = System.Convert.<span class="built_in">FromBase64String</span>(Modulus);</span><br><span class="line">	Settings.SigningKey.PrivateKey.Exponent = System.Convert.<span class="built_in">FromBase64String</span>(PrivateExponent);</span><br><span class="line">	Settings.SigningKey.PrivateKey.Modulus = Settings.SigningKey.PublicKey.Modulus;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>虽然加密密钥是保存在<code>Config/DefaultCrypto.ini</code>中的，但是在打包时会把它剔除，它不会进包，所以不用担心直接被打进版本的问题。</p>
+</blockquote>
+<h3 id="编译时写入"><a href="#编译时写入" class="headerlink" title="编译时写入"></a>编译时写入</h3><p>在编译时，执行TargetRules.cs的逻辑，会读取工程的ini，并构造出一个<code>EncryptionAndSigning.CryptoSettings</code>，记录了当前工程的加密和签名配置。<br>代码在：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/4.27-plus/Engine/Source/Programs/UnrealBuildTool/System/EncryptionAndSigning.cs#L227">Engine/Source/Programs/UnrealBuildTool/System/EncryptionAndSigning.cs</a></p>
+<p>如果项目的配置文件中，开启了加密和签名，会往<code>ProjectDefinitions</code>中添加KEY的宏：</p>
+<figure class="highlight csharp"><figcaption><span>title:"Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs"</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Setup macros for signing and encryption keys</span></span><br><span class="line">EncryptionAndSigning.CryptoSettings CryptoSettings = EncryptionAndSigning.ParseCryptoSettings(DirectoryReference.FromFile(ProjectFile), Platform);</span><br><span class="line"><span class="keyword">if</span> (CryptoSettings.IsAnyEncryptionEnabled())</span><br><span class="line">&#123;</span><br><span class="line">	ProjectDefinitions.Add(String.Format(<span class="string">&quot;IMPLEMENT_ENCRYPTION_KEY_REGISTRATION()=UE_REGISTER_ENCRYPTION_KEY(&#123;0&#125;)&quot;</span>, FormatHexBytes(CryptoSettings.EncryptionKey.Key)));</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">	ProjectDefinitions.Add(<span class="string">&quot;IMPLEMENT_ENCRYPTION_KEY_REGISTRATION()=&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (CryptoSettings.IsPakSigningEnabled())</span><br><span class="line">&#123;</span><br><span class="line">	ProjectDefinitions.Add(String.Format(<span class="string">&quot;IMPLEMENT_SIGNING_KEY_REGISTRATION()=UE_REGISTER_SIGNING_KEY(UE_LIST_ARGUMENT(&#123;0&#125;), UE_LIST_ARGUMENT(&#123;1&#125;))&quot;</span>, FormatHexBytes(CryptoSettings.SigningKey.PublicKey.Exponent), FormatHexBytes(CryptoSettings.SigningKey.PublicKey.Modulus)));</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">	ProjectDefinitions.Add(<span class="string">&quot;IMPLEMENT_SIGNING_KEY_REGISTRATION()=&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这些宏被添加到了项目中的所有模块的定义中：</p>
+<figure class="highlight cpp"><figcaption><span>title:Intermediate\Build\Android\FGame\Development\FGame\Definitions.FGame.h</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> IMPLEMENT_ENCRYPTION_KEY_REGISTRATION() UE_REGISTER_ENCRYPTION_KEY(0x3E,0x8A,0x5B,0x8D,0x5F,0xA8,0x6A,0xF5,0x83,0x42,0xFB,0x1F,0x8D,0xC6,0x78,0x8D,0x73,0x48,0x3E,0x14,0x7B,0x32,0xA4,0x41,0x2A,0x5A,0x04,0x55,0x80,0x6F,0xBD,0x2D)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> IMPLEMENT_SIGNING_KEY_REGISTRATION() UE_REGISTER_SIGNING_KEY(UE_LIST_ARGUMENT(0x01,0x00,0x01), UE_LIST_ARGUMENT(0x15,0x16,0x34,0x0B,0x94,0xA2,0xAA,0xCD,0xA3,0xD9,0xAF,0x5E,0xF6,0x07,0xE5,0x36,0xA3,0xA1,0x49,0x3A,0xB5,0xAB,0xA2,0xBF,0xC1,0xD1,0x75,0x6D,0xAB,0x08,0x82,0x51,0x99,0x9B,0xC1,0x62,0x90,0x4D,0xF0,0x3F,0xC7,0xB5,0xDC,0x35,0xDE,0xAB,0x18,0xE8,0x4E,0x4C,0x6C,0xA7,0x03,0xF2,0x31,0xD6,0x69,0x6E,0x3E,0x0E,0x84,0xC5,0x05,0x91,0x88,0x07,0x8D,0x5B,0x78,0xAD,0x49,0x7F,0xE0,0x29,0xF2,0x6B,0xBF,0x18,0xFA,0x97,0xE1,0xBB,0x79,0x10,0x47,0xD6,0xED,0x4A,0x21,0xDE,0x7E,0x37,0x84,0x9C,0x95,0xB4,0xC7,0x6E,0x80,0xD7,0xD6,0x4E,0x73,0xA3,0x17,0x84,0x4A,0x52,0xC5,0x1E,0xFF,0x91,0xA7,0xC2,0xD7,0xCA,0x96,0xE1,0x6B,0xCC,0xDA,0x09,0xD1,0x92,0xFE,0x0C,0xB1,0x98,0x48,0x69,0x52,0x1A,0xBF,0xC9,0x75,0x80,0x12,0x79,0xEA,0xC4,0x80,0x3E,0x82,0xCB,0x90,0x7B,0xB8,0x2E,0xFD,0xBE,0xCF,0x8B,0x3C,0xD5,0x7B,0xAE,0x52,0xA7,0x2B,0x76,0xAD,0xDF,0xB7,0xBD,0xE9,0x94,0x81,0x6B,0xE8,0x90,0x67,0x5B,0xA8,0xC5,0x52,0xAF,0x4D,0xDE,0xA2,0xB5,0x20,0x98,0x05,0x3F,0xC8,0x0A,0x05,0x6C,0xBD,0xFD,0x5C,0xA3,0xDB,0xDA,0x1D,0x63,0x8A,0x45,0x99,0xB5,0x8D,0x6A,0x30,0xFD,0x82,0xF5,0xB0,0xC8,0x6C,0x06,0xCC,0xBD,0xE2,0x18,0xB2,0x73,0x26,0xD2,0x48,0xDA,0xAA,0x45,0xAB,0xF1,0x5F,0x10,0x94,0xCE,0x60,0xBF,0xF9,0x55,0xA0,0x7C,0x35,0xFF,0x05,0x22,0xA9,0xA7,0xCE,0x9B,0x75,0x55,0xDF,0x2A,0xD4,0xB7,0xCC,0x0B,0x47,0x24,0x93,0x6E,0x39,0x48,0xA2,0x7A,0xDF,0x06,0x5F,0x2D,0x95,0x8B,0xF3,0xC2,0xD2,0x6A,0x42,0xD1,0x85,0x94,0x66,0x8A,0x03,0x66,0xA4,0x23,0x58,0xCF,0x6D,0x98,0x0D,0xB7,0x81,0x60,0x03,0xFC,0x22,0xED,0x8D,0xCD,0x6B,0x9A,0xC4,0xE5,0xCF,0x34,0x4E,0x85,0x10,0x5D,0x69,0xAB,0xD6,0xE9,0xD5,0xDF,0xF1,0xC3,0xF1,0x7D,0x31,0xAB,0x6F,0xCB,0x1C,0xC7,0xF6,0x1A,0x60,0x54,0xA6,0xDE,0xB5,0x86,0x87,0xF8,0x3A,0xF6,0x17,0x29,0x52,0xDB,0x67,0x61,0x07,0xCE,0xEA,0xE4,0x8D,0xD0,0x78,0xCB,0xFF,0x60,0x55,0x47,0x5A,0xF2,0xA3,0x53,0x8C,0xE7,0x5C,0xC6,0x10,0xE7,0x2F,0x96,0x49,0x21,0x38,0xEF,0x86,0x43,0x5A,0xA2,0x97,0xCC,0x39,0x06,0xDF,0x50,0xF0,0x68,0xDE,0x76,0x72,0xA5,0x61,0x73,0x70,0xFD,0x48,0xCE,0xD3,0x41,0x20,0xFF,0x6F,0x78,0xF7,0x46,0x52,0x8F,0xD4,0x4E,0xBE,0x0E,0xB6,0xF7,0xF7,0xC9,0x8D,0xA4,0x4B,0xA4,0x4B,0x91,0x4F,0xBD,0x4C,0xD3,0x21,0x47,0x21,0x19,0xEE,0x08,0x32,0xF4,0xFB,0x4B,0xD3,0xD9,0xDF,0xE0,0xA0,0xFA,0x93,0xD3,0xB2,0xAD,0xD9,0x67,0xDF,0x56,0x6C,0x74,0x8A,0xDD,0xA4,0x05,0xCC,0xC6,0x08,0x73,0xCF,0x20,0x9C,0x86,0x40,0x6A,0x1E,0xF7,0x7D,0x3A,0x62,0xE7,0xCA,0xAD,0x6B,0x44,0x6E,0xE3,0x02,0x35,0xA4,0x2A,0xFF,0x5C,0x27,0x1C,0x04,0x50,0xFC,0x24,0x68,0x80,0xA7,0x60,0x26,0xDF,0xA3,0x82,0xC6,0x13,0xE9,0x4A,0x52,0x0C,0x3C,0xAA,0x6A,0xA5,0xBB,0x79,0xCB,0x81,0x4A,0xAE,0x56,0x58,0x82,0xE7,0x0A,0x4E,0x5E,0xB6,0x2D,0xBC))</span></span><br></pre></td></tr></table></figure>
+
+<p>这两个宏，会被用在<code>IMPLEMENT_PRIMARY_GAME_MODULE</code>中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">IMPLEMENT_PRIMARY_GAME_MODULE</span>(FGameModule, FGame, <span class="string">&quot;FGame&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>它的作用为定义模块。在打包后的运行时，代码编译都是Monolithic的。<br>所以对于移动平台来说，<code>IMPLEMENT_PRIMARY_GAME_MODULE</code>的宏定义为：</p>
+<figure class="highlight cpp"><figcaption><span>title:IMPLEMENT_PRIMARY_GAME_MODULE</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> IMPLEMENT_PRIMARY_GAME_MODULE( ModuleImplClass, ModuleName, DEPRECATED_GameName ) \</span></span><br><span class="line"><span class="meta">	<span class="comment">/* For monolithic builds, we must statically define the game&#x27;s name string (See Core.h) */</span> \</span></span><br><span class="line"><span class="meta">	TCHAR GInternalProjectName[64] = TEXT( PREPROCESSOR_TO_STRING(UE_PROJECT_NAME) ); \</span></span><br><span class="line"><span class="meta">	PER_MODULE_BOILERPLATE \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_FOREIGN_ENGINE_DIR() \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_LIVE_CODING_ENGINE_DIR() \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_LIVE_CODING_PROJECT() \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_SIGNING_KEY_REGISTRATION() \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_ENCRYPTION_KEY_REGISTRATION() \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_TARGET_NAME_REGISTRATION() \</span></span><br><span class="line"><span class="meta">	IMPLEMENT_GAME_MODULE( ModuleImplClass, ModuleName ) \</span></span><br><span class="line"><span class="meta">	<span class="comment">/* Implement the GIsGameAgnosticExe variable (See Core.h). */</span> \</span></span><br><span class="line"><span class="meta">	bool GIsGameAgnosticExe = false;</span></span><br></pre></td></tr></table></figure>
+
+<p>前面列出的，在<code>TargetRules.cs</code>里定义的记录加密和签名Key的宏，是一个嵌套的结构：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> IMPLEMENT_ENCRYPTION_KEY_REGISTRATION() UE_REGISTER_ENCRYPTION_KEY(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> IMPLEMENT_SIGNING_KEY_REGISTRATION() UE_REGISTER_SIGNING_KEY(...) </span></span><br></pre></td></tr></table></figure>
+
+<p>从而转发到了<code>UE_REGISTER_ENCRYPTION_KEY</code>和<code>UE_REGISTER_SIGNING_KEY</code>这两个宏里。它们也是在<code>ModuleManager.h</code>里定义的。</p>
+<p><strong>UE_REGISTER_ENCRYPTION_KEY</strong></p>
+<p>它的作用是构造出一个<code>FEncryptionKeyRegistration</code>的类定义，并定义出一个<code>GEncryptionKeyRegistration</code>对象。<br>并在它的构造函数中，注册了获取加密Key的Callback。</p>
+<figure class="highlight cpp"><figcaption><span>title:UE_REGISTER_ENCRYPTION_KEY</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Macro for registering encryption key for a project.</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UE_REGISTER_ENCRYPTION_KEY(...) \</span></span><br><span class="line"><span class="meta">	struct FEncryptionKeyRegistration \</span></span><br><span class="line"><span class="meta">	&#123; \</span></span><br><span class="line"><span class="meta">		FEncryptionKeyRegistration() \</span></span><br><span class="line"><span class="meta">		&#123; \</span></span><br><span class="line"><span class="meta">			extern void RegisterEncryptionKeyCallback(void (*)(unsigned char OutKey[32])); \</span></span><br><span class="line"><span class="meta">			RegisterEncryptionKeyCallback(&amp;Callback); \</span></span><br><span class="line"><span class="meta">		&#125; \</span></span><br><span class="line"><span class="meta">		static void Callback(unsigned char OutKey[32]) \</span></span><br><span class="line"><span class="meta">		&#123; \</span></span><br><span class="line"><span class="meta">			const unsigned char Key[32] = &#123; __VA_ARGS__ &#125;; \</span></span><br><span class="line"><span class="meta">			for(int ByteIdx = 0; ByteIdx &lt; 32; ByteIdx++) \</span></span><br><span class="line"><span class="meta">			&#123; \</span></span><br><span class="line"><span class="meta">				OutKey[ByteIdx] = Key[ByteIdx]; \</span></span><br><span class="line"><span class="meta">			&#125; \</span></span><br><span class="line"><span class="meta">		&#125; \</span></span><br><span class="line"><span class="meta">	&#125; GEncryptionKeyRegistration;</span></span><br></pre></td></tr></table></figure>
+
+<p>预处理后的结果为：</p>
+<figure class="highlight cpp"><figcaption><span>title:FEncryptionKeyRegistration</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FEncryptionKeyRegistration</span>  </span><br><span class="line">&#123;  </span><br><span class="line">   <span class="built_in">FEncryptionKeyRegistration</span>()  </span><br><span class="line">   &#123;       </span><br><span class="line">      <span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">RegisterEncryptionKeyCallback</span><span class="params">(<span class="type">void</span> (*)(<span class="type">unsigned</span> <span class="type">char</span> OutKey[<span class="number">32</span>]))</span></span>;  </span><br><span class="line">      <span class="built_in">RegisterEncryptionKeyCallback</span>(&amp;Callback);  </span><br><span class="line">   &#125;    </span><br><span class="line">   <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">Callback</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> OutKey[<span class="number">32</span>])</span>  </span></span><br><span class="line"><span class="function">   </span>&#123;</span><br><span class="line">      <span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> Key[<span class="number">32</span>] = &#123; <span class="number">0x3E</span>,<span class="number">0x0A</span>,<span class="number">0x59</span>,<span class="number">0x8D</span>,<span class="number">0x5F</span>,<span class="number">0xA8</span>,<span class="number">0x6A</span>,<span class="number">0xF5</span>,<span class="number">0x83</span>,<span class="number">0x42</span>,<span class="number">0xDB</span>,<span class="number">0xBF</span>,<span class="number">0xAD</span>,<span class="number">0xC6</span>,<span class="number">0xB8</span>,<span class="number">0x8D</span>,<span class="number">0x7D</span>,<span class="number">0x48</span>,<span class="number">0x3E</span>,<span class="number">0x1F</span>,<span class="number">0x3B</span>,<span class="number">0x32</span>,<span class="number">0xA4</span>,<span class="number">0x41</span>,<span class="number">0x2A</span>,<span class="number">0x5A</span>,<span class="number">0x04</span>,<span class="number">0x55</span>,<span class="number">0x80</span>,<span class="number">0x61</span>,<span class="number">0xBA</span>,<span class="number">0x2D</span> &#125;;  </span><br><span class="line">      <span class="keyword">for</span>(<span class="type">int</span> ByteIdx = <span class="number">0</span>; ByteIdx &lt; <span class="number">32</span>; ByteIdx++)  </span><br><span class="line">      &#123;</span><br><span class="line">         OutKey[ByteIdx] = Key[ByteIdx];</span><br><span class="line">      &#125;    </span><br><span class="line">   &#125;</span><br><span class="line">&#125;GEncryptionKeyRegistration;</span><br></pre></td></tr></table></figure>
+
+<p><strong>UE_REGISTER_SIGNING_KEY</strong></p>
+<p>它的所用是构造出一个<code>FSigningKeyRegistration</code>的类定义，并定义出一个<code>GSigningKeyRegistration</code>对象。<br>并在它的构造函数中，注册了获取签名Key的Callback。</p>
+<figure class="highlight cpp"><figcaption><span>title:UE_REGISTER_SIGNING_KEY</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Macro for registering signing keys for a project.</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> UE_REGISTER_SIGNING_KEY(ExponentValue, ModulusValue) \</span></span><br><span class="line"><span class="meta">	struct FSigningKeyRegistration \</span></span><br><span class="line"><span class="meta">	&#123; \</span></span><br><span class="line"><span class="meta">		FSigningKeyRegistration() \</span></span><br><span class="line"><span class="meta">		&#123; \</span></span><br><span class="line"><span class="meta">			extern void RegisterSigningKeyCallback(void (*)(TArray<span class="string">&lt;uint8&gt;</span>&amp;, TArray<span class="string">&lt;uint8&gt;</span>&amp;)); \</span></span><br><span class="line"><span class="meta">			RegisterSigningKeyCallback(&amp;Callback); \</span></span><br><span class="line"><span class="meta">		&#125; \</span></span><br><span class="line"><span class="meta">		static void Callback(TArray<span class="string">&lt;uint8&gt;</span>&amp; OutExponent, TArray<span class="string">&lt;uint8&gt;</span>&amp; OutModulus) \</span></span><br><span class="line"><span class="meta">		&#123; \</span></span><br><span class="line"><span class="meta">			const uint8 Exponent[] = &#123; ExponentValue &#125;; \</span></span><br><span class="line"><span class="meta">			const uint8 Modulus[] = &#123; ModulusValue &#125;; \</span></span><br><span class="line"><span class="meta">			OutExponent.SetNum(UE_ARRAY_COUNT(Exponent)); \</span></span><br><span class="line"><span class="meta">			OutModulus.SetNum(UE_ARRAY_COUNT(Modulus)); \</span></span><br><span class="line"><span class="meta">			for(int ByteIdx = 0; ByteIdx &lt; UE_ARRAY_COUNT(Exponent); ByteIdx++) \</span></span><br><span class="line"><span class="meta">			&#123; \</span></span><br><span class="line"><span class="meta">				OutExponent[ByteIdx] = Exponent[ByteIdx]; \</span></span><br><span class="line"><span class="meta">			&#125; \</span></span><br><span class="line"><span class="meta">			for(int ByteIdx = 0; ByteIdx &lt; UE_ARRAY_COUNT(Modulus); ByteIdx++) \</span></span><br><span class="line"><span class="meta">			&#123; \</span></span><br><span class="line"><span class="meta">				OutModulus[ByteIdx] = Modulus[ByteIdx]; \</span></span><br><span class="line"><span class="meta">			&#125; \</span></span><br><span class="line"><span class="meta">		&#125; \</span></span><br><span class="line"><span class="meta">	&#125; GSigningKeyRegistration;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>预处理后的结果为：</p>
+<figure class="highlight cpp"><figcaption><span>title:FSigningKeyRegistration</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FSigningKeyRegistration</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">FSigningKeyRegistration</span>()</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">RegisterSigningKeyCallback</span><span class="params">(<span class="type">void</span> (*)(TArray&lt;uint8&gt;&amp;, TArray&lt;uint8&gt;&amp;))</span></span>;</span><br><span class="line">		<span class="built_in">RegisterSigningKeyCallback</span>(&amp;Callback);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">Callback</span><span class="params">(TArray&lt;uint8&gt;&amp; OutExponent, TArray&lt;uint8&gt;&amp; OutModulus)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		<span class="type">const</span> uint8 Exponent[] = &#123; <span class="number">0x01</span>,<span class="number">0x00</span>,<span class="number">0x01</span> &#125;;</span><br><span class="line">		<span class="type">const</span> uint8 Modulus[] = &#123; <span class="number">0x15</span>,<span class="number">0x16</span>,<span class="number">0x34</span>,<span class="number">0x0B</span>,<span class="number">0x94</span>,<span class="number">0xA2</span>,<span class="number">0xAA</span>,<span class="number">0xCD</span>,<span class="number">0xA3</span>,<span class="number">0xD9</span>,<span class="number">0xAF</span>,<span class="number">0x5E</span>,<span class="number">0xF6</span>,<span class="number">0x07</span>,<span class="number">0xE5</span>,<span class="number">0x36</span>,<span class="number">0xA3</span>,<span class="number">0xA1</span>,<span class="number">0x49</span>,<span class="number">0x3A</span>,<span class="number">0xB5</span>,<span class="number">0xAB</span>,<span class="number">0xA2</span>,<span class="number">0xBF</span>,<span class="number">0xC1</span>,<span class="number">0xD1</span>,<span class="number">0x75</span>,<span class="number">0x6D</span>,<span class="number">0xAB</span>,<span class="number">0x08</span>,<span class="number">0x82</span>,<span class="number">0x51</span>,<span class="number">0x99</span>,<span class="number">0x9B</span>,<span class="number">0xC1</span>,<span class="number">0x62</span>,<span class="number">0x90</span>,<span class="number">0x4D</span>,<span class="number">0xF0</span>,<span class="number">0x3F</span>,<span class="number">0xC7</span>,<span class="number">0xB5</span>,<span class="number">0xDC</span>,<span class="number">0x35</span>,<span class="number">0xDE</span>,<span class="number">0xAB</span>,<span class="number">0x18</span>,<span class="number">0xE8</span>,<span class="number">0x4E</span>,<span class="number">0x4C</span>,<span class="number">0x6C</span>,<span class="number">0xA7</span>,<span class="number">0x03</span>,<span class="number">0xF2</span>,<span class="number">0x31</span>,<span class="number">0xD6</span>,<span class="number">0x69</span>,<span class="number">0x6E</span>,<span class="number">0x3E</span>,<span class="number">0x0E</span>,<span class="number">0x84</span>,<span class="number">0xC5</span>,<span class="number">0x05</span>,<span class="number">0x91</span>,<span class="number">0x88</span>,<span class="number">0x07</span>,<span class="number">0x8D</span>,<span class="number">0x5B</span>,<span class="number">0x78</span>,<span class="number">0xAD</span>,<span class="number">0x49</span>,<span class="number">0x7F</span>,<span class="number">0xE0</span>,<span class="number">0x29</span>,<span class="number">0xF2</span>,<span class="number">0x6B</span>,<span class="number">0xBF</span>,<span class="number">0x18</span>,<span class="number">0xFA</span>,<span class="number">0x97</span>,<span class="number">0xE1</span>,<span class="number">0xBB</span>,<span class="number">0x79</span>,<span class="number">0x10</span>,<span class="number">0x47</span>,<span class="number">0xD6</span>,<span class="number">0xED</span>,<span class="number">0x4A</span>,<span class="number">0x21</span>,<span class="number">0xDE</span>,<span class="number">0x7E</span>,<span class="number">0x37</span>,<span class="number">0x84</span>,<span class="number">0x9C</span>,<span class="number">0x95</span>,<span class="number">0xB4</span>,<span class="number">0xC7</span>,<span class="number">0x6E</span>,<span class="number">0x80</span>,<span class="number">0xD7</span>,<span class="number">0xD6</span>,<span class="number">0x4E</span>,<span class="number">0x73</span>,<span class="number">0xA3</span>,<span class="number">0x17</span>,<span class="number">0x84</span>,<span class="number">0x4A</span>,<span class="number">0x52</span>,<span class="number">0xC5</span>,<span class="number">0x1E</span>,<span class="number">0xFF</span>,<span class="number">0x91</span>,<span class="number">0xA7</span>,<span class="number">0xC2</span>,<span class="number">0xD7</span>,<span class="number">0xCA</span>,<span class="number">0x96</span>,<span class="number">0xE1</span>,<span class="number">0x6B</span>,<span class="number">0xCC</span>,<span class="number">0xDA</span>,<span class="number">0x09</span>,<span class="number">0xD1</span>,<span class="number">0x92</span>,<span class="number">0xFE</span>,<span class="number">0x0C</span>,<span class="number">0xB1</span>,<span class="number">0x98</span>,<span class="number">0x48</span>,<span class="number">0x69</span>,<span class="number">0x52</span>,<span class="number">0x1A</span>,<span class="number">0xBF</span>,<span class="number">0xC9</span>,<span class="number">0x75</span>,<span class="number">0x80</span>,<span class="number">0x12</span>,<span class="number">0x79</span>,<span class="number">0xEA</span>,<span class="number">0xC4</span>,<span class="number">0x80</span>,<span class="number">0x3E</span>,<span class="number">0x82</span>,<span class="number">0xCB</span>,<span class="number">0x90</span>,<span class="number">0x7B</span>,<span class="number">0xB8</span>,<span class="number">0x2E</span>,<span class="number">0xFD</span>,<span class="number">0xBE</span>,<span class="number">0xCF</span>,<span class="number">0x8B</span>,<span class="number">0x3C</span>,<span class="number">0xD5</span>,<span class="number">0x7B</span>,<span class="number">0xAE</span>,<span class="number">0x52</span>,<span class="number">0xA7</span>,<span class="number">0x2B</span>,<span class="number">0x76</span>,<span class="number">0xAD</span>,<span class="number">0xDF</span>,<span class="number">0xB7</span>,<span class="number">0xBD</span>,<span class="number">0xE9</span>,<span class="number">0x94</span>,<span class="number">0x81</span>,<span class="number">0x6B</span>,<span class="number">0xE8</span>,<span class="number">0x90</span>,<span class="number">0x67</span>,<span class="number">0x5B</span>,<span class="number">0xA8</span>,<span class="number">0xC5</span>,<span class="number">0x52</span>,<span class="number">0xAF</span>,<span class="number">0x4D</span>,<span class="number">0xDE</span>,<span class="number">0xA2</span>,<span class="number">0xB5</span>,<span class="number">0x20</span>,<span class="number">0x98</span>,<span class="number">0x05</span>,<span class="number">0x3F</span>,<span class="number">0xC8</span>,<span class="number">0x0A</span>,<span class="number">0x05</span>,<span class="number">0x6C</span>,<span class="number">0xBD</span>,<span class="number">0xFD</span>,<span class="number">0x5C</span>,<span class="number">0xA3</span>,<span class="number">0xDB</span>,<span class="number">0xDA</span>,<span class="number">0x1D</span>,<span class="number">0x63</span>,<span class="number">0x8A</span>,<span class="number">0x45</span>,<span class="number">0x99</span>,<span class="number">0xB5</span>,<span class="number">0x8D</span>,<span class="number">0x6A</span>,<span class="number">0x30</span>,<span class="number">0xFD</span>,<span class="number">0x82</span>,<span class="number">0xF5</span>,<span class="number">0xB0</span>,<span class="number">0xC8</span>,<span class="number">0x6C</span>,<span class="number">0x06</span>,<span class="number">0xCC</span>,<span class="number">0xBD</span>,<span class="number">0xE2</span>,<span class="number">0x18</span>,<span class="number">0xB2</span>,<span class="number">0x73</span>,<span class="number">0x26</span>,<span class="number">0xD2</span>,<span class="number">0x48</span>,<span class="number">0xDA</span>,<span class="number">0xAA</span>,<span class="number">0x45</span>,<span class="number">0xAB</span>,<span class="number">0xF1</span>,<span class="number">0x5F</span>,<span class="number">0x10</span>,<span class="number">0x94</span>,<span class="number">0xCE</span>,<span class="number">0x60</span>,<span class="number">0xBF</span>,<span class="number">0xF9</span>,<span class="number">0x55</span>,<span class="number">0xA0</span>,<span class="number">0x7C</span>,<span class="number">0x35</span>,<span class="number">0xFF</span>,<span class="number">0x05</span>,<span class="number">0x22</span>,<span class="number">0xA9</span>,<span class="number">0xA7</span>,<span class="number">0xCE</span>,<span class="number">0x9B</span>,<span class="number">0x75</span>,<span class="number">0x55</span>,<span class="number">0xDF</span>,<span class="number">0x2A</span>,<span class="number">0xD4</span>,<span class="number">0xB7</span>,<span class="number">0xCC</span>,<span class="number">0x0B</span>,<span class="number">0x47</span>,<span class="number">0x24</span>,<span class="number">0x93</span>,<span class="number">0x6E</span>,<span class="number">0x39</span>,<span class="number">0x48</span>,<span class="number">0xA2</span>,<span class="number">0x7A</span>,<span class="number">0xDF</span>,<span class="number">0x06</span>,<span class="number">0x5F</span>,<span class="number">0x2D</span>,<span class="number">0x95</span>,<span class="number">0x8B</span>,<span class="number">0xF3</span>,<span class="number">0xC2</span>,<span class="number">0xD2</span>,<span class="number">0x6A</span>,<span class="number">0x42</span>,<span class="number">0xD1</span>,<span class="number">0x85</span>,<span class="number">0x94</span>,<span class="number">0x66</span>,<span class="number">0x8A</span>,<span class="number">0x03</span>,<span class="number">0x66</span>,<span class="number">0xA4</span>,<span class="number">0x23</span>,<span class="number">0x58</span>,<span class="number">0xCF</span>,<span class="number">0x6D</span>,<span class="number">0x98</span>,<span class="number">0x0D</span>,<span class="number">0xB7</span>,<span class="number">0x81</span>,<span class="number">0x60</span>,<span class="number">0x03</span>,<span class="number">0xFC</span>,<span class="number">0x22</span>,<span class="number">0xED</span>,<span class="number">0x8D</span>,<span class="number">0xCD</span>,<span class="number">0x6B</span>,<span class="number">0x9A</span>,<span class="number">0xC4</span>,<span class="number">0xE5</span>,<span class="number">0xCF</span>,<span class="number">0x34</span>,<span class="number">0x4E</span>,<span class="number">0x85</span>,<span class="number">0x10</span>,<span class="number">0x5D</span>,<span class="number">0x69</span>,<span class="number">0xAB</span>,<span class="number">0xD6</span>,<span class="number">0xE9</span>,<span class="number">0xD5</span>,<span class="number">0xDF</span>,<span class="number">0xF1</span>,<span class="number">0xC3</span>,<span class="number">0xF1</span>,<span class="number">0x7D</span>,<span class="number">0x31</span>,<span class="number">0xAB</span>,<span class="number">0x6F</span>,<span class="number">0xCB</span>,<span class="number">0x1C</span>,<span class="number">0xC7</span>,<span class="number">0xF6</span>,<span class="number">0x1A</span>,<span class="number">0x60</span>,<span class="number">0x54</span>,<span class="number">0xA6</span>,<span class="number">0xDE</span>,<span class="number">0xB5</span>,<span class="number">0x86</span>,<span class="number">0x87</span>,<span class="number">0xF8</span>,<span class="number">0x3A</span>,<span class="number">0xF6</span>,<span class="number">0x17</span>,<span class="number">0x29</span>,<span class="number">0x52</span>,<span class="number">0xDB</span>,<span class="number">0x67</span>,<span class="number">0x61</span>,<span class="number">0x07</span>,<span class="number">0xCE</span>,<span class="number">0xEA</span>,<span class="number">0xE4</span>,<span class="number">0x8D</span>,<span class="number">0xD0</span>,<span class="number">0x78</span>,<span class="number">0xCB</span>,<span class="number">0xFF</span>,<span class="number">0x60</span>,<span class="number">0x55</span>,<span class="number">0x47</span>,<span class="number">0x5A</span>,<span class="number">0xF2</span>,<span class="number">0xA3</span>,<span class="number">0x53</span>,<span class="number">0x8C</span>,<span class="number">0xE7</span>,<span class="number">0x5C</span>,<span class="number">0xC6</span>,<span class="number">0x10</span>,<span class="number">0xE7</span>,<span class="number">0x2F</span>,<span class="number">0x96</span>,<span class="number">0x49</span>,<span class="number">0x21</span>,<span class="number">0x38</span>,<span class="number">0xEF</span>,<span class="number">0x86</span>,<span class="number">0x43</span>,<span class="number">0x5A</span>,<span class="number">0xA2</span>,<span class="number">0x97</span>,<span class="number">0xCC</span>,<span class="number">0x39</span>,<span class="number">0x06</span>,<span class="number">0xDF</span>,<span class="number">0x50</span>,<span class="number">0xF0</span>,<span class="number">0x68</span>,<span class="number">0xDE</span>,<span class="number">0x76</span>,<span class="number">0x72</span>,<span class="number">0xA5</span>,<span class="number">0x61</span>,<span class="number">0x73</span>,<span class="number">0x70</span>,<span class="number">0xFD</span>,<span class="number">0x48</span>,<span class="number">0xCE</span>,<span class="number">0xD3</span>,<span class="number">0x41</span>,<span class="number">0x20</span>,<span class="number">0xFF</span>,<span class="number">0x6F</span>,<span class="number">0x78</span>,<span class="number">0xF7</span>,<span class="number">0x46</span>,<span class="number">0x52</span>,<span class="number">0x8F</span>,<span class="number">0xD4</span>,<span class="number">0x4E</span>,<span class="number">0xBE</span>,<span class="number">0x0E</span>,<span class="number">0xB6</span>,<span class="number">0xF7</span>,<span class="number">0xF7</span>,<span class="number">0xC9</span>,<span class="number">0x8D</span>,<span class="number">0xA4</span>,<span class="number">0x4B</span>,<span class="number">0xA4</span>,<span class="number">0x4B</span>,<span class="number">0x91</span>,<span class="number">0x4F</span>,<span class="number">0xBD</span>,<span class="number">0x4C</span>,<span class="number">0xD3</span>,<span class="number">0x21</span>,<span class="number">0x47</span>,<span class="number">0x21</span>,<span class="number">0x19</span>,<span class="number">0xEE</span>,<span class="number">0x08</span>,<span class="number">0x32</span>,<span class="number">0xF4</span>,<span class="number">0xFB</span>,<span class="number">0x4B</span>,<span class="number">0xD3</span>,<span class="number">0xD9</span>,<span class="number">0xDF</span>,<span class="number">0xE0</span>,<span class="number">0xA0</span>,<span class="number">0xFA</span>,<span class="number">0x93</span>,<span class="number">0xD3</span>,<span class="number">0xB2</span>,<span class="number">0xAD</span>,<span class="number">0xD9</span>,<span class="number">0x67</span>,<span class="number">0xDF</span>,<span class="number">0x56</span>,<span class="number">0x6C</span>,<span class="number">0x74</span>,<span class="number">0x8A</span>,<span class="number">0xDD</span>,<span class="number">0xA4</span>,<span class="number">0x05</span>,<span class="number">0xCC</span>,<span class="number">0xC6</span>,<span class="number">0x08</span>,<span class="number">0x73</span>,<span class="number">0xCF</span>,<span class="number">0x20</span>,<span class="number">0x9C</span>,<span class="number">0x86</span>,<span class="number">0x40</span>,<span class="number">0x6A</span>,<span class="number">0x1E</span>,<span class="number">0xF7</span>,<span class="number">0x7D</span>,<span class="number">0x3A</span>,<span class="number">0x62</span>,<span class="number">0xE7</span>,<span class="number">0xCA</span>,<span class="number">0xAD</span>,<span class="number">0x6B</span>,<span class="number">0x44</span>,<span class="number">0x6E</span>,<span class="number">0xE3</span>,<span class="number">0x02</span>,<span class="number">0x35</span>,<span class="number">0xA4</span>,<span class="number">0x2A</span>,<span class="number">0xFF</span>,<span class="number">0x5C</span>,<span class="number">0x27</span>,<span class="number">0x1C</span>,<span class="number">0x04</span>,<span class="number">0x50</span>,<span class="number">0xFC</span>,<span class="number">0x24</span>,<span class="number">0x68</span>,<span class="number">0x80</span>,<span class="number">0xA7</span>,<span class="number">0x60</span>,<span class="number">0x26</span>,<span class="number">0xDF</span>,<span class="number">0xA3</span>,<span class="number">0x82</span>,<span class="number">0xC6</span>,<span class="number">0x13</span>,<span class="number">0xE9</span>,<span class="number">0x4A</span>,<span class="number">0x52</span>,<span class="number">0x0C</span>,<span class="number">0x3C</span>,<span class="number">0xAA</span>,<span class="number">0x6A</span>,<span class="number">0xA5</span>,<span class="number">0xBB</span>,<span class="number">0x79</span>,<span class="number">0xCB</span>,<span class="number">0x81</span>,<span class="number">0x4A</span>,<span class="number">0xAE</span>,<span class="number">0x56</span>,<span class="number">0x58</span>,<span class="number">0x82</span>,<span class="number">0xE7</span>,<span class="number">0x0A</span>,<span class="number">0x4E</span>,<span class="number">0x5E</span>,<span class="number">0xB6</span>,<span class="number">0x2D</span>,<span class="number">0xBC</span> &#125;;</span><br><span class="line">		OutExponent.<span class="built_in">SetNum</span>(<span class="built_in">UE_ARRAY_COUNT</span>(Exponent));</span><br><span class="line">		OutModulus.<span class="built_in">SetNum</span>(<span class="built_in">UE_ARRAY_COUNT</span>(Modulus));</span><br><span class="line">		<span class="keyword">for</span>(<span class="type">int</span> ByteIdx = <span class="number">0</span>; ByteIdx &lt; <span class="built_in">UE_ARRAY_COUNT</span>(Exponent); ByteIdx++)</span><br><span class="line">		&#123;</span><br><span class="line">			OutExponent[ByteIdx] = Exponent[ByteIdx];</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">for</span>(<span class="type">int</span> ByteIdx = <span class="number">0</span>; ByteIdx &lt; <span class="built_in">UE_ARRAY_COUNT</span>(Modulus); ByteIdx++)</span><br><span class="line">		&#123;</span><br><span class="line">			OutModulus[ByteIdx] = Modulus[ByteIdx];</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125; GSigningKeyRegistration;</span><br></pre></td></tr></table></figure>
+
+<p>简单来说，UE解密密钥的序列化方式，本质上就是在UBT里把解密的KEY，以宏定义的形式编译到了代码中，供运行时解密访问。运行时访问的部分后面会具体介绍。</p>
+<h3 id="打包PAK启用加密"><a href="#打包PAK启用加密" class="headerlink" title="打包PAK启用加密"></a>打包PAK启用加密</h3><p>引擎的所有依赖的文件和资源，都存储在PAK文件中。当项目指定了加密和签名配置，实际上影响的是在打包PAK时对资源进行加密和签名。<br>在调用<code>UnrealPak</code>时，可以传递<code>-cryptokeys=</code>参数，读取加密配置。<br>UAT打包时，会根据<code>DefaultCrypto.ini</code>里的配置在<code>Saved/Cooked/[PLATFORM]/[PROJECT_NAME]/Metadata</code>目录下生成一个json文件，用于UnrealPak打包时指定。<br>该json文件的结构为：</p>
+<figure class="highlight json"><figcaption><span>title:Crypto.json</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">   <span class="attr">&quot;$types&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+CryptoSettings, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+EncryptionKey, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+SigningKeyPair, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;UnrealBuildTool.EncryptionAndSigning+SigningKey, UnrealBuildTool, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;EncryptionKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Name&quot;</span><span class="punctuation">:</span><span class="string">&quot;Embedded&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Guid&quot;</span><span class="punctuation">:</span><span class="string">&quot;00000000-0000-0000-0000-000000000000&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;Key&quot;</span><span class="punctuation">:</span><span class="string">&quot;PgpZjV+oavWDQtu/jca4jXNIPhR7MqRBKloEVYBhui0=&quot;</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;SigningKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;PublicKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">         <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Exponent&quot;</span><span class="punctuation">:</span><span class="string">&quot;AQAB&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Modulus&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;PrivateKey&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">         <span class="attr">&quot;$type&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Exponent&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">         <span class="attr">&quot;Modulus&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakSigning&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakIndexEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakIniEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakUAssetEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bEnablePakFullAssetEncryption&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;bDataCryptoRequired&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;PakEncryptionRequired&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;PakSigningRequired&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;SecondaryEncryptionKeys&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">      </span><br><span class="line">   <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>引擎打包pakchunk0时的命令行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">/Users/buildmachine/Client/Saved/StagedBuilds/IOS/cookeddata/fgame/content/paks/pakchunk0-ios.pak</span><br><span class="line">-create=<span class="string">&quot;/Users/buildmachine/Library/Logs/Unreal Engine/LocalBuildLogs/BuildCookRun/PakList_pakchunk0-ios.txt&quot;</span></span><br><span class="line">-cryptokeys=/Users/buildmachine/Client/Saved/Cooked/IOS/FGame/Metadata/Crypto.json</span><br><span class="line">-order=/Users/buildmachine/Client/Build/IOS/FileOpenOrder/EditorOpenOrder.<span class="built_in">log</span></span><br><span class="line">-encryptindex</span><br><span class="line">-sign</span><br><span class="line">-allowForIndexUnload</span><br><span class="line">-platform=IOS</span><br><span class="line">-AlignForMemoryMapping=16384</span><br><span class="line">-compressionformats=Oodle,Zlib</span><br><span class="line">-multiprocess</span><br><span class="line">-abslog=<span class="string">&quot;/Users/buildmachine/Library/Logs/Unreal Engine/LocalBuildLogs/BuildCookRun/UnrealPak-pakchunk0-ios-2024.12.23-04.32.38.txt&quot;</span></span><br><span class="line">-compressmethod=Kraken</span><br><span class="line">-compresslevel=fast</span><br></pre></td></tr></table></figure>
+
+<p>在<code>PakFileUtilities.cpp</code>中的<code>LoadKeyChain</code>函数中，从命令行读取<code>Crypto.json</code>并解析出加密配置：<a target="_blank" rel="noopener" href="https://github.com/EpicGames/UnrealEngine/blob/585df42eb3a391efd295abd231333df20cddbcf3/Engine/Source/Developer/PakFileUtilities/Private/PakFileUtilities.cpp#L1777">LoadKeyChain</a>，将在PAK生成时使用。</p>
+<p>在生成PAK时，实际执行逻辑在<code>PakFileUtilities.cpp</code>的<code>CreatePakFile</code>函数中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">CreatePakFile</span><span class="params">(<span class="type">const</span> TCHAR* Filename, TArray&lt;FPakInputPair&gt;&amp; FilesToAdd, <span class="type">const</span> FPakCommandLineParameters&amp; CmdLineParameters, <span class="type">const</span> FKeyChain&amp; InKeyChain)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>最后一个参数传递的就是加密配置，如果检测到KeyChain配置里有启用加密，它就会使用AES进行加密：</p>
+<figure class="highlight cpp"><figcaption><span>title:CreatePakFile</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">FMemoryImageResult Result;</span><br><span class="line">MemoryImage.<span class="built_in">Flatten</span>(Result);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (Info.bEncryptedIndex)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="built_in">check</span>(InKeyChain.MasterEncryptionKey);</span><br><span class="line">	Result.Bytes.<span class="built_in">AddZeroed</span>(<span class="built_in">Align</span>(Result.Bytes.<span class="built_in">Num</span>(), FAES::AESBlockSize) - Result.Bytes.<span class="built_in">Num</span>());</span><br><span class="line">	FSHA1::<span class="built_in">HashBuffer</span>(Result.Bytes.<span class="built_in">GetData</span>(), Result.Bytes.<span class="built_in">Num</span>(), Info.IndexHash.Hash);</span><br><span class="line">	FAES::<span class="built_in">EncryptData</span>(Result.Bytes.<span class="built_in">GetData</span>(), Result.Bytes.<span class="built_in">Num</span>(), InKeyChain.MasterEncryptionKey-&gt;Key);</span><br><span class="line">	TotalEncryptedDataSize += Result.Bytes.<span class="built_in">Num</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int32 Size = Result.Bytes.<span class="built_in">Num</span>();</span><br><span class="line">PakFileHandle-&gt;<span class="built_in">Serialize</span>(Result.Bytes.<span class="built_in">GetData</span>(), Size);</span><br><span class="line">Result.<span class="built_in">SaveToArchive</span>(*PakFileHandle);</span><br></pre></td></tr></table></figure>
+<p>本质上来说，就是用AES去加密数据，并把加密后的数据序列化到PAK文件里。</p>
+<p>我在之前的文章（<a href="https://imzlp.com/posts/12188/">虚幻引擎中Pak的运行时重组方案</a>）中，曾详细介绍了PAK的序列化结构：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2024/11/152029.png" alt="image.png"><br>而UE的加密，就是针对PAK结构里的某些数据进行的。图与上文结合起来看更容易理解。</p>
+<h3 id="运行时获取解密Key"><a href="#运行时获取解密Key" class="headerlink" title="运行时获取解密Key"></a>运行时获取解密Key</h3><p>对于Pak的加密和签名，在运行时都需要获取对应的key才可以。</p>
+<p>而在上面<code>UE_REGISTER_ENCRYPTION_KEY</code>与<code>UE_REGISTER_SIGNING_KEY</code>的定义中，可以看到，里面有两个<code>extern</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">RegisterEncryptionKeyCallback</span><span class="params">(<span class="type">void</span> (*)(<span class="type">unsigned</span> <span class="type">char</span> OutKey[<span class="number">32</span>]))</span></span>; </span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">RegisterSigningKeyCallback</span><span class="params">(<span class="type">void</span> (*)(TArray&lt;uint8&gt;&amp;, TArray&lt;uint8&gt;&amp;))</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>这两个函数就是引擎获取Key的方法：</p>
+<figure class="highlight cpp"><figcaption><span>title:Engine/Source/Runtime/Core/Private/Misc/CoreDelegates.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span><span class="params">(*TSigningKeyFunc)</span><span class="params">(TArray&lt;uint8&gt;&amp;, TArray&lt;uint8&gt;&amp;)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span><span class="params">(*TEncryptionKeyFunc)</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span>[<span class="number">32</span>])</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RegisterSigningKeyCallback</span><span class="params">(TSigningKeyFunc InCallback)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	FCoreDelegates::<span class="built_in">GetPakSigningKeysDelegate</span>().<span class="built_in">BindLambda</span>([InCallback](TArray&lt;uint8&gt;&amp; OutExponent, TArray&lt;uint8&gt;&amp; OutModulus)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">InCallback</span>(OutExponent, OutModulus);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RegisterEncryptionKeyCallback</span><span class="params">(TEncryptionKeyFunc InCallback)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	FCoreDelegates::<span class="built_in">GetPakEncryptionKeyDelegate</span>().<span class="built_in">BindLambda</span>([InCallback](uint8 OutKey[<span class="number">32</span>])</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">InCallback</span>(OutKey);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这两个函数被调用时（也就是<code>FEncryptionKeyRegistration</code>与<code>FSigningKeyRegistration</code>的构造函数）。</p>
+<p>回想一下之前文章里写的Monolithic模块的初始化流程：<a href="https://imzlp.com/posts/75405/#Monolithic%E6%A8%A1%E5%BC%8F">UE插件与工具开发：基础概念#Monolithic 模式</a>。<br>它们会在模块启动的时候，就会被创建出来。</p>
+<p>在加载PAK时，会调用<code>FCoreDelegates::GetPakEncryptionKeyDelegate()</code>来获取密钥：</p>
+<figure class="highlight cpp"><figcaption><span>title:"Engine/Source/Runtime/PakFile/Private/IPlatformFilePak.cpp"</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FPakPlatformFile::GetPakEncryptionKey</span><span class="params">(FAES::FAESKey&amp; OutKey, <span class="type">const</span> FGuid&amp; InEncryptionKeyGuid)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	OutKey.<span class="built_in">Reset</span>();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!<span class="built_in">GetRegisteredEncryptionKeys</span>().<span class="built_in">GetKey</span>(InEncryptionKeyGuid, OutKey))</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (!InEncryptionKeyGuid.<span class="built_in">IsValid</span>() &amp;&amp; FCoreDelegates::<span class="built_in">GetPakEncryptionKeyDelegate</span>().<span class="built_in">IsBound</span>())</span><br><span class="line">		&#123;</span><br><span class="line">			FCoreDelegates::<span class="built_in">GetPakEncryptionKeyDelegate</span>().<span class="built_in">Execute</span>(OutKey.Key);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">UE_LOG</span>(LogPakFile, Fatal, <span class="built_in">TEXT</span>(<span class="string">&quot;Failed to find requested encryption key %s&quot;</span>), *InEncryptionKeyGuid.<span class="built_in">ToString</span>());</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>之后用来解密数据：</p>
+<figure class="highlight cpp"><figcaption><span>title:"Engine\Source\Runtime\PakFile\Private\IPlatformFilePak.cpp"</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DecryptData</span><span class="params">(uint8* InData, uint32 InDataSize, FGuid InEncryptionKeyGuid)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (FPakPlatformFile::<span class="built_in">GetPakCustomEncryptionDelegate</span>().<span class="built_in">IsBound</span>())</span><br><span class="line">   &#123;</span><br><span class="line">      FPakPlatformFile::<span class="built_in">GetPakCustomEncryptionDelegate</span>().<span class="built_in">Execute</span>(InData, InDataSize, InEncryptionKeyGuid);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">else</span></span><br><span class="line">   &#123;</span><br><span class="line">      <span class="built_in">SCOPE_SECONDS_ACCUMULATOR</span>(STAT_PakCache_DecryptTime);</span><br><span class="line">      FAES::FAESKey Key;</span><br><span class="line">      FPakPlatformFile::<span class="built_in">GetPakEncryptionKey</span>(Key, InEncryptionKeyGuid);</span><br><span class="line">      <span class="built_in">check</span>(Key.<span class="built_in">IsValid</span>());</span><br><span class="line">      FAES::<span class="built_in">DecryptData</span>(InData, InDataSize, Key);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从而实现了从构建时加密到运行时解密的整套流程。</p>
+<h2 id="Pak的序列化结构"><a href="#Pak的序列化结构" class="headerlink" title="Pak的序列化结构"></a>Pak的序列化结构</h2><p>之前文章中已经提到过，UE的PAK是一种典型的Archive的结构：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/142207.png"><br>通过一定的序列化规则生成出来的，而且运行时读取也是按照格式规则进行的：</p>
+<ol>
+<li>挂载PAK时首先从文件尾读取PakInfo，然后获取到Index的偏移位置</li>
+<li>根据Index偏移获取到EncodePakEntrys，可以获取到每一个文件的PakEntry信息</li>
+<li>每个PakEntry又记录了当前的文件的信息，用于指导如何读取和解压<br>它也是UE本身虚拟文件系统的重要部分。</li>
+</ol>
+<p>但是，因为UE源代码是开放的，所以PAK本身的序列化结构并没有什么保密性可言，如果通过逆向拿到加密密钥之后，就能够直接通过官版引擎UnrealPak的逻辑解出PAK内的文件。</p>
+<p>而且也有一些第三方工具，如UModel或UnrealPakViewer等，都可以做到这一点。所以，除了密钥、解密混淆之外，还需要对PAK本身的序列化结构进行改造。</p>
+<h2 id="加固方案"><a href="#加固方案" class="headerlink" title="加固方案"></a>加固方案</h2><h3 id="默认方案的缺点"><a href="#默认方案的缺点" class="headerlink" title="默认方案的缺点"></a>默认方案的缺点</h3><p>根据前面两个小结的介绍，可以得出下面的结论：</p>
+<ol>
+<li>解密的key直接以宏定义的形式编译到代码中</li>
+<li>通过引擎源代码 + 静态分析，比较容易能够定位到获取密钥的函数</li>
+<li>代码中的导出符号，可以直接暴露解密函数位置</li>
+<li>代码中的PAK字符串（日志/ProfilingTag）可以辅助定位到关键的解密函数</li>
+<li>默认使用AES加密，有明显的代码特征，易被分析</li>
+<li>PAK的序列化格式比较通用，获取密钥后能被公版引擎的UnrealPak或UModel/UnrealPakViewer等工具解密</li>
+</ol>
+<p>所以，基于这些情况，我们需要对加密方案做一些多方面的改造，尽可能地提高解密成本。但同样地，基于安全的需求我只能介绍一些加密思路，并不会提供具体的代码。</p>
+<h3 id="密钥加固"><a href="#密钥加固" class="headerlink" title="密钥加固"></a>密钥加固</h3><p>第一节提到了，密钥是通过<strong>Base64编码</strong>后生成了一个宏定义，然后运行时获取的，我们可以通过写一些独特的密钥混淆逻辑，使对密钥本身做一层处理。避免直接静态分析就可以拿到编码后的密钥。</p>
+<h3 id="符号剔除"><a href="#符号剔除" class="headerlink" title="符号剔除"></a>符号剔除</h3><p>默认情况下，如果没有把符号剔除的话，用IDA等逆向工具打开可执行程序，是可以直接看到函数名字的：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/03/162032.png"></p>
+<p>这样直接就能看到解密函数，非常容易就能拿到密钥了。所以需要对所有的发行平台的包，都需要剔除符号。<br>剔除后的符号情况：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/03/162714.png"></p>
+<p>可以参考我上一篇文章的内容：<a href="https://imzlp.com/posts/53079/">极致优化 UE Android APK 的大小</a></p>
+<h3 id="PAK字符串剔除"><a href="#PAK字符串剔除" class="headerlink" title="PAK字符串剔除"></a>PAK字符串剔除</h3><p>相同的原因，引擎在挂载PAK相关逻辑中打印出了很多的日志，分析这些日志字符串的访问位置，也能辅助解密逻辑的定位：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/03/171946.png"><br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/03/163940.png"></p>
+<p>找到解密函数后，附加调试器，看一下内存就能拿到实际的密钥了。</p>
+<p>所以，剔除pak相关的字符串是非常必要的。</p>
+<h4 id="剔除LOG"><a href="#剔除LOG" class="headerlink" title="剔除LOG"></a>剔除LOG</h4><p>剔除方式，希望在Dev里依然保留日志，但是在Shipping时剔除：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//++[lipengzha] 在shipping时剔除PAK相关字符串</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> DISABLE_PAK_LOG_IN_SHIPPING</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> DISABLE_PAK_LOG_IN_SHIPPING 0</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> UE_BUILD_SHIPPING &amp;&amp; DISABLE_PAK_LOG_IN_SHIPPING</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> UE_PAK_LOG(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> UE_PAK_LOG(LogCategory,LogLevel,Format, ...) UE_LOG(LogCategory,LogLevel,Format,##__VA_ARGS__)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">//--</span></span><br></pre></td></tr></table></figure>
+
+<p>所以可以对<code>UE_LOG</code>的宏做一层封装，Dev默认转发，Shipping时替换为空宏。</p>
+<h4 id="剔除BOOT-TIMING"><a href="#剔除BOOT-TIMING" class="headerlink" title="剔除BOOT_TIMING"></a>剔除BOOT_TIMING</h4><p>还需要剔除<code>SCOPED_BOOT_TIMING</code>引入的字符串：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//++[lipengzha] 在shipping时剔除PAK相关字符串</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> REMOVE_PAK_TEXT_IN_SHIPPING</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> REMOVE_PAK_TEXT_IN_SHIPPING 0</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> UE_BUILD_SHIPPING &amp;&amp; REMOVE_PAK_TEXT_IN_SHIPPING</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> UE_PAK_LOG(...)</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> UE_PAK_SCOPED_BOOT_TIMING(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> UE_PAK_LOG(LogCategory,LogLevel,Format, ...) UE_LOG(LogCategory,LogLevel,Format,##__VA_ARGS__)</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> UE_PAK_SCOPED_BOOT_TIMING(x) SCOPED_BOOT_TIMING(x)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">//--</span></span><br></pre></td></tr></table></figure>
+
+<p>然后把<code>IPlatformFilePak.cpp</code>与<code>IPlatformFilePak.h</code>两个文件中，所有的<code>UE_LOG</code>替换为<code>UE_PAK_LOG</code>，所有的<code>SCOPED_BOOT_TIMING</code>替换为<code>UE_PAK_SCOPED_BOOT_TIMING</code>。</p>
+<p>就能在Shipping时自动剔除这部分字符串了。</p>
+<h3 id="PAK结构混淆"><a href="#PAK结构混淆" class="headerlink" title="PAK结构混淆"></a>PAK结构混淆</h3><p>在前面的小节中(<a href="#Pak%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96%E7%BB%93%E6%9E%84">Pak的序列化结构</a>)，我介绍了PAK结构本身的序列化方式，所以对于商业项目而言对结构本身的混淆也是需要做的。</p>
+<p>可以在保持原有UFS文件系统的基础上对PAK的序列化进行改造，对结构的组织方式、数据进行加密或修改，避免公版引擎和开源工具能够在拿到密钥后解密的情况。也可以做到每个pak的结构和解密的唯一性，避免一个被破解然后一窝端的情况。</p>
+<p>这部分内容就不再具体阐述了，只能每个项目各自实现了。</p>
+<h3 id="解压算法混淆"><a href="#解压算法混淆" class="headerlink" title="解压算法混淆"></a>解压算法混淆</h3><p>因为在文件在打包进PAK后，通常会用压缩算法进行压缩，然后运行时需要解压，而且每个文件用了哪一个压缩算法是序列化到了PakInfo内的，在每个PakEntry中有记录Index。</p>
+<p>所以也可以在这方面做一些处理，就算拿到了密钥和逆向了PAK结构，也可以在把实际文件解压出来时多一个混淆行为：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/07/150409.png"></p>
+<h3 id="替换AES算法"><a href="#替换AES算法" class="headerlink" title="替换AES算法"></a>替换AES算法</h3><p>因为UE中AES是标配，在逆向时也可以通过特征码来定位到解密逻辑。所以也可以对AES进行替换或对代码逻辑做一些改造。<br>具体替换成什么算法，这个需要根据项目情况自己评估了。</p>
+<h3 id="动态密钥注册"><a href="#动态密钥注册" class="headerlink" title="动态密钥注册"></a>动态密钥注册</h3><p>按照前面的分析，如果所有资产只用一个默认密钥，是直接就被编译到了代码中。这个密钥如果被破解，那么所有的资源都会面临泄露的情况。而且本地解密确实没有太高的安全性可言。</p>
+<p>而这种情况下，对于一些关键的资产或文件（如未开放的商业化内容），有时资产已经提前预埋进客户端了，但还未到开放时间，这种情况下，如果共用同一套密钥就会存在很大风险。</p>
+<p>引擎内本身也提供了动态注册解密密钥的逻辑：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CORE_API</span> FCoreDelegates  </span><br><span class="line">&#123;  </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="comment">// Callback for registering a new encryption key  </span></span><br><span class="line">	<span class="built_in">DECLARE_DELEGATE_TwoParams</span>(FRegisterEncryptionKeyDelegate, <span class="type">const</span> FGuid&amp;, <span class="type">const</span> FAES::FAESKey&amp;);</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>所以可以在更新流程中实现一套动态密钥机制，加密后的PAK在程序本体内不包含解密密钥，只要到特定时间版本开放后，再把密钥动态下发，客户端才能使用，这样能够保证不会被提前解包泄露的情况。可以根据项目情况结合使用。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇文章介绍了UE默认的加密逻辑，并且分析了潜在的风险，并提供了一些可行的加固策略，可以参考使用。</p>
+<blockquote>
+<p>注：文章内介绍了引擎加密流程的分析以及逆向手段，只是为了分析如何能够更安全，并非破解教程。任何游戏逆向相关行为均与作者无关，谢谢！</p>
+</blockquote>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/88478/" target="_blank">UE PAK的加密分析与加固策略</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2025/07/11 09:21<br/>
+             
+             <span>本文字数:</span><span class="page-count">5.1k 字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/88478/" target="_blank" title="UE PAK的加密分析与加固策略">https://imzlp.com/posts/88478/</a>
+             <span class="copy-path" data-clipboard-text="原始链接: https://imzlp.com/posts/88478/ 文章作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UnrealEngine/" rel="tag"># UnrealEngine</a>
+              <a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" rel="tag"># 资源管理</a>
+              <a href="/tags/Pak/" rel="tag"># Pak</a>
+              <a href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag"># 加密</a>
+              <a href="/tags/Encrypt/" rel="tag"># Encrypt</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/27510/" rel="prev" title="UE插件与工具开发：可扩展性支持">
+      <i class="fa fa-chevron-left"></i> UE插件与工具开发：可扩展性支持
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/2411/" rel="next" title="UE插件与工具开发：配置化能力">
+      UE插件与工具开发：配置化能力 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E5%8A%A0%E5%AF%86%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">默认加密分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E5%8A%A0%E5%AF%86%E9%85%8D%E7%BD%AE"><span class="nav-number">1.1.</span> <span class="nav-text">项目加密配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%97%B6%E5%86%99%E5%85%A5"><span class="nav-number">1.2.</span> <span class="nav-text">编译时写入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8C%85PAK%E5%90%AF%E7%94%A8%E5%8A%A0%E5%AF%86"><span class="nav-number">1.3.</span> <span class="nav-text">打包PAK启用加密</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%8E%B7%E5%8F%96%E8%A7%A3%E5%AF%86Key"><span class="nav-number">1.4.</span> <span class="nav-text">运行时获取解密Key</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pak%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">Pak的序列化结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E5%9B%BA%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">加固方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E6%96%B9%E6%A1%88%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">3.1.</span> <span class="nav-text">默认方案的缺点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%86%E9%92%A5%E5%8A%A0%E5%9B%BA"><span class="nav-number">3.2.</span> <span class="nav-text">密钥加固</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%A6%E5%8F%B7%E5%89%94%E9%99%A4"><span class="nav-number">3.3.</span> <span class="nav-text">符号剔除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PAK%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%89%94%E9%99%A4"><span class="nav-number">3.4.</span> <span class="nav-text">PAK字符串剔除</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%94%E9%99%A4LOG"><span class="nav-number">3.4.1.</span> <span class="nav-text">剔除LOG</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%94%E9%99%A4BOOT-TIMING"><span class="nav-number">3.4.2.</span> <span class="nav-text">剔除BOOT_TIMING</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PAK%E7%BB%93%E6%9E%84%E6%B7%B7%E6%B7%86"><span class="nav-number">3.5.</span> <span class="nav-text">PAK结构混淆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%8E%8B%E7%AE%97%E6%B3%95%E6%B7%B7%E6%B7%86"><span class="nav-number">3.6.</span> <span class="nav-text">解压算法混淆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%BF%E6%8D%A2AES%E7%AE%97%E6%B3%95"><span class="nav-number">3.7.</span> <span class="nav-text">替换AES算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%AF%86%E9%92%A5%E6%B3%A8%E5%86%8C"><span class="nav-number">3.8.</span> <span class="nav-text">动态密钥注册</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="/images/avatar.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">198</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">194</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">794k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/88478/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : 'https://appcounter.imzlp.com',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

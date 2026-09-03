@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN,default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon-touch-icon.png" color="#222">
+  <meta name="google-site-verification" content="ttIkhAIFZQM9Huj8roB0l95ePN2Tv2zv2wRFksi09WA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Pacifico:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"imzlp.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false,"width":280},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"manual"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"code_unfold":{"enable":true,"CODE_MAX_HEIGHT":600},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="家里有一台10年前的旧笔记本，闲置了几年。最近收拾出来改造了一下，真机部署了Proxmox环境，把它打造成一个简易家用Homelab服务器。上面跑了Ubuntu和FnOS的虚拟机，搭配内网穿透可以作为一台长期在线的VPS使用，也可以部署NAS系统备份文件和图片。 本篇文章将介绍PVE + 虚拟机 + FRP内网穿透 + Nginx反向代理的整套部署方案，可以安全地把局域网服务暴露给公网域名访问。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用旧笔记本打造家用Homelab服务器">
+<meta property="og:url" content="https://imzlp.com/posts/54672/index.html">
+<meta property="og:site_name" content="循迹研究室">
+<meta property="og:description" content="家里有一台10年前的旧笔记本，闲置了几年。最近收拾出来改造了一下，真机部署了Proxmox环境，把它打造成一个简易家用Homelab服务器。上面跑了Ubuntu和FnOS的虚拟机，搭配内网穿透可以作为一台长期在线的VPS使用，也可以部署NAS系统备份文件和图片。 本篇文章将介绍PVE + 虚拟机 + FRP内网穿透 + Nginx反向代理的整套部署方案，可以安全地把局域网服务暴露给公网域名访问。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/e165d8d7711990c8.png">
+<meta property="article:published_time" content="2025-12-03T10:39:42.000Z">
+<meta property="article:modified_time" content="2025-12-12T10:50:00.000Z">
+<meta property="article:author" content="查利鹏">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="硬件维修">
+<meta property="article:tag" content="PVE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/e165d8d7711990c8.png">
+
+<link rel="canonical" href="https://imzlp.com/posts/54672/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>利用旧笔记本打造家用Homelab服务器 | 循迹研究室</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FDCJ41EFP5"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FDCJ41EFP5');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.staticfile.org/lxgw-wenkai-screen-webfont/1.7.0/style.min.css" /><!-- hexo injector head_end end --><link rel="alternate" href="/atom.xml" title="循迹研究室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">循迹研究室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        
+            
+  <li class="menu-item menu-item-notes">
+
+    <a href="/notes/" rel="section"><i class="fa fa-edit fa-fw"></i>笔记</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-essay">
+
+    <a href="/essay/" rel="section"><i class="fas fa-feather-alt fa-fw"></i>随笔</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="fa fa-inbox fa-fw"></i>资源</a>
+
+  </li>
+
+
+      
+        
+            
+  <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+
+
+      
+        <li class="menu-item menu-item-showcase">
+
+    <a href="/showcase/" rel="section"><i class="fa fa-solid fa-trophy fa-fw"></i>展示柜</a>
+
+  </li>
+        <li class="menu-item menu-item-changelog">
+
+    <a href="/changelog/" rel="section"><i class="fa fa-history fa-fw"></i>站点日志</a>
+
+  </li>
+        <li class="menu-item menu-item-opensource">
+
+    <a href="/opensource/" rel="section"><i class="fas fa-code-branch fa-fw"></i>开源项目</a>
+
+  </li>
+        <li class="menu-item menu-item-uewiki">
+
+    <a href="https://ue5wiki.com/" rel="noopener" target="_blank"><i class="fab fa-wikipedia-w fa-fw"></i>虚幻知识库</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>站内搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+
+
+<script type="text/javascript">
+  let domain='aW16bHAuY29t';
+  let domain_str = atob(domain);
+  let pathname = location.pathname;
+  if (domain_str!= location.host.toLowerCase()){
+        console.log(`this host is not safe,jump to https://${domain_str}${pathname}`);
+        location.href=`https://${domain_str}${pathname}`;
+  }
+</script>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+  <div class="l10n-header-widget">
+    <script>
+      // 获取当前页面的 URL
+      const currentUrl = window.location.href;
+      // 替换 URL 中的部分内容
+      const jumpToL10nLink = currentUrl.replace('imzlp.com', 'en.imzlp.com');
+      // 将 jumpToL10nLink 绑定到一个全局变量
+      window.jumpToL10nLink = jumpToL10nLink;
+    </script>
+
+    <a href="#" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: none;" rel="noopener" target="_blank" onclick="window.open(window.jumpToL10nLink, '_blank'); return false;">
+      <i class="fa fa-solid fa-language"></i>
+    </a>
+  </div>
+
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"
+  >
+    <link itemprop="mainEntityOfPage" href="https://imzlp.com/posts/54672/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.webp">
+      <meta itemprop="name" content="查利鹏">
+      <meta itemprop="description" content="唯有热爱可抵岁月漫长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="循迹研究室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用旧笔记本打造家用Homelab服务器<a href="https://github.com/imzlp/blog-md/blob/zh/_posts/2025-12-03-54672.md" class="post-edit-link" title="编辑" style="float: right;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a><a href="https://en.imzlp.com/posts/54672/" class="post-l10n-link" title="Switch to English" style="float: left;border-bottom: 0px;" rel="noopener" target="_blank"><i class="fa fa-solid fa-language"></i></a>
+        </h1>
+
+        
+          <div class="post-subtitle" style="text-align: center;line-height: 1;">
+            <sub text-align="center" style="font-size: 15px;align-content: center;font-style: italic;bottom: 0em;">Build a Homelab server using an old laptop</sub>
+          </div>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-12-03 10:39 10:39:42:39" itemprop="dateCreated datePublished" datetime="2025-12-03T10:39:42+00:00">2025-12-03 10:39</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-12-12 10:50 10:50:00:50" itemprop="dateModified" datetime="2025-12-12T10:50:00+00:00">2025-12-12 10:50</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Homelab/" itemprop="url" rel="index"><span itemprop="name">Homelab</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/54672/" class="post-meta-item leancloud_visitors" data-flag-title="利用旧笔记本打造家用Homelab服务器" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>家里有一台10年前的旧笔记本，闲置了几年。最近收拾出来改造了一下，真机部署了Proxmox环境，把它打造成一个简易家用Homelab服务器。<br>上面跑了Ubuntu和FnOS的虚拟机，搭配内网穿透可以作为一台长期在线的VPS使用，也可以部署NAS系统备份文件和图片。</p>
+<p>本篇文章将介绍PVE + 虚拟机 + FRP内网穿透 + Nginx反向代理的整套部署方案，可以安全地把局域网服务暴露给公网域名访问。</p>
+<span id="more"></span>
+
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><a target="_blank" rel="noopener" href="https://www.proxmox.com/en/products/proxmox-virtual-environment/overview">Proxmox Virtual Environment</a>（PVE）是一个基于KVM的开源虚拟化平台，目前最新版本为9.1，基于Debian13打造，是一个社区比较活跃且免费的虚拟化平台。</p>
+<p>之所以不选择直接真机安装对应的系统，是因为在底层搞一个虚拟化平台，能够比较方便地管理、切换与并行执行系统（当然取决于旧笔记本的性能，也不可能并行跑太多）。如果把虚拟机系统搞崩了，在PVE中直接删掉重建或恢复快照就行了，非常方便。也能让我非常随心所欲地测试哪个NAS系统好用。</p>
+<p>而且开启硬件对虚拟化的支持，也没有太多的性能损耗（KVM虚拟化CPU损耗通常在2-5%左右），并且可以配置硬件直通虚拟机进一步降低损耗。</p>
+<h2 id="硬件改造"><a href="#硬件改造" class="headerlink" title="硬件改造"></a>硬件改造</h2><p>我的这台笔记本是ASUS P453UJ，CPU是<code>i7 6500U</code>、8G DDR4内存，500G HDD。扩展性方面，只有一个SATA接口，被HDD占用，还有光驱。没法直接插两块硬盘。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/ef1274b5784ec766.png"></p>
+<p>虽然只有8G内存，但是现在内存行情非常夸张，我也不打算给它扩容内存了，我要跑的服务8G内存也够用了，除此之外给PVE还另外加了8G Swap空间。</p>
+<h3 id="光驱改硬盘位"><a href="#光驱改硬盘位" class="headerlink" title="光驱改硬盘位"></a>光驱改硬盘位</h3><p>现在已经是2025年了，原来在HDD上装的是Win10，从开机到能操作要几分钟，卡的怀疑人生。所以第一步肯定要换一块SSD。光驱也没用了，也可以把光驱位拆掉，买一个硬盘托架转接2.5寸SATA，也就几块钱到十几块钱不等。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/645799ed1a3a6027.png"></p>
+<p>另外，我刚好有一块M2 NGFF的256G固态，刚好可以用来装系统，但是因为笔记本没这个接口不能直接装，还需要买一个M2 NGFF转2.5寸SATA的硬盘盒。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/38c7c1a37756c141.png"></p>
+<p>然后把它插到光驱位上。原来的SATA口，可以用来单独放一块硬盘。</p>
+<h3 id="网卡升级"><a href="#网卡升级" class="headerlink" title="网卡升级"></a>网卡升级</h3><p>这台笔记本的内置网卡是高通<code>QCNFA435</code>，是一个中低端的网卡配置，只支持Wifi5，且1x1 MIMO，最大传输速度只能支持433Mbps。</p>
+<p>这个规格现在根本跑不满带宽，老牛拉破车了属于是。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">root@homelab:~<span class="comment"># iw dev wlp3s0 link</span></span><br><span class="line">Connected to 28:d1:27:c2:72:5f (on wlp3s0)</span><br><span class="line">	SSID: IMZLP_5G</span><br><span class="line">	freq: 5785.0</span><br><span class="line">	RX: 3359053263 bytes (37960769 packets)</span><br><span class="line">	TX: 729554542 bytes (5502603 packets)</span><br><span class="line">	signal: -69 dBm</span><br><span class="line">	rx bitrate: 130.0 MBit/s VHT-MCS 3 80MHz short GI VHT-NSS 1</span><br><span class="line">	bss flags: short-preamble short-slot-time</span><br><span class="line">	dtim period: 1</span><br><span class="line">	beacon int: 10</span><br></pre></td></tr></table></figure>
+
+<p><code>rx bitrate</code>只有可怜的<code>130MBit/s</code>！</p>
+<p>所以，我给他升级了Intel AX200，可以支持Wifi6，2X2 MIMO，最大速度可达2.4Gbps，性能远超<code>QCNFA435</code>，目前价格40-50之间。</p>
+<p>在我旧的Wifi5的路由器下，AX200依然能获得巨大的速度提升：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">root@homelab:~<span class="comment"># iw dev wlp3s0 link</span></span><br><span class="line">Connected to 13:d2:17:f2:75:3f (on wlp3s0)</span><br><span class="line">        SSID: IMZLP_5G</span><br><span class="line">        freq: 5745.0</span><br><span class="line">        RX: 2023005199 bytes (2214532 packets)</span><br><span class="line">        TX: 470837407 bytes (610574 packets)</span><br><span class="line">        signal: -65 dBm</span><br><span class="line">        rx bitrate: 468.0 MBit/s VHT-MCS 5 80MHz VHT-NSS 2</span><br><span class="line">        tx bitrate: 390.0 MBit/s VHT-MCS 4 80MHz short GI VHT-NSS 2</span><br><span class="line">        bss flags: short-preamble short-slot-time</span><br><span class="line">        dtim period: 1</span><br><span class="line">        beacon int: 100</span><br></pre></td></tr></table></figure>
+
+<h3 id="更换硅脂-清灰"><a href="#更换硅脂-清灰" class="headerlink" title="更换硅脂/清灰"></a>更换硅脂/清灰</h3><p>作为一款陈年电脑，之前从未开盖清灰。这次改造时，顺便把硅脂换了，也给风扇清了清灰。</p>
+<blockquote>
+<p>注意：笔记本风扇清灰不能只把扇叶擦干净就行，还要把笔记本的风道鳍片拆开轻轻灰，我拆开时发现风道都被絮状物堆满了。</p>
+</blockquote>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/26/69d3c35ef95bd5a5.png"></p>
+<p>另外，我没有使用传统的硅脂，而是几块钱买了一块霍尼韦尔7950相变片，CPU和显卡都可以用了。而且笔电的CPU和显卡芯片比指甲盖大不了多少，一块31*50mm的，能换两三次。<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/26/54734fc2dc4d1abf.png"></p>
+<p>散热效果：CPU跑满负载2h，CPU温度依然压在60°：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/26/3a61f2ef254aa425.png"></p>
+<h2 id="安装PVE"><a href="#安装PVE" class="headerlink" title="安装PVE"></a>安装PVE</h2><blockquote>
+<p>注意：安装PVE之前，请确认你的CPU支持虚拟化，并且需要在BIOS中开启虚拟化。<br>Intel：<code>Advanced</code>-<code>CPU Configuration</code>-<code>Intel Virtualization Technology</code>改成Enable。</p>
+</blockquote>
+<p>然后如PVE官方下载镜像：<a target="_blank" rel="noopener" href="https://www.proxmox.com/en/downloads">Downloads</a></p>
+<p>找个U盘，刻录进去即可。建议使用<a target="_blank" rel="noopener" href="https://www.ventoy.net/en/index.html">Ventory</a>，既能够当作普通优盘使用，也能把ISO放进去，选择加载，这样就不用每个镜像都重新刻录一遍了，类似的技术在早些年用过Fbinstool，<a target="_blank" rel="noopener" href="https://www.ventoy.net/en/index.html">Ventory</a>就更方便了。</p>
+<blockquote>
+<p>另外，安装PVE时最好机器插着网线，默认是桥接网络，这样默认安装完就能通过局域网进行连接。</p>
+</blockquote>
+<p>安装成功后<code>screenfetch</code>一下：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/01e4b2e40b05639a.png"></p>
+<p>默认PVE安装完是不带X环境的，只能在局域网内设备用浏览器通过IP访问，默认端口为<code>8006</code>。</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/6a604d590559a02a.png"></p>
+<h2 id="PVE优化-配置"><a href="#PVE优化-配置" class="headerlink" title="PVE优化/配置"></a>PVE优化/配置</h2><h3 id="连接Wifi网络"><a href="#连接Wifi网络" class="headerlink" title="连接Wifi网络"></a>连接Wifi网络</h3><p>笔记本因为自带WLAN网卡，而我又不希望机器拖着根网线，我希望它能连接WIFI，这样只需要解决供电，就可以随便丢到哪个角落里去就行了。</p>
+<h4 id="网络配置"><a href="#网络配置" class="headerlink" title="网络配置"></a>网络配置</h4><p>下面介绍一下PVE连接WIFI，并让虚拟机使用NAT组网的方法。</p>
+<ol>
+<li>输入 <code>ip a</code>查看无线网卡设备名，我这里是 <code>wlp3s0</code>。</li>
+</ol>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/403a34c26118dba2.png"></p>
+<ol start="2">
+<li>安装 Wi-Fi 软件包</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y wpasupplicant iw wireless-tools</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>配置要连接的WIFI并保存，可配置多个（<code>/etc/wpa_supplicant/wpa_supplicant.conf</code>）</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ctrl_interface=/run/wpa_supplicant</span><br><span class="line">update_config=1</span><br><span class="line"></span><br><span class="line">network=&#123;</span><br><span class="line">  ssid=&quot;wifiname1&quot;</span><br><span class="line">  psk=&quot;password1&quot;</span><br><span class="line">  priority=5</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>配置<code>nano /etc/network/interfaces</code>，修改 Wi-Fi 网卡部分的配置，注意其中的设备名<code>wlp3s0</code>换成自己的</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">allow-hotplug wlp3s0</span><br><span class="line">iface wlp3s0 inet dhcp</span><br><span class="line">    wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li><p>启动，执行<code>ifup wlp3s0</code>，此时输入 <code>ip a</code> 查看 Wi-Fi 网卡因该已能正常联网。</p>
+</li>
+<li><p>开启IP转发功能，编辑 <code>/etc/sysctl.conf</code>  </p>
+</li>
+</ol>
+<ul>
+<li>将 <code>#net.ipv6.conf.all.forwarding=1</code> 前的 <code>#</code> 去掉并保存  </li>
+<li>将 <code>#net.ipv4.ip_forward=1</code> 前的 <code>#</code> 去掉并保存</li>
+</ul>
+<blockquote>
+<p>注：在最新版本PVE上（9.1），没有<code>/etc/sysctl.conf</code>这个文件了，需要在<code>/etc/sysctl.d</code>目录下新建一个<code>conf</code>文件。</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@homelab:/etc/sysctl.d<span class="comment"># cat pve.conf </span></span><br><span class="line">net.ipv6.conf.all.forwarding=1</span><br><span class="line">net.ipv4.ip_forward=1</span><br><span class="line">net.ipv4.conf.all.rp_filter = 0</span><br><span class="line">net.ipv4.conf.default.rp_filter = 0</span><br><span class="line">net.ipv4.conf.wlp3s0.rp_filter = 0</span><br></pre></td></tr></table></figure>
+
+<ol start="6">
+<li>修改 <code>/etc/network/interfaces</code> 添加 <code>vmbr0</code> 的 NAT 规则</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">auto vmbr0</span><br><span class="line">iface vmbr0 inet static</span><br><span class="line">    address 10.10.10.1/24</span><br><span class="line">    bridge-ports none</span><br><span class="line">    bridge-stp off</span><br><span class="line">    bridge-fd 0</span><br><span class="line">    post-up echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br><span class="line">    post-up iptables -t nat -A POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o wlp3s0 -j MASQUERADE</span><br><span class="line">    post-down iptables -t nat -D POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o wlp3s0 -j MASQUERADE</span><br><span class="line"></span><br><span class="line">    post-up ip6tables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE</span><br><span class="line">    post-down ip6tables -t nat -D POSTROUTING -o wlp3s0 -j MASQUERADE</span><br><span class="line">iface vmbr0 inet6 auto</span><br></pre></td></tr></table></figure>
+
+<ol start="7">
+<li>重启网络即可正常连接 Wi-Fi，并且通过局域网访问。<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl restart networking</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<p>参考文章：<a target="_blank" rel="noopener" href="https://linux.do/t/topic/497979">PVE 使用无线网卡连接 Wi-Fi 步骤</a></p>
+<h4 id="DHCP"><a href="#DHCP" class="headerlink" title="DHCP"></a>DHCP</h4><p>前面虽然已经让PVE连接上了WIFI，但是此时虚拟还是无法获取网络， 因为前面的配置是把PVE的网络改为了NAT模式（一般家用WLAN网卡也不支持直接桥接），还需要在PVE中添加一个DHCP服务，让这个DHCP服务给虚拟机分配IP。</p>
+<p>安装<code>isc-dhcp-server</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install isc-dhcp-server</span><br></pre></td></tr></table></figure>
+
+<p>编辑<code>/etc/dhcp/dhcpd.conf</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"># 定义子网，必须与 vmbr0 的 IP 段一致</span><br><span class="line">subnet 10.10.10.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  # 0. 核心设置：告诉所有客户端网关是谁 (指向 PVE 的 vmbr0)</span><br><span class="line">  option routers 10.10.10.1;</span><br><span class="line">  # 1. 分配给虚拟机的 IP 范围 (例如 100 到 200)</span><br><span class="line">  range 10.10.10.100 10.10.10.200;</span><br><span class="line"></span><br><span class="line">  # 2. 核心设置：告诉虚拟机网关是谁 (指向 PVE 的 vmbr0)</span><br><span class="line">  option routers 10.10.10.1;</span><br><span class="line"></span><br><span class="line">  # 3. DNS 服务器 (可以用 114.114.114.114 或 8.8.8.8)</span><br><span class="line">  option domain-name-servers 114.114.114.114, 8.8.8.8;</span><br><span class="line"></span><br><span class="line">  # 4. 租期设置 (单位：秒，这里设为 12 小时)</span><br><span class="line">  default-lease-time 43200;</span><br><span class="line">  max-lease-time 86400;</span><br><span class="line"></span><br><span class="line">  # 5. 设置固定IP</span><br><span class="line">  host fnos-server&#123;</span><br><span class="line">    hardware ethernet BC:24:11:A7:EB:99;</span><br><span class="line">    fixed-address 10.10.10.100;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后启动dhcp-server：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl restart isc-dhcp-server</span><br><span class="line">systemctl <span class="built_in">enable</span> isc-dhcp-server</span><br></pre></td></tr></table></figure>
+
+<p>此时虚拟机应该可以正常分配IP并联网了。</p>
+<p>我的完整的<code>/etc/network/interface</code>如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">auto lo</span><br><span class="line">iface lo inet loopback</span><br><span class="line"></span><br><span class="line">iface nic0 inet manual</span><br><span class="line">       post-up echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br><span class="line"></span><br><span class="line">iface nic1 inet manual</span><br><span class="line"></span><br><span class="line">auto wlp3s0</span><br><span class="line">iface wlp3s0 inet dhcp</span><br><span class="line">        wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf</span><br><span class="line"></span><br><span class="line">auto vmbr0</span><br><span class="line">iface vmbr0 inet static</span><br><span class="line">    address 10.10.10.1/24</span><br><span class="line">    bridge-ports none</span><br><span class="line">    bridge-stp off</span><br><span class="line">    bridge-fd 0</span><br><span class="line">    post-up echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br><span class="line">    post-up iptables -t nat -A POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o wlp3s0 -j MASQUERADE</span><br><span class="line">    post-down iptables -t nat -D POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o wlp3s0 -j MASQUERADE</span><br><span class="line"></span><br><span class="line">    post-up ip6tables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE</span><br><span class="line">    post-down ip6tables -t nat -D POSTROUTING -o wlp3s0 -j MASQUERADE</span><br><span class="line">iface vmbr0 inet6 auto</span><br><span class="line"></span><br><span class="line">source /etc/network/interfaces.d/*</span><br></pre></td></tr></table></figure>
+
+<h4 id="NAT端口转发"><a href="#NAT端口转发" class="headerlink" title="NAT端口转发"></a>NAT端口转发</h4><p>因为前面我们连接WIFI时，使用NAT组网。那么PVE中的虚拟机和物理网络是隔离的，无法直接通过<code>ip:port</code>的方式访问虚拟机中的服务。</p>
+<p>如果想要直接通过局域网访问，还需要进行iptables的端口转发配置。</p>
+<p>为了方便扩展，可以在<code>/etc/network/interface</code>中添加一个<code>post-up</code>的脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">auto vmbr0</span><br><span class="line">iface vmbr0 inet static</span><br><span class="line">    address 10.10.10.1/24</span><br><span class="line">    bridge-ports none</span><br><span class="line">    bridge-stp off</span><br><span class="line">    bridge-fd 0</span><br><span class="line">    post-up echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br><span class="line">    post-up iptables -t nat -A POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o wlp3s0 -j MASQUERADE</span><br><span class="line">    post-down iptables -t nat -D POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o wlp3s0 -j MASQUERADE</span><br><span class="line"></span><br><span class="line">    post-up ip6tables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE</span><br><span class="line">    post-down ip6tables -t nat -D POSTROUTING -o wlp3s0 -j MASQUERADE</span><br><span class="line">    </span><br><span class="line">    # === 加载端口转发脚本 ===</span><br><span class="line">    post-up /root/documents/iptables-nat.sh</span><br><span class="line"></span><br><span class="line">iface vmbr0 inet6 auto</span><br></pre></td></tr></table></figure>
+
+<p>后续如果想要添加新的端口转发，就只需要修改这个文件就行了：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义变量</span></span><br><span class="line">WIFI_IF=<span class="string">&quot;wlp3s0&quot;</span>  <span class="comment"># 你的WiFi网卡名</span></span><br><span class="line">VM_NET=<span class="string">&quot;10.10.10.0/24&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 清除旧的 NAT 规则 (防止重复)</span></span><br><span class="line">iptables -t nat -F PREROUTING</span><br><span class="line"><span class="comment"># ---------------------------------------------------</span></span><br><span class="line"><span class="comment"># 在下面添加你的端口转发规则</span></span><br><span class="line"><span class="comment"># 格式: iptables -t nat -A PREROUTING -i $WIFI_IF -p tcp --dport [宿主机端口] -j DNAT --to [虚拟机IP]:[虚拟机端口]</span></span><br><span class="line"><span class="comment"># ---------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例1: SSH (宿主机 10022 -&gt; VM 22)</span></span><br><span class="line"><span class="comment"># iptables -t nat -A PREROUTING -i $WIFI_IF -p tcp --dport 10022 -j DNAT --to 10.10.10.100:22</span></span><br><span class="line"><span class="comment"># 示例2: 远程桌面 RDP (宿主机 33890 -&gt; VM 3389)</span></span><br><span class="line"><span class="comment"># iptables -t nat -A PREROUTING -i $WIFI_IF -p tcp --dport 33890 -j DNAT --to 10.10.10.101:3389</span></span><br></pre></td></tr></table></figure>
+
+<p>作用就是把虚拟机的端口，映射到宿主机的端口上。比如把虚拟机（10.10.10.100:22）映射到宿主机的10022端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iptables -t nat -A PREROUTING -i <span class="variable">$WIFI_IF</span> -p tcp --dport 10022 -j DNAT --to 10.10.10.100:22</span><br></pre></td></tr></table></figure>
+
+<p>执行脚本，就能生效，因为前面我们修改了<code>/etc/network/interface</code>，所以每次networking服务启动时都会执行到，这样重启也不用担心不生效了。</p>
+<p>访问的方式：假如宿主机在物理路由的IP为<code>192.168.1.123</code>，那么就可以访问<code>192.168.1.123:10022</code>访问虚拟机(10.10.10.100:22)了。</p>
+<h4 id="Wifi全功率运行"><a href="#Wifi全功率运行" class="headerlink" title="Wifi全功率运行"></a>Wifi全功率运行</h4><p>默认情况下，WLAN网卡是标准省电模，会定期进入休眠状态，只在需要发送或接收数据包时唤醒。但我们作为长期持续联网的设备来说，我希望机器能保持最高的网络稳定性和性能。</p>
+<p>所以可以把网卡改为默认全功率运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看网卡列表，找到WLAN的网卡，我的是wlp3s0</span></span><br><span class="line">$ iw dev</span><br><span class="line"><span class="comment"># 查看当前网卡的省电模式</span></span><br><span class="line">$ iw dev wlp3s0 get power_save</span><br><span class="line">Power save: on</span><br><span class="line"><span class="comment"># 关闭省电模式</span></span><br><span class="line">$ sudo iw dev wlp3s0 <span class="built_in">set</span> power_save off</span><br></pre></td></tr></table></figure>
+
+<h3 id="插网线网络配置"><a href="#插网线网络配置" class="headerlink" title="插网线网络配置"></a>插网线网络配置</h3><p>如果想要插网线运行，同样基于NAT拓扑，则<code>/etc/network/interfcae</code>为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">auto lo</span><br><span class="line">iface lo inet loopback</span><br><span class="line"></span><br><span class="line">auto nic0</span><br><span class="line">iface nic0 inet dhcp</span><br><span class="line"></span><br><span class="line">auto vmbr0</span><br><span class="line">iface vmbr0 inet static</span><br><span class="line">    address 10.10.10.1/24</span><br><span class="line">    bridge-ports none</span><br><span class="line">    bridge-stp off</span><br><span class="line">    bridge-fd 0</span><br><span class="line">    post-up echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br><span class="line">    post-up iptables -t nat -A POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o nic0 -j MASQUERADE</span><br><span class="line">    post-down iptables -t nat -D POSTROUTING -s &#x27;10.10.10.0/24&#x27; -o nic0 -j MASQUERADE</span><br><span class="line"></span><br><span class="line">    post-up ip6tables -t nat -A POSTROUTING -o nic0 -j MASQUERADE</span><br><span class="line">    post-down ip6tables -t nat -D POSTROUTING -o nic0 -j MASQUERADE</span><br><span class="line">    </span><br><span class="line">    # === 加载端口转发脚本 ===</span><br><span class="line">    post-up /root/documents/iptables-nat.sh</span><br><span class="line"></span><br><span class="line"># iface nic1 inet manual</span><br><span class="line"></span><br><span class="line"># allow-hotplug wlp3s0</span><br><span class="line"># iface wlp3s0 inet dhcp</span><br><span class="line">#    wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf</span><br><span class="line"></span><br><span class="line">source /etc/network/interfaces.d/*</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：iptables的端口转发规则也要相应修改。</p>
+</blockquote>
+<h3 id="一键优化脚本"><a href="#一键优化脚本" class="headerlink" title="一键优化脚本"></a>一键优化脚本</h3><p>针对PVE有一些一键优化脚本，可以直接配置直通+CPU/硬盘/温度显示+换源/去订阅+CPU睿频模式。<br>还是非常方便的，推荐<a target="_blank" rel="noopener" href="https://github.com/xiangfeidexiaohuo/pve-diy">pve-diy</a>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash -c <span class="string">&quot;<span class="subst">$(curl -fsSL https://raw.githubusercontent.com/xiangfeidexiaohuo/pve-diy/master/pve.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以按需进行选择配置。</p>
+<h3 id="安装X环境"><a href="#安装X环境" class="headerlink" title="安装X环境"></a>安装X环境</h3><p>因为PVE安装时没有X环境，所以只能进入终端，但是PVE本身又依赖web配置，在无网络或者无另一台机器的情况下就非常不方便。</p>
+<p>但是PVE是基于Debian的，我们自然可以给他装上X环境，而官方也提供了安装的方法，可以安装xfce：<a target="_blank" rel="noopener" href="https://pve.proxmox.com/wiki/Developer_Workstations_with_Proxmox_VE_and_X11">Developer_Workstations_with_Proxmox_VE_and_X11</a></p>
+<p>简单来说就下面几行命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">apt update &amp;&amp; apt dist-upgrade</span><br><span class="line">apt install xfce4 chromium lightdm</span><br><span class="line"><span class="comment"># adduser newusername</span></span><br><span class="line">systemctl start lightdm</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开机自动进入X环境</span></span><br><span class="line">systemctl <span class="built_in">enable</span> lightdm</span><br></pre></td></tr></table></figure>
+
+<p>这样每次开机后就能正常进入xfce了，也安装了chromium，可以通过<code>localhost:8006</code>来本机管理PVE。</p>
+<h3 id="关闭合盖休眠"><a href="#关闭合盖休眠" class="headerlink" title="关闭合盖休眠"></a>关闭合盖休眠</h3><p>笔记本默认盒盖休眠，需要设置为不休眠，不然一盒盖就用不了了。</p>
+<p>编辑<code>/etc/systemd/logind.conf</code>，把下面三行改为ignore，并取消注释。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 未充电状态</span></span><br><span class="line">HandleLidSwitch=ignore</span><br><span class="line"><span class="comment"># 充电中</span></span><br><span class="line">HandleLidSwitchExternalPower=ignore</span><br><span class="line"><span class="comment"># 连接扩展坞</span></span><br><span class="line">HandleLidSwitchDocked=ignore</span><br></pre></td></tr></table></figure>
+
+<h3 id="内置电池当作UPS"><a href="#内置电池当作UPS" class="headerlink" title="内置电池当作UPS"></a>内置电池当作UPS</h3><p>因为笔记本本身自带电池，所以当断电时，笔记本的内置电池就可以当作简易UPS使用。</p>
+<blockquote>
+<p>注：我认为UPS最大的价值是，能保证异常断电后系统正常关机，不会因为断电丢失数据和硬件异常。</p>
+</blockquote>
+<p>安装upower，设置动作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/UPower/UPower.conf</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[UPower]</span></span><br><span class="line"><span class="comment"># 开启电源检测</span></span><br><span class="line"><span class="attr">EnableWattsUpPro</span>=<span class="literal">true</span></span><br><span class="line"><span class="comment"># 忽略盖子关闭事件（笔记本合盖不休眠）</span></span><br><span class="line"><span class="attr">IgnoreLid</span>=<span class="literal">true</span></span><br><span class="line"><span class="comment"># 使用百分比而非剩余时间</span></span><br><span class="line"><span class="attr">UsePercentageForPolicy</span>=<span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 低电量警告 - 50% </span></span><br><span class="line"><span class="attr">PercentageLow</span>=<span class="number">50</span></span><br><span class="line"><span class="comment"># 临界电量 - 40% </span></span><br><span class="line"><span class="attr">PercentageCritical</span>=<span class="number">40</span> </span><br><span class="line"><span class="comment"># 执行操作的电量 - 30% </span></span><br><span class="line"><span class="attr">PercentageAction</span>=<span class="number">30</span> </span><br><span class="line"><span class="comment"># 临界电量时的操作（关机） </span></span><br><span class="line"><span class="attr">CriticalPowerAction</span>=Power<span class="literal">Off</span></span><br></pre></td></tr></table></figure>
+
+<p>然后开启upower的服务并设置为开机自启：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@homelab:~<span class="comment"># systemctl start upower</span></span><br><span class="line">root@homelab:~<span class="comment"># systemctl enable upower</span></span><br><span class="line">Created symlink <span class="string">&#x27;/etc/systemd/system/graphical.target.wants/upower.service&#x27;</span> → <span class="string">&#x27;/usr/lib/systemd/system/upower.service&#x27;</span>.</span><br></pre></td></tr></table></figure>
+
+<p>这样，当笔记本断电，且电池容量低于30%时，就自动触发关机了，保证PVE和虚拟机环境都能够正常退出。</p>
+<h2 id="虚拟机安装"><a href="#虚拟机安装" class="headerlink" title="虚拟机安装"></a>虚拟机安装</h2><p>我在PVE上跑了两个系统：</p>
+<ul>
+<li>Ubuntu</li>
+<li>FnOS，飞牛最近出了正式版本，作为国产免费的NAS系统，社区还算比较活跃。</li>
+</ul>
+<p>可以直接在PVE上输入URL下载镜像：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/f72f33263dd80633.png"></p>
+<p>创建虚拟机时指定镜像即可，在每台虚拟机的控制台中可以看到画面和进行操作：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/43cb666fc90574d5.png"></p>
+<p>在NAT网络下，想要访问虚拟机内的服务，需要利用iptables进行端口转发，详见前文中<strong>NAT端口转发</strong>。</p>
+<h2 id="硬盘直通"><a href="#硬盘直通" class="headerlink" title="硬盘直通"></a>硬盘直通</h2><p>因为现在这台笔记本上有两块硬盘，一块256G SSD用来装系统、安装虚拟机，一块4T硬盘专门来存储数据，我把它直通给了FnOS。</p>
+<p>可以通过<code>ls /dev/disk/by-id</code>查看当前的硬盘信息：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/8ac2fc1fc1b57c36.png"></p>
+<p>记录下想要直通的硬盘id，然后通过下面的命令直通给指定的虚拟机：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># qm set &#123;VM_ID&#125; -scsi2 /dev/disk/by-id/&#123;DISK_ID&#125;</span></span><br><span class="line">qm <span class="built_in">set</span> 100 -scsi2 /dev/disk/by-id/ata-HGST_HTSXXXXXXXXXX30_RCYYYYYYYYYYEM</span><br></pre></td></tr></table></figure>
+
+<p>然后在虚拟机的硬件中，就可以看到这块硬盘了：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/3643fec829586ef1.png"></p>
+<h2 id="核显GVT-g直通"><a href="#核显GVT-g直通" class="headerlink" title="核显GVT-g直通"></a>核显GVT-g直通</h2><p>在飞牛中，如果直通了显卡，可以用来加速图库的AI计算，以及视频的解码加速。</p>
+<h3 id="PVE配置"><a href="#PVE配置" class="headerlink" title="PVE配置"></a>PVE配置</h3><p>我的旧笔记本里的这块CPU是i7 6500U，是SkyLake架构的，可以支持GVT-g，<strong>Intel 6-10代</strong>的CPU应该都可以。</p>
+<p>编辑<code>/etc/default/grub</code>，修改<code>GRUB_CMDLINE_LINUX_DEFAULT</code>参数：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">GRUB_CMDLINE_LINUX_DEFAULT</span>=<span class="string">&quot;quiet intel_iommu=on i915.enable_gvt=1&quot;</span></span><br></pre></td></tr></table></figure>
+<p>然后更新Grab：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">update-initramfs -u -k all</span><br><span class="line">update-grub</span><br></pre></td></tr></table></figure>
+
+<p>还需要加载必要的kernel module，编辑<code>/etc/modules</code>，将下面的内容填入其中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">vfio</span><br><span class="line">vfio_iommu_type1</span><br><span class="line">vfio_pci</span><br><span class="line">vfio_virqfd</span><br><span class="line">kvmgt</span><br></pre></td></tr></table></figure>
+
+<p>然后重启PVE，查看GRAB启动参数生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># dmesg | grep &quot;Command line&quot;</span></span><br><span class="line">[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-6.17.2-1-pve root=/dev/mapper/pve-root ro quiet intel_iommu=on i915.enable_gvt=1</span><br></pre></td></tr></table></figure>
+
+<p>以及内核模块<code>kvmgt</code>是否加载：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@homelab:~<span class="comment"># lsmod | grep -i kvmgt</span></span><br><span class="line">kvmgt                 385024  1</span><br><span class="line">mdev                   24576  1 kvmgt</span><br><span class="line">i915                 4485120  13 kvmgt</span><br><span class="line">kvm                  1376256  7 kvmgt,kvm_intel</span><br><span class="line">vfio                   65536  9 vfio_pci_core,kvmgt,vfio_iommu_type1,vfio_pci</span><br></pre></td></tr></table></figure>
+
+<p>此时在PVE中，先关闭虚拟机。编辑虚拟机的硬件，添加PCI设备，选中核显：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/12/3b9ca77dc671ccda.png"><br>MDev类型中，就可以看到GVTg了：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/12/d3b212f0acfc4c5f.png"></p>
+<p>选择可用的，添加即可，然后启动虚拟机。</p>
+<h3 id="虚拟机配置"><a href="#虚拟机配置" class="headerlink" title="虚拟机配置"></a>虚拟机配置</h3><p>SSH连接飞牛虚拟机，编辑<code>/etc/modprobe.d/i915.conf</code>，注释掉下面内容：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># options i915 enable_guc=3</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：这行配置的作用是：开启 Intel 显卡的 GuC（Graphics MicroController）和 HuC（HuC MicroController）硬件加速功能。<br>但它跟GVT-g会有冲突，导致飞牛无法调用核显，所以需要把它注释掉，然后重启虚拟机。</p>
+</blockquote>
+<p>应用修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">update-initramfs -u -k all</span><br></pre></td></tr></table></figure>
+
+<p>打开飞牛的应用中心，搜索安装<code>i915-sriov-dkms</code>驱动。</p>
+<p>重启虚拟机，就可以看到正常识别了核显了：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/12/82da5bab8b7ddcc5.png"></p>
+<p>打开相册修改AI相册设置，启用GPU计算即可：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/12/773f3cdba0437ca3.png"></p>
+<blockquote>
+<p>注意：虚拟机器用GVT-g后，PVE内VNC画面不会再输出，只能通过SSH连接进行配置。</p>
+</blockquote>
+<h2 id="内网穿透"><a href="#内网穿透" class="headerlink" title="内网穿透"></a>内网穿透</h2><p>在之前的文章中，曾详细地介绍了如何在VPS上部署一个内网穿透服务：<a href="https://imzlp.com/posts/5050/">使用 frp 进行内网穿透</a><br>同样地，跑在PVE上的虚拟机以及PVE本身，都可以用frpc来连接公网VPS进行内网穿透服务。</p>
+<p>但是运行方式有些区别，近期我逐渐把依赖的软件服务都打包成docker镜像，然后用容器的方式在多台机器运行，这样可以统一执行环境，只需要维护好配置即可。</p>
+<p>所以，我把frp打包成了一个docker镜像，方便在各种环境部署：<a target="_blank" rel="noopener" href="https://github.com/imzlp/frp-docker">frp-docker</a></p>
+<p>可以用仓库中的<code>docker_builder</code>自己打包镜像，或者使用我提交到docker hub的版本（<code>ahzknarf/frp:latest</code>当前最新的0.67.0），默认支持了amd64与arm64架构的，支持frpc/frps。</p>
+<p>导入镜像后可以直接启动，只需要指定两个参数：</p>
+<ul>
+<li><code>MODE</code>：frpc或frps</li>
+<li><code>ARCH</code>：amd64或arm64</li>
+</ul>
+<p>docker run启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># frpc</span></span><br><span class="line">docker run -d \</span><br><span class="line">  --name frpc \</span><br><span class="line">  --network host \</span><br><span class="line">  --restart=always \</span><br><span class="line">  -e MODE=frpc \</span><br><span class="line">  -e ARCH=amd64 \</span><br><span class="line">  -v /home/root/frp/frpc.toml:/etc/frp/frpc.toml \</span><br><span class="line">  ahzknarf/frp:latest</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># frps</span></span><br><span class="line">docker run -d \</span><br><span class="line">  --name frps \</span><br><span class="line">  --network host \</span><br><span class="line">  --restart=always \</span><br><span class="line">  -e MODE=frps \</span><br><span class="line">  -e ARCH=amd64 \</span><br><span class="line">  -v /home/root/frp/frps.toml:/etc/frp/frps.toml \</span><br><span class="line">  ahzknarf/frp:latest</span><br></pre></td></tr></table></figure>
+
+<p>这样就能够非常简单地跑内网穿透了，只需要维护frpc/frps的配置文件即可。</p>
+<p>新增了穿透端口，需要把容器重新启动一下。</p>
+<blockquote>
+<p>注意：从内网转发出来的端口在VPS上最好不要直接暴露在公网，可以通过Nginx+Https+鉴权访问。<br>可以在frps的配置中指定<code>proxyBindAddr = &quot;127.0.0.1&quot;</code>，强制把端口绑定到localhost，避免被公网直接访问。</p>
+</blockquote>
+<h2 id="Nginx反向代理"><a href="#Nginx反向代理" class="headerlink" title="Nginx反向代理"></a>Nginx反向代理</h2><p>当我们把PVE虚拟中的服务端口通过frp转发到VPS上后，我们还可以通过Nginx绑定域名，实现把局域网服务暴露在公网用域名访问。</p>
+<p>以FnOS为例，我在CF上创建了一个二级域名：<code>fnos.xxx.com</code>，解析上VPS的IP。</p>
+<p>然后在VPS上可以添加一个nginx配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"># fnos.xxxxx.com.conf</span><br><span class="line">server &#123;</span><br><span class="line">    listen 80;</span><br><span class="line">    server_name fnos.xxxxx.com;</span><br><span class="line">    return 301 https://$server_name$request_uri;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen 443 ssl;</span><br><span class="line">    server_name fnos.xxxxx.com;</span><br><span class="line"></span><br><span class="line">    client_max_body_size 1024m;</span><br><span class="line"></span><br><span class="line">    ssl_certificate      /etc/letsencrypt/live/$server_name/fullchain.pem;</span><br><span class="line">    ssl_certificate_key  /etc/letsencrypt/live/$server_name/privkey.pem;</span><br><span class="line"></span><br><span class="line">    ssl_session_timeout  5m;</span><br><span class="line"></span><br><span class="line">    ssl_ciphers  HIGH:!aNULL:!MD5;</span><br><span class="line">    ssl_prefer_server_ciphers  on;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">	    # 飞牛服务转发到VPS的端口号</span><br><span class="line">        proxy_pass https://localhost:15667;</span><br><span class="line">        </span><br><span class="line">        proxy_http_version 1.1;</span><br><span class="line">        proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">        proxy_set_header Connection &quot;upgrade&quot;;</span><br><span class="line"></span><br><span class="line">        proxy_set_header Host $host;</span><br><span class="line">        proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line"></span><br><span class="line">        proxy_set_header X-Forwarded-Proto https;  # 明确设置为 https</span><br><span class="line">        proxy_set_header X-Forwarded-Port 443;     # 设置端口</span><br><span class="line">        proxy_set_header X-Forwarded-Host $host;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后停止<code>nginx</code>服务，申请证书：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt-get install certbot</span><br><span class="line">certbot certonly --standalone -d fnos.xxxxx.com</span><br></pre></td></tr></table></figure>
+
+<p>然后启动<code>nginx</code>服务即可。</p>
+<blockquote>
+<p>注：申请ssl证书以及自动更新，详见文章<a href="https://imzlp.com/posts/30014/#SSL%E8%AF%81%E4%B9%A6">部署一个自托管的 MEMOS 笔记系统#SSL证书</a>。</p>
+</blockquote>
+<p>此时就能访问<code>fnos.xxxxx.com</code>域名，然后访问到部署在PVE虚拟机中的飞牛了。</p>
+<blockquote>
+<p>注：如果访问域名出现502错误，可以查看nginx的日志。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt;<span class="built_in">tail</span> -f /var/log/nginx/error.log</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>如果是ssl的问题，需要检查<code>/etc/letsencrypt/</code>目录下的证书权限，确保nginx可以读取。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> -ld /etc/letsencrypt/</span><br><span class="line"></span><br><span class="line">sudo <span class="built_in">chmod</span> o+x /etc/letsencrypt/live -R</span><br><span class="line">sudo <span class="built_in">chmod</span> 644 /etc/letsencrypt/live -R</span><br><span class="line">sudo <span class="built_in">chmod</span> o+x /etc/letsencrypt/archive -R</span><br><span class="line">sudo <span class="built_in">chmod</span> 644 /etc/letsencrypt/archive -R</span><br></pre></td></tr></table></figure>
+
+<p>然后重启nginx服务即可。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nginx -s reload</span><br></pre></td></tr></table></figure>
+
+<p>通过域名访问飞牛，且HTTPS：<br><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/7f70c286daab7192.png"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>文章中介绍的整套部署方案，是PVE + 虚拟机 + FRP内网穿透 + Nginx反向代理的流程，可以安全地把局域网服务暴露给公网域名访问。</p>
+<p>在我部署的服务负载中，大多数情况下，CPU基本处于闲置状态，功耗也是很低的：</p>
+<p><img data-src="https://img.imzlp.com/imgs/zlp/picgo/2025/12/03/516ff7a3cd0ed819.png"></p>
+<p>在拆机改造时顺便给笔记本清了清灰，目前看散热压力并不大，持续稳定运行了几天没发现异常，可以作为一个简易版家庭Homelab服务器了。</p>
+<p>让旧机器焕发新生，废物再利用，是折腾的意义，但乐于折腾往往是稳定性的最大阻碍，所以及时收手，能用就行:)。</p>
+<h2 id="更新日志"><a href="#更新日志" class="headerlink" title="更新日志"></a>更新日志</h2><ul>
+<li>2025-12-26：补充清灰/更换硅脂的内容，并添加了散热效果数据</li>
+<li>2025-12-12：补充了核显GVT-g直通的内容</li>
+<li>2025-12-09：补充了更换网卡前后速度对比、网线模式的网络配置</li>
+<li>2025-12-04：补充了Wifi网卡全功率运行</li>
+</ul>
+
+    </div>
+
+    
+    
+        
+        
+          
+            <blockquote class="blockquote-center">
+              
+                全文完，若有不足之处请评论指正。
+              
+            <br/>
+            
+                <div class="qr-code" onclick="return false">
+                    <script src="/js/qrcode.min.js"></script>
+                    <div id="qrcode">
+                      
+                        <img src="https://imzlp.com/images/wechat-qrcode.webp">
+                      
+                    <p>微信扫描二维码，关注我的公众号。</p>
+                    </div>
+                </div>
+            
+            </blockquote>
+          
+        
+
+        
+          <div class="postCopyright" style="clear:both;">
+             <span>本文标题:</span><a href="/posts/54672/" target="_blank">利用旧笔记本打造家用Homelab服务器</a><br/>
+             <span>文章作者:</span><a href="/about" target="_blank" title="查看 查利鹏 的资料">查利鹏</a><br/>
+             <span>发布时间:</span>2025/12/03 10:39<br/>
+             
+              <span>更新时间:</span>2025/12/12 10:50<br/>
+             
+             <span>本文字数:</span><span class="page-count">5.9k 字</span><br/>
+             
+             <span>原始链接:</span><a href="/posts/54672/" target="_blank" title="利用旧笔记本打造家用Homelab服务器">https://imzlp.com/posts/54672/</a>
+             <span class="copy-path" data-clipboard-text="原始链接: https://imzlp.com/posts/54672/ 文章作者: 查利鹏" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+             <script src="/js/jquery.min.js"></script>
+             <script src="/js/clipboard.min.js"></script>
+             <script> var clipboard = new Clipboard('.copy-path'); </script>
+             <br/>
+             
+             <span>许可协议:</span><i class="fab fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</a><br/>
+             
+             <span>文章禁止全文转载，摘要转发请保留原文链接及作者信息，谢谢！</span>
+          </div>
+        
+    
+
+        
+  <div class="reward-container">
+    <div>您的捐赠将鼓励我继续创作！</div>
+    <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+      打赏
+    </button>
+    <div id="qr" style="display: none;">
+        
+        <div style="display: inline-block;">
+          <img src="/images/reward/wechatpay.webp" alt="查利鹏 微信支付">
+          <p>微信支付</p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Docker/" rel="tag"># Docker</a>
+              <a href="/tags/%E7%A1%AC%E4%BB%B6%E7%BB%B4%E4%BF%AE/" rel="tag"># 硬件维修</a>
+              <a href="/tags/PVE/" rel="tag"># PVE</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/99122/" rel="prev" title="包体优化：UE跨版本资源复用的方案">
+      <i class="fa fa-chevron-left"></i> 包体优化：UE跨版本资源复用的方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/6069/" rel="next" title="UE5虚拟资产的可用性分析">
+      UE5虚拟资产的可用性分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+      <div class="tabs tabs-comment">
+        <ul class="nav-tabs">
+            <li class="tab"><a href="#comment-utteranc">utteranc</a></li>
+            <li class="tab"><a href="#comment-valine">valine</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane utteranc" id="comment-utteranc">
+              
+  
+  <div class="comments">
+  <script src="https://utteranc.es/client.js" repo="hxhb/blog-comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script>
+  </div>
+  
+  
+            </div>
+            <div class="tab-pane valine" id="comment-valine">
+              <div class="comments" id="valine-comments"></div>
+            </div>
+        </div>
+      </div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E6%94%B9%E9%80%A0"><span class="nav-number">2.</span> <span class="nav-text">硬件改造</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%89%E9%A9%B1%E6%94%B9%E7%A1%AC%E7%9B%98%E4%BD%8D"><span class="nav-number">2.1.</span> <span class="nav-text">光驱改硬盘位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E5%8D%A1%E5%8D%87%E7%BA%A7"><span class="nav-number">2.2.</span> <span class="nav-text">网卡升级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%8D%A2%E7%A1%85%E8%84%82-%E6%B8%85%E7%81%B0"><span class="nav-number">2.3.</span> <span class="nav-text">更换硅脂&#x2F;清灰</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85PVE"><span class="nav-number">3.</span> <span class="nav-text">安装PVE</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PVE%E4%BC%98%E5%8C%96-%E9%85%8D%E7%BD%AE"><span class="nav-number">4.</span> <span class="nav-text">PVE优化&#x2F;配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5Wifi%E7%BD%91%E7%BB%9C"><span class="nav-number">4.1.</span> <span class="nav-text">连接Wifi网络</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE"><span class="nav-number">4.1.1.</span> <span class="nav-text">网络配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DHCP"><span class="nav-number">4.1.2.</span> <span class="nav-text">DHCP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NAT%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91"><span class="nav-number">4.1.3.</span> <span class="nav-text">NAT端口转发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Wifi%E5%85%A8%E5%8A%9F%E7%8E%87%E8%BF%90%E8%A1%8C"><span class="nav-number">4.1.4.</span> <span class="nav-text">Wifi全功率运行</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%92%E7%BD%91%E7%BA%BF%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE"><span class="nav-number">4.2.</span> <span class="nav-text">插网线网络配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E9%94%AE%E4%BC%98%E5%8C%96%E8%84%9A%E6%9C%AC"><span class="nav-number">4.3.</span> <span class="nav-text">一键优化脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85X%E7%8E%AF%E5%A2%83"><span class="nav-number">4.4.</span> <span class="nav-text">安装X环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%97%AD%E5%90%88%E7%9B%96%E4%BC%91%E7%9C%A0"><span class="nav-number">4.5.</span> <span class="nav-text">关闭合盖休眠</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E7%BD%AE%E7%94%B5%E6%B1%A0%E5%BD%93%E4%BD%9CUPS"><span class="nav-number">4.6.</span> <span class="nav-text">内置电池当作UPS</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85"><span class="nav-number">5.</span> <span class="nav-text">虚拟机安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AC%E7%9B%98%E7%9B%B4%E9%80%9A"><span class="nav-number">6.</span> <span class="nav-text">硬盘直通</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E6%98%BEGVT-g%E7%9B%B4%E9%80%9A"><span class="nav-number">7.</span> <span class="nav-text">核显GVT-g直通</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PVE%E9%85%8D%E7%BD%AE"><span class="nav-number">7.1.</span> <span class="nav-text">PVE配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%85%8D%E7%BD%AE"><span class="nav-number">7.2.</span> <span class="nav-text">虚拟机配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F"><span class="nav-number">8.</span> <span class="nav-text">内网穿透</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginx%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86"><span class="nav-number">9.</span> <span class="nav-text">Nginx反向代理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">10.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97"><span class="nav-number">11.</span> <span class="nav-text">更新日志</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person" oncontextmenu="return false" οndragstart="return false">
+    <img class="site-author-image" itemprop="image" alt="查利鹏"
+      src="/images/avatar.webp">
+  <p class="site-author-name" itemprop="name">查利鹏</p>
+  <div class="site-description" itemprop="description">唯有热爱可抵岁月漫长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+             
+          <span class="site-state-item-count">198</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">194</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hxhb" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hxhb" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://linkedin.com/in/lipengzha" title="Linkedin → https:&#x2F;&#x2F;linkedin.com&#x2F;in&#x2F;lipengzha" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat-qrcode-offical.webp" title="微信公众号 → &#x2F;images&#x2F;wechat-qrcode-offical.webp"><i class="fab fa-weixin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:imzlp@foxmail.com" title="E-Mail → mailto:imzlp@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://imzlp.com/opensource/" title="https:&#x2F;&#x2F;imzlp.com&#x2F;opensource&#x2F;">Open Source Projects</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ue5wiki.com/" title="https:&#x2F;&#x2F;ue5wiki.com&#x2F;" rel="noopener" target="_blank">Unreal Engine Wiki</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021027036号 </a>
+      <img src="/images/beian_logo.webp" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44030502007298" rel="noopener" target="_blank">粤公网安备44030502007298号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2014 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">查利鹏</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">794k</span>
+</div>
+  <div class="powered-by-other">
+    
+	    <center>Github Pages | Actions | NeXT | Cloudflare | Hexo Deploy</center>
+      
+  </div>
+
+<script>
+function checkWebp(callback) {
+    var img = new Image();
+    img.onload = function () { callback((img.width > 0) && (img.height > 0)); };
+    img.onerror = function () { callback(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+}
+function showImage(useWebp) {
+    var imgs = [].slice.call(document.querySelectorAll('img'));
+    imgs.forEach(function (e) {
+        if (!useWebp) {
+            var src = e.getAttribute('data-src')
+            src = src.replace(/\.webp$/, '.png');
+            e.setAttribute('data-src', src);
+        }
+    });
+}
+checkWebp(showImage);
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+<script src="/js/code-unfold.js"></script>
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout : 3000,
+        priority: true,
+        ignores : [uri => uri.includes('#'),uri => uri === 'https://imzlp.com/posts/54672/',]
+      });
+      });
+  </script>
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    var requiredFields = 'nick';
+    requiredFields = requiredFields.split(',');
+    
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'oCE6RMVkVoi5MgUhvFsn1EvV-gzGzoHsz',
+      appKey     : 'K9SOaNYJ8PV6xaoFggWG5xvv',
+      placeholder: "留下点什么吧~",
+      avatar     : 'robohash',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : 'https://appcounter.imzlp.com',
+      requiredFields: requiredFields
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
